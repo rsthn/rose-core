@@ -17,8 +17,11 @@
 
 namespace Rose;
 
+use Rose\Errors\Error;
+
 use Rose\IO\Path;
 use Rose\IO\File;
+
 use Rose\Map;
 use Rose\Regex;
 use Rose\Text;
@@ -103,16 +106,19 @@ class Configuration extends Map
     public static function loadFrom ($source, $target=null, $merge=false)
     {
         if (Text::position($source, '//') !== false)
-        {
-            trace ('Configuration: Blocked attempt to load configuration from a remote address: ' . $source);
-            return null;
-		}
+            throw new Error ('Blocked attempt to load configuration from a remote address: ' . $source);
 
         return Configuration::loadFromBuffer (File::getContents($source), $target, $merge);
     }
 
 	/*
-	**	Parses the given configuration buffer and stores it on the given map, if no map is provided a new one will be created. The map is returned.
+	**	Parses the given configuration buffer and stores it on the given map, if no map is provided a new one will be created. The buffer data is just
+	**	field-name pairs separated by equal-sign (i.e. Name=John), and sections enclosed in square brakets (i.e. [General]).
+	**
+	**	Note that you can use the equal-sign in the field value without any issues because the parser will look only for the first to delimit the name.
+	**
+	**	If a multiline value is desired, back-ticks can be used to span multiple lines, each line will be trimmed first before concatenating it to
+	**	the value, and new-line character is preserved.
 	*/
     public static function loadFromBuffer ($source, $target=null, $merge=false)
     {

@@ -200,7 +200,7 @@ $c->name = 'jon';												assert($c->get('name') == 'jon', 'Map.__set');
 $c = Configuration::getInstance();
 																assert($c->General->title == 'System', 'Configuration.get normal');
 																assert($c->General->desc1 == 'Hello=World', 'Configuration.get with equal');
-																assert($c->General->desc2 == "Hello\nWorld", 'Configuration.get multiline');
+																assert($c->General->desc2 == "Hello\n\nWorld", 'Configuration.get multiline');
 $d = new Map();
 $d->main = new Map();
 $d->main->name = "John=Doe";

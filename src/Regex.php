@@ -115,10 +115,10 @@ class Regex
 	/*
 	**	Uses the pattern and tries to match as many items as possible from the given text string. Returns an array with the matched items.
 	*/
-    public static function _matchAll ($text, $captureIndex=0, $flags=Regex::PATTERN_ORDER)
+    public static function _matchAll ($pattern, $text, $captureIndex=0, $flags=Regex::PATTERN_ORDER)
     {
         $result = null;
-        preg_match_all ($this->pattern, $text, $result, $flags);
+        preg_match_all ($pattern, $text, $result, $flags);
         return Arry::fromNativeArray ($captureIndex === true ? $result : $result[$captureIndex]);
     }
 
@@ -149,7 +149,7 @@ class Regex
 	/*
 	**	Replaces all the strings that match the pattern by the given replacement.
 	*/
-    public static function _replace ($pattern, $replacement, $text)
+    public static function _replace ($pattern, $text, $replacement)
     {
         return preg_replace ($pattern, $replacement, $text);
     }
@@ -171,9 +171,9 @@ class Regex
     public static function _extract ($pattern, $text, $delim='', $captureIndex=0, $max=0)
     {
         if ($max)
-            return Regex::_matchAll ($pattern, $captureIndex, $text)->slice(0, $max)->join($delim);
+            return Regex::_matchAll ($pattern, $text, $captureIndex)->slice(0, $max)->join($delim);
         else
-            return Regex::_matchAll ($pattern, $captureIndex, $text)->join($delim);
+            return Regex::_matchAll ($pattern, $text, $captureIndex)->join($delim);
     }
 
 	/*

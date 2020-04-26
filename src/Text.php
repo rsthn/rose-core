@@ -1261,4 +1261,4 @@ class Text
     {
         return $this->__typeCast('String');
     }
-}
+};

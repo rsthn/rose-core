@@ -17,9 +17,10 @@
 
 namespace Rose;
 
+use Rose\Errors\Error;
+
 use Rose\Map;
 use Rose\Arry;
-use Rose\Error;
 
 /*
 **	Provides an interface to register, unregister and retrieve system resources. One major advantage of using system resources is that they can be

@@ -128,4 +128,4 @@ class Locale
 				return Text::format($config->Locale->get($formatType), $value);
         }
     }
-}
+};

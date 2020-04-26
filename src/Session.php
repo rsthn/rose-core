@@ -17,6 +17,8 @@
 
 namespace Rose;
 
+use Rose\Errors\Error;
+
 use Rose\Configuration;
 use Rose\Resources;
 use Rose\Filter;
@@ -24,7 +26,6 @@ use Rose\Text;
 use Rose\Map;
 use Rose\Math;
 use Rose\DateTime;
-use Rose\Error;
 use Rose\Gateway;
 use Rose\Cookies;
 use Rose\Regex;

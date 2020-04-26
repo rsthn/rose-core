@@ -17,11 +17,14 @@
 
 namespace Rose;
 
+use Rose\Errors\FalseError;
+use Rose\Errors\Error;
+
 use Rose\Configuration;
 use Rose\Strings;
 use Rose\Map;
 use Rose\Text;
-use Rose\FalseError;
+use Rose\Regex;
 
 /*
 **	Provides an interface between clients and the system. No client can have access to the system without passing first through the Gateway.
@@ -123,8 +126,12 @@ class Gateway
 		// Detect is a service is being requested.
         if ($this->requestParams->srv != null)
         {
-            if ($this->registeredServices->hasElement ($this->requestParams->srv))
-                $this->registeredServices->getElement ($this->requestParams->srv)->execute();
+			$this->requestParams->srv = Regex::_extract('/[A-Za-z0-9_-]+/', $this->requestParams->srv);
+
+            if ($this->registerService != null && $this->registeredServices->has($this->requestParams->srv))
+				$this->registeredServices->get($this->requestParams->srv)->execute();
+			else
+				throw new Error ("Service `" . $this->requestParams->srv . "` is not registered.");
 
             return;
 		}
@@ -135,7 +142,7 @@ class Gateway
 	*/
     public function registerService ($serviceCode, $handlerObject)
     {
-        $this->registeredServices->setElement ($serviceCode, $handlerObject);
+        $this->registeredServices->set ($serviceCode, $handlerObject);
     }
 
 	/*
@@ -173,4 +180,4 @@ class Gateway
         Gateway::header('location: '.$location);
         throw new FalseError ();
     }
-}
+};

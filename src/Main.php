@@ -45,10 +45,31 @@ function trace ($string, $out=null)
 /*
 **	Returns the class name of the given object.
 */
-function typeOf ($object)
+function typeOf ($object, $detailed=false)
 {
 	if (is_object ($object))
 		return get_class($object);
+
+	if ($detailed)
+	{
+		if (is_null($object))
+			return 'null';
+
+		if (is_bool($object))
+			return 'bool';
+
+		if (is_array($object))
+			return 'array';
+
+		if (is_int($object))
+			return 'int';
+
+		if (is_numeric($object))
+			return 'number';
+
+		if (is_string($object))
+			return 'string';
+	}
 
 	return 'PrimitiveType';
 }
@@ -156,15 +177,18 @@ class Main
 
 		$ms_start = mstime ();
 
-		Gateway::getInstance();
-		Session::getInstance();
-
 		try
 		{
+			Gateway::getInstance();
+			Session::getInstance();
+	
 			Gateway::getInstance()->main();
 
 			if ($callback != null)
 				$callback();
+
+			Session::getInstance()->close();
+			Gateway::getInstance()->close();
 		}
 		catch (FalseError $e0)
 		{
@@ -172,12 +196,52 @@ class Main
 		catch (\Exception $e1)
 		{
 			ob_end_clean();
-			trace ($e1 = 'ERROR: ' . $e1->getMessage());
-			echo $e1;
-		}
 
-		Session::getInstance()->close();
-		Gateway::getInstance()->close();
+			echo '<html>';
+			echo '<body style="background: #070710; padding: 24px;">';
+			echo '<pre style="font-size: 12px; line-height: 1em; color: #fff; background: #070710; padding: 16px 24px;">';
+
+			echo '<div style="padding: 2px; color: #0cf; font-size: 1.3em;">' . typeOf($e1) . '</div>';
+			echo '<div style="padding: 2px; color: #ccc;">' . basename($e1->getFile()) . ':' . $e1->getLine() . '</div>';
+
+			echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1em;">' . $e1->getMessage() . '</div>';
+
+			foreach ($e1->getTrace() as $err)
+			{
+				echo '<div style="margin-top: 4px; padding: 2px; color: #0c7;">';
+
+				if ($err['class'])
+					echo '<span style="color: #c0f;">(' . $err['class'] . ') </span>';
+
+				echo '<b>'.$err['function'].'</b>';
+				echo ' (';
+				for ($i = 0; $i < count($err['args']); $i++)
+				{
+					echo typeOf($err['args'][$i], true);
+
+					if ($i != count($err['args']) - 1)
+						echo ', ';
+				}
+				echo ')';
+
+				if ($err['file'])
+				{
+					echo '<span style="color: #ccc;">';
+					echo ' ' . basename($err['file']) . ':' . $err['line'] . ' ';
+					echo '</span>';
+				}
+
+				echo '</div>';
+			}
+
+			echo '<div style="color: #676770; margin-top: 24px;">';
+			echo '@rsthn/rose 3.0.2';
+			echo '</div>';
+
+			echo '</pre>';
+			echo '</body>';
+			echo '</html>';
+		}
 
 		$ms_end = mstime();
 

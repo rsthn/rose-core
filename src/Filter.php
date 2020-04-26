@@ -243,4 +243,4 @@ class Filter
     {
         return ((($data+((1<<$bits))))&((((1<<$bits))-1)));
     }
-}
+};
