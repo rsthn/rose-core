@@ -1,0 +1,25 @@
+----------------
+Convert
+Text
+
+----------------
+Remove all alpha() calls and replace with new().
+
+Refactor: __nativeArray -> data ?
+Refactor: PrimitiveType -> native
+
+Ensure all uses of typeOf() correctly compare with Rose\ClassName
+Remove the call_user_func.
+
+Add recursive chmod to Path.
+Ensure all try/catch using "Exception" actually use \Exception
+Remove references to dummy functions located on Main
+
+Completely re-build Text.format to new mechanism.
+Ensure all string stuff uses Text class.
+
+Test if Configuration loads 'env' and the appropriate related file.
+
+!!!!!!!! Think if XML strings are still a good idea or if we should keep only .plain and .conf
+
+Remove unnecessary getInstance() on classes that will never be used with Text.format
