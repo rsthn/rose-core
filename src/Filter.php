@@ -17,6 +17,8 @@
 
 namespace Rose;
 
+require_once('Main.php');
+
 use Rose\Map;
 use Rose\Text;
 

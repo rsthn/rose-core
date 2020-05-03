@@ -17,6 +17,8 @@
 
 namespace Rose;
 
+require_once('Main.php');
+
 use Rose\Errors\Error;
 
 use Rose\Configuration;

@@ -17,6 +17,8 @@
 
 namespace Rose;
 
+require_once('Main.php');
+
 use Rose\Regex;
 use Rose\Text;
 use Rose\Arry;
@@ -199,6 +201,19 @@ class Map
     }
 
 	/*
+	**	For each of the items in the map the specified function is called.
+	*/
+    public function forEach ($function)
+    {
+		foreach ($this->__nativeArray as $key => $item)
+		{
+			$function ($item, $key, $this);
+		}
+
+        return $this;
+    }
+
+	/*
 	**	Calls Text.format with the given string and two parameters which are the key and value of each item in the map.
 	*/
     public function format ($formatString)
@@ -331,7 +346,7 @@ class Map
 		{
 			$name = '"' . addcslashes($name, "\"\\\f\n\r\v") . '"' . ": ";
 
-			if (typeOf($item) == 'Rose\\Arry' || typeOf($value) == 'Rose\\Map')
+			if (typeOf($item) == 'Rose\\Arry' || typeOf($item) == 'Rose\\Map')
 			{
 				$s[] = $name . (string)$item;
 			}

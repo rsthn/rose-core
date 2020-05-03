@@ -23,3 +23,5 @@ Test if Configuration loads 'env' and the appropriate related file.
 !!!!!!!! Think if XML strings are still a good idea or if we should keep only .plain and .conf
 
 Remove unnecessary getInstance() on classes that will never be used with Text.format
+
+Remote calls to Text.format since that is no longer going to be needed.

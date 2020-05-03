@@ -17,6 +17,8 @@
 
 namespace Rose;
 
+require_once('Main.php');
+
 use Rose\Errors\ArgumentError;
 use Rose\Errors\UndefinedPropertyError;
 
@@ -420,6 +422,32 @@ class Arry
     }
 
 	/*
+	**	Maps each value of the array to another value using the specified filter function.
+	*/
+    public function map ($filter)
+    {
+		foreach ($this->__nativeArray as &$item)
+		{
+			$item = $filter($item);
+		}
+
+        return $this;
+	}
+
+	/*
+	**	For each of the items in the array the specified function is called.
+	*/
+    public function forEach ($function)
+    {
+		foreach ($this->__nativeArray as $index => $item)
+		{
+			$function ($item, $index, $this);
+		}
+
+        return $this;
+    }
+
+	/*
 	**	Calls Text.format with the given string and one parameter which is the value of each item in the array.
 	*/
     public function format ($formatString, $useContents=false)
@@ -479,7 +507,7 @@ class Arry
 
 		foreach ($this->__nativeArray as $index => $item)
 		{
-			if (typeOf($item) == 'Rose\\Arry' || typeOf($value) == 'Rose\\Map')
+			if (typeOf($item) == 'Rose\\Arry' || typeOf($item) == 'Rose\\Map')
 			{
 				$s[] = (string)$item;
 			}

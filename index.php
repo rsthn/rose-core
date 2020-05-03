@@ -14,6 +14,7 @@ use Rose\Strings;
 use Rose\Gateway;
 use Rose\Resources;
 use Rose\Locale;
+use Rose\Expr;
 
 use Rose\Errors\Error;
 use Rose\Errors\ArgumentError;
@@ -24,6 +25,18 @@ use Rose\IO\Directory;
 use Rose\IO\File;
 
 use Rose\Data\Connection;
+
+//echo Expr::eval('This is (good)', Map::fromNativeArray([ 'good' => 'Nice' ]));
+
+$data = "(each (dict (u)XXX(u): Hello b: my c: name d: is e: Jonathan) '(i#): (i##) => (i)\n')";
+
+$tpl = Expr::parseTemplate ($data, '(', ')');
+
+
+$x = Map::fromNativeArray([ 'u' => 'u', 'th' => 'th', 'fn' => 'er', 'nice' => 'Ok', 'p' => 'Name', 'XName' => 'All <b>Good!</b>', 'X' => [ 'x' => 'Ok!' ] ]);
+echo('<pre>'.Expr::expand ($tpl, $x).'</pre>');
+
+exit;
 
 class TestClass
 {
