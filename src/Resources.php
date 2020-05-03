@@ -81,7 +81,7 @@ class Resources
 	*/
     public function registerConstructor ($name, $object, $method, $dynamic=false)
     {
-        $this->resourceConstructor->set ($name, Arry::fromNativeArray(array($object, $method, $dynamic), false));
+        $this->resourceConstructor->set ($name, new Arry (array($object, $method, $dynamic), false));
     }
 
 	/*

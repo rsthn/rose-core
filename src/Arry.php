@@ -41,44 +41,23 @@ class Arry
 	/*
 	**	Constructs an instance of the class.
 	*/
-    public function __construct ()
+    public function __construct ($nativeArray=null, $recursiveScan=true)
     {
-        if (func_num_args() != 0)
-        {
-            if (func_num_args() <= 2 && is_array(func_get_arg(0)))
-            {
-                $i = null; $pair = null;
-				$arr = func_get_arg(0);
+		$this->__nativeArray = $nativeArray ? array_values($nativeArray) : array();
 
-                if (func_num_args() == 2 && func_get_arg(1) == true)
-                {
-					$this->__nativeArray = array();
+		if ($nativeArray == null || !$recursiveScan)
+			return;
 
-					// VIOLET: DEPRECATED
-					// Build array as map.
-                    for ($i=0; $i < sizeof($arr); $i++)
-                    {
-                        $pair = Text::split('=', $arr[$i]);
-                        $this->__nativeArray[$pair[0]] = $pair[1];
-                    }
-                }
-                else
-                {
-					// Build array using provided native array.
-                    $this->__nativeArray = $arr;
-                }
-            }
-            else
-            {
-				// Build array from arguments.
-                $this->__nativeArray = func_get_args();
-            }
-        }
-        else
-        {
-			// Build empty array.
-            $this->__nativeArray = array();
-        }
+		foreach ($this->__nativeArray as &$value)
+		{
+			if (is_array($value))
+			{
+				if (count(array_filter(array_keys($value), 'is_string')) != 0)
+					$value = Map::fromNativeArray($value);
+				else
+					$value = Arry::fromNativeArray($value);
+			}
+		}
     }
 
 	/*
@@ -355,7 +334,7 @@ class Arry
 	*/
     public function slice ($start, $length=null)
     {
-        return Arry::fromNativeArray (array_slice($this->__nativeArray, $start, $length));
+        return new Arry (array_slice($this->__nativeArray, $start, $length), false);
     }
 
 	/*
@@ -385,7 +364,7 @@ class Arry
 			return $this;
 		}
 
-        return Arry::fromNativeArray(array_merge($this->__nativeArray, $array->__nativeArray));
+        return new Arry (array_merge($this->__nativeArray, $array->__nativeArray), false);
     }
 
 	/*
@@ -393,7 +372,7 @@ class Arry
 	*/
     public function unique()
     {
-        return Arry::fromNativeArray(array_unique($this->__nativeArray));
+        return new Arry (array_unique($this->__nativeArray), false);
     }
 
 	/*
@@ -410,7 +389,7 @@ class Arry
 	*/
     public function reverse()
     {
-        return Arry::fromNativeArray(array_reverse($this->__nativeArray));
+        return new Arry (array_reverse($this->__nativeArray), false);
     }
 
 	/*
@@ -463,7 +442,7 @@ class Arry
         }
         else
         {
-            $temp = Map::fromNativeArray (array('0'=>'', 'index'=>0), false);
+            $temp = new Map (array('0'=>'', 'index'=>0), false);
             foreach ($this->__nativeArray as $index => $item)
             {
                 $temp->{'0'} = $item;

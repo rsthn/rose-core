@@ -37,9 +37,23 @@ class Map
 	/*
 	**	Constructs an instance of a Map.
 	*/
-    public function __construct ()
+    public function __construct ($nativeArray=null, $recursiveScan=true)
     {
-		$this->__nativeArray = array();
+		$this->__nativeArray = $nativeArray ? $nativeArray : array();
+
+		if ($nativeArray == null || !$recursiveScan)
+			return;
+
+		foreach ($this->__nativeArray as &$value)
+		{
+			if (is_array($value))
+			{
+				if (count(array_filter(array_keys($value), 'is_string')) != 0)
+					$value = Map::fromNativeArray($value);
+				else
+					$value = Arry::fromNativeArray($value);
+			}
+		}
     }
 
 	/*
@@ -75,7 +89,7 @@ class Map
 	*/
     public static function fromCombination ($keys, $values)
     {
-		return Map::fromNativeArray (array_combine(is_array($keys) ? $keys : $keys->__nativeArray, is_array($values) ? $values : $values->__nativeArray));
+		return new Map (array_combine(is_array($keys) ? $keys : $keys->__nativeArray, is_array($values) ? $values : $values->__nativeArray), false);
     }
 
 	/*
@@ -117,7 +131,7 @@ class Map
 	*/
     public function keys ()
     {
-        return Arry::fromNativeArray(array_keys($this->__nativeArray));
+        return new Arry(array_keys($this->__nativeArray), false);
     }
 
 	/*
@@ -125,7 +139,7 @@ class Map
 	*/
     public function values ()
     {
-        return Arry::fromNativeArray(array_values($this->__nativeArray));
+        return new Arry(array_values($this->__nativeArray), false);
     }
 
 	/*
@@ -197,7 +211,7 @@ class Map
             return $this;
 		}
 
-        return Map::fromNativeArray(array_merge($this->__nativeArray, $map->__nativeArray));
+        return new Map(array_merge($this->__nativeArray, $map->__nativeArray), false);
     }
 
 	/*
@@ -220,7 +234,7 @@ class Map
     {
 		$result = new Arry();
 
-		$temp = Arry::fromNativeArray(array(null, null), false);
+		$temp = new Arry (array(null, null), false);
 
         foreach ($this->__nativeArray as $key => $value)
         {

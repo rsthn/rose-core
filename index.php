@@ -26,15 +26,14 @@ use Rose\IO\File;
 
 use Rose\Data\Connection;
 
-//echo Expr::eval('This is (good)', Map::fromNativeArray([ 'good' => 'Nice' ]));
+$tpl = "((nl).name)";
 
-$data = "(each (dict (u)XXX(u): Hello b: my c: name d: is e: Jonathan) '(i#): (i##) => (i)\n')";
+Expr::$filters->set('nl', function($args)
+{
+	return new Map([ 'name' => 'Jonathan' ]);
+});
 
-$tpl = Expr::parseTemplate ($data, '(', ')');
-
-
-$x = Map::fromNativeArray([ 'u' => 'u', 'th' => 'th', 'fn' => 'er', 'nice' => 'Ok', 'p' => 'Name', 'XName' => 'All <b>Good!</b>', 'X' => [ 'x' => 'Ok!' ] ]);
-echo('<pre>'.Expr::expand ($tpl, $x).'</pre>');
+echo('<pre>'.Expr::eval($tpl, new Map()).'</pre>');
 
 exit;
 
@@ -146,7 +145,7 @@ Main::initialize($test);
 /* ************ TESTING Arry ************** */
 $a = new Arry(); 								assert((string)$a == '[]', 'Arry()');
 $a = new Arry([1,2,3]); 						assert((string)$a == '[1, 2, 3]', 'Arry([1,2,3])');
-$a = new Arry(1,'xx',123); 					assert((string)$a == '[1, "xx", 123]', 'Arry(1,xx,123)');
+$a = new Arry([1,'xx',123]); 					assert((string)$a == '[1, "xx", 123]', 'Arry(1,xx,123)');
 												assert($a->length()==3, 'Arry.length');
 												assert($a->get(0)=='1', 'Arry.get');
 $a->set(3, 'hello'); 							assert($a->get(3)=='hello', 'Arry.get');
@@ -185,7 +184,7 @@ try { $b->{'asd'}; assert(false, 'Arry.__get expect UndefinedPropertyError'); } 
 
 /* ************ TESTING MAP ************** */
 $a = new Map(); 												assert((string)$a == '{}', 'Map()');
-$a = Map::fromNativeArray(['name'=>'jon']); 					assert((string)$a == '{"name": "jon"}', 'Map(...)');
+$a = new Map(['name'=>'jon']); 					assert((string)$a == '{"name": "jon"}', 'Map(...)');
 $a = Map::fromCombination(['last','name'],['beta','alpha']); 	assert((string)$a == '{"last": "beta", "name": "alpha"}', 'Map(...)');
 $a->sort(); 													assert((string)$a == '{"name": "alpha", "last": "beta"}', 'Map.sort(ASC)');
 $a->sort('DESC');												assert((string)$a == '{"last": "beta", "name": "alpha"}', 'Map.sort(DESC)');

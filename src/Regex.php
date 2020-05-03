@@ -69,7 +69,7 @@ class Regex
     {
         $result = null;
         preg_match ($this->pattern, $text, $result, $flags);
-        return Arry::fromNativeArray ($result);
+        return new Arry ($result);
     }
 
 	/*
@@ -79,7 +79,7 @@ class Regex
     {
         $result = null;
         preg_match ($pattern, $text, $result, $flags);
-        return Arry::fromNativeArray ($result);
+        return new Arry ($result);
     }
 
 	/*
@@ -109,7 +109,7 @@ class Regex
     {
         $result = null;
         preg_match_all ($this->pattern, $text, $result, $flags);
-        return Arry::fromNativeArray ($captureIndex === true ? $result : $result[$captureIndex]);
+        return new Arry ($captureIndex === true ? $result : $result[$captureIndex]);
     }
 
 	/*
@@ -119,7 +119,7 @@ class Regex
     {
         $result = null;
         preg_match_all ($pattern, $text, $result, $flags);
-        return Arry::fromNativeArray ($captureIndex === true ? $result : $result[$captureIndex]);
+        return new Arry ($captureIndex === true ? $result : $result[$captureIndex]);
     }
 
 	/*
@@ -127,7 +127,7 @@ class Regex
 	*/
     public function split ($text, $flags=0, $limit=-1)
     {
-        return Arry::fromNativeArray (preg_split($this->pattern, $text, $limit, $flags));
+        return new Arry (preg_split($this->pattern, $text, $limit, $flags));
     }
 
 	/*
@@ -135,7 +135,7 @@ class Regex
 	*/
     public static function _split ($pattern, $text, $flags=0, $limit=-1)
     {
-        return Arry::fromNativeArray (preg_split($pattern, $text, $limit, $flags));
+        return new Arry (preg_split($pattern, $text, $limit, $flags));
     }
 
 	/*

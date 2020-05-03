@@ -119,7 +119,7 @@ class Expr
 				});
 			}
 			else
-				$parts->push(Map::fromNativeArray([ 'type' => $type, 'data' => $data ], false));
+				$parts->push(new Map([ 'type' => $type, 'data' => $data ], false));
 
 			if ($nparts)
 			{
@@ -449,7 +449,7 @@ class Expr
 			}
 
 			if ($mparts->length() == 0)
-				$mparts->push(Map::fromNativeArray([ 'type' => 'string', 'data' => '' ], false));
+				$mparts->push(new Map([ 'type' => 'string', 'data' => '' ], false));
 		}
 
 		if ($root)
@@ -600,6 +600,14 @@ class Expr
 				if ($parts->get(0)->length() == 1 && $parts->get(0)->get(0)->type == 'string')
 					return $parts->get(0)->get(0)->data;
 
+				if ($parts->get(0)->length() == 1 && $parts->get(0)->get(0)->type == 'identifier')
+				{
+					$name = $parts->get(0)->get(0)->data;
+
+					if (Expr::$filters->has($name) || Expr::$filters->has('_'.$name))
+						return Expr::expand($parts, $data, $ret, 'fn');
+				}
+
 				return Expr::expand($parts->get(0), $data, $ret, 'var');
 			}
 
@@ -663,9 +671,20 @@ class Expr
 	{
 		$template = Expr::parse($template);
 
-		return function ($data, $mode) use (&$template) {
-			return Expr::expand($template, $data, $mode);
+		return function ($data=null, $mode='text') use (&$template) {
+			return Expr::expand($template, $data ? $data : new Map(), $mode);
 		};
+	}
+
+	/**
+	**	Parses and expands the given template immediately.
+	**
+	**	>> object eval (string template, object data, string mode='text');
+	*/
+	public static function eval ($template, $data=null, $mode='text')
+	{
+		$template = Expr::parse($template);
+		return Expr::expand($template, $data ? $data : new Map(), $mode);
 	}
 
 	/**

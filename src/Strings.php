@@ -268,7 +268,7 @@ class Strings
                 if ($merge)
                 {
                     if (!$this->loadedMaps->has($name))
-                        $this->loadedMaps->set ($name, Map::fromNativeArray(array(), false));
+                        $this->loadedMaps->set ($name, new Map ());
 
                     $this->loadedMaps->get($name)->merge(Configuration::loadFrom($path.'.conf'), true);
                 }
@@ -281,7 +281,7 @@ class Strings
             if ($merge)
             {
                 if (!$this->loadedMaps->has($name))
-                    $this->loadedMaps->set ($name, Map::fromNativeArray(array(), false));
+                    $this->loadedMaps->set ($name, new Map ());
 
                 $this->loadedMaps->get($name)->merge(XmlElement::loadFrom($path.'.xml')->toMap(), true);
             }

@@ -89,9 +89,9 @@ class Gateway
 	*/
 	private function __construct()
 	{
-		$this->requestParams = Map::fromNativeArray (array_merge ($_REQUEST, $_FILES));
-		$this->serverParams = Map::fromNativeArray ($_SERVER);
-		$this->cookies = Map::fromNativeArray ($_COOKIE);
+		$this->requestParams = new Map (array_merge ($_REQUEST, $_FILES));
+		$this->serverParams = new Map ($_SERVER);
+		$this->cookies = new Map ($_COOKIE);
 	}
 
 	/*
