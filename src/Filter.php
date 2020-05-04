@@ -1,6 +1,6 @@
 <?php
 /*
-**	Rose\Session
+**	Rose\Filter
 **
 **	Copyright (c) 2018-2020, RedStar Technologies, All rights reserved.
 **	https://rsthn.com/
@@ -16,8 +16,6 @@
 */
 
 namespace Rose;
-
-require_once('Main.php');
 
 use Rose\Map;
 use Rose\Text;
@@ -87,7 +85,7 @@ class Filter
             unset ($name);
             $result='{'._Text::substring($result,1).'}';
             break;
-            case 'PrimitiveType':
+            case 'primitive':
             if (isString($data))
             {
                 $result=Filter::filter('cescape',$data);

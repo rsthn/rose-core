@@ -87,7 +87,6 @@ class Strings
 
 		$res = Resources::getInstance();
 		$gateway = Gateway::getInstance();
-		$session = Session::getInstance();
 
 		// Set indicator that language code is used from input request parameters.
 		$lang = Text::substring ($gateway->requestParams->lang, 0, 2);
@@ -101,11 +100,11 @@ class Strings
 		}
 
 		// Attempt to load language code from current user data.
-        if (!$lang && $session->data->CurrentUser != null && $session->data->CurrentUser->lang != null)
+        if (!$lang && Session::$data->currentUser != null && Session::$data->currentUser->lang != null)
         {
-			if (Path::exists($this->base.$session->data->CurrentUser->lang))
+			if (Path::exists($this->base.Session::$data->currentUser->lang))
 			{
-				$gateway->requestParams->lang = $lang = $session->data->CurrentUser->lang;
+				$gateway->requestParams->lang = $lang = Session::$data->currentUser->lang;
 				$res->LangSrc = 'USER';
 			}
 		}
@@ -145,7 +144,7 @@ class Strings
     }
 
 	/*
-	**	Sets the strings language code. The language folder resources/strings/XX for code XX should exist.
+	**	Sets the strings language code. The language directory resources/strings/XX for code XX should exist.
 	*/
     public function setLang ($lang)
     {
@@ -187,7 +186,7 @@ class Strings
 	**	base directory, and if still not found an error will be issues.
 	**
 	**	If $name starts with '//' it will be treated as an absolute path. If it starts with '/' it will be considered a language string
-	**	and the `langBase` folder will be used, in other cases the `base` folder will be used.
+	**	and the `langBase` directory will be used, in other cases the `base` directory will be used.
 	*/
     public function retrieve ($name)
     {

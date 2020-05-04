@@ -223,6 +223,14 @@ class Connection
     }
 
 	/*
+	**	Escapes the given string to be used in a query.
+	*/
+	public static function escape ($value)
+	{
+		return "'" . addcslashes (Text::replace ("'", "''", $value), "#\\\t\n\v\f\r") . "'";
+	}
+
+	/*
 	**	Executes a query (or an statement) and returns a `Table` (for queries) or a `boolean` (for statements).
 	*/
     public function execQuery ($queryString)
@@ -231,7 +239,7 @@ class Connection
             throw new Error ('Connection: Database connection is not open.');
 
         $queryString = $this->filterQuery($queryString);
-        if ($this->dbTracing) trace($queryString);
+        if ($this->dbTracing) \Rose\trace($queryString);
 
         if (!$this->driver->isAlive ($this->conn))
             $this->connect();
@@ -272,7 +280,7 @@ class Connection
             throw new Error ('Connection: Database connection is not open.');
 
         $queryString = $this->filterQuery($queryString);
-        if ($this->dbTracing) trace($queryString);
+        if ($this->dbTracing) \Rose\trace($queryString);
 
         if (!$this->driver->isAlive ($this->conn))
             $this->connect();
@@ -298,7 +306,7 @@ class Connection
             throw new Error ('Connection: Database connection is not open.');
 
         $queryString = $this->filterQuery($queryString);
-        if ($this->dbTracing) trace($queryString);
+        if ($this->dbTracing) \Rose\trace($queryString);
 
         if (!$this->driver->isAlive ($this->conn))
             $this->connect();
@@ -318,6 +326,18 @@ class Connection
         return $array[0];
     }
 
+	/*
+	**	Executes a query and returns an array with the rows.
+	*/
+	public function execArray ($queryString)
+	{
+		$data = $this->execQuery ($queryString);
+
+		if ($data === true)
+			throw new Error ('Result is not a data set.');
+
+		return $data->rows;
+	}
 
 	/*
 	**	Executes a query and returns a Map with the first row of the result set.
@@ -328,7 +348,7 @@ class Connection
             throw new Error ('Connection: Database connection is not open.');
 
         $queryString = $this->filterQuery($queryString);
-        if ($this->dbTracing) trace($queryString);
+        if ($this->dbTracing) \Rose\trace($queryString);
 
         if (!$this->driver->isAlive ($this->conn))
 			$this->connect();

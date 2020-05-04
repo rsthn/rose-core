@@ -17,8 +17,6 @@
 
 namespace Rose;
 
-require_once('Main.php');
-
 use Rose\Errors\Error;
 use Rose\Regex;
 use Rose\Arry;
@@ -62,6 +60,19 @@ class Expr
 			if ($value[$i] == '\\')
 			{
 				$r = $value[$i+1];
+
+				switch ($r)
+				{
+					case 'n': $r = "\n"; break;
+					case 'r': $r = "\r"; break;
+					case 'f': $r = "\f"; break;
+					case 'v': $r = "\v"; break;
+					case 't': $r = "\t"; break;
+					case 's': $r = "\s"; break;
+					case '"': $r = "\""; break;
+					case "'": $r = "\'"; break;
+				}
+
 				$value = substr($value, 0, $i) . $r . substr($value, $i+2);
 			}
 		}
@@ -96,7 +107,7 @@ class Expr
 			{
 				$data = Expr::parseTemplate ($data, $sym_open, $sym_close, true, 0);
 			}
-			else if ($type == 'parse-string')
+			else if ($type == 'parse')
 			{
 				$data = Expr::parseTemplate ($data, $sym_open, $sym_close, false, 0);
 				$type = 'base-string';
@@ -107,12 +118,16 @@ class Expr
 					$data = $data->get(0)->data;
 				}
 			}
-			else if ($type == 'parse-string-and-merge')
+			else if ($type == 'parse-trim-merge')
+			{
+				$data = Expr::parseTemplate (Text::split ("\n", trim($data))->map(function($i) { return Text::trim($i); })->join("\n"), $sym_open, $sym_close, false, 0);
+			}
+			else if ($type == 'parse-merge')
 			{
 				$data = Expr::parseTemplate ($data, $sym_open, $sym_close, false, 0);
 			}
 
-			if ($type == 'parse-string-and-merge')
+			if ($type == 'parse-merge' || $type == 'parse-trim-merge')
 			{
 				$data->forEach(function($i) use(&$parts) {
 					$parts->push($i);
@@ -148,13 +163,13 @@ class Expr
 					{
 						$state = 1; $count = 1;
 						$flush = 'string';
-						$nflush = 'parse-string-and-merge';
+						$nflush = 'parse-merge';
 					}
 					else if ($template[$i] == $sym_open && $template[$i+1] == '@')
 					{
 						$state = 1; $count = 1;
 						$flush = 'string';
-						$nflush = 'parse-string-and-merge';
+						$nflush = 'parse-trim-merge';
 						$i++;
 					}
 					else if ($template[$i] == $sym_open && $template[$i+1] == ':')
@@ -234,26 +249,26 @@ class Expr
 					else if ($template[$i] == $sym_open && $template[$i+1] == '<')
 					{
 						if ($str) $flush = $nflush;
-						$state = 11; $count = 1; $nflush = 'parse-string-and-merge';
+						$state = 11; $count = 1; $nflush = 'parse-merge';
 						break;
 					}
 					else if ($template[$i] == $sym_open && $template[$i+1] == '@')
 					{
 						if ($str) $flush = $nflush;
-						$state = 11; $count = 1; $nflush = 'parse-string-and-merge';
+						$state = 11; $count = 1; $nflush = 'parse-trim-merge';
 						$i++;
 						break;
 					}
 					else if ($template[$i] == '"')
 					{
 						if ($str) $flush = $nflush;
-						$state = 14; $count = 1; $nflush = 'parse-string-and-merge';
+						$state = 14; $count = 1; $nflush = 'parse-merge';
 						break;
 					}
 					else if ($template[$i] == '\'')
 					{
 						if ($str) $flush = $nflush;
-						$state = 15; $count = 1; $nflush = 'parse-string-and-merge';
+						$state = 15; $count = 1; $nflush = 'parse-merge';
 						break;
 					}
 					else if ($template[$i] == $sym_open && $template[$i+1] == ':')
@@ -266,7 +281,7 @@ class Expr
 					else if ($template[$i] == $sym_open)
 					{
 						if ($str) $emit ($nflush, $str);
-						$state = 11; $count = 1; $str = ''; $nflush = 'parse-string';
+						$state = 11; $count = 1; $str = ''; $nflush = 'parse';
 						$str .= $template[$i];
 						break;
 					}
@@ -298,7 +313,7 @@ class Expr
 						{
 							$state = 10;
 	
-							if ($nflush == 'parse-string-and-merge')
+							if ($nflush == 'parse-merge' || $nflush == 'parse-trim-merge')
 								break;
 						}
 					}
@@ -387,7 +402,7 @@ class Expr
 						{
 							$state = 10;
 	
-							if ($nflush == 'parse-string-and-merge')
+							if ($nflush == 'parse-merge' || $nflush == 'parse-trim-merge')
 								break;
 						}
 					}
@@ -412,7 +427,7 @@ class Expr
 						{
 							$state = 10;
 	
-							if ($nflush == 'parse-string-and-merge')
+							if ($nflush == 'parse-merge' || $nflush == 'parse-trim-merge')
 								break;
 						}
 					}
@@ -487,6 +502,7 @@ class Expr
 
 			$root = $data;
 			$last = null;
+			$first = true;
 			$str = '';
 
 			for ($i = 0; $i < $parts->length() && $data != null; $i++)
@@ -501,7 +517,7 @@ class Expr
 
 					case 'template':
 						$last = Expr::expand($parts->get($i)->data, $root, 'arg', 'template');
-						$str .= $last;
+						$str .= typeOf($last) == 'primitive' ? $last : '';
 						break;
 
 					case 'base-string':
@@ -510,8 +526,10 @@ class Expr
 						break;
 
 					case 'access':
-						if (!$last || (typeOf($last) != 'Rose\\Arry' && typeOf($last) != 'Rose\\Map'))
+						if (!$last || typeOf($last) == 'primitive')
 						{
+							if (!$str) $str = 'this';
+
 							while (true)
 							{
 								if ($str[0] == '!')
@@ -528,8 +546,19 @@ class Expr
 									break;
 							}
 
-							if ($str != 'this')
-								$data = $data != null ? ($data->has($str) ? $data->get($str) : null) : null;
+							if ($str != 'this' && $data != null)
+							{
+								$tmp = $data;
+								$data = $data->{$str};
+
+								if ($data === null && $first)
+								{
+									if (Expr::$filters->has($str))
+										$data = Expr::$filters->get($str) (null, null, $tmp);
+								}
+
+								$first = false;
+							}
 						}
 						else
 							$data = $last;
@@ -539,7 +568,7 @@ class Expr
 				}
 			}
 
-			while (true)
+			while ($str != '')
 			{
 				if ($str[0] == '!')
 				{
@@ -556,7 +585,7 @@ class Expr
 			}
 
 			if ($str != 'this')
-				$data = $data != null ? ($data->has($str) ? $data->get($str) : null) : null;
+				$data = $data != null ? $data->{$str} : null;
 
 			if (is_string($data))
 			{
@@ -693,6 +722,16 @@ class Expr
 	**	will be available, each 'part' must be expanded manually by calling Expr::expand.
 	*/
 	public static $filters;
+
+	/**
+	**	Registers an expression filter.
+	**
+	**	>> object register (string name, function filter);
+	*/
+	public static function register ($name, $filter)
+	{
+		Expr::$filters->set ($name, $filter);
+	}
 };
 
 Expr::$filters = new Map();
@@ -700,37 +739,37 @@ Expr::$filters = new Map();
 /**
 **	Expression filters.
 */
-Expr::$filters->set('not', function($args) { return !$args->get(1); });
-Expr::$filters->set('notnull', function($args) { return !!$args->get(1); });
-Expr::$filters->set('null', function($args) { return !$args->get(1); });
-Expr::$filters->set('int', function($args) { return (int)$args->get(1); });
-Expr::$filters->set('eq', function($args) { return $args->get(1) == $args->get(2); });
-Expr::$filters->set('ne', function($args) { return $args->get(1) != $args->get(2); });
-Expr::$filters->set('lt', function($args) { return $args->get(1) < $args->get(2); });
-Expr::$filters->set('le', function($args) { return $args->get(1) <= $args->get(2); });
-Expr::$filters->set('gt', function($args) { return $args->get(1) > $args->get(2); });
-Expr::$filters->set('ge', function($args) { return $args->get(1) >= $args->get(2); });
-Expr::$filters->set('and', function($args) { for ($i = 1; $i < $args->length(); $i++) if (!$args->get($i)) return false; return true; });
-Expr::$filters->set('or', function($args) { for ($i = 1; $i < $args->length(); $i++) if (~~$args->get($i)) return true; return false; });
-Expr::$filters->set('char', function($args) { return chr($args->get(1)); });
-Expr::$filters->set('len', function($args) { return strlen((string)$args->get(1)); });
+Expr::register('not', function($args) { return !$args->get(1); });
+Expr::register('notnull', function($args) { return !!$args->get(1); });
+Expr::register('null', function($args) { return !$args->get(1); });
+Expr::register('int', function($args) { return (int)$args->get(1); });
+Expr::register('eq', function($args) { return $args->get(1) == $args->get(2); });
+Expr::register('ne', function($args) { return $args->get(1) != $args->get(2); });
+Expr::register('lt', function($args) { return $args->get(1) < $args->get(2); });
+Expr::register('le', function($args) { return $args->get(1) <= $args->get(2); });
+Expr::register('gt', function($args) { return $args->get(1) > $args->get(2); });
+Expr::register('ge', function($args) { return $args->get(1) >= $args->get(2); });
+Expr::register('and', function($args) { for ($i = 1; $i < $args->length(); $i++) if (!$args->get($i)) return false; return true; });
+Expr::register('or', function($args) { for ($i = 1; $i < $args->length(); $i++) if (~~$args->get($i)) return true; return false; });
+Expr::register('char', function($args) { return chr($args->get(1)); });
+Expr::register('len', function($args) { return strlen((string)$args->get(1)); });
 
-Expr::$filters->set('neg', function($args) { return -$args->get(1); });
-Expr::$filters->set('*', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
-Expr::$filters->set('mul', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
-Expr::$filters->set('/', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x /= $args->get($i); return $x; });
-Expr::$filters->set('div', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x /= $args->get($i); return $x; });
-Expr::$filters->set('+', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= -$args->get($i); return $x; });
-Expr::$filters->set('sum', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= -$args->get($i); return $x; });
-Expr::$filters->set('-', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= $args->get($i); return $x; });
-Expr::$filters->set('sub', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= $args[$i]; return $x; });
+Expr::register('neg', function($args) { return -$args->get(1); });
+Expr::register('*', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
+Expr::register('mul', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
+Expr::register('/', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x /= $args->get($i); return $x; });
+Expr::register('div', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x /= $args->get($i); return $x; });
+Expr::register('+', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= -$args->get($i); return $x; });
+Expr::register('sum', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= -$args->get($i); return $x; });
+Expr::register('-', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= $args->get($i); return $x; });
+Expr::register('sub', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= $args[$i]; return $x; });
 
 /**
 **	Returns the JSON representation of the expression.
 **
 **	json <expr>
 */
-Expr::$filters->set('json', function ($args)
+Expr::register('json', function ($args)
 {
 	return (string)$args->get(1);
 });
@@ -740,7 +779,7 @@ Expr::$filters->set('json', function ($args)
 **
 **	set <var-name> <expr>
 */
-Expr::$filters->set('set', function ($args, $parts, $data)
+Expr::register('set', function ($args, $parts, $data)
 {
 	$data->set($args->get(1), $args->get(2));
 	return '';
@@ -751,7 +790,7 @@ Expr::$filters->set('set', function ($args, $parts, $data)
 **
 **	trim <expr>
 */
-Expr::$filters->set('trim', function ($args)
+Expr::register('trim', function ($args)
 {
 	return $args->get(1) ? (typeOf($args->get(1)) == 'Rose\\Arry' ? $args->get(1)->map(function($e) { return trim($e); }) : trim($args->get(1))) : '';
 });
@@ -761,7 +800,7 @@ Expr::$filters->set('trim', function ($args)
 **
 **	upper <expr>
 */
-Expr::$filters->set('upper', function ($args)
+Expr::register('upper', function ($args)
 {
 	return $args->get(1) ? (typeOf($args->get(1)) == 'Rose\\Arry' ? $args->get(1)->map(function($e) { return strtoupper($e); }) : strtoupper($args->get(1))) : '';
 });
@@ -771,7 +810,7 @@ Expr::$filters->set('upper', function ($args)
 **
 **	lower <expr>
 */
-Expr::$filters->set('lower', function ($args)
+Expr::register('lower', function ($args)
 {
 	return $args->get(1) ? (typeOf($args->get(1)) == 'Rose\\Arry' ? $args->get(1)->map(function($e) { return strtolower($e); }) : strtolower($args->get(1))) : '';
 });
@@ -781,7 +820,7 @@ Expr::$filters->set('lower', function ($args)
 **
 **	nl2br <expr>
 */
-Expr::$filters->set('nl2br', function ($args)
+Expr::register('nl2br', function ($args)
 {
 	return $args->get(1) ? (typeOf($args->get(1)) == 'Rose\\Arry' ? $args->get(1)->map(function($e) { return str_replace("\n", '<br/>', $e); }) : str_replace("\n", '<br/>', $args->get(1))) : '';
 });
@@ -791,7 +830,7 @@ Expr::$filters->set('nl2br', function ($args)
 **
 **	% <tag-name> <expr>
 */
-Expr::$filters->set('%', function ($args)
+Expr::register('%', function ($args)
 {
 	$args->shift();
 	$name = $args->shift();
@@ -821,7 +860,7 @@ Expr::$filters->set('%', function ($args)
 **
 **	%% <tag-name> [<attr> <value>]* [<content>]
 */
-Expr::$filters->set('%%', function ($args)
+Expr::register('%%', function ($args)
 {
 	$args->shift();
 	$name = $args->shift();
@@ -832,7 +871,7 @@ Expr::$filters->set('%%', function ($args)
 	for ($i = 0; $i < $args->length(); $i += 2)
 	{
 		if ($i+1 < $args->length())
-			$attr .= ' '.$args->get($i).'='.$args->get($i+1);
+			$attr .= ' '.$args->get($i).'="'.$args->get($i+1).'"';
 		else
 			$text = $args->get($i);
 	}
@@ -846,7 +885,7 @@ Expr::$filters->set('%%', function ($args)
 **
 **	join <string-expr> <array-expr>
 */
-Expr::$filters->set('join', function ($args)
+Expr::register('join', function ($args)
 {
 	if ($args->get(2) && typeOf($args->get(2)) == 'Rose\\Arry')
 		return $args->get(2)->join($args->get(1));
@@ -859,7 +898,7 @@ Expr::$filters->set('join', function ($args)
 **
 **	split <string-expr> <expr>
 */
-Expr::$filters->set('split', function ($args)
+Expr::register('split', function ($args)
 {
 	if ($args->get(2) && is_string($args->get(2)))
 		return $args->get(2)->split($args->get(1));
@@ -872,7 +911,7 @@ Expr::$filters->set('split', function ($args)
 **
 **	keys <object-expr>
 */
-Expr::$filters->set('keys', function ($args)
+Expr::register('keys', function ($args)
 {
 	if ($args->get(1) && typeOf($args->get(1)) == 'Rose\\Map')
 		return $args->get(1)->keys();
@@ -885,7 +924,7 @@ Expr::$filters->set('keys', function ($args)
 **
 **	values <object-expr>
 */
-Expr::$filters->set('values', function ($args)
+Expr::register('values', function ($args)
 {
 	if ($args->get(1) && typeOf($args->get(1)) == 'Rose\\Map')
 		return $args->get(1)->values();
@@ -901,7 +940,7 @@ Expr::$filters->set('values', function ($args)
 **
 **	each <list-expr> [<varname:i>] <template>
 */
-Expr::$filters->set('_each', function ($parts, $data)
+Expr::register('_each', function ($parts, $data)
 {
 	$var_name = 'i';
 	$list = Expr::expand($parts->get(1), $data, 'arg');
@@ -944,7 +983,7 @@ Expr::$filters->set('_each', function ($parts, $data)
 **
 **	? <expr> <valueA> [<valueB>]
 */
-Expr::$filters->set('_?', function ($parts, $data)
+Expr::register('_?', function ($parts, $data)
 {
 	if (Expr::expand($parts->get(1), $data, 'arg'))
 		return Expr::expand($parts->get(2), $data, 'arg');
@@ -960,7 +999,7 @@ Expr::$filters->set('_?', function ($parts, $data)
 **
 **	if <expr> <value> [elif <expr> <value>] [else <value>]
 */
-Expr::$filters->set('_if', function ($parts, $data)
+Expr::register('_if', function ($parts, $data)
 {
 	for ($i = 0; $i < $parts->length(); $i += 3)
 	{
@@ -979,7 +1018,7 @@ Expr::$filters->set('_if', function ($parts, $data)
 **
 **	switch <expr> <case1> <value1> ... <caseN> <valueN> default <defvalue> 
 */
-Expr::$filters->set('_switch', function ($parts, $data)
+Expr::register('_switch', function ($parts, $data)
 {
 	$value = Expr::expand($parts->get(1), $data, 'arg');
 
@@ -998,7 +1037,7 @@ Expr::$filters->set('_switch', function ($parts, $data)
 **
 **	repeat [<from>] <count> [<varname:i>] <template>
 */
-Expr::$filters->set('repeat', function ($args, $parts, $data)
+Expr::register('repeat', function ($args, $parts, $data)
 {
 	$var_name = 'i';
 	$count = (int)$args->get(1);
@@ -1034,7 +1073,7 @@ Expr::$filters->set('repeat', function ($args, $parts, $data)
 **
 **	list <expr> [<expr>...]
 */
-Expr::$filters->set('_list', function ($parts, $data)
+Expr::register('_list', function ($parts, $data)
 {
 	$s = new Arry();
 
@@ -1049,7 +1088,7 @@ Expr::$filters->set('_list', function ($parts, $data)
 **
 **	echo <expr> [<expr>...]
 */
-Expr::$filters->set('_echo', function ($parts, $data)
+Expr::register('_echo', function ($parts, $data)
 {
 	for ($i = 1; $i < $parts->length(); $i++)
 		echo(Expr::expand($parts->get($i), $data, 'arg')."\n");
@@ -1062,7 +1101,7 @@ Expr::$filters->set('_echo', function ($parts, $data)
 **
 **	dict <name>: <expr> [<name>: <expr>...]
 */
-Expr::$filters->set('_dict', function ($parts, $data)
+Expr::register('_dict', function ($parts, $data)
 {
 	$s = new Map();
 	$key = null;

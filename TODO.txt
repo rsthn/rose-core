@@ -1,6 +1,5 @@
 ----------------
 Convert
-Text
 
 ----------------
 Remove all alpha() calls and replace with new().
@@ -15,13 +14,7 @@ Add recursive chmod to Path.
 Ensure all try/catch using "Exception" actually use \Exception
 Remove references to dummy functions located on Main
 
-Completely re-build Text.format to new mechanism.
 Ensure all string stuff uses Text class.
 
-Test if Configuration loads 'env' and the appropriate related file.
-
-!!!!!!!! Think if XML strings are still a good idea or if we should keep only .plain and .conf
-
 Remove unnecessary getInstance() on classes that will never be used with Text.format
-
-Remote calls to Text.format since that is no longer going to be needed.
+Remove calls to Text.format since that is no longer going to be needed.

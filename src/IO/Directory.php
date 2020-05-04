@@ -17,8 +17,10 @@
 
 namespace Rose\IO;
 
+use Rose\IO\Path;
+
+use Rose\Arry;
 use Rose\Map;
-use Rose\Path;
 use Rose\Regex;
 use Rose\Error;
 use Rose\Text;

@@ -1,0 +1,2 @@
+(sentinel::logout)
+(return (dict response: 200))

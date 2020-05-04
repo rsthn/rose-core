@@ -1,0 +1,5 @@
+(set username "admin")
+(set password "admin2020")
+
+(sentinel::login (username) (password))
+(return (dict response: 200))

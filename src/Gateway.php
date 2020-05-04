@@ -20,6 +20,9 @@ namespace Rose;
 use Rose\Errors\FalseError;
 use Rose\Errors\Error;
 
+use Rose\IO\Directory;
+use Rose\IO\Path;
+
 use Rose\Configuration;
 use Rose\Strings;
 use Rose\Map;
@@ -35,7 +38,7 @@ class Gateway
 	/*
 	**	Primary and only instance of this class.
 	*/
-	private static $objectInstance = null;
+	private static $instance = null;
 
 	/*
 	**	List of registered services, each time the "srv" request parameter is detected, its value will be checked in
@@ -78,10 +81,10 @@ class Gateway
 	*/
     public static function getInstance ()
     {
-		if (Gateway::$objectInstance == null)
-			Gateway::$objectInstance = new Gateway();
+		if (Gateway::$instance == null)
+			Gateway::$instance = new Gateway();
 
-        return Gateway::$objectInstance;
+        return Gateway::$instance;
     }
 
 	/*
@@ -92,6 +95,8 @@ class Gateway
 		$this->requestParams = new Map (array_merge ($_REQUEST, $_FILES));
 		$this->serverParams = new Map ($_SERVER);
 		$this->cookies = new Map ($_COOKIE);
+
+		$this->registeredServices = new Map();
 	}
 
 	/*
@@ -119,6 +124,9 @@ class Gateway
 		// Start strings module for language selection.
 		Strings::getInstance();
 
+		// Load extensions from 'Ext' directory.
+		Directory::readFiles(Path::append(dirname(__FILE__), 'Ext'))->files->forEach(function($i) { require_once($i->path); });
+
 		// If service parameter is set in Gateway configuration, load it as 'srv' to force activation of service.
 		if (Configuration::getInstance()->Gateway->service != null)
 			$this->requestParams->srv = Configuration::getInstance()->Gateway->service;
@@ -128,8 +136,8 @@ class Gateway
         {
 			$this->requestParams->srv = Regex::_extract('/[A-Za-z0-9_-]+/', $this->requestParams->srv);
 
-            if ($this->registerService != null && $this->registeredServices->has($this->requestParams->srv))
-				$this->registeredServices->get($this->requestParams->srv)->execute();
+            if ($this->registeredServices->has($this->requestParams->srv))
+				$this->registeredServices->get($this->requestParams->srv)->main();
 			else
 				throw new Error ("Service `" . $this->requestParams->srv . "` is not registered.");
 
@@ -140,18 +148,18 @@ class Gateway
 	/*
 	**	Registers a service.
 	*/
-    public function registerService ($serviceCode, $handlerObject)
+    public static function registerService ($serviceCode, $handlerObject)
     {
-        $this->registeredServices->set ($serviceCode, $handlerObject);
+        Gateway::getInstance()->registeredServices->set ($serviceCode, $handlerObject);
     }
 
 	/*
 	**	Returns the service handler object given a service code.
 	*/
-    public function getService ($serviceCode)
+    public static function getService ($serviceCode)
     {
-        if ($this->registeredServices->hasElement($serviceCode))
-            return $this->registeredServices->getElement($serviceCode);
+        if (Gateway::getInstance()->registeredServices->hasElement($serviceCode))
+            return Gateway::getInstance()->registeredServices->getElement($serviceCode);
         else
             return null;
     }
@@ -161,7 +169,7 @@ class Gateway
 	*/
     public static function close ()
     {
-		Gateway::$objectInstance = null;
+		Gateway::$instance = null;
     }
 
 	/*
@@ -169,7 +177,7 @@ class Gateway
 	*/
     public static function header ($headerItem)
     {
-        call_user_func('header', $headerItem);
+        \header ($headerItem);
     }
 
 	/*
@@ -179,5 +187,33 @@ class Gateway
     {
         Gateway::header('location: '.$location);
         throw new FalseError ();
+    }
+
+	/*
+	**	Exits immediately.
+	*/
+    public static function exit ()
+    {
+        throw new FalseError ();
+    }
+
+	/*
+	**	Flushes all output buffers and prepares for direct output.
+	*/
+    public static function flush ()
+    {
+		if (function_exists("apache_setenv"))
+			apache_setenv("no-gzip", 1);
+
+		ini_set("zlib.output_compression", "0");
+		ini_set("output_buffering", "0");
+		ini_set("implicit_flush", "1");
+
+		for ($i = 0; $i < ob_get_level(); $i++)
+			ob_end_flush();
+
+		//set_time_limit(0);
+		//ob_implicit_flush(1);
+		flush();
     }
 };

@@ -156,6 +156,23 @@ class Table
 			$s .= "<tr>$i</tr>";
 		}
 
-		return "<table border='1'>$s</table>";
+		return "<table style='font-family: monospace;' border='1'>$s</table>";
+	}
+
+	/*
+	**	Executes the specified function for each of the rows in the table.
+	*/
+    public function forEach ($function)
+    {
+		$this->rows->forEach($function);
+        return $this;
+    }
+
+	/*
+	**	Returns the string representation of the table.
+	*/
+	public function __toString()
+	{
+		return $this->toHTML();
 	}
 };

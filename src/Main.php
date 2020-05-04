@@ -71,7 +71,7 @@ function typeOf ($object, $detailed=false)
 			return 'string';
 	}
 
-	return 'PrimitiveType';
+	return 'primitive';
 }
 
 /*
@@ -124,11 +124,113 @@ function mstime ()
 }
 
 /*
-**	Global error handler/
+**	Global error handler.
 */
 function error_handler ($errno, $error, $file, $line)
 {
 	throw new Error ($error . sprintf (' (%s %u)', $file, $line));
+}
+
+/*
+**	Fatal error handler.
+*/
+function fatal_handler()
+{
+	global $lastException;
+
+    $error = error_get_last();
+
+	if ($error != null && ($error['type'] == E_NOTICE))
+		$error = null;
+
+	if ($error == null && $lastException == null)
+		return;
+
+	ob_end_clean();
+
+	echo '<html>';
+	echo '<body style="background: #070710; padding: 24px;">';
+	echo '<pre style="font-size: 12px; line-height: 1em; color: #fff; background: #070710; padding: 16px 24px;">';
+
+	if ($error != null)
+	{
+		echo '<div style="padding: 2px; color: #0cf; font-size: 1.3em;">' . sprintf('Fatal Error %04u', $error['type']) . '</div>';
+		echo '<div style="padding: 2px; color: #ccc;">' . basename($error['file']) . ':' . $error['line'] . '</div>';
+
+		$msg = trim(Regex::_getString('/.*?:(.+) in/', $error['message'], 1));
+		if ($msg)
+		{
+			echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $msg . '</div>';
+
+			$a = Regex::_matchAll('/#.+? (.+?)\(([0-9]+)\): ([^:(-]+)(->|::)?(.*)\(/', $msg, true);
+			$n = $a->shift()->length;
+
+			$stackTrace = array();
+
+			for ($i = 0; $i < $n; $i++)
+			{
+				if ($a->get(3)->get($i) == '')
+					$stackTrace[] = ['file' => $a->get(0)->get($i), 'line' => $a->get(1)->get($i), 'function' => $a->get(2)->get($i)];
+				else
+					$stackTrace[] = ['file' => $a->get(0)->get($i), 'line' => $a->get(1)->get($i), 'class' => $a->get(2)->get($i), 'function' => $a->get(4)->get($i)];
+			}
+		}
+		else
+			echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $error['message'] . '</div>';
+	}
+
+	if ($lastException != null)
+	{
+		echo '<div style="padding: 2px; color: #0cf; font-size: 1.3em;">' . typeOf($lastException) . '</div>';
+		echo '<div style="padding: 2px; color: #ccc;">' . basename($lastException->getFile()) . ':' . $lastException->getLine() . '</div>';
+
+		echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $lastException->getMessage() . '</div>';
+
+		$stackTrace = $lastException->getTrace();
+	}
+
+	if ($stackTrace != null)
+	{
+		foreach ($stackTrace as $err)
+		{
+			echo '<div style="margin-top: 4px; padding: 2px; color: #0c7;">';
+
+			if (isset($err['class']))
+				echo '<span style="color: #c0f;">(' . $err['class'] . ') </span>';
+
+			echo '<b>'.$err['function'].'</b>';
+
+			echo ' (';
+			if (isset($err['args']))
+			{
+				for ($i = 0; $i < count($err['args']); $i++)
+				{
+					echo typeOf($err['args'][$i], true);
+
+					if ($i != count($err['args']) - 1)
+						echo ', ';
+				}
+			}
+			echo ')';
+
+			if (isset($err['file']))
+			{
+				echo '<span style="color: #ccc;">';
+				echo ' ' . basename($err['file']) . ':' . $err['line'] . ' ';
+				echo '</span>';
+			}
+
+			echo '</div>';
+		}
+	}
+
+	echo '<div style="color: #676770; margin-top: 24px;">';
+	echo '@rsthn/rose 3.0.2';
+	echo '</div>';
+
+	echo '</pre>';
+	echo '</body>';
+	echo '</html>';
 }
 
 /*
@@ -140,7 +242,7 @@ class Main
 	**	Initializes the primary framework classes and passes control to the Gateway. If $callback is not null, it will be executed
 	**	after Gateway's main().
 	*/
-	static function initialize($callback=null)
+	static function initialize ($callback=null)
 	{
 		// Configure PHP environment.
 		gc_disable();
@@ -171,76 +273,38 @@ class Main
 			$_REQUEST = array_merge($_REQUEST, $tmp);
 		}
 
-		
-		// Set global error handler.
+		// Set global error handlers and disable PHP error output.
 		set_error_handler ('Rose\\error_handler', E_STRICT | E_WARNING | E_USER_ERROR | E_USER_WARNING);
+		register_shutdown_function ('Rose\\fatal_handler');
+		ini_set('display_errors', '0');
 
 		$ms_start = mstime ();
 
+		global $lastException;
+		$lastException = null;
+
 		try
 		{
+			// Initialize Gateway and Session.
 			Gateway::getInstance();
-			Session::getInstance();
+			Session::init();
 	
-			Gateway::getInstance()->main();
+			// Pass control to Gateway.
+			try {
+				Gateway::getInstance()->main();
+			}
+			catch (FalseError $e) {
+			}
 
 			if ($callback != null)
 				$callback();
 
-			Session::getInstance()->close();
+			Session::close();
 			Gateway::getInstance()->close();
 		}
-		catch (FalseError $e0)
+		catch (\Exception $e)
 		{
-		}
-		catch (\Exception $e1)
-		{
-			ob_end_clean();
-
-			echo '<html>';
-			echo '<body style="background: #070710; padding: 24px;">';
-			echo '<pre style="font-size: 12px; line-height: 1em; color: #fff; background: #070710; padding: 16px 24px;">';
-
-			echo '<div style="padding: 2px; color: #0cf; font-size: 1.3em;">' . typeOf($e1) . '</div>';
-			echo '<div style="padding: 2px; color: #ccc;">' . basename($e1->getFile()) . ':' . $e1->getLine() . '</div>';
-
-			echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1em;">' . $e1->getMessage() . '</div>';
-
-			foreach ($e1->getTrace() as $err)
-			{
-				echo '<div style="margin-top: 4px; padding: 2px; color: #0c7;">';
-
-				if ($err['class'])
-					echo '<span style="color: #c0f;">(' . $err['class'] . ') </span>';
-
-				echo '<b>'.$err['function'].'</b>';
-				echo ' (';
-				for ($i = 0; $i < count($err['args']); $i++)
-				{
-					echo typeOf($err['args'][$i], true);
-
-					if ($i != count($err['args']) - 1)
-						echo ', ';
-				}
-				echo ')';
-
-				if ($err['file'])
-				{
-					echo '<span style="color: #ccc;">';
-					echo ' ' . basename($err['file']) . ':' . $err['line'] . ' ';
-					echo '</span>';
-				}
-
-				echo '</div>';
-			}
-
-			echo '<div style="color: #676770; margin-top: 24px;">';
-			echo '@rsthn/rose 3.0.2';
-			echo '</div>';
-
-			echo '</pre>';
-			echo '</body>';
-			echo '</html>';
+			$lastException = $e;
 		}
 
 		$ms_end = mstime();

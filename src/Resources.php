@@ -75,13 +75,14 @@ class Resources
 
 	/*
 	**	Registers a constructor for the resource with the given name such that when the resources is requested and it does not exist, the
-	**	specified `$method` of the given `$object` will be executed and the return value will be registered as a resource. However when
-	**	the `$dynamic` flag is set, the returned resource will *not* be registered, but rather just returned to ensure that if another
+	**	specified function will be executed and the return value will be registered as a resource.
+	**	
+	**	When the `$dynamic` flag is set the returned resource will *not* be registered, but rather just returned to ensure that if another
 	**	request for the same resource is made, the constructor will end up being called again.
 	*/
-    public function registerConstructor ($name, $object, $method, $dynamic=false)
+    public function registerConstructor ($name, $function, $dynamic=false)
     {
-        $this->resourceConstructor->set ($name, new Arry (array($object, $method, $dynamic), false));
+        $this->resourceConstructor->set ($name, new Arry (array($function, $dynamic), false));
     }
 
 	/*
@@ -130,10 +131,10 @@ class Resources
             if ($info == null)
                 throw new Error ('Undefined resource: '.$name);
 
-            if ($info->get(2) == true)
-                return $info->get(0)->{$info->get(1)} ();
+            if ($info->get(1) == true)
+                return $info->get(0) ();
 
-            $this->register ($name, $info->get(0)->{$info->get(1)} ());
+            $this->register ($name, $info->get(0) ());
 		}
 
         return $this->resourceContainer->get($name);

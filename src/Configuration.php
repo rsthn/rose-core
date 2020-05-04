@@ -17,8 +17,6 @@
 
 namespace Rose;
 
-require_once('Main.php');
-
 use Rose\Errors\Error;
 
 use Rose\IO\Path;
@@ -155,15 +153,7 @@ class Configuration extends Map
                 continue;
 			}
 
-            if ($line[0] == '#' && $line[1] == ':')
-            {
-                $tmp1 = '';
-                $tmp2 = Text::trim(Text::substring($line, 2));
-                $state = 1;
-                continue;
-			}
-
-            if ($line[0] == '#' || $line == '')
+            if ($line == '' || $line[0] == '#')
                 continue;
 
             if ($line[0] == '[')

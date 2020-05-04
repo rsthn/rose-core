@@ -17,8 +17,6 @@
 
 namespace Rose;
 
-require_once('Main.php');
-
 use Rose\Errors\Error;
 
 use Rose\Configuration;
@@ -39,67 +37,51 @@ use Rose\Regex;
 class Session
 {
 	/*
-	**	Primary and only instance of this class.
-	*/
-	private static $objectInstance = null;
-
-	/*
 	**	Indicates if session has been closed.
 	*/
-	public $sessionClosed;
+	public static $sessionClosed;
 
 	/*
 	**	Contains the session data objects, the contents of this attribute will be filled by the framework initializer.
 	*/
-	public $data;
+	public static $data;
 
 	/*
 	**	Contains the session ID for the current session.
 	*/
-	public $sessionId;
+	public static $sessionId;
 	
 	/*
 	**	Contains the name of the session cookie.
 	*/
-	public $sessionName;
+	public static $sessionName;
 	
 	/*
 	**	Charset used by generateId() to generate session IDs.
 	*/
-    public $charset = '78JKLMFOPQRST0GHI6N12UV34WXYZ5MFOEBPQR9ACD';
+    public static $charset = '78JKLMFOPQRST0GHI6N12UV34WXYZ5MFOEBPQR9ACD';
 
 	/*
-	**	Returns the instance of this class.
+	**	Initializes the Session singleton.
 	*/
-    public static function getInstance ()
+    public static function init ()
     {
-		if (Session::$objectInstance == null)
-			Session::$objectInstance = new Session();
-
-        return Session::$objectInstance;
-    }
-
-	/*
-	**	Constructs the Session object, this is a private constructor as this class can have only one instance.
-	*/
-	private function __construct()
-	{
 		$config = Configuration::getInstance();
 		$gateway = Gateway::getInstance();
 
-		$this->sessionClosed = true;
-		$this->sessionName = '';
-		$this->sessionId = '';
+		Session::$sessionClosed = false;
+		Session::$sessionName = '';
+		Session::$sessionId = '';
 
 		// Load session name from the config unless parameter "sysnoss" (no session storage) is set to 1.
 		if ($config->Session->name != null && !$gateway->requestParams->get('sysnoss'))
-			$this->sessionName = $config->Session->name;
+			Session::$sessionName = $config->Session->name;
 
 		// If session name was not specified use session-less method.
-		if (!$this->sessionName)
+		if (!Session::$sessionName)
 		{
-			$this->sessionClosed = true;
-			$this->invalidate();
+			Session::$sessionClosed = true;
+			Session::invalidate();
 		}
 		else
 		{
@@ -107,13 +89,13 @@ class Session
 			if ($config->Session->database == 'true')
 			{
 				// Verify if m_<SessionName> was provided over POST or GET to override session id.
-				if ($gateway->requestParams->has('m_'.$sess))
-					$this->sessionId = $gateway->requestParams->get('m_'.$sess);
+				if ($gateway->requestParams->has('m_'.Session::$sessionName))
+					Session::$sessionId = $gateway->requestParams->get('m_'.Session::$sessionName);
 				else
-					$this->sessionId = Cookies::getInstance()->get($sess);
+					Session::$sessionId = Cookies::getInstance()->get(Session::$sessionName);
 
 				try {
-					$this->dbSessionLoad();
+					Session::dbSessionLoad();
 				}
 				catch (\Exception $e) {
 					throw new Error ('Fatal: Unable to connect to database for session initialization.');
@@ -122,11 +104,11 @@ class Session
 			// Load session data from regular PHP session storage.
 			else
 			{
-				session_name ($this->sessionName);
+				session_name (Session::$sessionName);
 
 				// Verify if m_<SessionName> was provided over POST or GET to override session id.
-				if ($gateway->requestParams->has('m_'.$sess))
-					$this->sessionId = $gateway->requestParams->get('m_'.$sess);
+				if ($gateway->requestParams->has('m_'.Session::$sessionName))
+					Session::$sessionId = $gateway->requestParams->get('m_'.Session::$sessionName);
 
 				try {
 					session_set_cookie_params (0, gateway_root());
@@ -138,66 +120,66 @@ class Session
 				}
 
 				if (isset($_SESSION['session']))
-					$this->$data = unserialize ($_SESSION['session']);
+					Session::$data = unserialize ($_SESSION['session']);
 				else
-					$this->$data = new Map ();
+					Session::$data = new Map ();
 
-				$this->sessionId = session_id();
+				Session::$sessionId = session_id();
 			}
 		}
 
         $expires = $config->Session->expires;
         if ($expires < 1) return;
 
-        if ($this->$data->last_activity != null)
+        if (Session::$data->last_activity != null)
         {
-			if ((new DateTime())->sub($this->$data->last_activity) > $expires)
-                $this->invalidate();
+			if ((new DateTime())->sub(Session::$data->last_activity) > $expires)
+                Session::invalidate();
         }
 
-		$this->$data->last_activity = (string)(new DateTime());
+		Session::$data->last_activity = (string)(new DateTime());
     }
 
 	/*
 	**	Invalidates the session and destroys any information stored.
 	*/
-    public function invalidate()
+    public static function invalidate()
     {
-        $this->data = new Map();
+        Session::$data = new Map();
     }
 
 	/*
 	**	Closes the session and flushes the data to storage.
 	*/
-    public function close()
+    public static function close()
     {
-		if ($this->sessionClosed == true)
+		if (Session::$sessionClosed == true)
 			return;
 
 		if (Configuration::getInstance()->Session->database == 'true')
 		{
-			$this->dbSessionSave();
+			Session::dbSessionSave();
 		}
 		else
 		{
-			$_SESSION['session'] = serialize ($this->data);
+			$_SESSION['session'] = serialize (Session::$data);
 			session_write_close();
 		}
 	
-		$this->sessionClosed = true;
+		Session::$sessionClosed = true;
     }
 
 	/*
 	**	Generates a random ID of the desired length.
 	*/
-    private function generateId ($length)
+    private static function generateId ($length)
     {
 		$result = '';
 
-		$n = Text::length ($this->charset);
+		$n = Text::length (Session::$charset);
 
         while ($length-- > 0)
-            $result .= $this->charset[Math::rand() % $n];
+            $result .= Session::$charset[Math::rand() % $n];
 
         return $result;
     }
@@ -205,41 +187,41 @@ class Session
 	/*
 	**	Loads session data from the database. Fields sessionId and sessionName must already be set.
 	*/
-    public function dbSessionLoad ()
+    public static function dbSessionLoad ()
     {
-		$conn = Resources::getInstance()->sqlConn;
+		$conn = Resources::getInstance()->Database;
 		$create = false;
 
 		// VIOLET Requires to use new parameter-based SQL execution.
 		// VIOLET Requires: Filter
-        $this->sessionId = Regex::_extract('/^['.$this->charset.']+$/', $this->sessionId);
-        if (!$this->sessionId || Text::length($this->sessionId) != 32)
+        Session::$sessionId = Regex::_extract('/^['.Session::$charset.']+$/', Session::$sessionId);
+        if (!Session::$sessionId || Text::length(Session::$sessionId) != 32)
         {
-            $this->data = new Map();
+            Session::$data = new Map();
 			$create = true;
 
-            do { $this->sessionId = $this->generateId(32); }
-            while (null != $conn->execAssoc('SELECT session_id FROM ##sessions WHERE session_id='.Filter::filter('escape', $this->sessionId)));
+            do { Session::$sessionId = Session::generateId(32); }
+            while (null != $conn->execAssoc('SELECT session_id FROM ##sessions WHERE session_id='.Filter::filter('escape', Session::$sessionId)));
         }
         else
         {
-            $this->data = $conn->execAssoc('SELECT * FROM ##sessions WHERE session_id='.Filter::filter('escape', $this->sessionId));
-            if (!$this->data)
+            Session::$data = $conn->execAssoc('SELECT * FROM ##sessions WHERE session_id='.Filter::filter('escape', Session::$sessionId));
+            if (!Session::$data)
             {
-                $this->data = new Map();
+                Session::$data = new Map();
                 $create = true;
             }
             else
             {
                 try
                 {
-					$this->data = Filter::fromSerialized (Filter::fromDeflate ($this->data->data));
-                    if (!$this->data || typeOf($this->data) != 'Rose\\Map')
-                        $this->data = new Map();
+					Session::$data = Filter::fromSerialized (Filter::fromDeflate (Session::$data->data));
+                    if (!Session::$data || typeOf(Session::$data) != 'Rose\\Map')
+                        Session::$data = new Map();
                 }
                 catch (\Exception $e)
                 {
-                    $this->data = new Map();
+                    Session::$data = new Map();
                     trace('Session: ' + $e->getMessage());
                 }
             }
@@ -247,21 +229,21 @@ class Session
 
 		// VIOLET Replace NOW() With a DateTime from local objects.
         if ($create == true)
-            $conn->execQuery('INSERT INTO ##sessions SET last_activity=NOW(), session_id='.Filter::filter('escape', $this->sessionId).', data=\'\'');
+            $conn->execQuery('INSERT INTO ##sessions SET last_activity=NOW(), session_id='.Filter::filter('escape', Session::$sessionId).', data=\'\'');
 
-        Cookies::getInstance()->setCookie ($this->sessionName, $this->sessionId, Configuration::getInstance()->Session->expires);
+        Cookies::getInstance()->setCookie (Session::$sessionName, Session::$sessionId, Configuration::getInstance()->Session->expires);
     }
 
 	/*
 	**	Saves the session data to the database. Fields sessionId and sessionName must already be set.
 	*/
-    public function dbSessionSave ()
+    public static function dbSessionSave ()
     {
-        $user_id = $this->data->has('CurrentUser') && $this->data->CurrentUser->user_id ? Filter::filter('escape', $this->data->CurrentUser->user_id) : 'NULL';
-		$data = Filter::filter('xescape', Filter::toDeflate(Filter::toSerialized($this->data)));
+        $user_id = Session::$data->has('currentUser') && Session::$data->currentUser->user_id ? Filter::filter('escape', Session::$data->currentUser->user_id) : 'NULL';
+		$data = Filter::filter('xescape', Filter::toDeflate(Filter::toSerialized(Session::$data)));
 
-        Resources::getInstance()->sqlConn->execQuery(
-			'UPDATE ##sessions SET last_activity=NOW(), user_id='.$user_id.', data='.$data.' WHERE session_id='.Filter::filter('escape', $this->sessionId)
+        Resources::getInstance()->Database->execQuery(
+			'UPDATE ##sessions SET last_activity=NOW(), user_id='.$user_id.', data='.$data.' WHERE session_id='.Filter::filter('escape', Session::$sessionId)
 		);
     }
 };

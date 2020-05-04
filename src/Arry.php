@@ -17,8 +17,6 @@
 
 namespace Rose;
 
-require_once('Main.php');
-
 use Rose\Errors\ArgumentError;
 use Rose\Errors\UndefinedPropertyError;
 
@@ -309,6 +307,14 @@ class Arry
     }
 
 	/*
+	**	Checks if the given index exists in the array.
+	*/
+    public function has ($index)
+    {
+        return array_key_exists($index, $this->__nativeArray) ? true : false;
+    }
+
+	/*
 	**	Creates and returns a replica of the array.
 	*/
     public function replicate ($deep=false)
@@ -397,7 +403,7 @@ class Arry
 	*/
     public function join ($separator='')
     {
-        return call_user_func('implode', $separator, $this->__nativeArray);
+        return \implode ($separator, $this->__nativeArray);
     }
 
 	/*
@@ -411,6 +417,22 @@ class Arry
 		}
 
         return $this;
+	}
+
+	/*
+	**	Returns a new array containing only elements that were accepted by the given filter function (by returning true).
+	*/
+    public function filter ($filter)
+    {
+		$tmp = new Arry();
+
+		foreach ($this->__nativeArray as &$item)
+		{
+			if ($filter($item))
+				$tmp->push($item);
+		}
+
+        return $tmp;
 	}
 
 	/*
@@ -470,11 +492,16 @@ class Arry
     {
         switch ($name)
         {
-            case 'size':
+            case 'length':
 				return sizeof($this->__nativeArray);
         }
 
-        throw new UndefinedPropertyError ($name);
+		$name = (int)$name;
+
+		if (!($this->has($name)))
+			return null;
+
+        return $this->get((int)$name);
     }
 
 	/*
@@ -495,7 +522,7 @@ class Arry
 				if ($item === true) $s[] = 'true';
 				else if ($item === false) $s[] = 'false';
 				else if ($item === null) $s[] = 'null';
-				else if (is_string($item)) $s[] = '"' . addcslashes($item, "\"\\\f\n\r\v") . '"';
+				else if (is_string($item)) $s[] = '"' . addcslashes($item, "\"\\\f\n\r\v\t") . '"';
 				else $s[] = $item;
 			}
 		}

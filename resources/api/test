@@ -1,0 +1,9 @@
+(sentinel::privilege-required admin)
+
+(loadData "
+	SELECT user_id, created, is_authorized, username
+	FROM ##users
+	WHERE is_active=1
+")
+
+(return (data))

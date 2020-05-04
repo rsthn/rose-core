@@ -17,8 +17,6 @@
 
 namespace Rose;
 
-require_once('Main.php');
-
 use Rose\Regex;
 use Rose\Text;
 use Rose\Arry;
@@ -172,7 +170,7 @@ class Map
     }
 
 	/*
-	**	Check if the given key exists in the map.
+	**	Checks if the given key exists in the map.
 	*/
     public function has ($key)
     {
@@ -322,12 +320,17 @@ class Map
 	/*
 	**	Definition of the global accessor for items, this will be invoked when the map is used with the arrow operator and
 	**	the attribute does not exist in the class definition.
+	**
+	**	If the requested field starts with '#' will be considered to be an 'exists' call, and will return 0 or 1.
+	**
+	**	If it starts with '@' will be considered a regular 'get' call. This was added because this function also provides
+	**	access to builtin 'length', therefore you wanted to actually access a field named 'length' use '@length' instead.
 	*/
     public function __get ($name)
     {
         switch ($name)
         {
-            case 'size':
+            case 'length':
 				return sizeof($this->__nativeArray);
 
             default:
@@ -369,7 +372,7 @@ class Map
 				if ($item === true) $s[] = $name . 'true';
 				else if ($item === false) $s[] = $name . 'false';
 				else if ($item === null) $s[] = $name . 'null';
-				else if (is_string($item)) $s[] = $name . '"' . addcslashes($item, "\"\\\f\n\r\v") . '"';
+				else if (is_string($item)) $s[] = $name . '"' . addcslashes($item, "\"\\\f\n\r\v\t") . '"';
 				else $s[] = $name . $item;
 			}
 		}

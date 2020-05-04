@@ -352,7 +352,7 @@ class Text
                     $result='';
                     break;
                     case 'usrp':
-                    _Session::getInstance ()->CurrentUser->setElement($params->arrayGetElement (1),Text::getParam($values,$params->arrayGetElement (2)));
+                    _Session::getInstance ()->currentUser->setElement($params->arrayGetElement (1),Text::getParam($values,$params->arrayGetElement (2)));
                     $result='';
                     break;
                     case 'hmac':
@@ -424,13 +424,13 @@ class Text
                     $result=Text::format(_Configuration::getInstance ()->General->{$params->arrayGetElement (1)},$values->arrayGetElement (2),$values->arrayGetElement (1));
                     break;
                     case 'u':
-                    if ((_Session::getInstance ()->CurrentUser==null))
+                    if ((_Session::getInstance ()->currentUser==null))
                     {
                         $result='';
                     }
                     else
                     {
-                        $result=_Session::getInstance ()->CurrentUser->{$params->arrayGetElement (1)};
+                        $result=_Session::getInstance ()->currentUser->{$params->arrayGetElement (1)};
                     }
                     break;
                     case 'z':
@@ -440,17 +440,17 @@ class Text
                     $result=_Session::getInstance ()->{$params->arrayGetElement (1)};
                     break;
                     case 'priv':
-                    if ((_Session::getInstance ()->CurrentUser==null))
+                    if ((_Session::getInstance ()->currentUser==null))
                     {
                         $result='0';
                         break;
                     }
-                    if ((_Session::getInstance ()->CurrentUser->privileges->indexOf('master')!==null))
+                    if ((_Session::getInstance ()->currentUser->privileges->indexOf('master')!==null))
                     {
                         $result='1';
                         break;
                     }
-                    $result=((_Session::getInstance ()->CurrentUser->privileges->indexOf($params->arrayGetElement (1))!==null)?'1':'0');
+                    $result=((_Session::getInstance ()->currentUser->privileges->indexOf($params->arrayGetElement (1))!==null)?'1':'0');
                     break;
                     case 'r':
                     try
@@ -977,7 +977,7 @@ class Text
                         }
                     }
                     $result=$tmp;
-                    if (($kx&&(typeOf($result)=='PrimitiveType')))
+                    if (($kx&&(typeOf($result)=='primitive')))
                     {
                         $result=Text::format($result,$values->arrayGetElement (2),$values->arrayGetElement (1));
                     }
