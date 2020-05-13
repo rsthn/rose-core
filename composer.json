@@ -1,11 +1,13 @@
 {
     "name": "rsthn/rose",
 	"description": "Rose Framework v3",
-	"version": "3.0.0",
 	"homepage": "https://github.com/rsthn/rose",
-    "type": "project",
+    "type": "library",
 	"license": "Apache-2.0",
 	"readme": "README.md",
+	"bin": [
+		"bin/rose-init.php"
+	],
     "authors": [
         {
             "name": "Jonathan Palencia",
