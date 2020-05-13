@@ -1,6 +1,7 @@
 {
     "name": "rsthn/rose",
 	"description": "Rose Framework v3",
+	"version": "3.0.0",
 	"homepage": "https://github.com/rsthn/rose",
     "type": "project",
 	"license": "Apache-2.0",
