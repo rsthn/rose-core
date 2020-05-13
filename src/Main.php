@@ -309,6 +309,6 @@ class Main
 
 		$ms_end = mstime();
 
-		// trace (sprintf ("%.4f MB,%s,%.5f", memory_get_peak_usage () / 1048576, $_SERVER['REQUEST_URI'], ($ms_end - $ms_start)/1000), "timing.csv");
+		trace (sprintf ("%.4f MB,%s,%.5f", memory_get_peak_usage()/1048576, $_SERVER['REQUEST_URI'], ($ms_end-$ms_start)/1000), "timing.csv");
 	}
 };

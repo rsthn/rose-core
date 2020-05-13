@@ -3,14 +3,16 @@
 	"description": "Rose Framework v3",
 	"homepage": "https://github.com/rsthn/rose",
     "type": "project",
-    "license": "MIT",
+	"license": "Apache-2.0",
+	"readme": "README.md",
     "authors": [
         {
             "name": "Jonathan Palencia",
 			"email": "jpalencia@rsthn.com",
 			"role": "Developer"
         }
-    ],
+	],
+	"minimum-stability": "stable",
     "require": {
 		"php": ">=5.3.0"
 	},
