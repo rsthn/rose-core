@@ -1,17 +1,14 @@
 {
-    "name": "rsthn/rose",
-	"description": "Rose Framework v3",
-	"homepage": "https://github.com/rsthn/rose",
+    "name": "rsthn/rose-core",
+	"description": "Rose Framework Core",
+	"homepage": "https://github.com/rsthn/rose-core",
     "type": "library",
 	"license": "Apache-2.0",
 	"readme": "README.md",
-	"bin": [
-		"bin/rose-init.php"
-	],
     "authors": [
         {
             "name": "Jonathan Palencia",
-			"email": "jpalencia@rsthn.com",
+			"email": "strikeone88@rsthn.com",
 			"role": "Developer"
         }
 	],

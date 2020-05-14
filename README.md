@@ -1,3 +1,3 @@
-# Rose Framework v3.0
+# Rose Framework Core
 
 More information to be added soon.
