@@ -1,21 +1,22 @@
 {
     "name": "rsthn/rose-core",
-	"description": "Rose Framework Core",
-	"homepage": "https://github.com/rsthn/rose-core",
+    "description": "Rose Framework Core",
+    "version": "3.0.0",
+    "homepage": "https://github.com/rsthn/rose-core",
     "type": "library",
-	"license": "Apache-2.0",
-	"readme": "README.md",
+    "license": "Apache-2.0",
+    "readme": "README.md",
     "authors": [
         {
             "name": "Jonathan Palencia",
-			"email": "strikeone88@rsthn.com",
-			"role": "Developer"
+            "email": "strikeone88@rsthn.com",
+            "role": "Developer"
         }
-	],
-	"minimum-stability": "stable",
+    ],
+    "minimum-stability": "stable",
     "require": {
-		"php": ">=5.3.0"
-	},
+        "php": ">=5.3.0"
+    },
     "autoload": {
         "psr-4": {
             "Rose\\": "src"
