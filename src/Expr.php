@@ -31,13 +31,18 @@ use Rose\Map;
 **	Immediate Reparse:				[<....] [@....] "..." '...'		Reparses the contents as if parseTemplate() was called again.
 **	Immediate Output:				(:...)							Takes the contents and outputs exactly as-is without format and optionally enclosed by ()
 **																	when the first character is not '<', ( or space.
-**	Filtered Output:				(filterName ... <expr> ...)		Runs a filter call, 'expr' can be any of the allowed formats shown here (nested if desired),
-**																	filterName should map to one of the available filter functions in the Rin.Expr::$filters map,
-**																	each of which have their own parameters.
+**	Filtered Output:				(functionName ... <expr> ...)	Runs a function call, 'expr' can be any of the allowed formats shown here (nested if desired),
+**																	functionName should map to one of the available expression functions registered in
+**																	the Rin.Expr::$functions map, each of which have their own parameters.
 */
 
 class Expr
 {
+	/*
+	**	Strict mode flag. When set, any undefined expression function will trigger an error.
+	*/
+	static public $strict = true;
+
 	/*
 	**	Unescapes the back-slash escape sequences.
 	*/
@@ -553,8 +558,8 @@ class Expr
 
 								if ($data === null && $first)
 								{
-									if (Expr::$filters->has($str))
-										$data = Expr::$filters->get($str) (null, null, $tmp);
+									if (Expr::$functions->has($str))
+										$data = Expr::$functions->get($str) (null, null, $tmp);
 								}
 
 								$first = false;
@@ -606,19 +611,24 @@ class Expr
 
 			$args->push(Expr::expand($parts->get(0), $data, 'text', 'base-string'));
 
-			if (Expr::$filters->has('_'.$args->get(0)))
+			if (Expr::$functions->has('_'.$args->get(0)))
 				$args->set(0, '_'.$args->get(0));
 
-			if (!(Expr::$filters->has($args->get(0))))
+			if (!(Expr::$functions->has($args->get(0))))
+			{
+				if (Expr::$strict == true)
+					throw new \Error ('Expression function `'.$args->get(0).'` not found.');
+
 				return '(Unknown: '.$args->get(0).')';
+			}
 
 			if ($args->get(0)[0] == '_')
-				return Expr::$filters->get($args->get(0)) ($parts, $data);
+				return Expr::$functions->get($args->get(0)) ($parts, $data);
 
 			for ($i = 1; $i < $parts->length(); $i++)
 				$args->push(Expr::expand($parts->get($i), $data, 'arg', 'base-string'));
 
-			$s->push(Expr::$filters->get($args->get(0)) ($args, $parts, $data));
+			$s->push(Expr::$functions->get($args->get(0)) ($args, $parts, $data));
 		}
 
 		// Template mode.
@@ -633,7 +643,7 @@ class Expr
 				{
 					$name = $parts->get(0)->get(0)->data;
 
-					if (Expr::$filters->has($name) || Expr::$filters->has('_'.$name))
+					if (Expr::$functions->has($name) || Expr::$functions->has('_'.$name))
 						return Expr::expand($parts, $data, $ret, 'fn');
 				}
 
@@ -717,27 +727,27 @@ class Expr
 	}
 
 	/**
-	**	Template filters, functions that are used to format data. Each function takes three parameters (args, parts and data). By default the filter arguments
-	**	are expanded and passed via 'args' for convenience, however if the filter name starts with '_' the 'args' parameter will be skipped and only (parts, data)
+	**	Template functions, functions that are used to format data. Each function takes three parameters (args, parts and data). By default the function arguments
+	**	are expanded and passed via 'args' for convenience, however if the function name starts with '_' the 'args' parameter will be skipped and only (parts, data)
 	**	will be available, each 'part' must be expanded manually by calling Expr::expand.
 	*/
-	public static $filters;
+	public static $functions;
 
 	/**
-	**	Registers an expression filter.
+	**	Registers an expression function.
 	**
-	**	>> object register (string name, function filter);
+	**	>> object register (string name, function fn);
 	*/
-	public static function register ($name, $filter)
+	public static function register ($name, $fn)
 	{
-		Expr::$filters->set ($name, $filter);
+		Expr::$functions->set ($name, $fn);
 	}
 };
 
-Expr::$filters = new Map();
+Expr::$functions = new Map();
 
 /**
-**	Expression filters.
+**	Expression functions.
 */
 Expr::register('not', function($args) { return !$args->get(1); });
 Expr::register('notnull', function($args) { return !!$args->get(1); });
@@ -978,7 +988,7 @@ Expr::register('_each', function ($parts, $data)
 });
 
 /**
-**	Returns the valueA if the expression is true otherwise valueB, this is a short version of the 'if' filter with the
+**	Returns the valueA if the expression is true otherwise valueB, this is a short version of the 'if' function with the
 **	difference that the result is 'obj' instead of text.
 **
 **	? <expr> <valueA> [<valueB>]
@@ -995,7 +1005,7 @@ Expr::register('_?', function ($parts, $data)
 });
 
 /**
-**	Returns the value if the expression is true, supports 'elif' and 'else' as well. The result of this filter is always text.
+**	Returns the value if the expression is true, supports 'elif' and 'else' as well. The result of this function is always text.
 **
 **	if <expr> <value> [elif <expr> <value>] [else <value>]
 */
