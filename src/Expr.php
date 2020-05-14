@@ -1079,21 +1079,6 @@ Expr::register('repeat', function ($args, $parts, $data)
 });
 
 /**
-**	Constructs a list from the given arguments and returns it.
-**
-**	list <expr> [<expr>...]
-*/
-Expr::register('_list', function ($parts, $data)
-{
-	$s = new Arry();
-
-	for ($i = 1; $i < $parts->length(); $i++)
-		$s->push(Expr::expand($parts->get($i), $data, 'arg'));
-
-	return $s;
-});
-
-/**
 **	Writes the specified arguments to the console.
 **
 **	echo <expr> [<expr>...]
@@ -1107,11 +1092,26 @@ Expr::register('_echo', function ($parts, $data)
 });
 
 /**
+**	Constructs a list from the given arguments and returns it.
+**
+**	# <expr> [<expr>...]
+*/
+Expr::register('_#', function ($parts, $data)
+{
+	$s = new Arry();
+
+	for ($i = 1; $i < $parts->length(); $i++)
+		$s->push(Expr::expand($parts->get($i), $data, 'arg'));
+
+	return $s;
+});
+
+/**
 **	Constructs an associative array (dictionary) and returns it.
 **
-**	dict <name>: <expr> [<name>: <expr>...]
+**	& <name>: <expr> [<name>: <expr>...]
 */
-Expr::register('_dict', function ($parts, $data)
+Expr::register('_&', function ($parts, $data)
 {
 	$s = new Map();
 	$key = null;

@@ -225,7 +225,7 @@ function fatal_handler()
 	}
 
 	echo '<div style="color: #676770; margin-top: 24px;">';
-	echo '@rsthn/rose 3.0.2';
+	echo '@rsthn/rose ' . json_decode(file_get_contents(dirname(__FILE__).'/../composer.json'))->version;
 	echo '</div>';
 
 	echo '</pre>';
@@ -252,18 +252,21 @@ class Main
 		mt_srand (((double)microtime ()) * 10000);
 
 		// Activate strip slashes if magic_quotes_gpc is enabled, but issue a warning since that is not required in this framework.
-		if (get_magic_quotes_gpc ())
+		if (version_compare(PHP_VERSION, '7.4.0') < 0)
 		{
-			trace ('WARNING: magic_quotes_gpc is enabled, please disable or performance will not be optimal.');
+			if (get_magic_quotes_gpc())
+			{
+				trace ('WARNING: magic_quotes_gpc is enabled, please disable or performance will not be optimal.');
 
-			function stripslashes_gpc(&$value) {
-				$value = stripslashes($value);
+				function stripslashes_gpc(&$value) {
+					$value = stripslashes($value);
+				}
+
+				array_walk_recursive ($_GET, 'stripslashes_gpc');
+				array_walk_recursive ($_POST, 'stripslashes_gpc');
+				array_walk_recursive ($_COOKIE, 'stripslashes_gpc');
+				array_walk_recursive ($_REQUEST, 'stripslashes_gpc');
 			}
-
-			array_walk_recursive ($_GET, 'stripslashes_gpc');
-			array_walk_recursive ($_POST, 'stripslashes_gpc');
-			array_walk_recursive ($_COOKIE, 'stripslashes_gpc');
-			array_walk_recursive ($_REQUEST, 'stripslashes_gpc');
 		}
 
 		// Load specially encoded request if "req64" parameter is set.

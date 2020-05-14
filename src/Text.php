@@ -1218,7 +1218,7 @@ class Text
                 case "\v":
                 if (($prev==' '))
                 {
-                    continue;
+					break;
                 }
                 else
                 {
@@ -1237,24 +1237,6 @@ class Text
     public static function padString ($text, $len, $str=' ')
     {
         return str_pad($text,$len,$str);
-    }
-
-    public function __get ($gsprn)
-    {
-        switch ($gsprn)
-        {
-        }
-
-        if (method_exists (get_parent_class (), '__get')) return parent::__get ($gsprn);
-        throw new _UndefinedProperty ($gsprn);
-    }
-
-    public function __set ($gsprn, $sprv)
-    {
-        switch ($gsprn)
-        {
-        }
-        if (method_exists (get_parent_class (), '__set')) parent::__set ($gsprn, $sprv);
     }
 
     public function __toString ()
