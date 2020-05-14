@@ -20,14 +20,12 @@ namespace Rose;
 use Rose\Errors\FalseError;
 use Rose\Errors\Error;
 
-use Rose\IO\Directory;
-use Rose\IO\Path;
-
 use Rose\Configuration;
 use Rose\Strings;
 use Rose\Map;
 use Rose\Text;
 use Rose\Regex;
+use Rose\Extensions;
 
 /*
 **	Provides an interface between clients and the system. No client can have access to the system without passing first through the Gateway.
@@ -124,8 +122,8 @@ class Gateway
 		// Start strings module for language selection.
 		Strings::getInstance();
 
-		// Load extensions from 'Ext' directory.
-		Directory::readFiles(Path::append(dirname(__FILE__), 'Ext'))->files->forEach(function($i) { require_once($i->path); });
+		// Load extensions from the 'Ext' directory.
+		Extensions::init();
 
 		// If service parameter is set in Gateway configuration, load it as 'srv' to force activation of service.
 		if (Configuration::getInstance()->Gateway->service != null)
