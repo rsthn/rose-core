@@ -749,6 +749,10 @@ Expr::$functions = new Map();
 /**
 **	Expression functions.
 */
+Expr::register('null', function($args) { return null; });
+Expr::register('true', function($args) { return true; });
+Expr::register('false', function($args) { return false; });
+
 Expr::register('len', function($args) { return strlen((string)$args->get(1)); });
 
 Expr::register('int', function($args) { return (int)$args->get(1); });
@@ -770,8 +774,8 @@ Expr::register('ge', function($args) { return $args->get(1) >= $args->get(2); })
 Expr::register('and', function($args) { for ($i = 1; $i < $args->length(); $i++) if (!$args->get($i)) return false; return true; });
 Expr::register('or', function($args) { for ($i = 1; $i < $args->length(); $i++) if (~~$args->get($i)) return true; return false; });
 
-Expr::register('notnull', function($args) { return !!$args->get(1); });
-Expr::register('null', function($args) { return !$args->get(1); });
+Expr::register('isnotnull', function($args) { return !!$args->get(1); });
+Expr::register('isnull', function($args) { return !$args->get(1); });
 
 Expr::register('*', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
 Expr::register('mul', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });

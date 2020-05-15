@@ -513,17 +513,27 @@ class Arry
 
 		foreach ($this->__nativeArray as $index => $item)
 		{
-			if (typeOf($item) == 'Rose\\Arry' || typeOf($item) == 'Rose\\Map')
+			switch (typeOf($item, true))
 			{
-				$s[] = (string)$item;
-			}
-			else
-			{
-				if ($item === true) $s[] = 'true';
-				else if ($item === false) $s[] = 'false';
-				else if ($item === null) $s[] = 'null';
-				else if (is_string($item)) $s[] = '"' . addcslashes($item, "\"\\\f\n\r\v\t") . '"';
-				else $s[] = $item;
+				case 'Rose\\Arry':
+				case 'Rose\\Map':
+					$s[] = (string)$item;
+					break;
+
+				case 'null':
+				case 'bool':
+				case 'int':
+				case 'number':
+					$s[] = $item;
+					break;
+
+				case 'string':
+					$s[] = '"' . addcslashes($item, "\"\\\f\n\r\v\t") . '"';
+					break;
+
+				default:
+					$s[] = '"' . addcslashes((string)$item, "\"\\\f\n\r\v\t") . '"';
+					break;
 			}
 		}
 

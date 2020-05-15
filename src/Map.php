@@ -363,17 +363,27 @@ class Map
 		{
 			$name = '"' . addcslashes($name, "\"\\\f\n\r\v") . '"' . ": ";
 
-			if (typeOf($item) == 'Rose\\Arry' || typeOf($item) == 'Rose\\Map')
+			switch (typeOf($item, true))
 			{
-				$s[] = $name . (string)$item;
-			}
-			else
-			{
-				if ($item === true) $s[] = $name . 'true';
-				else if ($item === false) $s[] = $name . 'false';
-				else if ($item === null) $s[] = $name . 'null';
-				else if (is_string($item)) $s[] = $name . '"' . addcslashes($item, "\"\\\f\n\r\v\t") . '"';
-				else $s[] = $name . $item;
+				case 'Rose\\Arry':
+				case 'Rose\\Map':
+					$s[] = $name . (string)$item;
+					break;
+
+				case 'null':
+				case 'bool':
+				case 'int':
+				case 'number':
+					$s[] = $name . $item;
+					break;
+
+				case 'string':
+					$s[] = $name . '"' . addcslashes($item, "\"\\\f\n\r\v\t") . '"';
+					break;
+
+				default:
+					$s[] = $name . '"' . addcslashes((string)$item, "\"\\\f\n\r\v\t") . '"';
+					break;
 			}
 		}
 
