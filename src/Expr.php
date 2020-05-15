@@ -749,10 +749,18 @@ Expr::$functions = new Map();
 /**
 **	Expression functions.
 */
-Expr::register('not', function($args) { return !$args->get(1); });
-Expr::register('notnull', function($args) { return !!$args->get(1); });
-Expr::register('null', function($args) { return !$args->get(1); });
+Expr::register('len', function($args) { return strlen((string)$args->get(1)); });
+
 Expr::register('int', function($args) { return (int)$args->get(1); });
+Expr::register('str', function($args) { return (string)$args->get(1); });
+Expr::register('float', function($args) { return (float)$args->get(1); });
+Expr::register('chr', function($args) { return chr($args->get(1)); });
+Expr::register('ord', function($args) { return ord($args->get(1)); });
+
+Expr::register('not', function($args) { return !$args->get(1); });
+Expr::register('neg', function($args) { return -$args->get(1); });
+Expr::register('abs', function($args) { return abs($args->get(1)); });
+
 Expr::register('eq', function($args) { return $args->get(1) == $args->get(2); });
 Expr::register('ne', function($args) { return $args->get(1) != $args->get(2); });
 Expr::register('lt', function($args) { return $args->get(1) < $args->get(2); });
@@ -761,10 +769,10 @@ Expr::register('gt', function($args) { return $args->get(1) > $args->get(2); });
 Expr::register('ge', function($args) { return $args->get(1) >= $args->get(2); });
 Expr::register('and', function($args) { for ($i = 1; $i < $args->length(); $i++) if (!$args->get($i)) return false; return true; });
 Expr::register('or', function($args) { for ($i = 1; $i < $args->length(); $i++) if (~~$args->get($i)) return true; return false; });
-Expr::register('char', function($args) { return chr($args->get(1)); });
-Expr::register('len', function($args) { return strlen((string)$args->get(1)); });
 
-Expr::register('neg', function($args) { return -$args->get(1); });
+Expr::register('notnull', function($args) { return !!$args->get(1); });
+Expr::register('null', function($args) { return !$args->get(1); });
+
 Expr::register('*', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
 Expr::register('mul', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
 Expr::register('/', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x /= $args->get($i); return $x; });
