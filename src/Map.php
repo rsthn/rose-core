@@ -371,7 +371,13 @@ class Map
 					break;
 
 				case 'null':
+					$s[] = $name . 'null';
+					break;
+
 				case 'bool':
+					$s[] = $name . ($item ? 'true' : 'false');
+					break;
+	
 				case 'int':
 				case 'number':
 					$s[] = $name . $item;

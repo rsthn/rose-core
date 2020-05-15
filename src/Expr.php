@@ -590,7 +590,33 @@ class Expr
 			}
 
 			if ($str != 'this')
-				$data = $data != null ? $data->{$str} : null;
+			{
+				$failed = false;
+
+				if ($data != null)
+				{
+					if (typeOf($data) == 'Rose\\Arry' || typeOf($data) == 'Rose\\Map')
+					{
+						if (!$data->has($str))
+						{
+							$failed = true;
+							$data = null;
+						}
+						else
+							$data = $data->{$str};
+					}
+					else
+						$data = $data->{$str};
+				}
+				else
+					$failed = true;
+
+				if ($failed && $parts->length == 1)
+				{
+					if (Expr::$strict == true)
+						throw new \Error ('Expression function `'.$str.'` not found.');
+				}
+			}
 
 			if (is_string($data))
 			{

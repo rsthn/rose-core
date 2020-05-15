@@ -521,7 +521,13 @@ class Arry
 					break;
 
 				case 'null':
+					$s[] = 'null';
+					break;
+
 				case 'bool':
+					$s[] = $item ? 'true' : 'false';
+					break;
+		
 				case 'int':
 				case 'number':
 					$s[] = $item;

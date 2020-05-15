@@ -23,6 +23,7 @@ use Rose\Errors\FalseError;
 use Rose\Session;
 use Rose\Configuration;
 use Rose\Map;
+use Rose\DateTime;
 use Rose\Gateway;
 
 /*
@@ -30,8 +31,7 @@ use Rose\Gateway;
 */
 function trace ($string, $out=null)
 {
-	if (!$out) $out = Configuration::getInstance()->Gateway->logFile;
-	if (!$out) $out = 'resources/system.log';
+	if (!$out) $out = 'logs/system.log';
 
 	$fp = @fopen ($out, 'a+t');
 	if (!$fp) return;
@@ -312,6 +312,7 @@ class Main
 
 		$ms_end = mstime();
 
-		// trace (sprintf ("%.4f MB,%s,%.5f", memory_get_peak_usage()/1048576, $_SERVER['REQUEST_URI'], ($ms_end-$ms_start)/1000), "timing.csv");
+		if (Configuration::getInstance()->Gateway->access_log == 'true')
+			trace (sprintf ('%s    %7.2f MB    %6d ms    %s', (string)(new DateTime()), memory_get_peak_usage()/1048576, $ms_end-$ms_start, $_SERVER['REQUEST_URI']), 'logs/access.log');
 	}
 };
