@@ -32,32 +32,37 @@ Expr::register('escape', function ($args)
 	return Connection::escape($args->get(1));
 });
 
-Expr::register('database::scalar', function ($args)
+Expr::register('db::scalar', function ($args)
 {
 	return Resources::getInstance()->Database->execScalar ($args->get(1));
 });
 
-Expr::register('database::record', function ($args)
+Expr::register('db::scalars', function ($args)
+{
+	return Resources::getInstance()->Database->execQuery ($args->get(1))->rows->map(function($i) { return $i->values()->get(0); });
+});
+
+Expr::register('db::record', function ($args)
 {
 	return Resources::getInstance()->Database->execAssoc ($args->get(1));
 });
 
-Expr::register('database::record:array', function ($args)
+Expr::register('db::record:array', function ($args)
 {
 	return Resources::getInstance()->Database->execAssoc ($args->get(1))->values();
 });
 
-Expr::register('database::table', function ($args)
+Expr::register('db::table', function ($args)
 {
 	return Resources::getInstance()->Database->execQuery ($args->get(1))->rows;
 });
 
-Expr::register('database::table:array', function ($args)
+Expr::register('db::table:array', function ($args)
 {
 	return Resources::getInstance()->Database->execQuery ($args->get(1))->rows->map(function($i) { return $i->values(); });
 });
 
-Expr::register('database::exec', function ($args)
+Expr::register('db::exec', function ($args)
 {
 	return Resources::getInstance()->Database->execQuery ($args->get(1)) === true ? true : false;
 });

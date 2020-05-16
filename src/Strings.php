@@ -22,7 +22,6 @@ use Rose\IO\File;
 
 use Rose\Errors\Error;
 
-use Rose\XmlElement;
 use Rose\Resources;
 use Rose\Configuration;
 use Rose\Gateway;
@@ -32,7 +31,7 @@ use Rose\Text;
 use Rose\Map;
 
 /*
-**	Provides an interface to automatically load and manipulate string resources stored in .xml, .conf and .plain files.
+**	Provides an interface to automatically load and manipulate string resources stored in .conf and .plain files.
 */
 
 class Strings
@@ -162,7 +161,7 @@ class Strings
         if (Text::substring($base, -1) != '/')
             $base .= '/';
 
-        $this->langBase = $base . Text::substring($this->langBase, Text::length($this->base));
+        $this->langBase = $base . Text::substring($this->langBase, Text::length($this->base)) . '/';
         $this->base = $base;
     }
 
@@ -176,16 +175,16 @@ class Strings
         if (Text::substring($base, -1) != '/')
             $base .= '/';
 
-        $this->altLangBase = $base . Text::substring($this->altLangBase, Text::length($this->altBase));
+		$this->altLangBase = $base . Text::substring($this->altLangBase, Text::length($this->altBase)) . '/';
         $this->altBase = $base;
     }
 
 	/*
 	**	Retrieves a strings map given its name. Will attempt to retrieve the strings map from the cache, however if not loaded it will load it
-	**	from whichever file is found first (xml, conf, or plain) using the base directory, if not found, will retry using the alternative
-	**	base directory, and if still not found an error will be issues.
+	**	from whichever file is found first (conf, or plain) using the base directory, if not found, will retry using the alternative base
+	**	directory, and if still not found an error will be issues.
 	**
-	**	If $name starts with '//' it will be treated as an absolute path. If it starts with '/' it will be considered a language string
+	**	If $name starts with '//' it will be treated as an absolute path. If it starts with '@' it will be considered a language string
 	**	and the `langBase` directory will be used, in other cases the `base` directory will be used.
 	*/
     public function retrieve ($name)
@@ -199,14 +198,8 @@ class Strings
 		if ($this->loadedMaps->has($name))
 			return $this->loadedMaps->get($name);
 
-		// Attempt to load xml, conf or plain from base directory.
-		$tmp = Text::substring($name,0,2) == '//' ? Text::substring($name,2) : ($name[0] == '/' ? $this->langBase.$name : $this->base.$name);
-
-		if (Path::exists($tmp.'.xml'))
-		{
-			$this->loadedMaps->set ($name, $data = XmlElement::loadFrom($tmp.'.xml')->toMap());
-			return $data;
-		}
+		// Attempt to load conf or plain from base directory.
+		$tmp = Text::substring($name,0,2) == '//' ? Text::substring($name,2) : ($name[0] == '@' ? $this->langBase.Text::substring($name,1) : $this->base.$name);
 
 		if (Path::exists($tmp.'.conf'))
 		{
@@ -220,26 +213,38 @@ class Strings
 			return $data;
 		}
 
-		// Attempt to load xml, conf or plain from alternative base directory.
-		$tmp2 = Text::substring($name,0,2) == '//' ? Text::substring($name,2) : ($name[0] == '/' ? $this->altLangBase.$name : $this->altBase.$name);
-		if ($tmp == $tmp2) throw new Error ('Undefined strings file: '.$tmp);
-
-		if (Path::exists($tmp2.'.xml'))
+		// Attempt to load conf or plain from alternative base directory.
+		$tmp2 = Text::substring($name,0,2) == '//' ? Text::substring($name,2) : ($name[0] == '@' ? $this->altLangBase.Text::substring($name,1) : $this->altBase.$name);
+		if ($tmp != $tmp2)
 		{
-			$this->loadedMaps->set ($name, $data = XmlElement::loadFrom($tmp2.'.xml')->toMap());
-			return $data;
+			if (Path::exists($tmp2.'.conf'))
+			{
+				$this->loadedMaps->set ($name, $data = Configuration::loadFrom($tmp2.'.conf'));
+				return $data;
+			}
+
+			if (Path::exists($tmp2.'.plain'))
+			{
+				$this->loadedMaps->set ($name, $data = File::getContents($tmp2.'.plain'));
+				return $data;
+			}
 		}
 
-		if (Path::exists($tmp2.'.conf'))
+		// Attempt to load conf or plain from base directory ignoring language specifier.
+		$tmp2 = Text::substring($name,0,2) == '//' ? Text::substring($name,2) : ($name[0] == '@' ? $this->base.Text::substring($name,1) : $this->base.$name);
+		if ($tmp != $tmp2)
 		{
-			$this->loadedMaps->set ($name, $data = Configuration::loadFrom($tmp2.'.conf'));
-			return $data;
-		}
+			if (Path::exists($tmp2.'.conf'))
+			{
+				$this->loadedMaps->set ($name, $data = Configuration::loadFrom($tmp2.'.conf'));
+				return $data;
+			}
 
-		if (Path::exists($tmp2.'.plain'))
-		{
-			$this->loadedMaps->set ($name, $data = File::getContents($tmp2.'.plain'));
-			return $data;
+			if (Path::exists($tmp2.'.plain'))
+			{
+				$this->loadedMaps->set ($name, $data = File::getContents($tmp2.'.plain'));
+				return $data;
+			}
 		}
 
 		throw new Error ('Undefined strings file: '.$tmp);
@@ -253,41 +258,25 @@ class Strings
         if ($this->loadedMaps->has($name) && !$merge)
             $this->loadedMaps->remove($name);
 
-        if (!Path::exists($path.'.xml'))
-        {
-            if (!Path::exists($path.'.conf'))
-            {
-                if (!Path::exists($path.'.plain'))
-					throw new Error ('Undefined strings file: '.$path);
+		if (!Path::exists($path.'.conf'))
+		{
+			if (!Path::exists($path.'.plain'))
+				throw new Error ('Undefined strings file: '.$path);
 
-                $this->loadedMaps->set ($name, File::getContents($path.'.plain'));
-            }
-            else
-            {
-                if ($merge)
-                {
-                    if (!$this->loadedMaps->has($name))
-                        $this->loadedMaps->set ($name, new Map ());
+			$this->loadedMaps->set ($name, File::getContents($path.'.plain'));
+		}
+		else
+		{
+			if ($merge)
+			{
+				if (!$this->loadedMaps->has($name))
+					$this->loadedMaps->set ($name, new Map ());
 
-                    $this->loadedMaps->get($name)->merge(Configuration::loadFrom($path.'.conf'), true);
-                }
-                else
-                    $this->loadedMaps->set ($name, Configuration::loadFrom($path.'.conf'));
-            }
-        }
-        else
-        {
-            if ($merge)
-            {
-                if (!$this->loadedMaps->has($name))
-                    $this->loadedMaps->set ($name, new Map ());
-
-                $this->loadedMaps->get($name)->merge(XmlElement::loadFrom($path.'.xml')->toMap(), true);
-            }
-            else
-				$this->loadedMaps->set($name, XmlElement::loadFrom($path.'.xml')->toMap());
-			// VIOLET Required: XmlElement
-        }
+				$this->loadedMaps->get($name)->merge(Configuration::loadFrom($path.'.conf'), true);
+			}
+			else
+				$this->loadedMaps->set ($name, Configuration::loadFrom($path.'.conf'));
+		}
     }
 
 	/*
@@ -296,5 +285,24 @@ class Strings
     public function __get ($name)
     {
         return $this->retrieve($name);
-    }
+	}
+
+	/*
+ 	**	Utility function to return a string.
+	*/
+	public static function get ($path, $placeholder=true)
+	{
+		$args = Text::split('/', $path);
+		$tmp = Strings::getInstance();
+
+		foreach ($args->__nativeArray as $i)
+		{
+			$tmp = $tmp->{$i};
+
+			if ($tmp == null)
+				return $placeholder ? $path : null;
+		}
+
+		return $tmp;
+	}
 };

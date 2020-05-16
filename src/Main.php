@@ -55,6 +55,9 @@ function typeOf ($object, $detailed=false)
 		if (is_null($object))
 			return 'null';
 
+		if (is_string($object))
+			return 'string';
+
 		if (is_bool($object))
 			return 'bool';
 
@@ -66,9 +69,6 @@ function typeOf ($object, $detailed=false)
 
 		if (is_numeric($object))
 			return 'number';
-
-		if (is_string($object))
-			return 'string';
 	}
 
 	return 'primitive';

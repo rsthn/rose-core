@@ -717,24 +717,38 @@ class Expr
 		// Expand parts.
 		if ($mode == 'base-string')
 		{
-			$parts->forEach(function($i) use(&$s, &$data, &$ret)
+			$parts->forEach(function($i, $index, $list) use(&$s, &$data, &$ret)
 			{
 				switch ($i->type)
 				{
 					case 'template':
-						$s->push(Expr::expand($i->data, $data, $ret, 'template'));
+						$tmp = Expr::expand($i->data, $data, $ret, 'template');
 						break;
 
 					case 'string': case 'identifier':
-						$s->push($i->data);
+						$tmp = $i->data;
 						break;
 
 					case 'base-string':
-						$s->push(Expr::expand($i->data, $data, $ret, 'base-string'));
+						$tmp = Expr::expand($i->data, $data, $ret, 'base-string');
 						break;
 				}
+
+				if ($ret == 'void')
+					return;
+
+				if ($ret == 'last' && $index != $list->length-1)
+					return;
+
+				$s->push($tmp);
 			});
 		}
+
+		// Return types for direct objects.
+		if ($ret == 'obj' || $ret == 'last') return $s;
+
+		// When the output is not really needed.
+		if ($ret == 'void') return null;
 
 		// Return as argument ('object' if only one, or string if more than one), that is, the first item in the result.
 		if ($ret == 'arg')
@@ -750,7 +764,7 @@ class Expr
 			return $s;
 		}
 
-		if ($ret != 'obj' && typeOf($s) == 'Rose\\Arry')
+		if ($ret == 'text' && typeOf($s) == 'Rose\\Arry')
 		{
 			$f = function($e) use(&$f) {
 				return $e != null && typeOf($e) == 'Rose\\Arry' ? $e->map($f)->join('') : (string)$e;
@@ -785,6 +799,16 @@ class Expr
 	{
 		$template = Expr::parse($template);
 		return Expr::expand($template, $data ? $data : new Map(), $mode);
+	}
+
+	/**
+	**	Expands the template as 'arg' and returns the result.
+	**
+	**	>> object value (string parts, object data);
+	*/
+	public static function value ($parts, $data=null)
+	{
+		return typeOf($parts) != 'Rose\\Arry' ? $parts : Expr::expand($parts, $data ? $data : new Map(), 'arg');
 	}
 
 	/**
@@ -1168,6 +1192,21 @@ Expr::register('_#', function ($parts, $data)
 });
 
 /**
+**	Constructs a non-expanded list from the given arguments and returns it.
+**
+**	# <expr> [<expr>...]
+*/
+Expr::register('_##', function ($parts, $data)
+{
+	$s = new Arry();
+
+	for ($i = 1; $i < $parts->length(); $i++)
+		$s->push($parts->get($i));
+
+	return $s;
+});
+
+/**
 **	Constructs an associative array (dictionary) and returns it.
 **
 **	& <name>: <expr> [<name>: <expr>...]
@@ -1175,21 +1214,35 @@ Expr::register('_#', function ($parts, $data)
 Expr::register('_&', function ($parts, $data)
 {
 	$s = new Map();
-	$key = null;
 
-	for ($i = 1; $i < $parts->length(); $i++)
+	for ($i = 1; $i < $parts->length(); $i += 2)
 	{
-		$tmp = Expr::expand($parts->get($i), $data, 'arg');
-		if (substr($tmp, -1) == ':')
-		{
-			$key = substr($tmp, 0, strlen($tmp)-1);
-			continue;
-		}
+		$key = Expr::expand($parts->get($i), $data, 'arg');
+		if (substr($key, -1) == ':')
+			$key = substr($key, 0, strlen($key)-1);
 
-		if (!$key) continue;
+		$s->set($key, Expr::expand($parts->get($i+1), $data, 'arg'));
+	}
 
-		$s->set($key, $tmp);
-		$key = null;
+	return $s;
+});
+
+/**
+**	Constructs a non-expanded associative array (dictionary) and returns it.
+**
+**	&& <name>: <expr> [<name>: <expr>...]
+*/
+Expr::register('_&&', function ($parts, $data)
+{
+	$s = new Map();
+
+	for ($i = 1; $i < $parts->length(); $i += 2)
+	{
+		$key = Expr::expand($parts->get($i), $data, 'arg');
+		if (substr($key, -1) == ':')
+			$key = substr($key, 0, strlen($key)-1);
+
+		$s->set($key, $parts->get($i+1));
 	}
 
 	return $s;

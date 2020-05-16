@@ -49,7 +49,7 @@ class Extensions
 		if (self::isLoaded($identifier))
 			return;
 
-		require_once(Path::append(dirname(__FILE__), 'Ext', $identifier, 'Main.php'));
+		require_once(Path::append(dirname(__FILE__), 'Ext', $identifier, $identifier.'.php'));
 
 		self::$loaded->set($identifier, true);
 	}
@@ -59,7 +59,7 @@ class Extensions
 	*/
     public static function isInstalled ($identifier)
     {
-		return Path::exists(Path::append(dirname(__FILE__), 'Ext', $identifier, 'Main.php'));
+		return Path::exists(Path::append(dirname(__FILE__), 'Ext', $identifier, $identifier.'.php'));
 	}
 
 	/*
