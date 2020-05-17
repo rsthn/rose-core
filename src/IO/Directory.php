@@ -44,7 +44,7 @@ class Directory
 	**
 	**	NOTE: Output parameter is used internally.
 	*/
-    public static function read ($path, $recursive=true, $pattern='/.+/', $offset=0, $flags=Directory::READ_FILES | Directory::READ_DIRS, $output=null)
+    public static function read (string $path, bool $recursive=true, string $pattern='/.+/', int $offset=0, int $flags=Directory::READ_FILES | Directory::READ_DIRS, $output=null)
     {
         $result = null;
         $hdl = null;
@@ -126,7 +126,7 @@ class Directory
 	/*
 	**	Returns an array only with file entries in the directory.
 	*/
-    public static function readFiles ($path, $recursive=false, $pattern='/.+/', $offset=0, $flags=0)
+    public static function readFiles (string $path, bool $recursive=false, string $pattern='/.+/', int $offset=0, int $flags=0)
     {
 		return Directory::read ($path, $recursive, $pattern, $offset, $flags | Directory::READ_FILES);
     }
@@ -134,7 +134,7 @@ class Directory
 	/*
 	**	Returns an array only with directory entries in the directory.
 	*/
-    public static function readDirs ($path, $recursive=false, $pattern='/.+/', $offset=0, $flags=0)
+    public static function readDirs (string $path, bool $recursive=false, string $pattern='/.+/', int $offset=0, int $flags=0)
     {
         return Directory::read ($path, $recursive, $pattern, $offset, $flags | Directory::READ_DIRS);
     }
@@ -142,7 +142,7 @@ class Directory
 	/*
 	**	Removes a directory (recursively if needed), returns true if success.
 	*/
-    public static function remove ($path, $recursive=false)
+    public static function remove (string $path, bool $recursive=false)
     {
 		$path = Path::normalize($path);
 
@@ -177,7 +177,7 @@ class Directory
 	/*
 	**	Creates a directory using the given path, returns true if the directory was created, or false if an error occurred.
 	*/
-    public static function create ($path, $recursive=false)
+    public static function create (string $path, bool $recursive=false)
     {
 		if (Path::exists($path) && Path::is_dir($path))
 			return true;
@@ -194,7 +194,7 @@ class Directory
 	**	Copies all files (and directories if recursive is set) from the source to the destination, if 'overwrite' is true the destination
 	**	files will be overwritten.
 	*/
-    public static function copy ($source, $dest, $recursive=true, $overwrite=false, $pattern=null)
+    public static function copy (string $source, string $dest, bool $recursive=true, bool $overwrite=false, string $pattern=null)
     {
         if ($dest == '' || $source == '')
             return false;

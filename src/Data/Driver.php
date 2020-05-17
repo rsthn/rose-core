@@ -39,4 +39,6 @@ abstract class Driver
 	public abstract function fetchAssoc ($result, $conn);
 	public abstract function fetchRow ($result, $conn);
 	public abstract function freeResult ($result, $conn);
+
+	public abstract function escapeName ($value);
 };

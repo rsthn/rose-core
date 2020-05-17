@@ -24,6 +24,7 @@ use Rose\Data\Table;
 use Rose\Data\Reader;
 
 use Rose\Map;
+use Rose\Arry;
 use Rose\Text;
 
 /**
@@ -225,9 +226,67 @@ class Connection
 	/*
 	**	Escapes the given string to be used in a query.
 	*/
-	public static function escape ($value)
+	public static function escape ($value, $start="'", $end="'", $search1="'", $replace1="''", $search2=null, $replace2=null)
 	{
-		return "'" . addcslashes (Text::replace ("'", "''", $value), "#\\\t\n\v\f\r") . "'";
+		if ($search1 != null)
+			$value = Text::replace ($search1, $replace1, $value);
+
+		if ($search2 != null)
+			$value = Text::replace ($search2, $replace2, $value);
+
+		return $start . addcslashes ($value, "#\\\t\n\v\f\r") . $end;
+	}
+
+	/*
+	**	Escapes an identifier using the driver's escapeName method.
+	*/
+	public function escapeName ($value)
+	{
+		return $this->driver->escapeName($value);
+	}
+
+	/*
+	**	Escapes the given value to be used in a query. Uses the type of the value to determine the appropriate format and
+	**	if escape is required. Also uses the driver's escapeName method to escape column names.
+	*/
+	public function escapeExt ($value)
+	{
+		switch (\Rose\typeof($value, true))
+		{
+			case 'Rose\\Arry':
+				$s = new Arry();
+				$value->forEach(function($i) use(&$s) { $s->push($this->escapeExt($i)); });
+				$value = $s;
+				break;
+	
+			case 'Rose\\Map':
+				$s = new Arry();
+				$value->forEach(function($i, $k) use(&$s) { $s->push($this->escapeName($k) . '=' . $this->escapeExt($i)); });
+				$value = $s;
+				break;
+	
+			case 'null':
+				$value = 'NULL';
+				break;
+	
+			case 'bool':
+				$value = $item ? '1' : '0';
+				break;
+	
+			case 'int':
+			case 'number':
+				break;
+	
+			case 'string':
+				$value = Connection::escape($value);
+				break;
+
+			default:
+				$value = Connection::escape((string)$value);
+				break;
+		}
+	
+		return $value;
 	}
 
 	/*

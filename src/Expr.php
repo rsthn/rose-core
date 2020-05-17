@@ -745,7 +745,15 @@ class Expr
 		}
 
 		// Return types for direct objects.
-		if ($ret == 'obj' || $ret == 'last') return $s;
+		if ($ret == 'obj') return $s;
+
+		if ($ret == 'last')
+		{
+			if (typeOf($s) == 'Rose\\Arry')
+				$s = $s->get(0);
+
+			return $s;
+		}
 
 		// When the output is not really needed.
 		if ($ret == 'void') return null;

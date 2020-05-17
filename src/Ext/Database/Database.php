@@ -32,6 +32,16 @@ Expr::register('escape', function ($args)
 	return Connection::escape($args->get(1));
 });
 
+Expr::register('db::escape', function ($args)
+{
+	return Resources::getInstance()->Database->escapeExt ($args->get(1));
+});
+
+Expr::register('db::escape:name', function ($args)
+{
+	return Resources::getInstance()->Database->escapeName ($args->get(1));
+});
+
 Expr::register('db::scalar', function ($args)
 {
 	return Resources::getInstance()->Database->execScalar ($args->get(1));
@@ -65,4 +75,50 @@ Expr::register('db::table:array', function ($args)
 Expr::register('db::exec', function ($args)
 {
 	return Resources::getInstance()->Database->execQuery ($args->get(1)) === true ? true : false;
+});
+
+Expr::register('db::fields:update', function ($args)
+{
+	return Resources::getInstance()->Database->escapeExt ($args->get(1))->join(', ');
+});
+
+Expr::register('db::fields:insert', function ($args)
+{
+	return Resources::getInstance()->Database->escapeExt ($args->get(1)->values())->join(', ');
+});
+
+Expr::register('db::update', function ($args)
+{
+	$conn = Resources::getInstance()->Database;
+
+	$table = $args->get(1);
+	$condition = $args->get(2);
+	$data = $args->get(3);
+
+	if ($data->length == 0)
+		return true;
+
+	$s = 'UPDATE ' . $table . ' SET ';
+	$s .= $conn->escapeExt($data)->join(', ');
+	$s .= ' WHERE ' . $condition;
+
+	return $conn->execQuery($s);
+});
+
+Expr::register('db::insert', function ($args)
+{
+	$conn = Resources::getInstance()->Database;
+
+	$table = $args->get(1);
+	$data = $args->get(2);
+
+	$s = 'INSERT INTO ' . $table . ' ('. $data->keys()->map(function($i) use(&$conn) { return $conn->escapeName($i); })->join(', ') .')';
+	$s .= ' VALUES (' . $conn->escapeExt ($data->values())->join(', ') . ')';
+
+	return $conn->execQuery($s);
+});
+
+Expr::register('db::lastInsertId', function ($args)
+{
+	return Resources::getInstance()->Database->getLastInsertId();
 });

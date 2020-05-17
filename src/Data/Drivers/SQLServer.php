@@ -126,4 +126,9 @@ class SQLServer extends Driver
 	{
 		sqlsrv_free_stmt ($rs);
 	}
+
+	public function escapeName ($value)
+	{
+		return Connection::escape($value, '[', ']', null, null, null, null);
+	}
 };

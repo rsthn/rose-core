@@ -109,4 +109,9 @@ class MSSQL extends Driver
 	{
 		mssql_free_result($rs);
 	}
+
+	public function escapeName ($value)
+	{
+		return Connection::escape($value, '[', ']', null, null, null, null);
+	}
 };

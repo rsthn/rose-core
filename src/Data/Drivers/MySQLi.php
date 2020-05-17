@@ -131,5 +131,10 @@ class MySQLi extends Driver
 
 		while (mysqli_more_results($conn) && mysqli_next_result($conn)) {
 		};
-    }
+	}
+	
+	public function escapeName ($value)
+	{
+		return Connection::escape($value, '`', '`', null, null, null, null);
+	}
 };
