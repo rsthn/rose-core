@@ -561,7 +561,7 @@ class Expr
 						break;
 
 					case 'base-string':
-						$str += Expr::expand($parts->get($i)->data, $root, 'arg', 'base-string');
+						$str .= Expr::expand($parts->get($i)->data, $root, 'arg', 'base-string');
 						$last = null;
 						break;
 
@@ -663,6 +663,92 @@ class Expr
 			}
 
 			$s->push($data);
+		}
+
+		// Expand variable parts and returns a reference to it.
+		if ($ret == 'varref')
+		{
+			$root = $data;
+			$last = null;
+			$first = true;
+			$str = '';
+
+			for ($i = 0; $i < $parts->length() && $data != null; $i++)
+			{
+				switch ($parts->get($i)->type)
+				{
+					case 'identifier':
+					case 'string':
+						$str .= $parts->get($i)->data;
+						$last = null;
+						break;
+
+					case 'template':
+						$last = Expr::expand($parts->get($i)->data, $root, 'arg', 'template');
+						$str .= typeOf($last) == 'primitive' ? $last : '';
+						break;
+
+					case 'base-string':
+						$str .= Expr::expand($parts->get($i)->data, $root, 'arg', 'base-string');
+						$last = null;
+						break;
+
+					case 'access':
+						if (!$last || typeOf($last) == 'primitive')
+						{
+							if (!$str) $str = 'this';
+
+							while (true)
+							{
+								if ($str[0] == '!')
+								{
+									$str = substr($str, 1);
+								}
+								else if ($str[0] == '$')
+								{
+									$str = substr($str, 1);
+								}
+								else
+									break;
+							}
+
+							if ($str != 'this' && $data != null)
+							{
+								$tmp = $data;
+								$data = $data->{$str};
+
+								if ($data === null && $first)
+								{
+									if (Expr::$functions->has($str))
+										$data = Expr::$functions->get($str) (null, null, $tmp);
+								}
+
+								$first = false;
+							}
+						}
+						else
+							$data = $last;
+
+						$str = '';
+						break;
+				}
+			}
+
+			while ($str != '')
+			{
+				if ($str[0] == '!')
+				{
+					$str = substr($str, 1);
+				}
+				else if ($str[0] == '$')
+				{
+					$str = substr($str, 1);
+				}
+				else
+					break;
+			}
+
+			return $str != 'this' ? [$data, $str] : null;
 		}
 
 		// Expand function parts.
@@ -896,6 +982,13 @@ Expr::register('json', function ($args)
 */
 Expr::register('set', function ($args, $parts, $data)
 {
+	if ($parts->get(1)->length > 1)
+	{
+		$ref = Expr::expand($parts->get(1), $data, 'varref');
+		if ($ref != null) $ref[0]->{$ref[1]} = $args->get(2);
+		return '';
+	}
+
 	$data->set($args->get(1), $args->get(2));
 	return '';
 });
