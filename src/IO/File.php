@@ -17,10 +17,10 @@
 
 namespace Rose\IO;
 
-use Rose\Path;
-use Rose\Error;
-use Rose\DataStream;
-use Rose\StreamDescriptor;
+use Rose\Errors\Error;
+use Rose\IO\Path;
+use Rose\IO\DataStream;
+use Rose\IO\StreamDescriptor;
 
 /*
 **	Describes a file. The static methods of this class provide access to several file specific functions.
