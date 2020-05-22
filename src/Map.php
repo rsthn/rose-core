@@ -174,6 +174,14 @@ class Map
 	*/
     public function has ($key)
     {
+		if ($key != null) {
+			if ($key[0] == '#' || $key == 'length')
+				return true;
+
+			if ($key[0] == '@')
+				return $this->has(Text::substring($key, 1));
+		}
+
         return array_key_exists($key, $this->__nativeArray) ? true : false;
     }
 
@@ -335,10 +343,10 @@ class Map
 
             default:
                 if ($name[0] == '#')
-                    return $this->hasKey(substr($name, 1)) ? '1' : '0';
+                    return $this->has(Text::substring($name, 1)) ? '1' : '0';
 
                 if ($name[0] == '@')
-                    return $this->get(substr($name, 1));
+                    return $this->get(Text::substring($name, 1));
 
 				return $this->get($name);
         }

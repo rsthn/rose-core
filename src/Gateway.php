@@ -90,6 +90,10 @@ class Gateway
 	*/
 	private function __construct()
 	{
+		foreach ($_FILES as &$file) {
+			$file['filename'] = $file['tmp_name'];
+		}
+
 		$this->requestParams = new Map (array_merge ($_REQUEST, $_FILES));
 		$this->serverParams = new Map ($_SERVER);
 		$this->cookies = new Map ($_COOKIE);

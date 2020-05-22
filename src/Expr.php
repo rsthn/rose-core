@@ -836,7 +836,7 @@ class Expr
 		if ($ret == 'last')
 		{
 			if (typeOf($s) == 'Rose\\Arry')
-				$s = $s->get(0);
+				$s = $s->{0};
 
 			return $s;
 		}
@@ -1347,4 +1347,36 @@ Expr::register('_&&', function ($parts, $data)
 	}
 
 	return $s;
+});
+
+/**
+**	Returns true if the specified map has all the specified keys. If it fails the global variable `err` will contain an error message.
+**
+**	has <expr> <name> [<name>...]
+*/
+Expr::register('has', function ($args, $parts, $data)
+{
+	$value = $args->get(1);
+
+	if (typeOf($value) != 'Rose\\Map')
+	{
+		$data->err = 'Argument is not a Map';
+		return false;
+	}
+
+	$s = '';
+
+	for ($i = 2; $i < $args->length; $i++)
+	{
+		if (!$value->has($args->get($i)))
+			$s .= ', '.$args->get($i);
+	}
+
+	if ($s != '')
+	{
+		$data->err = Text::substring($s, 1);
+		return false;
+	}
+
+	return true;
 });

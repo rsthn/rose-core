@@ -70,31 +70,17 @@ class Configuration extends Map
 		}
 		catch (\Exception $e) { }
 
-		// Also load prod.conf or dev.conf depending on the 'env' contents.
-		if (Path::exists('env'))
+		// Also an environment-dependent file based on the 'rose-env' file contents.
+		if (Path::exists('rose-env'))
 		{
-			$env = Text::trim(File::getContents('env'));
+			$env = Text::trim(File::getContents('rose-env'));
 
-			if ($env == 'prod')
+			if (Path::exists('resources/'.$env.'.conf'))
 			{
-				if (Path::exists('resources/prod.conf'))
-				{
-					try {
-						Configuration::loadFrom ('resources/prod.conf', $this, true);
-					}
-					catch (\Exception $e) {
-					}
+				try {
+					Configuration::loadFrom ('resources/'.$env.'.conf', $this, true);
 				}
-			}
-			else if ($env == 'dev')
-			{
-				if (Path::exists('resources/dev.conf'))
-				{
-					try {
-						Configuration::loadFrom ('resources/dev.conf', this, true);
-					}
-					catch (\Exception $e) {
-					}
+				catch (\Exception $e) {
 				}
 			}
 		}

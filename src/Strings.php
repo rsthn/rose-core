@@ -133,7 +133,7 @@ class Strings
             $lang = '.';
 
 		// Redirect to error page if path to strings is not available.
-        if (!Path::exists($this->langBase = $this->altLangBase = $this->base.$lang))
+        if (!Path::exists($this->langBase = $this->altLangBase = $this->base.$lang.'/'))
         {
             if (Configuration::getInstance()->Strings->lang_error_url)
                 Gateway::redirect (Configuration::getInstance()->Strings->lang_error_url);
@@ -147,8 +147,8 @@ class Strings
 	*/
     public function setLang ($lang)
     {
-        $this->altLangBase = $this->altBase.$lang;
-        $this->langBase = $this->base.$lang;
+        $this->altLangBase = $this->altBase.$lang.'/';
+        $this->langBase = $this->base.$lang.'/';
     }
 
 	/*

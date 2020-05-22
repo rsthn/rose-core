@@ -52,12 +52,12 @@ Expr::register('db::scalars', function ($args)
 	return Resources::getInstance()->Database->execQuery ($args->get(1))->rows->map(function($i) { return $i->values()->get(0); });
 });
 
-Expr::register('db::record', function ($args)
+Expr::register('db::row', function ($args)
 {
 	return Resources::getInstance()->Database->execAssoc ($args->get(1));
 });
 
-Expr::register('db::record:array', function ($args)
+Expr::register('db::row:array', function ($args)
 {
 	return Resources::getInstance()->Database->execAssoc ($args->get(1))->values();
 });
