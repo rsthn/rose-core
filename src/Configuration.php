@@ -40,7 +40,7 @@ class Configuration extends Map
 	/*
 	**	Initializes the instance of the Configuration class and loads the configuration files.
 	*/
-    private function __construct ()
+    public function __construct ()
     {
         parent::__construct ();
         $this->reload();
