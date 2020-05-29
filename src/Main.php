@@ -20,7 +20,6 @@ namespace Rose;
 use Rose\Errors\Error;
 use Rose\Errors\FalseError;
 
-use Rose\Session;
 use Rose\Configuration;
 use Rose\Map;
 use Rose\DateTime;
@@ -288,11 +287,8 @@ class Main
 
 		try
 		{
-			// Initialize Gateway and Session.
 			Gateway::getInstance();
-			Session::init();
 	
-			// Pass control to Gateway.
 			try {
 				Gateway::getInstance()->main();
 			}
@@ -302,7 +298,6 @@ class Main
 			if ($callback != null)
 				$callback();
 
-			Session::close();
 			Gateway::getInstance()->close();
 		}
 		catch (\Exception $e)

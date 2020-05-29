@@ -22,6 +22,7 @@ use Rose\Errors\Error;
 
 use Rose\Configuration;
 use Rose\Strings;
+use Rose\Session;
 use Rose\Map;
 use Rose\Text;
 use Rose\Regex;
@@ -123,8 +124,11 @@ class Gateway
         if (Text::substring($this->LocalRoot, -1) != '/')
             $this->LocalRoot .= '/';
 
-		// Start strings module for language selection.
-		Strings::getInstance();
+		// Initialize session.
+		Session::init();
+
+		// Initialize strings.
+		Strings::init();
 
 		// Load extensions from the 'Ext' directory.
 		Extensions::init();
@@ -171,6 +175,7 @@ class Gateway
 	*/
     public static function close ()
     {
+		Session::close();
 		Gateway::$instance = null;
     }
 

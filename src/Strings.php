@@ -37,6 +37,16 @@ use Rose\Map;
 class Strings
 {
 	/*
+	**	Location from which the 'lang' parameter can be loaded (in order of precedence).
+	*/
+	public const FROM_NOWHERE				= 0;
+	public const FROM_CONFIG				= 1;
+	public const FROM_COOKIE				= 2;
+	public const FROM_SESSION				= 3;
+	public const FROM_REQUEST				= 4;
+	public const FROM_OVERRIDE				= 5;
+
+	/*
 	**	Primary and only instance of this class.
 	*/
 	private static $objectInstance = null;
@@ -45,6 +55,16 @@ class Strings
 	**	List of already loaded strings files.
 	*/
 	private $loadedMaps;
+
+	/*
+	**	Current language code.
+	*/
+	public $lang;
+
+	/*
+	**	Indicates the location from which the 'lang' parameter was loaded.
+	*/
+    public $langFrom;
 
 	/*
 	**	Base directory for general strings.
@@ -61,7 +81,7 @@ class Strings
 	/*
 	**	Indicates if we're debugging string output, values are: null, 'blank', or 'code'.
 	*/
-    public $debug;
+	public $debug;
 
 	/*
 	**	Returns the instance of this class.
@@ -75,80 +95,77 @@ class Strings
     }
 
 	/*
+	**	Initializes the instance of the class. Similar to calling getInstance().
+	*/
+	public function init ()
+	{
+		self::getInstance();
+	}
+
+	/*
 	**	Constructs the Strings object, this is a private constructor as this class can have only one instance.
 	*/
     private function __construct ()
     {
 		$this->loadedMaps = new Map ();
-
-        $this->altLangBase = $this->altBase = $this->langBase = $this->base = 'resources/strings/';
-		$this->debug = null;
-
-		$res = Resources::getInstance();
-		$gateway = Gateway::getInstance();
-
-		// Set indicator that language code is used from input request parameters.
-		$lang = Text::substring ($gateway->requestParams->lang, 0, 2);
-		$res->LangSrc = 'REQUEST';
-
-		// Attempt to load language code from cookie.
-        if (!$lang && Cookies::getInstance()->has('lang'))
-        {
-            $gateway->requestParams->lang = $lang = Cookies::getInstance()->lang;
-            $res->LangSrc = 'SYSPARAM';
-		}
-
-		// Attempt to load language code from current user data.
-        if (!$lang && Session::$data->currentUser != null && Session::$data->currentUser->lang != null)
-        {
-			if (Path::exists($this->base.Session::$data->currentUser->lang))
-			{
-				$gateway->requestParams->lang = $lang = Session::$data->currentUser->lang;
-				$res->LangSrc = 'USER';
-			}
-		}
-
-		// Use default language code from configuration.
-        if (!$lang && Configuration::getInstance()->Locale->lang != null)
-        {
-			$gateway->requestParams->lang = $lang = Text::format(Configuration::getInstance()->Locale->lang);
-            $res->LangSrc = 'CONFIG';
-		}
-
-		// Force language code override if "override_lang" input request parameter is specified.
-        if ($gateway->requestParams->override_lang != null)
-        {
-			$gateway->requestParams->lang = $lang = $gateway->requestParams->override_lang;
-            $res->LangSrc = 'OVERRIDE';
-		}
-
-		// Load debug configuration string.
         $this->debug = Configuration::getInstance()->Strings->debug;
 
-		// Ensure that if no language is selected all strings will be loaded from the base strings directory.
-        if (!$lang) $lang = '.';
+		$this->altLangBase = $this->altBase = $this->langBase = $this->base = 'resources/strings/';
 
-		// Ensure language code is only two characters long.
-        if (Text::length($lang) > 2)
-            $lang = '.';
+		// Use default internal language code.
+		$this->langFrom = Strings::FROM_NOWHERE;
+		$this->lang = '';
 
-		// Redirect to error page if path to strings is not available.
-        if (!Path::exists($this->langBase = $this->altLangBase = $this->base.$lang.'/'))
-        {
-            if (Configuration::getInstance()->Strings->lang_error_url)
-                Gateway::redirect (Configuration::getInstance()->Strings->lang_error_url);
-            else
-                throw new Error ('Specified language code is not supported: ' . $lang);
-        }
+		$this->setLang();
     }
 
 	/*
-	**	Sets the strings language code. The language directory resources/strings/XX for code XX should exist.
+	**	Sets the strings language code to the specified value. The language directory resources/strings/XX for code XX should exist, if the
+	**	parameter is not specified, the lang code will be loaded from one of the supported locations.
 	*/
-    public function setLang ($lang)
+    public function setLang ($lang=null)
     {
-        $this->altLangBase = $this->altBase.$lang.'/';
-        $this->langBase = $this->base.$lang.'/';
+		if ($lang == null)
+		{
+			// Attempt to load language code from configuration.
+			if (Configuration::getInstance()->Locale->lang != null)
+			{
+				$lang = Configuration::getInstance()->Locale->lang;
+				$this->langFrom = Strings::FROM_CONFIG;
+			}
+
+			// Attempt to load language code from cookie.
+			if (!$lang && Cookies::getInstance()->has('lang'))
+			{
+				$lang = Cookies::getInstance()->lang;
+				$this->langFrom = Strings::FROM_COOKIE;
+			}
+
+			// Attempt to load language code from current user.
+			if (!$lang && Session::$data->currentUser != null && Session::$data->currentUser->lang != null && Path::exists($this->base.Session::$data->currentUser->lang))
+			{
+				$lang = Session::$data->currentUser->lang;
+				$this->langFrom = Strings::FROM_CURRENT_USER;
+			}
+
+			// Attempt to load language code from request parameters.
+			if (!$lang && Gateway::getInstance()->requestParams->has('lang'))
+			{
+				$lang = Gateway::getInstance()->requestParams->lang;
+				$this->langFrom = Strings::FROM_REQUEST;
+			}
+
+			// Ensure that if no language is selected (or is invalid) all strings will be loaded from the base strings directory.
+			if (!$lang || Text::length($lang) > 2 || !Path::exists($this->base.$lang.'/'))
+				$lang = '.';
+
+			$gateway->requestParams->lang = $lang;
+		}
+
+		$this->lang = $lang;
+
+        $this->altLangBase = $this->altBase.$this->lang.'/';
+		$this->langBase = $this->base.$this->lang.'/';
     }
 
 	/*
@@ -161,8 +178,8 @@ class Strings
         if (Text::substring($base, -1) != '/')
             $base .= '/';
 
-        $this->langBase = $base . Text::substring($this->langBase, Text::length($this->base)) . '/';
-        $this->base = $base;
+		$this->base = $base;
+		$this->langBase = $this->base.$this->lang.'/';
     }
 
 	/*
@@ -175,8 +192,8 @@ class Strings
         if (Text::substring($base, -1) != '/')
             $base .= '/';
 
-		$this->altLangBase = $base . Text::substring($this->altLangBase, Text::length($this->altBase)) . '/';
-        $this->altBase = $base;
+		$this->altBase = $base;
+		$this->altLangBase = $this->altBase.$this->lang.'/';
     }
 
 	/*

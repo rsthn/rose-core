@@ -37,9 +37,9 @@ use Rose\Regex;
 class Session
 {
 	/*
-	**	Indicates if session has been closed.
+	**	Indicates if session is open.
 	*/
-	public static $sessionClosed;
+	public static $sessionOpen;
 
 	/*
 	**	Contains the session data objects, the contents of this attribute will be filled by the framework initializer.
@@ -69,63 +69,86 @@ class Session
 		$config = Configuration::getInstance();
 		$gateway = Gateway::getInstance();
 
-		Session::$sessionClosed = false;
-		Session::$sessionName = '';
+		Session::$data = new Map();
+
+		Session::$sessionOpen = false;
+		Session::$sessionName = $config->Session->name;
 		Session::$sessionId = '';
 
-		// Load session name from the config unless parameter "sysnoss" (no session storage) is set to 1.
-		if ($config->Session->name != null && !$gateway->requestParams->get('sysnoss'))
-			Session::$sessionName = $config->Session->name;
-
-		// If session name was not specified use session-less method.
-		if (!Session::$sessionName)
+		// Verify if m_<SessionName> was provided over POST or GET to override session id.
+		if (Session::$sessionName)
 		{
-			Session::$sessionClosed = true;
-			Session::invalidate();
+			if ($gateway->requestParams->has('m_'.Session::$sessionName))
+				Session::$sessionId = $gateway->requestParams->get('m_'.Session::$sessionName);
+			else
+				Session::$sessionId = Cookies::getInstance()->get(Session::$sessionName);
 		}
+
+		// If sessionId is valid, open the session automatically.
+		if (Session::$sessionId)
+		{
+			Session::open();
+		}
+    }
+
+	/*
+	**	Invalidates the session and destroys any information stored.
+	*/
+    public static function invalidate()
+    {
+        Session::$data = new Map();
+    }
+
+	/*
+	**	Opens the session by loading data from session storage (database or PHP's session). The createSession parameter
+	**	controls whether the session will be loaded if exists only, or if it will be created if it doesn't exist.
+	*/
+    public static function open ($createSession=true)
+    {
+		if (Session::$sessionOpen == true || !Session::$sessionName)
+			return;
+
+		$config = Configuration::getInstance();
+		$gateway = Gateway::getInstance();
+
+		// Load session data from the database if specified in the configuration field 'Session.database'.
+		if ($config->Session->database == 'true')
+		{
+			try {
+				if (!Session::dbSessionLoad($createSession))
+					return;
+			}
+			catch (\Exception $e) {
+				throw new Error ('Fatal: Unable to connect to database for session initialization.');
+			}
+		}
+		// Load session data from regular PHP session storage.
 		else
 		{
-			// Load session data from the database if configuration indicates so.
-			if ($config->Session->database == 'true')
-			{
-				// Verify if m_<SessionName> was provided over POST or GET to override session id.
-				if ($gateway->requestParams->has('m_'.Session::$sessionName))
-					Session::$sessionId = $gateway->requestParams->get('m_'.Session::$sessionName);
-				else
-					Session::$sessionId = Cookies::getInstance()->get(Session::$sessionName);
+			session_name (Session::$sessionName);
 
-				try {
-					Session::dbSessionLoad();
-				}
-				catch (\Exception $e) {
-					throw new Error ('Fatal: Unable to connect to database for session initialization.');
-				}
+			if (Session::$sessionId)
+				session_id (Session::$sessionId);
+
+			try {
+				session_set_cookie_params (0, gateway_root());
+				session_start();
 			}
-			// Load session data from regular PHP session storage.
+			catch (\Exception $e)
+			{
+				if (!$createSession)
+					return;
+
+				session_regenerate_id();
+				session_start();
+			}
+
+			if (isset($_SESSION['session']))
+				Session::$data = unserialize ($_SESSION['session']);
 			else
-			{
-				session_name (Session::$sessionName);
+				Session::$data = new Map ();
 
-				// Verify if m_<SessionName> was provided over POST or GET to override session id.
-				if ($gateway->requestParams->has('m_'.Session::$sessionName))
-					Session::$sessionId = $gateway->requestParams->get('m_'.Session::$sessionName);
-
-				try {
-					session_set_cookie_params (0, gateway_root());
-					session_start();
-				}
-				catch (\Exception $e) {
-					session_regenerate_id();
-					session_start();
-				}
-
-				if (isset($_SESSION['session']))
-					Session::$data = unserialize ($_SESSION['session']);
-				else
-					Session::$data = new Map ();
-
-				Session::$sessionId = session_id();
-			}
+			Session::$sessionId = session_id();
 		}
 
         $expires = $config->Session->expires;
@@ -138,14 +161,7 @@ class Session
         }
 
 		Session::$data->last_activity = (string)(new DateTime());
-    }
-
-	/*
-	**	Invalidates the session and destroys any information stored.
-	*/
-    public static function invalidate()
-    {
-        Session::$data = new Map();
+		Session::$sessionOpen = true;
     }
 
 	/*
@@ -153,7 +169,7 @@ class Session
 	*/
     public static function close()
     {
-		if (Session::$sessionClosed == true)
+		if (Session::$sessionOpen == false)
 			return;
 
 		if (Configuration::getInstance()->Session->database == 'true')
@@ -166,7 +182,7 @@ class Session
 			session_write_close();
 		}
 	
-		Session::$sessionClosed = true;
+		Session::$sessionOpen = false;
     }
 
 	/*
@@ -187,16 +203,20 @@ class Session
 	/*
 	**	Loads session data from the database. Fields sessionId and sessionName must already be set.
 	*/
-    public static function dbSessionLoad ()
+    public static function dbSessionLoad ($createSession)
     {
 		$conn = Resources::getInstance()->Database;
 		$create = false;
 
 		// VIOLET Requires to use new parameter-based SQL execution.
 		// VIOLET Requires: Filter
+
         Session::$sessionId = Regex::_extract('/^['.Session::$charset.']+$/', Session::$sessionId);
         if (!Session::$sessionId || Text::length(Session::$sessionId) != 32)
         {
+			if (!$createSession)
+				return false;
+
             Session::$data = new Map();
 			$create = true;
 
@@ -208,6 +228,9 @@ class Session
             Session::$data = $conn->execAssoc('SELECT * FROM ##sessions WHERE session_id='.Filter::filter('escape', Session::$sessionId));
             if (!Session::$data)
             {
+				if (!$createSession)
+					return false;
+
                 Session::$data = new Map();
                 $create = true;
             }
@@ -231,7 +254,8 @@ class Session
         if ($create == true)
             $conn->execQuery('INSERT INTO ##sessions SET last_activity=NOW(), session_id='.Filter::filter('escape', Session::$sessionId).', data=\'\'');
 
-        Cookies::getInstance()->setCookie (Session::$sessionName, Session::$sessionId, Configuration::getInstance()->Session->expires);
+		Cookies::getInstance()->setCookie (Session::$sessionName, Session::$sessionId, Configuration::getInstance()->Session->expires);
+		return true;
     }
 
 	/*
