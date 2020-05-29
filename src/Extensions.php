@@ -39,8 +39,8 @@ class Extensions
 	{
 		self::$loaded = new Map();
 
-		Directory::readDirs(Path::append(dirname(__FILE__), 'PExt'))->dirs->forEach(function($i) { self::load($i->name, true); });
-		Directory::readDirs(Path::append(dirname(__FILE__), 'Ext'))->dirs->forEach(function($i) { self::load($i->name); });
+		Directory::readDirs(Path::append(dirname(__FILE__), 'Ext'))->dirs->forEach(function($i) { self::load($i->name, true); });
+		Directory::readDirs(Path::append(dirname(__FILE__), '../../extensions'))->dirs->forEach(function($i) { self::load($i->name); });
 	}
 
 	/*
@@ -51,7 +51,7 @@ class Extensions
 		if (self::isLoaded($identifier))
 			return;
 
-		require_once(Path::append(dirname(__FILE__), ($isPrimary ? 'PExt' : 'Ext'), $identifier, $identifier.'.php'));
+		require_once(Path::append(dirname(__FILE__), ($isPrimary ? 'Ext' : '../../extensions'), $identifier, $identifier.'.php'));
 
 		self::$loaded->set($identifier, true);
 	}
@@ -61,7 +61,7 @@ class Extensions
 	*/
     public static function isInstalled ($identifier)
     {
-		return Path::exists(Path::append(dirname(__FILE__), 'Ext', $identifier, $identifier.'.php'));
+		return Path::exists(Path::append(dirname(__FILE__), '../../extensions', $identifier, $identifier.'.php'));
 	}
 
 	/*
