@@ -106,6 +106,8 @@ class Session
 		{
 			session_destroy();
 		}
+
+		Cookies::getInstance()->remove (Session::$sessionName);
 	
 		Session::$sessionOpen = false;
 	}
