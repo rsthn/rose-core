@@ -92,7 +92,7 @@ class Gateway
 	private function __construct()
 	{
 		foreach ($_FILES as &$file) {
-			$file['filename'] = $file['tmp_name'];
+			$file['path'] = $file['tmp_name'];
 		}
 
 		$this->requestParams = new Map (array_merge ($_REQUEST, $_FILES));

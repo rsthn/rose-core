@@ -93,7 +93,8 @@ Expr::register('file::size', function ($args)
 
 Expr::register('file::dump', function ($args)
 {
-	return File::dump($args->get(1));
+	File::dump($args->get(1));
+	return null;
 });
 
 Expr::register('file::mtime', function ($args)
@@ -153,4 +154,34 @@ Expr::register('file::create', function ($args)
 Expr::register('dir::create', function ($args)
 {
 	return Directory::create($args->get(1), true);
+});
+
+Expr::register('dir::files', function ($args)
+{
+	return Directory::readFiles ($args->get(1), false, $args->{2} ? $args->{2} : '/.+/')->files;
+});
+
+Expr::register('dir::dirs', function ($args)
+{
+	return Directory::readDirs ($args->get(1), false, $args->{2} ? $args->{2} : '/.+/')->dirs;
+});
+
+Expr::register('dir::entries', function ($args)
+{
+	return Directory::read ($args->get(1), false, $args->{2} ? $args->{2} : '/.+/', 0, Directory::READ_FILES | Directory::READ_DIRS);
+});
+
+Expr::register('dir::files:recursive', function ($args)
+{
+	return Directory::readFiles ($args->get(1), true, $args->{2} ? $args->{2} : '/.+/')->files;
+});
+
+Expr::register('dir::dirs:recursive', function ($args)
+{
+	return Directory::readDirs ($args->get(1), true, $args->{2} ? $args->{2} : '/.+/')->dirs;
+});
+
+Expr::register('dir::entries:recursive', function ($args)
+{
+	return Directory::read ($args->get(1), true, $args->{2} ? $args->{2} : '/.+/', 0, Directory::READ_FILES | Directory::READ_DIRS);
 });

@@ -505,6 +505,14 @@ class Arry
     }
 
 	/*
+	**	Definition of the global setter for items.
+	*/
+    public function __set ($name, $value)
+    {
+        $this->set((int)$name, $value);
+    }
+
+	/*
 	**	Converts the array to its text representation and returns it. The typeName parameter is ignored.
 	*/
 	public function __toString ()

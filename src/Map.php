@@ -355,9 +355,9 @@ class Map
 	/*
 	**	Definition of the global setter for items.
 	*/
-    public function __set ($name, $sprv)
+    public function __set ($name, $value)
     {
-        $this->set($name, $sprv);
+        $this->set($name, $value);
     }
 
 	/*
