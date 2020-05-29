@@ -18,6 +18,7 @@
 namespace Rose\Ext;
 
 use Rose\Session;
+use Rose\Expr;
 
 Expr::register('session::open', function ($args)
 {
