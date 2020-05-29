@@ -39,6 +39,21 @@ Expr::register('session::clear', function ($args)
 	return Session::clear();
 });
 
+Expr::register('session::name', function ($args)
+{
+	return Session::$sessionName;
+});
+
+Expr::register('session::id', function ($args)
+{
+	return Session::$sessionId;
+});
+
+Expr::register('session::isopen', function ($args)
+{
+	return Session::$sessionOpen;
+});
+
 Expr::register('session::data', function ($args)
 {
 	return Session::$data;
