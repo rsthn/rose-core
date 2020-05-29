@@ -147,7 +147,7 @@ class Session
 				session_id (Session::$sessionId);
 
 			try {
-				session_set_cookie_params (0, gateway_root());
+				session_set_cookie_params (0, Gateway::getInstance()->Root);
 				session_start();
 			}
 			catch (\Exception $e)
