@@ -98,14 +98,6 @@ function raiseError ($message)
 }
 
 /*
-**	Returns the relative root (same as Gateway.Root)
-*/
-function gateway_root ()
-{
-	return substr($_SERVER['SCRIPT_NAME'], 0, -9);
-}
-
-/*
 **	Returns true if the object is an instance of the given class.
 */
 function isSubTypeOf ($object, $className)

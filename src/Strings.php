@@ -97,7 +97,7 @@ class Strings
 	/*
 	**	Initializes the instance of the class. Similar to calling getInstance().
 	*/
-	public function init ()
+	public static function init ()
 	{
 		self::getInstance();
 	}
@@ -159,7 +159,7 @@ class Strings
 			if (!$lang || Text::length($lang) > 2 || !Path::exists($this->base.$lang.'/'))
 				$lang = '.';
 
-			$gateway->requestParams->lang = $lang;
+			Gateway::getInstance()->requestParams->lang = $lang;
 		}
 
 		$this->lang = $lang;

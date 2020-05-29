@@ -66,20 +66,17 @@ class Session
 	*/
     public static function init ()
     {
-		$config = Configuration::getInstance();
-		$gateway = Gateway::getInstance();
-
 		Session::$data = new Map();
 
 		Session::$sessionOpen = false;
-		Session::$sessionName = $config->Session->name;
+		Session::$sessionName = Configuration::getInstance()->Session->name;
 		Session::$sessionId = '';
 
 		// Verify if m_<SessionName> was provided over POST or GET to override session id.
 		if (Session::$sessionName)
 		{
-			if ($gateway->requestParams->has('m_'.Session::$sessionName))
-				Session::$sessionId = $gateway->requestParams->get('m_'.Session::$sessionName);
+			if (Gateway::getInstance()->requestParams->has('m_'.Session::$sessionName))
+				Session::$sessionId = Gateway::getInstance()->requestParams->get('m_'.Session::$sessionName);
 			else
 				Session::$sessionId = Cookies::getInstance()->get(Session::$sessionName);
 		}
@@ -92,11 +89,33 @@ class Session
     }
 
 	/*
-	**	Invalidates the session and destroys any information stored.
+	**	Invalidates the session data and destroys any related information (cookies included).
 	*/
-    public static function invalidate()
+    public static function destroy()
     {
-        Session::$data = new Map();
+		Session::$data = new Map();
+
+		if (Session::$sessionOpen == false)
+			return;
+
+		if (Configuration::getInstance()->Session->database == 'true')
+		{
+			Session::dbSessionDelete();
+		}
+		else
+		{
+			session_destroy();
+		}
+	
+		Session::$sessionOpen = false;
+	}
+
+	/*
+	**	Clears the session data.
+	*/
+    public static function clear ()
+    {
+		Session::$data = new Map();
     }
 
 	/*
@@ -108,11 +127,8 @@ class Session
 		if (Session::$sessionOpen == true || !Session::$sessionName)
 			return;
 
-		$config = Configuration::getInstance();
-		$gateway = Gateway::getInstance();
-
 		// Load session data from the database if specified in the configuration field 'Session.database'.
-		if ($config->Session->database == 'true')
+		if (Configuration::getInstance()->Session->database == 'true')
 		{
 			try {
 				if (!Session::dbSessionLoad($createSession))
@@ -151,13 +167,13 @@ class Session
 			Session::$sessionId = session_id();
 		}
 
-        $expires = $config->Session->expires;
+        $expires = Configuration::getInstance()->Session->expires;
         if ($expires < 1) return;
 
         if (Session::$data->last_activity != null)
         {
 			if ((new DateTime())->sub(Session::$data->last_activity) > $expires)
-                Session::invalidate();
+                Session::clear();
         }
 
 		Session::$data->last_activity = (string)(new DateTime());
@@ -268,6 +284,16 @@ class Session
 
         Resources::getInstance()->Database->execQuery(
 			'UPDATE ##sessions SET last_activity=NOW(), user_id='.$user_id.', data='.$data.' WHERE session_id='.Filter::filter('escape', Session::$sessionId)
+		);
+	}
+
+	/*
+	**	Deletes the session data from the database.
+	*/
+    public static function dbSessionDelete ()
+    {
+        Resources::getInstance()->Database->execQuery(
+			'DELETE FROM ##sessions WHERE session_id='.Filter::filter('escape', Session::$sessionId)
 		);
     }
 };
