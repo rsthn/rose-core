@@ -1109,7 +1109,7 @@ Expr::register('join', function ($args)
 Expr::register('split', function ($args)
 {
 	if ($args->get(2) && is_string($args->get(2)))
-		return $args->get(2)->split($args->get(1));
+		return Text::split($args->get(1), $args->get(2));
 
 	return new Arry();
 });
@@ -1379,4 +1379,32 @@ Expr::register('has', function ($args, $parts, $data)
 	}
 
 	return true;
+});
+
+/**
+**	Transforms each value of the array to something else (evaluating the template). Just as in 'each', the i# and i## variables be available.
+**
+**	map <varname> <list-expr> <template>
+*/
+Expr::register('_map', function ($parts, $data)
+{
+	$var_name = Expr::expand($parts->get(1), $data, 'arg');
+	$list = Expr::expand($parts->get(2), $data, 'arg');
+
+	$j = 0;
+
+	$list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$parts, &$data, &$list)
+	{
+		$data->set($var_name, $item);
+		$data->set($var_name . '##', $j++);
+		$data->set($var_name . '#', $key);
+
+		$list->set($key, Expr::expand($parts->get(3), $data, 'arg'));
+	});
+
+	$data->remove($var_name);
+	$data->remove($var_name . '##');
+	$data->remove($var_name . '#');
+
+	return $list;
 });
