@@ -63,17 +63,17 @@ class Gateway
 	/*
 	**	Full URL address to the Gateway's entry point.
 	*/
-	public $EP;
+	public $ep;
 
 	/*
 	**	Relative URL root where the index is found. Usually it is "/".
 	*/
-	public $Root;
+	public $root;
 	
 	/*
 	**	Local file system root where the index is found.
 	*/
-    public $LocalRoot;
+    public $localroot;
 
 	/*
 	**	Returns the instance of this class.
@@ -108,21 +108,21 @@ class Gateway
     public function main ()
     {
 		// Set entry point URL and root.
-		$this->Root = Text::substring($this->serverParams->SCRIPT_NAME, 0, -9);
+		$this->root = Text::substring($this->serverParams->SCRIPT_NAME, 0, -9);
 
-		$this->EP = (Text::toUpperCase($this->serverParams->HTTPS) == 'ON' ? 'https://' : 'http://')
+		$this->ep = (Text::toUpperCase($this->serverParams->HTTPS) == 'ON' ? 'https://' : 'http://')
 					.(Configuration::getInstance()->Gateway->serverName ? Configuration::getInstance()->Gateway->serverName : $this->serverParams->SERVER_NAME)
 					.(
 						(Text::toUpperCase($this->serverParams->HTTPS) == 'ON' ? $this->serverParams->SERVER_PORT != '443' : $this->serverParams->SERVER_PORT != '80')
 						? ':'.$this->serverParams->SERVER_PORT
 						: ''
 					)
-					.$this->Root;
+					.$this->root;
 
-		$this->LocalRoot = getcwd();
+		$this->localroot = getcwd();
 
-        if (Text::substring($this->LocalRoot, -1) != '/')
-            $this->LocalRoot .= '/';
+        if (Text::substring($this->localroot, -1) != '/')
+            $this->localroot .= '/';
 
 		// Initialize session.
 		Session::init();

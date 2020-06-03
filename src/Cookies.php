@@ -93,9 +93,9 @@ class Cookies
 		}
 
         if ($expiration !== null)
-            setcookie ($name, $value, (time()+$expiration), Gateway::getInstance()->Root, $domain);
+            setcookie ($name, $value, (time()+$expiration), Gateway::getInstance()->root, $domain);
         else
-            setcookie ($name, $value, 0, Gateway::getInstance()->Root, $domain);
+            setcookie ($name, $value, 0, Gateway::getInstance()->root, $domain);
     }
 
 	/*
@@ -115,9 +115,9 @@ class Cookies
 		}
 
         if ($expiration !== null)
-            setcookie ($name, $value, (time()+$expiration), Gateway::getInstance()->Root, $domain);
+            setcookie ($name, $value, (time()+$expiration), Gateway::getInstance()->root, $domain);
         else
-            setcookie ($name, $value, 0, Gateway::getInstance()->Root, $domain);
+            setcookie ($name, $value, 0, Gateway::getInstance()->root, $domain);
     }
 
 	/*
@@ -130,7 +130,7 @@ class Cookies
         if (!$domain)
 			$domain = Configuration::getInstance()->Gateway->domain;
 
-        setcookie ($name, null, (time()-186400), Gateway::getInstance()->Root, $domain);
+        setcookie ($name, null, (time()-186400), Gateway::getInstance()->root, $domain);
         Gateway::getInstance()->cookies->remove($name);
     }
 

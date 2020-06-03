@@ -149,7 +149,7 @@ class Session
 				session_id (Session::$sessionId);
 
 			try {
-				session_set_cookie_params (0, Gateway::getInstance()->Root);
+				session_set_cookie_params (0, Gateway::getInstance()->root);
 				session_start();
 			}
 			catch (\Exception $e)
@@ -281,7 +281,7 @@ class Session
 	*/
     public static function dbSessionSave ()
     {
-        $user_id = Session::$data->has('currentUser') && Session::$data->currentUser->user_id ? Filter::filter('escape', Session::$data->currentUser->user_id) : 'NULL';
+        $user_id = Session::$data->has('user') && Session::$data->user->user_id ? Filter::filter('escape', Session::$data->user->user_id) : 'NULL';
 		$data = Filter::filter('xescape', Filter::toDeflate(Filter::toSerialized(Session::$data)));
 
         Resources::getInstance()->Database->execQuery(

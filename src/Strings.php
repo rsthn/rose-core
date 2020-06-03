@@ -142,9 +142,9 @@ class Strings
 			}
 
 			// Attempt to load language code from current user.
-			if (!$lang && Session::$data->currentUser != null && Session::$data->currentUser->lang != null && Path::exists($this->base.Session::$data->currentUser->lang))
+			if (!$lang && Session::$data->user != null && Session::$data->user->lang != null && Path::exists($this->base.Session::$data->user->lang))
 			{
-				$lang = Session::$data->currentUser->lang;
+				$lang = Session::$data->user->lang;
 				$this->langFrom = Strings::FROM_CURRENT_USER;
 			}
 

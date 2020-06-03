@@ -655,11 +655,11 @@ class Expr
 
 			if (is_string($data))
 			{
-				if ($escape)
-					$data = str_replace('&', '&amp;', str_replace('<', '&lt;', str_replace('>', '&gt;', $data)));
+				//if ($escape)
+				//	$data = str_replace('&', '&amp;', str_replace('<', '&lt;', str_replace('>', '&gt;', $data)));
 
-				if ($quote)
-					$data = '"' . $data . '"';
+				//if ($quote)
+				//	$data = '"' . $data . '"';
 			}
 
 			$s->push($data);
@@ -953,8 +953,10 @@ Expr::register('ge', function($args) { return $args->get(1) >= $args->get(2); })
 Expr::register('and', function($args) { for ($i = 1; $i < $args->length(); $i++) if (!$args->get($i)) return false; return true; });
 Expr::register('or', function($args) { for ($i = 1; $i < $args->length(); $i++) if (~~$args->get($i)) return true; return false; });
 
-Expr::register('isnotnull', function($args) { return !!$args->get(1); });
-Expr::register('isnull', function($args) { return !$args->get(1); });
+Expr::register('isnotnull', function($args) { return $args->get(1) !== null; });
+Expr::register('isnull', function($args) { return $args->get(1) === null; });
+Expr::register('isnotempty', function($args) { return !!$args->get(1); });
+Expr::register('isempty', function($args) { return !$args->get(1); });
 
 Expr::register('*', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
 Expr::register('mul', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
@@ -982,15 +984,17 @@ Expr::register('json', function ($args)
 */
 Expr::register('set', function ($args, $parts, $data)
 {
+	$value = $args->get(2);
+
 	if ($parts->get(1)->length > 1)
 	{
 		$ref = Expr::expand($parts->get(1), $data, 'varref');
-		if ($ref != null) $ref[0]->{$ref[1]} = $args->get(2);
+		if ($ref != null) $ref[0]->{$ref[1]} = $value;
 		return '';
 	}
 
-	$data->set($args->get(1), $args->get(2));
-	return '';
+	$data->set($args->get(1), $value);
+	return $value;
 });
 
 /**
@@ -1407,4 +1411,16 @@ Expr::register('_map', function ($parts, $data)
 	$data->remove($var_name . '#');
 
 	return $list;
+});
+
+
+/**
+**	Expands the specified template string with the given data. The sym_open and sym_close will be '{' and '}' respectively.
+**	If no data is provided, current data parameter will be used.
+**
+**	expand <template> <data>
+*/
+Expr::register('expand', function ($args, $parts, $data)
+{
+	return Expr::expand (Expr::parseTemplate ($args->get(1), '{', '}'), $args->length == 3 ? $args->get(2) : $data);
 });
