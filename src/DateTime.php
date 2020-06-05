@@ -142,7 +142,7 @@ class DateTime
 	*/
 	public function sub ($datetime, $unit=DateTime::SECOND)
 	{
-		return Math::round(($this->timestamp - DateTime::getUnixTimestamp($datetime)) / DateTime::getUnit($unit));
+		return Math::round (($this->timestamp - DateTime::getUnixTimestamp($datetime)) / DateTime::getUnit($unit));
 	}
 
 	/*
@@ -150,7 +150,7 @@ class DateTime
 	*/
 	public function add ($span, $unit=DateTime::SECOND)
 	{
-		return $this->setTimestamp($this->timestamp + $span * DateTime::getUnit($unit));
+		return $this->setTimestamp ($this->timestamp + $span * DateTime::getUnit($unit));
 	}
 
 	/*
@@ -162,6 +162,9 @@ class DateTime
         {
             case 'DATETIME':
 				return sprintf("%4d-%02d-%02d %02d:%02d:%02d", $this->year, $this->month, $this->day, $this->hour, $this->minute, $this->second);
+
+			case 'UTC':
+				return strftime("%a, %d %b %Y %H:%M:%S GMT", $this->getTimestamp());
 
             case 'TIME':
 				return sprintf("%02d:%02d:%02d", $this->hour, $this->minute, $this->second);

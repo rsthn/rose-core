@@ -19,6 +19,8 @@ namespace Rose;
 
 use Rose\Errors\Error;
 
+use Rose\Data\Connection;
+
 use Rose\Configuration;
 use Rose\Resources;
 use Rose\Filter;
@@ -57,9 +59,9 @@ class Session
 	public static $sessionName;
 	
 	/*
-	**	Charset used by generateId() to generate session IDs.
+	**	Charset used by generateId() to generate session IDs (ensure there are 32 characters).
 	*/
-    public static $charset = '78JKLMFOPQRST0GHI6N12UV34WXYZ5MFOEBPQR9ACD';
+    public static $charset = 'uY3m8v7fJegDp4cnq6zb0w9kaRxhST25';
 
 	/*
 	**	Initializes the Session singleton.
@@ -107,8 +109,7 @@ class Session
 			session_destroy();
 		}
 
-		Cookies::getInstance()->remove (Session::$sessionName);
-	
+		Cookies::getInstance()->remove(Session::$sessionName);
 		Session::$sessionOpen = false;
 	}
 
@@ -149,16 +150,18 @@ class Session
 				session_id (Session::$sessionId);
 
 			try {
-				session_set_cookie_params (0, Gateway::getInstance()->root);
-				session_start();
+				if (!Session::$sessionId)
+					throw new \Exception();
+
+				session_start([ 'use_cookies' => 0 ]);
 			}
 			catch (\Exception $e)
 			{
 				if (!$createSession)
 					return;
 
-				session_regenerate_id();
-				session_start();
+				session_id (Session::generateId(48));
+				session_start([ 'use_cookies' => 0 ]);
 			}
 
 			if (isset($_SESSION['session']))
@@ -168,6 +171,8 @@ class Session
 
 			Session::$sessionId = session_id();
 		}
+
+		Cookies::getInstance()->setCookie (Session::$sessionName, Session::$sessionId, Configuration::getInstance()->Session->expires);
 
         $expires = Configuration::getInstance()->Session->expires;
         if ($expires < 1) return;
@@ -204,18 +209,77 @@ class Session
     }
 
 	/*
-	**	Generates a random ID of the desired length.
+	**	Generates a random session ID of the specified length.
 	*/
-    private static function generateId ($length)
+    private static function generateId ($m)
     {
-		$result = '';
+		$n = (int)(($m*5+7) / 8);
 
-		$n = Text::length (Session::$charset);
+		$value = 0;
+		$state = 0;
 
-        while ($length-- > 0)
-            $result .= Session::$charset[Math::rand() % $n];
+		$bytes = random_bytes($n);
+		$s = '';
 
-        return $result;
+		for ($i = 0; $m > 0; $i++, $m--)
+		{
+			$val = ord($bytes[$i]);
+
+			switch ($state)
+			{
+				case 0: // $value = 0-bits
+					$value = (($val >> 5) & 0x07) << 0;
+					$val &= 0x1F;
+					$state++;
+					break;
+
+				case 1: // $value = 3-bits
+					$value |= (($val >> 5) & 0x07) << 3;
+					$val &= 0x1F;
+					$state++;
+					break;
+
+				case 2: // $value = 6-bits
+					$val = $value & 0x1F;
+					$value >>= 5;
+					$state++; $i--;
+					break;
+
+				case 3: // $value = 1-bits
+					$value |= (($val >> 5) & 0x07) << 1;
+					$val &= 0x1F;
+					$state++;
+					break;
+
+				case 4: // $value = 4-bits
+					$value |= (($val >> 5) & 0x07) << 4;
+					$val &= 0x1F;
+					$state++;
+					break;
+
+				case 5: // $value = 7-bits
+					$val = $value & 0x1F;
+					$value >>= 5;
+					$state++; $i--;
+					break;
+
+				case 6: // $value = 2-bits
+					$value |= (($val >> 5) & 0x07) << 2;
+					$val &= 0x1F;
+					$state++;
+					break;
+
+				case 7: // $value = 5-bits
+					$val = $value & 0x1F;
+					$value >>= 5;
+					$state = 0; $i--;
+					break;
+			}
+
+			$s .= Session::$charset[$val];
+		}
+
+		return $s;
     }
 
 	/*
@@ -226,11 +290,8 @@ class Session
 		$conn = Resources::getInstance()->Database;
 		$create = false;
 
-		// VIOLET Requires to use new parameter-based SQL execution.
-		// VIOLET Requires: Filter
-
-        Session::$sessionId = Regex::_extract('/^['.Session::$charset.']+$/', Session::$sessionId);
-        if (!Session::$sessionId || Text::length(Session::$sessionId) != 32)
+		Session::$sessionId = Regex::_extract('/^['.Session::$charset.']+$/', Session::$sessionId);
+        if (!Session::$sessionId || Text::length(Session::$sessionId) != 48)
         {
 			if (!$createSession)
 				return false;
@@ -238,12 +299,11 @@ class Session
             Session::$data = new Map();
 			$create = true;
 
-            do { Session::$sessionId = Session::generateId(32); }
-            while (null != $conn->execAssoc('SELECT session_id FROM ##sessions WHERE session_id='.Filter::filter('escape', Session::$sessionId)));
+            Session::$sessionId = Session::generateId(48);
         }
         else
         {
-            Session::$data = $conn->execAssoc('SELECT * FROM ##sessions WHERE session_id='.Filter::filter('escape', Session::$sessionId));
+            Session::$data = $conn->execAssoc("SELECT * FROM ##sessions WHERE session_id=".Connection::escape(Session::$sessionId));
             if (!Session::$data)
             {
 				if (!$createSession)
@@ -256,23 +316,21 @@ class Session
             {
                 try
                 {
-					Session::$data = Filter::fromSerialized (Filter::fromDeflate (Session::$data->data));
-                    if (!Session::$data || typeOf(Session::$data) != 'Rose\\Map')
+					Session::$data = unserialize (base64_decode (Session::$data->data));
+                    if (!Session::$data || \Rose\typeOf(Session::$data) != 'Rose\\Map')
                         Session::$data = new Map();
                 }
                 catch (\Exception $e)
                 {
                     Session::$data = new Map();
-                    trace('Session: ' + $e->getMessage());
+                    \Rose\trace ('(Error: Session): ' + $e->getMessage());
                 }
             }
 		}
 
-		// VIOLET Replace NOW() With a DateTime from local objects.
         if ($create == true)
-            $conn->execQuery('INSERT INTO ##sessions SET last_activity=NOW(), session_id='.Filter::filter('escape', Session::$sessionId).', data=\'\'');
+            $conn->execQuery("INSERT INTO ##sessions SET last_activity='".(string)(new DateTime())."', session_id=".Connection::escape(Session::$sessionId).", data=''");
 
-		Cookies::getInstance()->setCookie (Session::$sessionName, Session::$sessionId, Configuration::getInstance()->Session->expires);
 		return true;
     }
 
@@ -281,11 +339,11 @@ class Session
 	*/
     public static function dbSessionSave ()
     {
-        $user_id = Session::$data->has('user') && Session::$data->user->user_id ? Filter::filter('escape', Session::$data->user->user_id) : 'NULL';
-		$data = Filter::filter('xescape', Filter::toDeflate(Filter::toSerialized(Session::$data)));
+        $user_id = Session::$data->has('user') && Session::$data->user->user_id ? Connection::escape(Session::$data->user->user_id) : 'NULL';
+		$data = Connection::escape(base64_encode(serialize(Session::$data)));
 
         Resources::getInstance()->Database->execQuery(
-			'UPDATE ##sessions SET last_activity=NOW(), user_id='.$user_id.', data='.$data.' WHERE session_id='.Filter::filter('escape', Session::$sessionId)
+			"UPDATE ##sessions SET last_activity='".(string)(new DateTime())."', user_id=".$user_id.", data=".$data." WHERE session_id=".Connection::escape(Session::$sessionId)
 		);
 	}
 
@@ -295,7 +353,7 @@ class Session
     public static function dbSessionDelete ()
     {
         Resources::getInstance()->Database->execQuery(
-			'DELETE FROM ##sessions WHERE session_id='.Filter::filter('escape', Session::$sessionId)
+			"DELETE FROM ##sessions WHERE session_id=".Connection::escape(Session::$sessionId)
 		);
     }
 };

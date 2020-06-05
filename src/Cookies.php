@@ -20,6 +20,7 @@ namespace Rose;
 use Rose\Configuration;
 use Rose\Gateway;
 use Rose\Text;
+use Rose\DateTime;
 
 /*
 **	Stores and retrieves persistent system parameters.
@@ -79,12 +80,37 @@ class Cookies
 	**	Sets a cookie with optional expiration value (delta from current time), the cookie is added to the
 	**	cookies of the Gateway.
 	*/
-    public function set ($name, $value, $expiration=null, $domain=null)
+    private function setCookieHeader ($name, $value, $ttl=null, $domain=null, $path=null)
+    {
+		$path = $path == null ? Gateway::getInstance()->root : $path;
+		$domain = $domain == null ? Configuration::getInstance()->Gateway->serverName : $domain;
+
+		if ($value === null)
+		{
+			$expiration = -608400;
+			$value = 'deleted';
+		}
+
+		$header = $name.'='.$value;
+
+		if ($expiration)
+			$header .= '; Expires=' . (new DateTime())->add($expiration, DateTime::SECOND)->format('UTC');
+
+		if ($domain) $header .= '; Domain='.$domain;
+		if ($path) $header .= '; Path='.$path;
+
+		$header .= '; SameSite=Strict';
+
+		header('Set-Cookie: '.$header);
+	}
+
+	/*
+	**	Sets a cookie with optional ttl value (time to live from current time), the cookie is added to the
+	**	cookies of the Gateway.
+	*/
+    public function set ($name, $value, $ttl=null, $domain=null)
     {
         if (!$name) return;
-
-		if (!$domain)
-			$domain = Configuration::getInstance()->Gateway->domain;
 
 		if ($value == null)
 		{
@@ -92,21 +118,18 @@ class Cookies
 			return;
 		}
 
-        if ($expiration !== null)
-            setcookie ($name, $value, (time()+$expiration), Gateway::getInstance()->root, $domain);
-        else
-            setcookie ($name, $value, 0, Gateway::getInstance()->root, $domain);
+		if ($ttl !== null)
+			$this->setCookieHeader ($name, $value, $ttl, $domain);
+		else
+			$this->setCookieHeader ($name, $value, 0, $domain);
     }
 
 	/*
 	**	Similar to set() but the request parameters of Gateway will not be modified.
 	*/
-    public function setCookie ($name, $value, $expiration=null, $domain=null)
+    public function setCookie ($name, $value, $ttl=null, $domain=null)
     {
 		if (!$name) return;
-
-        if (!$domain)
-            $domain = Configuration::getInstance()->Gateway->domain;
 
         if ($value == null)
         {
@@ -114,10 +137,10 @@ class Cookies
             return;
 		}
 
-        if ($expiration !== null)
-            setcookie ($name, $value, (time()+$expiration), Gateway::getInstance()->root, $domain);
-        else
-            setcookie ($name, $value, 0, Gateway::getInstance()->root, $domain);
+		if ($ttl !== null)
+			$this->setCookieHeader ($name, $value, $ttl, $domain);
+		else
+			$this->setCookieHeader ($name, $value, 0, $domain);
     }
 
 	/*
@@ -127,10 +150,8 @@ class Cookies
     {
         if (!$name) return;
 
-        if (!$domain)
-			$domain = Configuration::getInstance()->Gateway->domain;
+		$this->setCookieHeader ($name, null, 0, $domain);
 
-        setcookie ($name, null, (time()-186400), Gateway::getInstance()->root, $domain);
         Gateway::getInstance()->cookies->remove($name);
     }
 
