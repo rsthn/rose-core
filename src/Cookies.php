@@ -87,14 +87,16 @@ class Cookies
 
 		if ($value === null)
 		{
-			$expiration = -608400;
+			$ttl = -608400;
 			$value = 'deleted';
 		}
 
 		$header = $name.'='.$value;
 
-		if ($expiration)
-			$header .= '; Expires=' . (new DateTime())->add($expiration, DateTime::SECOND)->format('UTC');
+		if ($ttl > 0)
+			$header .= '; Expires=' . (new DateTime())->add($ttl, DateTime::SECOND)->format('UTC');
+		else if ($ttl < 0)
+			$header .= '; MaxAge=-1; Expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
 		if ($domain) $header .= '; Domain='.$domain;
 		if ($path) $header .= '; Path='.$path;

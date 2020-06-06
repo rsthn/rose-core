@@ -119,6 +119,16 @@ class Gateway
 					)
 					.$this->root;
 
+		if (Configuration::getInstance()->Gateway->allow_origin)
+		{
+			if (Configuration::getInstance()->Gateway->allow_origin == '*')
+				header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
+			else
+				header('Access-Control-Allow-Origin: '.Configuration::getInstance()->Gateway->allow_origin);
+
+			header('Access-Control-Allow-Credentials: true');
+		}
+
 		$this->localroot = getcwd();
 
         if (Text::substring($this->localroot, -1) != '/')

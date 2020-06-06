@@ -172,7 +172,11 @@ class Session
 			if (!isset($_SESSION['session']))
 			{
 				if (!$createSession)
+				{
+					Cookies::getInstance()->remove(Session::$sessionName);
+					session_destroy();
 					return;
+				}
 
 				Session::$data = new Map ();
 			}
