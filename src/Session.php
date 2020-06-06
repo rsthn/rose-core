@@ -81,12 +81,17 @@ class Session
 				Session::$sessionId = Gateway::getInstance()->requestParams->get('m_'.Session::$sessionName);
 			else
 				Session::$sessionId = Cookies::getInstance()->get(Session::$sessionName);
+
+			Session::$sessionId = Regex::_extract('/^['.Session::$charset.']+$/', Session::$sessionId);
+
+			if (!Session::$sessionId || Text::length(Session::$sessionId) != 48)
+				Session::$sessionId = '';
 		}
 
 		// If sessionId is valid, open the session automatically.
 		if (Session::$sessionId)
 		{
-			Session::open();
+			Session::open(false);
 		}
     }
 
@@ -164,10 +169,15 @@ class Session
 				session_start([ 'use_cookies' => 0 ]);
 			}
 
-			if (isset($_SESSION['session']))
-				Session::$data = unserialize ($_SESSION['session']);
-			else
+			if (!isset($_SESSION['session']))
+			{
+				if (!$createSession)
+					return;
+
 				Session::$data = new Map ();
+			}
+			else
+				Session::$data = unserialize ($_SESSION['session']);
 
 			Session::$sessionId = session_id();
 		}

@@ -47,6 +47,9 @@ Expr::register('session::name', function ($args)
 
 Expr::register('session::id', function ($args)
 {
+	if ($args->length == 2)
+		Session::$sessionId = $args->get(1);
+
 	return Session::$sessionId;
 });
 
