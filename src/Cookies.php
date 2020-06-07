@@ -101,14 +101,14 @@ class Cookies
 		if ($domain) $header .= '; Domain='.$domain;
 		if ($path) $header .= '; Path='.$path;
 
-		if (Configuration::getInstance()->Session->same_site)
-			$sameSite = Configuration::getInstance()->Session->same_site;
+		if (Configuration::getInstance()->Gateway->same_site)
+			$sameSite = Configuration::getInstance()->Gateway->same_site;
 		else
 			$sameSite = 'None';
 
 		$header .= '; SameSite='.$sameSite;
 
-		if ($sameSite == 'None' && Gateway::$getInstance()->secure)
+		if ($sameSite == 'None' && Gateway::getInstance()->secure)
 			$header .= '; Secure';
 			
 		$header .= '; HttpOnly';
