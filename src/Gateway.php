@@ -76,6 +76,11 @@ class Gateway
     public $localroot;
 
 	/*
+	**	Indicates if we're on a secure context (HTTPS).
+	*/
+	public $secure;
+
+	/*
 	**	Returns the instance of this class.
 	*/
     public static function getInstance ()
@@ -110,10 +115,12 @@ class Gateway
 		// Set entry point URL and root.
 		$this->root = Text::substring($this->serverParams->SCRIPT_NAME, 0, -9);
 
-		$this->ep = (Text::toUpperCase($this->serverParams->HTTPS) == 'ON' ? 'https://' : 'http://')
-					.(Configuration::getInstance()->Gateway->serverName ? Configuration::getInstance()->Gateway->serverName : $this->serverParams->SERVER_NAME)
+		$this->secure = Text::toUpperCase($this->serverParams->HTTPS) == 'ON';
+
+		$this->ep = ($this->secure ? 'https://' : 'http://')
+					.(Configuration::getInstance()->Gateway->server_name ? Configuration::getInstance()->Gateway->server_name : $this->serverParams->SERVER_NAME)
 					.(
-						(Text::toUpperCase($this->serverParams->HTTPS) == 'ON' ? $this->serverParams->SERVER_PORT != '443' : $this->serverParams->SERVER_PORT != '80')
+						($this->secure ? $this->serverParams->SERVER_PORT != '443' : $this->serverParams->SERVER_PORT != '80')
 						? ':'.$this->serverParams->SERVER_PORT
 						: ''
 					)

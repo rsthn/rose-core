@@ -83,7 +83,7 @@ class Cookies
     private function setCookieHeader ($name, $value, $ttl=null, $domain=null, $path=null)
     {
 		$path = $path == null ? Gateway::getInstance()->root : $path;
-		$domain = $domain == null ? Configuration::getInstance()->Gateway->serverName : $domain;
+		$domain = $domain == null ? Configuration::getInstance()->Gateway->server_name : $domain;
 
 		if ($value === null)
 		{
@@ -101,7 +101,17 @@ class Cookies
 		if ($domain) $header .= '; Domain='.$domain;
 		if ($path) $header .= '; Path='.$path;
 
-		$header .= '; SameSite=Lax';
+		if (Configuration::getInstance()->Session->same_site)
+			$sameSite = Configuration::getInstance()->Session->same_site;
+		else
+			$sameSite = 'None';
+
+		$header .= '; SameSite='.$sameSite;
+
+		if ($sameSite == 'None' && Gateway::$getInstance()->secure)
+			$header .= '; Secure';
+			
+		$header .= '; HttpOnly';
 
 		header('Set-Cookie: '.$header);
 	}
