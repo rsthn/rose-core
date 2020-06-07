@@ -101,7 +101,7 @@ class Cookies
 		if ($domain) $header .= '; Domain='.$domain;
 		if ($path) $header .= '; Path='.$path;
 
-		$header .= '; SameSite=Strict';
+		$header .= '; SameSite=Lax';
 
 		header('Set-Cookie: '.$header);
 	}
