@@ -39,19 +39,20 @@ class Extensions
 	{
 		self::$loaded = new Map();
 
-		Directory::readDirs(Path::append(dirname(__FILE__), 'Ext'))->dirs->forEach(function($i) { self::load($i->name, true); });
-		Directory::readDirs(Path::append(dirname(__FILE__), '../../extensions'))->dirs->forEach(function($i) { self::load($i->name); });
+		Directory::readDirs(Path::append(dirname(__FILE__), 'Ext'))->dirs->forEach(function($i) { self::load($i->name); });
+		Directory::readDirs(Path::append(dirname(__FILE__), '../../extensions'))->dirs->forEach(function($i) { self::load($i->name, '../../extensions'); });
+		Directory::readDirs(Path::append(dirname(__FILE__), '../../../../extensions'))->dirs->forEach(function($i) { self::load($i->name, '../../../../extensions'); });
 	}
 
 	/*
 	**	Loads an extension given its identifier.
 	*/
-    public static function load ($identifier, $isPrimary=false)
+    public static function load ($identifier, $path='Ext')
     {
 		if (self::isLoaded($identifier))
 			return;
 
-		require_once(Path::append(dirname(__FILE__), ($isPrimary ? 'Ext' : '../../extensions'), $identifier, $identifier.'.php'));
+		require_once(Path::append(dirname(__FILE__), ($path), $identifier, $identifier.'.php'));
 
 		self::$loaded->set($identifier, true);
 	}
