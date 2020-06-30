@@ -982,9 +982,9 @@ Expr::register('json', function ($args)
 **
 **	set <var-name> <expr>
 */
-Expr::register('set', function ($args, $parts, $data)
+Expr::register('_set', function ($parts, $data)
 {
-	$value = $args->get(2);
+	$value = Expr::value($parts->get(2), $data);
 
 	if ($parts->get(1)->length > 1)
 	{
@@ -993,9 +993,10 @@ Expr::register('set', function ($args, $parts, $data)
 		return '';
 	}
 
-	$data->set($args->get(1), $value);
+	$data->set(Expr::value($parts->get(1), $data), $value);
 	return $value;
 });
+
 
 /**
 **	Returns the expression without white-space on the left or right. The expression can be a string or an array.
@@ -1025,6 +1026,39 @@ Expr::register('upper', function ($args)
 Expr::register('lower', function ($args)
 {
 	return $args->get(1) ? (typeOf($args->get(1)) == 'Rose\\Arry' ? $args->get(1)->map(function($e) { return strtolower($e); }) : strtolower($args->get(1))) : '';
+});
+
+/**
+**	Returns a sub-string of the given string.
+**
+**	substr <start> <count> <string>
+**	substr <start> <string>
+*/
+Expr::register('substr', function ($args)
+{
+	$s = (string)$args->get($args->length-1);
+
+	$start = 0;
+	$count = null;
+
+	if ($args->length == 4)
+	{
+		$start = (int)($args->get(1));
+		$count = (int)($args->get(2));
+	}
+	else
+	{
+		$start = (int)($args->get(1));
+		$count = null;
+	}
+
+	if ($start < 0) $start += Text::length($s);
+	if ($count < 0) $count += Text::length($s);
+
+	if ($count === null)
+		$count = Text::length($s) - $start;
+
+	return Text::substring ($s, $start, $count);
 });
 
 /**

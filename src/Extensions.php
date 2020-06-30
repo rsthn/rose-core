@@ -41,7 +41,9 @@ class Extensions
 
 		Directory::readDirs(Path::append(dirname(__FILE__), 'Ext'))->dirs->forEach(function($i) { self::load($i->name); });
 		Directory::readDirs(Path::append(dirname(__FILE__), '../../extensions'))->dirs->forEach(function($i) { self::load($i->name, '../../extensions'); });
-		Directory::readDirs(Path::append(dirname(__FILE__), '../../../../extensions'))->dirs->forEach(function($i) { self::load($i->name, '../../../../extensions'); });
+
+		if (Path::exists(Path::append(dirname(__FILE__), '../../../../extensions')))
+			Directory::readDirs(Path::append(dirname(__FILE__), '../../../../extensions'))->dirs->forEach(function($i) { self::load($i->name, '../../../../extensions'); });
 	}
 
 	/*
