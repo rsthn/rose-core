@@ -1028,6 +1028,39 @@ Expr::register('lower', function ($args)
 });
 
 /**
+**	Returns a sub-string of the given string.
+**
+**	substr <start> <count> <string>
+**	substr <start> <string>
+*/
+Expr::register('substr', function ($args)
+{
+	$s = (string)$args->get($args->length-1);
+
+	$start = 0;
+	$count = null;
+
+	if ($args->length == 4)
+	{
+		$start = (int)($args->get(1));
+		$count = (int)($args->get(2));
+	}
+	else
+	{
+		$start = (int)($args->get(1));
+		$count = null;
+	}
+
+	if ($start < 0) $start += Text::length($s);
+	if ($count < 0) $count += Text::length($s);
+
+	if ($count === null)
+		$count = Text::length($s) - $start;
+
+	return Text::substring ($s, $start, $count);
+});
+
+/**
 **	Converts all new-line chars in the expression to <br/>, the expression can be a string or an array.
 **
 **	nl2br <expr>
