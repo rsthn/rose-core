@@ -994,7 +994,7 @@ Expr::register('_set', function ($parts, $data)
 	}
 
 	$data->set(Expr::value($parts->get(1), $data), $value);
-	return $value;
+	return '';
 });
 
 
