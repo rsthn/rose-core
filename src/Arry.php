@@ -440,7 +440,7 @@ class Arry
 	*/
     public function forEach ($function)
     {
-		foreach ($this->__nativeArray as $index => $item)
+		foreach ($this->__nativeArray as $index => &$item)
 		{
 			$function ($item, $index, $this);
 		}

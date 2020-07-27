@@ -921,6 +921,19 @@ class Expr
 	{
 		Expr::$functions->set ($name, $fn);
 	}
+
+	/**
+	**	Calls an expression function.
+	**
+	**	>> object call (string name, object $args, object $data);
+	*/
+	public static function call ($name, $args, $data=null)
+	{
+		if (Expr::$functions->has($name))
+			return Expr::$functions->get($name) ($args, $data);
+
+		return null;
+	}
 };
 
 Expr::$functions = new Map();
