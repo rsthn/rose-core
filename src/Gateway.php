@@ -141,13 +141,10 @@ class Gateway
         if (Text::substring($this->localroot, -1) != '/')
             $this->localroot .= '/';
 
-		// Initialize session.
+		// Initialize dependencies.
 		Session::init();
-
-		// Initialize strings.
 		Strings::init();
-
-		// Load extensions from the 'Ext' directory.
+		Locale::init();
 		Extensions::init();
 
 		// If service parameter is set in Gateway configuration, load it as 'srv' to force activation of service.

@@ -19,6 +19,7 @@ namespace Rose;
 
 use Rose\Regex;
 use Rose\Text;
+use Rose\Expr;
 use Rose\Arry;
 
 /*
@@ -205,7 +206,6 @@ class Map
         return $this->__nativeArray[$key];
     }
 
-
 	/*
 	**	Returns a new map that is the result of merging the current map with the given map.
 	*/
@@ -221,11 +221,40 @@ class Map
     }
 
 	/*
+	**	Maps each value of the map to another value using the specified filter function.
+	*/
+    public function map ($filter)
+    {
+		foreach ($this->__nativeArray as $name => &$item)
+		{
+			$item = $filter($item, $name);
+		}
+
+        return $this;
+	}
+
+	/*
+	**	Returns a new array containing only elements that were accepted by the given filter function (by returning true).
+	*/
+    public function filter ($filter)
+    {
+		$tmp = new Arry();
+
+		foreach ($this->__nativeArray as $name => &$item)
+		{
+			if ($filter($item, $name))
+				$tmp->push($item);
+		}
+
+        return $tmp;
+	}
+
+	/*
 	**	For each of the items in the map the specified function is called.
 	*/
     public function forEach ($function)
     {
-		foreach ($this->__nativeArray as $key => $item)
+		foreach ($this->__nativeArray as $key => &$item)
 		{
 			$function ($item, $key, $this);
 		}

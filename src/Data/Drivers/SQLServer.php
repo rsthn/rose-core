@@ -114,7 +114,7 @@ class SQLServer extends Driver
 
 	public function fetchRow ($rs, $conn)
 	{
-		$tmp = sqlsrv_fetch_row ($rs);
+		$tmp = sqlsrv_fetch_array($rs);
 
 		if ($tmp === false || $tmp == null)
 			$tmp = null;

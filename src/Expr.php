@@ -921,6 +921,19 @@ class Expr
 	{
 		Expr::$functions->set ($name, $fn);
 	}
+
+	/**
+	**	Calls an expression function.
+	**
+	**	>> object call (string name, object $args, object $data);
+	*/
+	public static function call ($name, $args, $data=null)
+	{
+		if (Expr::$functions->has($name))
+			return Expr::$functions->get($name) ($args, null, $data);
+
+		return null;
+	}
 };
 
 Expr::$functions = new Map();
@@ -1062,6 +1075,16 @@ Expr::register('substr', function ($args)
 });
 
 /**
+**	Replaces a matching string with the given replacement string in a given text.
+**
+**	replace <search> <replacement> <text>
+*/
+Expr::register('replace', function ($args)
+{
+	return Text::replace($args->get(1), $args->get(2), $args->get(3));
+});
+
+/**
 **	Converts all new-line chars in the expression to <br/>, the expression can be a string or an array.
 **
 **	nl2br <expr>
@@ -1193,6 +1216,8 @@ Expr::register('_each', function ($parts, $data)
 
 	$s = new Arry();
 	$j = 0;
+
+	if (!$list) return $s;
 
 	$list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$parts, &$data)
 	{
@@ -1430,6 +1455,8 @@ Expr::register('_map', function ($parts, $data)
 	$list = Expr::expand($parts->get(2), $data, 'arg');
 
 	$j = 0;
+
+	if (!$list) return $list;
 
 	$list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$parts, &$data, &$list)
 	{

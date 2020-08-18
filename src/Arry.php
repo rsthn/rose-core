@@ -100,7 +100,7 @@ class Arry
     public function get ($index)
     {
         if (!Math::inrange ($index, 0, sizeof($this->__nativeArray)-1))
-            throw new ArgumentError ('Index Out of Bounds');
+            throw new ArgumentError ('Index Out of Bounds: ' . $index);
 
         return $this->__nativeArray[$index];
     }
@@ -440,7 +440,7 @@ class Arry
 	*/
     public function forEach ($function)
     {
-		foreach ($this->__nativeArray as $index => $item)
+		foreach ($this->__nativeArray as $index => &$item)
 		{
 			$function ($item, $index, $this);
 		}

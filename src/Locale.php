@@ -19,6 +19,7 @@ namespace Rose;
 
 use Rose\Configuration;
 use Rose\Text;
+use Rose\Expr;
 
 /*
 **	Configures and provides locale-related information and formatting options.
@@ -37,6 +38,14 @@ class Locale
     public $timezone;
 
 	/*
+	**	Initializes the instance of the class. Similar to calling getInstance().
+	*/
+    public static function init ()
+    {
+		self::getInstance();
+	}
+
+	/*
 	**	Returns the instance of this class.
 	*/
     public static function getInstance ()
@@ -48,7 +57,7 @@ class Locale
 		}
 
         return Locale::$objectInstance;
-    }
+	}
 
 	/*
 	**	Private constructor to prevent instantiation. Use getInstance() to get the singleton instance.
@@ -83,7 +92,7 @@ class Locale
     {
 		$config = Configuration::getInstance();
 
-        switch ($formatType = Text::toUpperCase($formatType))
+        switch (Text::toUpperCase($formatType))
         {
             case 'NUMBER':
 				return number_format((double)$value, $config->Locale->numeric[1], $config->Locale->numeric[0], $config->Locale->numeric[2]);
@@ -115,11 +124,11 @@ class Locale
             case 'ISO_DATETIME':
 				return strftime('%Y-%m-%d %H:%M:%S', is_object($value) ? $value->getTimestamp() : (int)$value);
 
-            default:
-				if (Text::substring ($formatType, 0, 3) == 'DT_')
+			default:
+				if (Text::toUpperCase(Text::substring ($formatType, 0, 3)) == 'DT_')
 					return strftime ($config->Locale->get($formatType), is_object($value) ? $value->getTimestamp() : (int)$value);
 
-				if ((Text::substring($formatType,0,7) == 'NUMERIC'))
+				if (Text::toUpperCase(Text::substring($formatType,0,7)) == 'NUMERIC')
 				{
 					$tmp = $config->Locale->get($formatType);
 					return number_format ((double)$value, $tmp[1], $tmp[0], $tmp[2]);
@@ -129,3 +138,19 @@ class Locale
         }
     }
 };
+
+/*
+**	Register expression functions to access locale formatting functions.
+*/
+
+Expr::register('locale::number', function ($args) { return Locale::getInstance()->format('NUMBER', $args->get(1)); });
+Expr::register('locale::integer', function ($args) { return Locale::getInstance()->format('INTEGER', $args->get(1)); });
+Expr::register('locale::time', function ($args) { return Locale::getInstance()->format('TIME', $args->get(1)); });
+Expr::register('locale::date', function ($args) { return Locale::getInstance()->format('DATE', $args->get(1)); });
+Expr::register('locale::datetime', function ($args) { return Locale::getInstance()->format('DATETIME', $args->get(1)); });
+Expr::register('locale::gmt', function ($args) { return Locale::getInstance()->format('GMT', $args->get(1)); });
+Expr::register('locale::utc', function ($args) { return Locale::getInstance()->format('UTC', $args->get(1)); });
+Expr::register('locale::iso_date', function ($args) { return Locale::getInstance()->format('ISO_DATE', $args->get(1)); });
+Expr::register('locale::iso_time', function ($args) { return Locale::getInstance()->format('ISO_TIME', $args->get(1)); });
+Expr::register('locale::iso_datetime', function ($args) { return Locale::getInstance()->format('ISO_DATETIME', $args->get(1)); });
+Expr::register('locale::format', function ($args) { return Locale::getInstance()->format($args->get(1), $args->get(2)); });
