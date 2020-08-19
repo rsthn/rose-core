@@ -106,11 +106,12 @@ class Cookies
 		else
 			$sameSite = 'None';
 
-		$header .= '; SameSite='.$sameSite;
+		if (Configuration::getInstance()->Gateway->allow_origin && Gateway::getInstance()->serverParams->has('HTTP_ORIGIN'))
+			$header .= '; SameSite='.$sameSite;
 
 		if ($sameSite == 'None' && Gateway::getInstance()->secure)
 			$header .= '; Secure';
-			
+
 		$header .= '; HttpOnly';
 
 		header('Set-Cookie: '.$header);

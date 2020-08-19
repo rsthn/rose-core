@@ -50,7 +50,7 @@ class SQLServer extends Driver
 		$s = '';
 
 		foreach(sqlsrv_errors() as $a)
-			$s .= $a->message.'<br/>';
+			$s .= $a['message'].'<br/>';
 
 		return $s;
     }

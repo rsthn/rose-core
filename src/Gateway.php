@@ -126,7 +126,7 @@ class Gateway
 					)
 					.$this->root;
 
-		if (Configuration::getInstance()->Gateway->allow_origin)
+		if (Configuration::getInstance()->Gateway->allow_origin && $this->serverParams->has('HTTP_ORIGIN'))
 		{
 			if (Configuration::getInstance()->Gateway->allow_origin == '*')
 				header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);

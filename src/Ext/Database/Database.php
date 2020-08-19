@@ -72,6 +72,11 @@ Expr::register('db::table:array', function ($args)
 	return Resources::getInstance()->Database->execQuery ($args->get(1))->rows->map(function($i) { return $i->values(); });
 });
 
+Expr::register('db::table:html', function ($args)
+{
+	return Resources::getInstance()->Database->execQuery ($args->get(1))->toHTML();
+});
+
 Expr::register('db::exec', function ($args)
 {
 	return Resources::getInstance()->Database->execQuery ($args->get(1)) === true ? true : false;
