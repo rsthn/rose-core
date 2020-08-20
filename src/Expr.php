@@ -1254,6 +1254,19 @@ Expr::register('_?', function ($parts, $data)
 });
 
 /**
+**	Returns the valueA if it is not null (or empty or zero), otherwise returns valueB.
+**
+**	?? <valueA> <valueB>
+*/
+Expr::register('_??', function ($parts, $data)
+{
+	$value = Expr::expand($parts->get(1), $data, 'arg');
+	if ($value) return $value;
+
+	return Expr::expand($parts->get(2), $data, 'arg');
+});
+
+/**
 **	Returns the value if the expression is true, supports 'elif' and 'else' as well. The result of this function is always text.
 **
 **	if <expr> <value> [elif <expr> <value>] [else <value>]

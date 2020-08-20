@@ -100,11 +100,15 @@ class DateTime
 	}
 
 	/*
-	**	Returns the UNIX timestamp of the specified argument, can be a string date, a DateTime or an integer.
+	**	Returns the UNIX timestamp of the specified argument, can be a string date, a DateTime or an integer. If null is specified, null will be returned. And
+	**	if true is specified the current time will be returned.
 	*/
-	public static function getUnixTimestamp ($value=null)
+	public static function getUnixTimestamp ($value=true)
 	{
 		if ($value === null)
+			return null;
+
+		if ($value === true)
 			return time();
 
 		if (is_numeric($value))

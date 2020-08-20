@@ -101,32 +101,43 @@ class Locale
 				return number_format((double)$value, 0, 0, $config->Locale->numeric[2]);
 
 			case 'TIME':
-				return strftime($config->Locale->time, is_object($value) ? $value->getTimestamp() : (int)$value);
+				$value = is_object($value) ? $value->getTimestamp() : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp($value));
+				return $value ? strftime($config->Locale->time, $value) : null;
 
-            case 'DATE':
-				return strftime($config->Locale->date, is_object($value) ? $value->getTimestamp() : (int)$value);
+			case 'DATE':
+				$value = is_object($value) ? $value->getTimestamp() : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp($value));
+				return $value ? strftime($config->Locale->date, $value) : null;
 
-            case 'DATETIME':
-				return strftime($config->Locale->datetime, is_object($value) ? $value->getTimestamp() : (int)$value);
+			case 'DATETIME':
+				$value = is_object($value) ? $value->getTimestamp() : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp($value));
+				return $value ? strftime($config->Locale->datetime, $value) : null;
 
-            case 'GMT':
-				return date('D, d M Y H:i:s ', is_object($value) ? $value->getTimestamp() : (int)$value) . 'GMT';
+			case 'GMT':
+				$value = is_object($value) ? $value->getTimestamp() : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp($value));
+				return date('D, d M Y H:i:s ', $value) . 'GMT';
 
-            case 'UTC':
-				return date('Y-m-d\TH:i:s\Z', is_object($value) ? $value->getTimestamp() : (int)$value);
+			case 'UTC':
+				$value = is_object($value) ? $value->getTimestamp() : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp($value));
+				return date('Y-m-d\TH:i:s\Z', $value);
 
-            case 'ISO_DATE':
-				return strftime('%Y-%m-%d', is_object($value) ? $value->getTimestamp() : (int)$value);
+			case 'ISO_DATE':
+				$value = is_object($value) ? $value->getTimestamp() : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp($value));
+				return $value ? strftime('%Y-%m-%d', $value) : null;
 
-            case 'ISO_TIME':
-				return strftime('%H:%M:%S', is_object($value) ? $value->getTimestamp() : (int)$value);
+			case 'ISO_TIME':
+				$value = is_object($value) ? $value->getTimestamp() : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp($value));
+				return $value ? strftime('%H:%M:%S', $value) : null;
 
-            case 'ISO_DATETIME':
-				return strftime('%Y-%m-%d %H:%M:%S', is_object($value) ? $value->getTimestamp() : (int)$value);
+			case 'ISO_DATETIME':
+				$value = is_object($value) ? $value->getTimestamp() : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp($value));
+				return $value ? strftime('%Y-%m-%d %H:%M:%S', $value) : null;
 
 			default:
 				if (Text::toUpperCase(Text::substring ($formatType, 0, 3)) == 'DT_')
-					return strftime ($config->Locale->get($formatType), is_object($value) ? $value->getTimestamp() : (int)$value);
+				{
+					$value = is_object($value) ? $value->getTimestamp() : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp($value));
+					return $value ? strftime ($config->Locale->get($formatType), $value) : null;
+				}
 
 				if (Text::toUpperCase(Text::substring($formatType,0,7)) == 'NUMERIC')
 				{
