@@ -39,11 +39,11 @@ class Extensions
 	{
 		self::$loaded = new Map();
 
-		Directory::readDirs(Path::append(dirname(__FILE__), 'Ext'))->dirs->forEach(function($i) { self::load($i->name); });
-		Directory::readDirs(Path::append(dirname(__FILE__), '../../extensions'))->dirs->forEach(function($i) { self::load($i->name, '../../extensions'); });
+		Directory::readDirs(Path::append(Path::dirname(__FILE__), 'Ext'))->dirs->forEach(function($i) { self::load($i->name); });
+		Directory::readDirs(Path::append(Path::dirname(__FILE__), '../../extensions'))->dirs->forEach(function($i) { self::load($i->name, '../../extensions'); });
 
-		if (Path::exists(Path::append(dirname(__FILE__), '../../../../extensions')))
-			Directory::readDirs(Path::append(dirname(__FILE__), '../../../../extensions'))->dirs->forEach(function($i) { self::load($i->name, '../../../../extensions'); });
+		if (Path::exists(Path::append(Path::dirname(__FILE__), '../../../../extensions')))
+			Directory::readDirs(Path::append(Path::dirname(__FILE__), '../../../../extensions'))->dirs->forEach(function($i) { self::load($i->name, '../../../../extensions'); });
 	}
 
 	/*
@@ -54,7 +54,7 @@ class Extensions
 		if (self::isLoaded($identifier))
 			return;
 
-		require_once(Path::append(dirname(__FILE__), ($path), $identifier, $identifier.'.php'));
+		require_once(Path::append(Path::dirname(__FILE__), ($path), $identifier, $identifier.'.php'));
 
 		self::$loaded->set($identifier, true);
 	}
@@ -64,7 +64,7 @@ class Extensions
 	*/
     public static function isInstalled ($identifier)
     {
-		return Path::exists(Path::append(dirname(__FILE__), '../../extensions', $identifier, $identifier.'.php'));
+		return Path::exists(Path::append(Path::dirname(__FILE__), '../../extensions', $identifier, $identifier.'.php'));
 	}
 
 	/*

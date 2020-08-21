@@ -241,6 +241,7 @@ class Main
 		umask(0);
 		error_reporting (E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 		mt_srand (((double)microtime ()) * 10000);
+		set_time_limit(300);
 
 		// Activate strip slashes if magic_quotes_gpc is enabled, but issue a warning since that is not required in this framework.
 		if (version_compare(PHP_VERSION, '7.4.0') < 0)

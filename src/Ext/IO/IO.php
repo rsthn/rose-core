@@ -119,9 +119,6 @@ Expr::register('file::read', function ($args)
 
 Expr::register('file::write', function ($args)
 {
-	if (!Path::exists(Path::dirname($args->get(1))))
-		Directory::create(Path::dirname($args->get(1)), true);
-
 	File::setContents($args->get(1), $args->get(2));
 	return null;
 });

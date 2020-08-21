@@ -53,28 +53,65 @@ class DateTime
     private $timestamp;
 
 	/*
-	**	Constructs a DateTime object, by default will contain the current date and time.
+	**	Default timezone and timezone offset in seconds.
 	*/
-	public function __construct ($datetime='')
-    {
-		if (is_numeric($datetime))
-			$datetime = strftime('%Y-%m-%d %H:%M:%S', $datetime);
-
-		$tmp = new \DateTime ($datetime ? $datetime : 'now', Locale::getInstance()->timezone ? new \DateTimeZone (Locale::getInstance()->timezone) : null);
-
-        $this->year = $tmp->format('Y');
-        $this->month = $tmp->format('m');
-		$this->day = $tmp->format('d');
-
-        $this->hour = $tmp->format('H');
-        $this->minute = $tmp->format('i');
-		$this->second = $tmp->format('s');
-
-		$this->timestamp = mktime ($this->hour, $this->minute, $this->second, $this->month, $this->day, $this->year);
-    }
+	public static $timezone;
+	public static $offset;
+	public static $utc;
 
 	/*
-	**	Returns the DateTime in UNIX timestamp format.
+	**	Initialices static constants of this class.
+	*/
+	public static function init()
+	{
+		date_default_timezone_set('UTC');
+		self::$utc = new \DateTimeZone('UTC');
+		self::$timezone = Locale::getInstance()->timezone;
+	}
+
+	/*
+	**	Returns the offset from UTC to the given timezone.
+	*/
+	public static function timezoneOffset ($timezone)
+	{
+		if (Text::toUpperCase($timezone) == 'LTZ' || !$timezone)
+			$timezone = self::$timezone;
+
+		$timezone = new \DateTimeZone ($timezone);
+		return $timezone->getOffset(new \DateTime('now', $timezone));
+	}
+
+	/*
+	**	Constructs a DateTime object, by default will contain the current date and time.
+	*/
+	public function __construct ($datetime='', $targetTimezone='', $fromTimezone='')
+    {
+		if (Text::toUpperCase($targetTimezone) == 'LTZ')
+			$targetTimezone = self::$timezone;
+
+		if (is_numeric($datetime))
+		{
+			$datetime = strftime('%Y-%m-%d %H:%M:%S', $datetime);
+		}
+		else
+		{
+			if ($datetime && $datetime != 'now')
+			{
+				$targetTimezone = $targetTimezone ? $targetTimezone : self::$timezone;
+				$fromTimezone = $fromTimezone ? $fromTimezone : self::$timezone;
+			}
+			else
+				$datetime = 'now';
+		}
+
+		$tmp = new \DateTime ($datetime, self::$utc);
+		$tmp = mktime ($tmp->format('H'), $tmp->format('i'), $tmp->format('s'), $tmp->format('m'), $tmp->format('d'), $tmp->format('Y'));
+
+		$this->setTimestamp($tmp, $targetTimezone, $fromTimezone);
+	}
+
+	/*
+	**	Returns the DateTime in UNIX timestamp format (UTC).
 	*/
 	public function getTimestamp ()
 	{
@@ -82,11 +119,14 @@ class DateTime
 	}
 
 	/*
-	**	Sets the DateTime from the specified UNIX timestamp.
+	**	Sets the DateTime from the specified UNIX timestamp (UTC).
 	*/
-	public function setTimestamp ($timestamp)
+	public function setTimestamp ($timestamp, $targetTimezone='UTC', $fromTimezone='')
 	{
-		$this->timestamp = $timestamp;
+		if (!$fromTimezone) $fromTimezone = 'UTC';
+
+		$this->timestamp = ($timestamp -= self::timezoneOffset($fromTimezone));
+		$timestamp += self::timezoneOffset($targetTimezone);
 
 		$this->year = strftime('%Y', $timestamp);
 		$this->month = strftime('%m', $timestamp);
@@ -114,10 +154,10 @@ class DateTime
 		if (is_numeric($value))
 			return $value;
 
-		if ($value instanceof DateTime)
+		if ($value instanceof \DateTime || $value instanceof DateTime)
 			return $value->timestamp;
 
-		return (new \DateTime ($value))->getTimestamp();
+		return (new DateTime ($value))->getTimestamp();
 	}
 
 	/*
@@ -186,3 +226,8 @@ class DateTime
         return $this->format('DATETIME');
     }
 };
+
+/*
+**	Initialize DateTime class.
+*/	
+DateTime::init();

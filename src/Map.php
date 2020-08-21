@@ -398,7 +398,7 @@ class Map
 
 		foreach ($this->__nativeArray as $name => $item)
 		{
-			$name = '"' . addcslashes($name, "\"\\\f\n\r\v") . '"' . ": ";
+			$name = json_encode($name).':';
 
 			switch (typeOf($item, true))
 			{
@@ -421,15 +421,15 @@ class Map
 					break;
 
 				case 'string':
-					$s[] = $name . '"' . addcslashes($item, "\"\\\f\n\r\v\t") . '"';
+					$s[] = $name . json_encode($item);
 					break;
 
 				default:
-					$s[] = $name . '"' . addcslashes((string)$item, "\"\\\f\n\r\v\t") . '"';
+					$s[] = $name . json_encode((string)$item);
 					break;
 			}
 		}
 
-		return '{' . implode(", ", $s) . '}';
+		return '{' . implode(',', $s) . '}';
     }
 };

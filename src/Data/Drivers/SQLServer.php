@@ -33,7 +33,7 @@ class SQLServer extends Driver
 
     public function open ($server, $user, $password, $database)
     {
-		$conn = sqlsrv_connect ($server, array('Database' => $database, 'UID' => $user, 'PWD' => $password, 'ReturnDatesAsStrings' => true));
+		$conn = sqlsrv_connect ($server, array('Database' => $database, 'UID' => $user, 'PWD' => $password, 'ReturnDatesAsStrings' => true, 'CharacterSet' => 'UTF-8'));
 		if ($conn == null) return null;
 
 		sqlsrv_configure ('WarningsReturnAsErrors', 0);
@@ -114,7 +114,7 @@ class SQLServer extends Driver
 
 	public function fetchRow ($rs, $conn)
 	{
-		$tmp = sqlsrv_fetch_array($rs);
+		$tmp = sqlsrv_fetch_array($rs, SQLSRV_FETCH_NUMERIC);
 
 		if ($tmp === false || $tmp == null)
 			$tmp = null;

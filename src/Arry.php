@@ -542,15 +542,15 @@ class Arry
 					break;
 
 				case 'string':
-					$s[] = '"' . addcslashes($item, "\"\\\f\n\r\v\t") . '"';
+					$s[] = json_encode($item);
 					break;
 
 				default:
-					$s[] = '"' . addcslashes((string)$item, "\"\\\f\n\r\v\t") . '"';
+					$s[] = json_encode((string)$item);
 					break;
 			}
 		}
 
-		return '[' . implode(", ", $s) . ']';
+		return '[' . implode(',', $s) . ']';
     }
 };

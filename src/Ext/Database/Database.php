@@ -69,7 +69,7 @@ Expr::register('db::table', function ($args)
 
 Expr::register('db::table:array', function ($args)
 {
-	return Resources::getInstance()->Database->execQuery ($args->get(1))->rows->map(function($i) { return $i->values(); });
+	return Resources::getInstance()->Database->execArray ($args->get(1));
 });
 
 Expr::register('db::table:html', function ($args)

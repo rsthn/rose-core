@@ -19,8 +19,10 @@ namespace Rose\IO;
 
 use Rose\Errors\Error;
 use Rose\IO\Path;
+use Rose\IO\Directory;
 use Rose\IO\DataStream;
 use Rose\IO\StreamDescriptor;
+use Rose\DateTime;
 
 /*
 **	Describes a file. The static methods of this class provide access to several file specific functions.
@@ -53,27 +55,27 @@ class File
     }
 
 	/*
-	**	Returns the modification time of the file as an ISO DateTime or as a unix timestamp if $timestamp is `true`.
+	**	Returns the modification time of the file as an ISO DateTime string (LTZ) or as a unix timestamp (UTC) if $timestamp is `true`.
 	*/
     public static function mtime (string $filepath, bool $timestamp=false)
     {
-        return $timestamp ? filemtime($filepath) : strftime('%Y-%m-%d %H:%M:%S', filemtime($filepath));
+        return $timestamp ? filemtime($filepath) : (string)new DateTime(filemtime($filepath));
     }
 
 	/*
-	**	Returns the last access time of the file as an ISO DateTime or as a unix timestamp if $timestamp is `true`.
+	**	Returns the last access time of the file as an ISO DateTime string (LTZ) or as a unix timestamp (UTC) if $timestamp is `true`.
 	*/
     public static function atime (string $filepath, bool $timestamp=false)
     {
-        return $timestamp ? fileatime($filepath) : strftime('%Y-%m-%d %H:%M:%S', fileatime($filepath));
+        return $timestamp ? fileatime($filepath) : (string)new DateTime(fileatime($filepath));
     }
 
 	/*
-	**	Sets the last modified time of a file.
+	**	Sets the last modified time of a file (UTC).
 	*/
-    public static function touch (string $filepath, int $time)
+    public static function touch (string $filepath, $time=null)
     {
-        return \touch ($filepath, $time);
+        return \touch ($filepath, $time === null ? DateTime::getUnixTimestamp(true) : (is_object($time) ? $time->getTimestamp() : (is_int($time) ? (int)$time : DateTime::getUnixTimestamp($time))));
     }
 
 	/*
@@ -89,6 +91,9 @@ class File
 	*/
     public static function setContents (string $filepath, string $contents, $context=null)
     {
+		if (!Path::exists(Path::dirname($filepath)))
+			Directory::create(Path::dirname($filepath), true);
+
 		file_put_contents ($filepath, $contents, 0, $context);
     }
 
@@ -97,11 +102,16 @@ class File
 	*/
     public static function appendContents (string $filepath, string $contents)
     {
+		if (!Path::exists(Path::dirname($filepath)))
+			Directory::create(Path::dirname($filepath), true);
+
         $fp = fopen ($filepath, 'a+b');
         if (!$fp) return;
 
         fwrite ($fp, $contents);
-        fclose ($fp);
+		fclose ($fp);
+
+		\touch ($filepath, DateTime::getUnixTimestamp(true));
     }
 
 	/*

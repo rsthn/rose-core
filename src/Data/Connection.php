@@ -390,12 +390,37 @@ class Connection
 	*/
 	public function execArray ($queryString)
 	{
-		$data = $this->execQuery ($queryString);
+        if ($this->conn == null)
+            throw new Error ('Connection: Database connection is not open.');
 
-		if ($data === true)
+        $queryString = $this->filterQuery($queryString);
+        if ($this->dbTracing) \Rose\trace($queryString);
+
+        if (!$this->driver->isAlive ($this->conn))
+            $this->connect();
+
+        try { $rs = $this->driver->query ($queryString, $this->conn); }
+		catch (\Exception $e) { }
+
+        if ($rs === false || $rs === null)
+            throw new Error ($this->driver->getLastError($this->conn));
+
+        if ($rs === true)
 			throw new Error ('Result is not a data set.');
 
-		return $data->rows;
+		$dt = new Arry();
+		$i = null;
+
+		while (true)
+		{
+			$i = $this->driver->fetchRow($rs, $this->conn);
+			if ($i == null) break;
+
+			$dt->push(new Arry($i));
+		}
+
+		$this->driver->freeResult($rs, $this->conn);
+		return $dt;
 	}
 
 	/*
