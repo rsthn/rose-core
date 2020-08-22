@@ -98,7 +98,7 @@ class DateTime
 			if ($datetime && $datetime != 'now')
 			{
 				$targetTimezone = $targetTimezone ? $targetTimezone : self::$timezone;
-				$fromTimezone = $fromTimezone ? $fromTimezone : self::$timezone;
+				$fromTimezone = $fromTimezone ? $fromTimezone : 'UTC';
 			}
 			else
 				$datetime = 'now';
