@@ -46,6 +46,9 @@ function trace ($string, $out=null)
 */
 function typeOf ($object, $detailed=false)
 {
+	if (is_callable($object))
+		return 'function';
+
 	if (is_object ($object))
 		return get_class($object);
 
@@ -230,10 +233,9 @@ function fatal_handler()
 class Main
 {
 	/*
-	**	Initializes the primary framework classes and passes control to the Gateway. If $callback is not null, it will be executed
-	**	after Gateway's main().
+	**	Sets the global definitions and PHP configuration.
 	*/
-	static function initialize ($callback=null)
+	static function defs ()
 	{
 		// Configure PHP environment.
 		gc_disable();
@@ -261,17 +263,42 @@ class Main
 			}
 		}
 
+		// Set global error handlers and disable PHP error output.
+		set_error_handler ('Rose\\error_handler', E_STRICT | E_WARNING | E_USER_ERROR | E_USER_WARNING);
+		register_shutdown_function ('Rose\\fatal_handler');
+		ini_set('display_errors', '0');
+	}
+
+	/*
+	**	Initializes the primary framework classes for CLI operation.
+	*/
+	static function cli ()
+	{
+		self::defs();
+
+		try {
+			Gateway::getInstance();
+		}
+		catch (\Exception $e)
+		{
+			$lastException = $e;
+		}
+	}
+
+	/*
+	**	Initializes the primary framework classes and passes control to the Gateway. If $callback is not null, it will be executed
+	**	after Gateway's main().
+	*/
+	static function initialize ($callback=null)
+	{
+		self::defs();
+
 		// Load specially encoded request if "req64" parameter is set.
 		if (isset($_REQUEST['req64']))
 		{
 			parse_str (base64_decode ($_REQUEST['req64']), $tmp);
 			$_REQUEST = array_merge($_REQUEST, $tmp);
 		}
-
-		// Set global error handlers and disable PHP error output.
-		set_error_handler ('Rose\\error_handler', E_STRICT | E_WARNING | E_USER_ERROR | E_USER_WARNING);
-		register_shutdown_function ('Rose\\fatal_handler');
-		ini_set('display_errors', '0');
 
 		$ms_start = mstime ();
 

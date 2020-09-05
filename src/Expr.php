@@ -978,7 +978,10 @@ Expr::register('div', function($args) { $x = $args->get(1); for ($i = 2; $i < $a
 Expr::register('+', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= -$args->get($i); return $x; });
 Expr::register('sum', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= -$args->get($i); return $x; });
 Expr::register('-', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= $args->get($i); return $x; });
-Expr::register('sub', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= $args[$i]; return $x; });
+Expr::register('sub', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= $args->get($i); return $x; });
+Expr::register('mod', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x %= $args->get($i); return $x; });
+Expr::register('**', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x = pow($x, $args->get($i)); return $x; });
+Expr::register('pow', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x = pow($x, $args->get($i)); return $x; });
 
 /**
 **	Returns the JSON representation of the expression.
@@ -1458,33 +1461,76 @@ Expr::register('has', function ($args, $parts, $data)
 });
 
 /**
-**	Transforms each value of the array to something else (evaluating the template). Just as in 'each', the i# and i## variables be available.
+**	Returns a new array/map contaning the transformed values of the array/map (evaluating the template). And just as in 'each', the i# and i## variables be available.
 **
 **	map <varname> <list-expr> <template>
 */
 Expr::register('_map', function ($parts, $data)
 {
 	$var_name = Expr::expand($parts->get(1), $data, 'arg');
+
 	$list = Expr::expand($parts->get(2), $data, 'arg');
-
-	$j = 0;
-
 	if (!$list) return $list;
 
-	$list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$parts, &$data, &$list)
+	$arrayMode = typeOf($list) == 'Rose\\Arry' ? true : false;
+	$output = $arrayMode ? new Arry() : new Map();
+	$j = 0;
+
+	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$parts, &$data)
 	{
 		$data->set($var_name, $item);
 		$data->set($var_name . '##', $j++);
 		$data->set($var_name . '#', $key);
 
-		$list->set($key, Expr::expand($parts->get(3), $data, 'arg'));
+		if ($arrayMode)
+			$output->push(Expr::expand($parts->get(3), $data, 'arg'));
+		else
+			$output->set($key, Expr::expand($parts->get(3), $data, 'arg'));
 	});
 
 	$data->remove($var_name);
 	$data->remove($var_name . '##');
 	$data->remove($var_name . '#');
 
-	return $list;
+	return $output;
+});
+
+/**
+**	Returns a new array/map contaning the elements where the template evaluates to non-zero. Just as in 'each', the i# and i## variables be available.
+**
+**	filter <varname> <list-expr> <template>
+*/
+Expr::register('_filter', function ($parts, $data)
+{
+	$var_name = Expr::expand($parts->get(1), $data, 'arg');
+
+	$list = Expr::expand($parts->get(2), $data, 'arg');
+	if (!$list) return $list;
+
+	$arrayMode = typeOf($list) == 'Rose\\Arry' ? true : false;
+	$output = $arrayMode ? new Arry() : new Map();
+	$j = 0;
+
+	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$parts, &$data)
+	{
+		$data->set($var_name, $item);
+		$data->set($var_name . '##', $j++);
+		$data->set($var_name . '#', $key);
+
+		if ((int)Expr::expand($parts->get(3), $data, 'arg'))
+		{
+			if ($arrayMode)
+				$output->push($item);
+			else
+				$output->set($key, $item);
+		}
+	});
+
+	$data->remove($var_name);
+	$data->remove($var_name . '##');
+	$data->remove($var_name . '#');
+
+	return $output;
 });
 
 
@@ -1497,4 +1543,27 @@ Expr::register('_map', function ($parts, $data)
 Expr::register('expand', function ($args, $parts, $data)
 {
 	return Expr::expand (Expr::parseTemplate ($args->get(1), '{', '}'), $args->length == 3 ? $args->get(2) : $data);
+});
+
+/**
+**	Calls a function described by the given parameter.
+**
+**	call <function> <args...>
+*/
+Expr::register('_call', function ($parts, $data)
+{
+	$ref = Expr::expand($parts->get(1), $data, 'varref');
+	if (!$ref || typeOf($ref[0]->{$ref[1]}) != 'function')
+	{
+		echo $ref[0];
+		exit;
+		throw new Error ('Expression is not a function: ' . Expr::expand($parts->get(1), $data, 'obj')->map(function($i) { return $i == null ? '.' : $i; })->join(''));
+	}
+
+	$args = [];
+
+	for ($i = 2; $i < $parts->length; $i++)
+		$args[] = Expr::value($parts->get($i), $data);
+
+	return call_user_func_array ($ref[0]->{$ref[1]}, $args);
 });

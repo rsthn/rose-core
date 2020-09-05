@@ -65,8 +65,12 @@ class DateTime
 	public static function init()
 	{
 		date_default_timezone_set('UTC');
+
 		self::$utc = new \DateTimeZone('UTC');
 		self::$timezone = Locale::getInstance()->timezone;
+
+		if (!self::$timezone)
+			self::$timezone = 'UTC';
 	}
 
 	/*
