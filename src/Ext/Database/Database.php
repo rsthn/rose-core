@@ -79,7 +79,10 @@ Expr::register('db::table:html', function ($args)
 
 Expr::register('db::exec', function ($args)
 {
-	return Resources::getInstance()->Database->execQuery ($args->get(1)) === true ? true : false;
+	$query = trim($args->get(1));
+	if (!$query) return true;
+
+	return Resources::getInstance()->Database->execQuery ($query) === true ? true : false;
 });
 
 Expr::register('db::fields:update', function ($args)

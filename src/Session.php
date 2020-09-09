@@ -59,7 +59,7 @@ class Session
 	public static $sessionName;
 	
 	/*
-	**	Charset used by generateId() to generate session IDs (ensure there are 32 characters).
+	**	Charset used by generateId() to generate session IDs (ensure there are 48 characters).
 	*/
     public static $charset = 'uY3m8v7fJegDp4cnq6zb0w9kaRxhST25';
 
@@ -378,7 +378,7 @@ class Session
 	DROP TABLE IF EXISTS sessions;
 	CREATE TABLE sessions
 	(
-		session_id char(32) primary key unique not null,
+		session_id char(48) primary key unique not null,
 		last_activity datetime default null,
 
 		user_id int unsigned default null,

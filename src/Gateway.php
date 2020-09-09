@@ -56,6 +56,11 @@ class Gateway
 	public $serverParams;
 
 	/*
+	**	Relative path (if any) obtained from the PHP_SELF server parameter.
+	*/
+	public $relativePath;
+
+	/*
 	**	Available cookies (basically the $_COOKIES array).
 	*/
     public $cookies;
@@ -114,8 +119,9 @@ class Gateway
     {
 		// Set entry point URL and root.
 		$this->root = Text::substring($this->serverParams->SCRIPT_NAME, 0, -9);
-
 		$this->secure = Text::toUpperCase($this->serverParams->HTTPS) == 'ON';
+
+		$this->relativePath = Text::trim(Regex::_getString ('/index\.php([-_\/A-Za-z0-9]+)/', $this->serverParams->PHP_SELF, 1));
 
 		$this->ep = ($this->secure ? 'https://' : 'http://')
 					.(Configuration::getInstance()->Gateway->server_name ? Configuration::getInstance()->Gateway->server_name : $this->serverParams->SERVER_NAME)
@@ -178,8 +184,8 @@ class Gateway
 	*/
     public static function getService ($serviceCode)
     {
-        if (Gateway::getInstance()->registeredServices->hasElement($serviceCode))
-            return Gateway::getInstance()->registeredServices->getElement($serviceCode);
+        if (Gateway::getInstance()->registeredServices->has($serviceCode))
+            return Gateway::getInstance()->registeredServices->get($serviceCode);
         else
             return null;
     }
