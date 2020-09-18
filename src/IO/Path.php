@@ -44,7 +44,7 @@ class Path
 	*/
     public static function extname ($path)
     {
-		return Regex::_getString("/\.(.+)$/", basename($path));
+		return Regex::_getString("/\.([A-Za-z][A-Za-z0-9_]*)$/", basename($path));
     }
 
 	/*
@@ -52,7 +52,7 @@ class Path
 	*/
     public static function name ($path)
     {
-		return Regex::_getString("/^(.+?)\.(.+)$/", basename($path), 1);
+		return Regex::_getString("/^(.+?)\.([A-Za-z][A-Za-z0-9_]*)$/", basename($path), 1);
     }
 
 	/*

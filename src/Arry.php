@@ -542,15 +542,15 @@ class Arry
 					break;
 
 				case 'string':
-					$s[] = json_encode($item);
+					$s[] = \json_encode($item);
 					break;
 
 				default:
-					$s[] = json_encode((string)$item);
+					$s[] = \json_encode((string)$item);
 					break;
 			}
 		}
 
-		return '[' . implode(',', $s) . ']';
+		return '[' . \implode(',', $s) . ']';
     }
 };

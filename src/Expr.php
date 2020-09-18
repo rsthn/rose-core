@@ -1429,11 +1429,11 @@ Expr::register('_&&', function ($parts, $data)
 });
 
 /**
-**	Returns true if the specified map has all the specified keys. If it fails the global variable `err` will contain an error message.
+**	Returns true if the specified map contains all the specified keys. If it fails the global variable `err` will contain an error message.
 **
-**	has <expr> <name> [<name>...]
+**	contains <expr> <name> [<name>...]
 */
-Expr::register('has', function ($args, $parts, $data)
+Expr::register('contains', function ($args, $parts, $data)
 {
 	$value = $args->get(1);
 
@@ -1458,6 +1458,21 @@ Expr::register('has', function ($args, $parts, $data)
 	}
 
 	return true;
+});
+
+/**
+**	Returns true if the specified map has the specified key. Returns boolean.
+**
+**	has <name> <expr>
+*/
+Expr::register('has', function ($args, $parts, $data)
+{
+	$value = $args->get(2);
+
+	if (typeOf($value) != 'Rose\\Map')
+		return false;
+
+	return $value->has($args->get(1));
 });
 
 /**
@@ -1550,7 +1565,7 @@ Expr::register('expand', function ($args, $parts, $data)
 **
 **	call <function> <args...>
 */
-Expr::register('_call', function ($parts, $data)
+/*Expr::register('_call', function ($parts, $data)
 {
 	$ref = Expr::expand($parts->get(1), $data, 'varref');
 	if (!$ref || typeOf($ref[0]->{$ref[1]}) != 'function')
@@ -1566,4 +1581,4 @@ Expr::register('_call', function ($parts, $data)
 		$args[] = Expr::value($parts->get($i), $data);
 
 	return call_user_func_array ($ref[0]->{$ref[1]}, $args);
-});
+});*/

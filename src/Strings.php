@@ -28,6 +28,7 @@ use Rose\Gateway;
 use Rose\Session;
 use Rose\Cookies;
 use Rose\Text;
+use Rose\Regex;
 use Rose\Map;
 
 /*
@@ -42,9 +43,9 @@ class Strings
 	public const FROM_NOWHERE				= 0;
 	public const FROM_CONFIG				= 1;
 	public const FROM_COOKIE				= 2;
-	public const FROM_SESSION				= 3;
-	public const FROM_REQUEST				= 4;
-	public const FROM_OVERRIDE				= 5;
+	public const FROM_CURRENT_USER			= 3;
+	public const FROM_RELATIVE_PATH			= 4;
+	public const FROM_REQUEST				= 5;
 
 	/*
 	**	Primary and only instance of this class.
@@ -127,6 +128,8 @@ class Strings
     {
 		if ($lang == null)
 		{
+			$gateway = Gateway::getInstance();
+
 			// Attempt to load language code from configuration.
 			if (Configuration::getInstance()->Locale->lang != null)
 			{
@@ -148,10 +151,19 @@ class Strings
 				$this->langFrom = Strings::FROM_CURRENT_USER;
 			}
 
-			// Attempt to load language code from request parameters.
-			if (!$lang && Gateway::getInstance()->requestParams->has('lang'))
+			// Attempt to load language code from relative path.
+			if (Regex::_matches('/^\/[a-z]{2}\//', $gateway->relativePath))
 			{
-				$lang = Gateway::getInstance()->requestParams->lang;
+				$lang = Text::substring($gateway->relativePath, 1, 2);
+				$gateway->relativePath = Text::substring($gateway->relativePath, 3);
+
+				$this->langFrom = Strings::FROM_RELATIVE_PATH;
+			}
+			else
+			// Attempt to load language code from request parameters.
+			if ($gateway->requestParams->has('__lang'))
+			{
+				$lang = $gateway->requestParams->__lang;
 				$this->langFrom = Strings::FROM_REQUEST;
 			}
 
@@ -159,7 +171,7 @@ class Strings
 			if (!$lang || Text::length($lang) > 2 || !Path::exists($this->base.$lang.'/'))
 				$lang = '.';
 
-			Gateway::getInstance()->requestParams->lang = $lang;
+			$gateway->requestParams->__lang = $lang;
 		}
 
 		$this->lang = $lang;

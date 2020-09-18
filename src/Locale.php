@@ -101,41 +101,41 @@ class Locale
 				return number_format((double)$value, 0, 0, $config->Locale->numeric[2]);
 
 			case 'TIME':
-				$value = is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value);
+				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
 				return $value ? strftime($config->Locale->time, $value) : null;
 
 			case 'DATE':
-				$value = is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value);
+				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
 				return $value ? strftime($config->Locale->date, $value) : null;
 
 			case 'DATETIME':
-				$value = is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value);
+				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
 				return $value ? strftime($config->Locale->datetime, $value) : null;
 
 			case 'GMT':
-				$value = is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value);
+				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
 				return date('D, d M Y H:i:s ', $value) . 'GMT';
 
 			case 'UTC':
-				$value = is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value);
+				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
 				return date('Y-m-d\TH:i:s\Z', $value);
 
 			case 'ISO_DATE':
-				$value = is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value);
+				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
 				return $value ? strftime('%Y-%m-%d', $value) : null;
 
 			case 'ISO_TIME':
-				$value = is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value);
+				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
 				return $value ? strftime('%H:%M:%S', $value) : null;
 
 			case 'ISO_DATETIME':
-				$value = is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value);
+				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
 				return $value ? strftime('%Y-%m-%d %H:%M:%S', $value) : null;
 
 			default:
 				if (Text::toUpperCase(Text::substring ($formatType, 0, 3)) == 'DT_')
 				{
-					$value = is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value);
+					$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
 					return $value ? strftime ($config->Locale->get($formatType), $value) : null;
 				}
 

@@ -223,12 +223,20 @@ class DateTime
     }
 
 	/*
+	**	Returns a property of the DateTime.
+	*/
+    public function __get ($name)
+    {
+		return $this->{$name};
+    }
+
+	/*
 	**	Returns the string representation of the DateTime object (YYYY-MM-DD HH:II:SS);
 	*/
     public function __toString ()
     {
         return $this->format('DATETIME');
-    }
+	}
 };
 
 /*
