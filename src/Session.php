@@ -158,6 +158,7 @@ class Session
 				if (!Session::$sessionId)
 					throw new \Exception();
 
+				session_cache_limiter(false);
 				session_start([ 'use_cookies' => 0 ]);
 			}
 			catch (\Exception $e)
@@ -166,6 +167,7 @@ class Session
 					return;
 
 				session_id (Session::generateId(48));
+				session_cache_limiter(false);
 				session_start([ 'use_cookies' => 0 ]);
 			}
 

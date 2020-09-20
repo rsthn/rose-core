@@ -74,6 +74,14 @@ class DateTime
 	}
 
 	/*
+	**	Sets the global timezone.
+	*/
+	public static function setTimezone ($name)
+	{
+		self::$timezone = $name;
+	}
+
+	/*
 	**	Returns the offset from UTC to the given timezone.
 	*/
 	public static function timezoneOffset ($timezone)
@@ -102,10 +110,15 @@ class DateTime
 			if ($datetime && $datetime != 'now')
 			{
 				$targetTimezone = $targetTimezone ? $targetTimezone : self::$timezone;
-				$fromTimezone = $fromTimezone ? $fromTimezone : 'UTC';
+				$fromTimezone = $fromTimezone ? $fromTimezone : self::$timezone;
 			}
 			else
+			{
 				$datetime = 'now';
+
+				$targetTimezone = $targetTimezone ? $targetTimezone : self::$timezone;
+				$fromTimezone = $fromTimezone ? $fromTimezone : 'UTC';
+			}
 		}
 
 		$tmp = new \DateTime ($datetime, self::$utc);

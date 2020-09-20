@@ -1,6 +1,6 @@
 <?php
 /*
-**	Rose\Ext\Session
+**	Rose\Ext\Misc
 **
 **	Copyright (c) 2019-2020, RedStar Technologies, All rights reserved.
 **	https://rsthn.com/
@@ -17,43 +17,12 @@
 
 namespace Rose\Ext;
 
-use Rose\Session;
+use Rose\DateTime;
 use Rose\Expr;
 
-Expr::register('session', function ($args) { return Session::$data; });
+Expr::register('datetime::now', function ($args) { return new DateTime(); });
+Expr::register('datetime::now:int', function ($args) { return (new DateTime())->getTimestamp(); });
 
-Expr::register('session::open', function ($args) {
-	return Session::open();
-});
-
-Expr::register('session::close', function ($args) {
-	return Session::close();
-});
-
-Expr::register('session::destroy', function ($args) {
-	return Session::destroy();
-});
-
-Expr::register('session::clear', function ($args) {
-	return Session::clear();
-});
-
-Expr::register('session::name', function ($args) {
-	return Session::$sessionName;
-});
-
-Expr::register('session::id', function ($args)
-{
-	if ($args->length == 2)
-		Session::$sessionId = $args->get(1);
-
-	return Session::$sessionId;
-});
-
-Expr::register('session::isopen', function ($args) {
-	return Session::$sessionOpen;
-});
-
-Expr::register('session::data', function ($args) {
-	return Session::$data;
+Expr::register('datetime::parse', function ($args) {
+	return new DateTime($args->get(1));
 });

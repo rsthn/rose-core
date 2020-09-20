@@ -39,11 +39,16 @@ class Extensions
 	{
 		self::$loaded = new Map();
 
+		// Load native extensions.
 		Directory::readDirs(Path::append(Path::dirname(__FILE__), 'Ext'))->dirs->forEach(function($i) { self::load($i->name); });
-		Directory::readDirs(Path::append(Path::dirname(__FILE__), '../../extensions'))->dirs->forEach(function($i) { self::load($i->name, '../../extensions'); });
 
-		if (Path::exists(Path::append(Path::dirname(__FILE__), '../../../../extensions')))
-			Directory::readDirs(Path::append(Path::dirname(__FILE__), '../../../../extensions'))->dirs->forEach(function($i) { self::load($i->name, '../../../../extensions'); });
+		// Load installed extensions.
+		if (Path::exists($path = Path::append(Path::dirname(__FILE__), '../../extensions')))
+			Directory::readDirs(Path::append($path))->dirs->forEach(function($i) { self::load($i->name, '../../extensions'); });
+
+		// Load user extensions.
+		if (Path::exists($path = Path::append(Path::dirname(__FILE__), '../../../../extensions')))
+			Directory::readDirs($path)->dirs->forEach(function($i) { self::load($i->name, '../../../../extensions'); });
 	}
 
 	/*

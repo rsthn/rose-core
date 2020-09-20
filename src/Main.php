@@ -277,12 +277,16 @@ class Main
 		self::defs();
 
 		try {
-			Gateway::getInstance();
+			Gateway::getInstance()->init();
 		}
 		catch (\Exception $e)
 		{
 			$lastException = $e;
 		}
+
+		register_shutdown_function (function() {
+			Gateway::getInstance()->close();
+		});
 	}
 
 	/*
@@ -307,7 +311,7 @@ class Main
 
 		try
 		{
-			Gateway::getInstance();
+			Gateway::getInstance()->init();
 	
 			try {
 				Gateway::getInstance()->main();

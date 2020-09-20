@@ -113,10 +113,10 @@ class Gateway
 	}
 
 	/*
-	**	Executed by the framework initializer when a client has sent a request to the system.
+	**	Executed by the framework initializer to initialize the gateway.
 	*/
-    public function main ()
-    {
+	public function init ()
+	{
 		// Set entry point URL and root.
 		$this->root = Text::substring($this->serverParams->SCRIPT_NAME, 0, -9);
 		$this->secure = Text::toUpperCase($this->serverParams->HTTPS) == 'ON';
@@ -148,12 +148,18 @@ class Gateway
         if (Text::substring($this->localroot, -1) != '/')
             $this->localroot .= '/';
 
-		// Initialize dependencies.
+		// Initialize system classes.
 		Session::init();
 		Strings::init();
 		Locale::init();
 		Extensions::init();
+	}
 
+	/*
+	**	Executed by the framework initializer when a client has sent a request to the system.
+	*/
+    public function main ()
+    {
 		// If service parameter is set in Gateway configuration, load it as 'srv' to force activation of service.
 		if (Configuration::getInstance()->Gateway->service != null)
 			$this->requestParams->srv = Configuration::getInstance()->Gateway->service;
