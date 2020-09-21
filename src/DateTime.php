@@ -203,7 +203,7 @@ class DateTime
 	*/
 	public function sub ($datetime, $unit=DateTime::SECOND)
 	{
-		return Math::round (($this->timestamp - DateTime::getUnixTimestamp($datetime)) / DateTime::getUnit($unit));
+		return floor (($this->timestamp - DateTime::getUnixTimestamp($datetime)) / DateTime::getUnit($unit));
 	}
 
 	/*

@@ -4,4 +4,4 @@
 
 	Rose\Main::cli();
 
-	echo \Rose\Expr::eval('(datetime::parse (str (datetime::now)))');
+	echo \Rose\Expr::eval('(datetime::sub (datetime::add (datetime::now) 4 MINUTE) (datetime::now) )');

@@ -26,3 +26,26 @@ Expr::register('datetime::now:int', function ($args) { return (new DateTime())->
 Expr::register('datetime::parse', function ($args) {
 	return new DateTime($args->get(1));
 });
+
+Expr::register('datetime::sub', function ($args) {
+	$a = $args->get(1);
+	if (\Rose\typeOf($a) != 'Rose\\DateTime') $a = new DateTime ($a);
+
+	$b = $args->get(2);
+	if (\Rose\typeOf($b) != 'Rose\\DateTime') $b = new DateTime ($b);
+
+	$unit = $args->length == 4 ? $args->get(3) : 'SECOND';
+
+	return $a->sub($b, $unit);
+});
+
+Expr::register('datetime::add', function ($args) {
+	$a = $args->get(1);
+	if (\Rose\typeOf($a) != 'Rose\\DateTime') $a = new DateTime ($a);
+
+	$b = $args->get(2);
+
+	$unit = $args->length == 4 ? $args->get(3) : 'SECOND';
+
+	return $a->add($b, $unit);
+});
