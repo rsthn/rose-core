@@ -20,13 +20,30 @@ namespace Rose\Ext;
 use Rose\DateTime;
 use Rose\Expr;
 
-Expr::register('datetime::now', function ($args) { return new DateTime(); });
-Expr::register('datetime::now:int', function ($args) { return (new DateTime())->getTimestamp(); });
-
-Expr::register('datetime::parse', function ($args) {
-	return new DateTime($args->get(1));
+/*
+**	datetime::now [target_timezone]
+*/
+Expr::register('datetime::now', function ($args) {
+	return new DateTime('now', $args->length == 2 ? $args->get(1) : null);
 });
 
+/*
+**	datetime::now:int [target_timezone]
+*/
+Expr::register('datetime::now:int', function ($args) {
+	return (new DateTime('now', $args->length == 2 ? $args->get(1) : null))->getTimestamp();
+});
+
+/*
+**	datetime::parse <datetime> [target_timezone]
+*/
+Expr::register('datetime::parse', function ($args) {
+	return new DateTime($args->get(1), $args->length == 3 ? $args->get(2) : null);
+});
+
+/*
+**	datetime::sub <datetime> <datetime> [unit]
+*/
 Expr::register('datetime::sub', function ($args) {
 	$a = $args->get(1);
 	if (\Rose\typeOf($a) != 'Rose\\DateTime') $a = new DateTime ($a);
@@ -39,6 +56,9 @@ Expr::register('datetime::sub', function ($args) {
 	return $a->sub($b, $unit);
 });
 
+/*
+**	datetime::add <datetime> <value> [unit]
+*/
 Expr::register('datetime::add', function ($args) {
 	$a = $args->get(1);
 	if (\Rose\typeOf($a) != 'Rose\\DateTime') $a = new DateTime ($a);

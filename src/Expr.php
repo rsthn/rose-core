@@ -946,7 +946,6 @@ Expr::register('true', function($args) { return true; });
 Expr::register('false', function($args) { return false; });
 
 Expr::register('len', function($args) { return strlen((string)$args->get(1)); });
-
 Expr::register('int', function($args) { return (int)$args->get(1); });
 Expr::register('str', function($args) { return (string)$args->get(1); });
 Expr::register('float', function($args) { return (float)$args->get(1); });
@@ -1214,8 +1213,8 @@ Expr::register('values', function ($args)
 */
 Expr::register('_each', function ($parts, $data)
 {
-	$var_name = Expr::expand($parts->get(1), $data, 'arg');
-	$list = Expr::expand($parts->get(2), $data, 'arg');
+	$var_name = Expr::value($parts->get(1), $data);
+	$list = Expr::value($parts->get(2), $data);
 
 	$s = new Arry();
 	$j = 0;
@@ -1228,8 +1227,7 @@ Expr::register('_each', function ($parts, $data)
 		$data->set($var_name . '##', $j++);
 		$data->set($var_name . '#', $key);
 
-		for ($k0 = 3; $k0 < $parts->length(); $k0++)
-			$s->push(Expr::expand($parts->get($k0), $data, 'text'));
+		$s->push(Expr::expand($parts->get(3), $data, 'text'));
 	});
 
 	$data->remove($var_name);
@@ -1308,39 +1306,230 @@ Expr::register('_switch', function ($parts, $data)
 });
 
 /**
-**	Repeats the specified template for a number of times.
+**	Exits the current inner most loop.
 **
-**	repeat [<from>] <count> [<varname:i>] <template>
+**	break
 */
-Expr::register('repeat', function ($args, $parts, $data)
+Expr::register('_break', function ($parts, $data)
 {
-	$var_name = 'i';
-	$count = (int)$args->get(1);
-	$from = 0;
+	throw new \Exception('EXC_BREAK');
+});
 
-	$k = 2;
+/**
+**	Skips execution and continues the next cycle of the current inner most loop.
+**
+**	continue
+*/
+Expr::register('_continue', function ($parts, $data)
+{
+	throw new \Exception('EXC_CONTINUE');
+});
 
-	if ($args->get($k) && Regex::_matches('/^[0-9]+$/', $args->get($k)))
+/**
+**	Constructs an array with the results of repeating the specified template for a number of times.
+**
+**	repeat <varname:i> [from <number>] [to <number>] [count <number>] [step <number>] <template>
+*/
+Expr::register('_repeat', function ($parts, $data)
+{
+	if ($parts->length < 3 || ($parts->length & 1) != 1)
+		return '(`repeat`: Wrong number of parameters)';
+
+	$var_name = Expr::value($parts->get(1), $data);
+	$count = null;
+	$from = 0; $to = null;
+	$step = null;
+
+	for ($i = 2; $i < $parts->length-1; $i+=2)
 	{
-		$from = $count;
-		$count = $from + (int)$args->get($k++);
+		$value = Expr::value($parts->get($i), $data);
+
+		switch (Text::toLowerCase($value))
+		{
+			case 'from':
+				$from = (float)Expr::value($parts->get($i+1), $data);
+				break;
+
+			case 'to':
+				$to = (float)Expr::value($parts->get($i+1), $data);
+				break;
+
+			case 'count':
+				$count = (float)Expr::value($parts->get($i+1), $data);
+				break;
+
+			case 'step':
+				$step = (float)Expr::value($parts->get($i+1), $data);
+				break;
+		}
 	}
 
-	if ($args->get($k) && $parts->get($k)->get(0)->type == 'identifier' && Regex::_matches('/^[A-Za-z0-9_-]+$/', $args->get($k)))
-		$var_name = $args->get($k++);
+	$tpl = $parts->get($parts->length-1);
+	$arr = new Arry();
 
-	$s = new Arry();
-
-	for ($i = $from; $i < $count; $i++)
+	if ($to !== null)
 	{
-		$data->set($var_name, $i);
+		if ($step === null)
+			$step = $from > $to ? -1 : 1;
 
-		for ($j = $k; $j < $parts->length(); $j++)
-			$s->push(Expr::expand($parts->get($j), $data, 'text'));
+		if ($step < 0)
+		{
+			for ($i = $from; $i >= $to; $i += $step)
+			{
+				try {
+					$data->set($var_name, $i);
+					$arr->push(Expr::value($tpl, $data));
+				}
+				catch (\Exception $e) {
+					$name = $e->getMessage();
+					if ($name == 'EXC_BREAK') break;
+					if ($name == 'EXC_CONTINUE') continue;
+					throw $e;
+				}
+			}
+		}
+		else
+		{
+			for ($i = $from; $i <= $to; $i += $step)
+			{
+				try {
+					$data->set($var_name, $i);
+					$arr->push(Expr::value($tpl, $data));
+				}
+				catch (\Exception $e) {
+					$name = $e->getMessage();
+					if ($name == 'EXC_BREAK') break;
+					if ($name == 'EXC_CONTINUE') continue;
+					throw $e;
+				}
+			}
+		}
+	}
+	else if ($count !== null)
+	{
+		if ($step === null)
+			$step = 1;
+
+		for ($i = $from; $count > 0; $count--, $i += $step)
+		{
+			try {
+				$data->set($var_name, $i);
+				$arr->push(Expr::value($tpl, $data));
+			}
+			catch (\Exception $e) {
+				$name = $e->getMessage();
+				if ($name == 'EXC_BREAK') break;
+				if ($name == 'EXC_CONTINUE') continue;
+				throw $e;
+			}
+		}
 	}
 
 	$data->remove($var_name);
-	return $s;
+	return $arr;
+});
+
+/**
+**	Repeats the specified template for a number of times.
+**
+**	for <varname:i> [from <number>] [to <number>] [count <number>] [step <number>] <template>
+*/
+Expr::register('_for', function ($parts, $data)
+{
+	if ($parts->length < 3 || ($parts->length & 1) != 1)
+		return '(`for`: Wrong number of parameters)';
+
+	$var_name = Expr::value($parts->get(1), $data);
+	$count = null;
+	$from = 0; $to = null;
+	$step = null;
+
+	for ($i = 2; $i < $parts->length-1; $i+=2)
+	{
+		$value = Expr::value($parts->get($i), $data);
+
+		switch (Text::toLowerCase($value))
+		{
+			case 'from':
+				$from = (float)Expr::value($parts->get($i+1), $data);
+				break;
+
+			case 'to':
+				$to = (float)Expr::value($parts->get($i+1), $data);
+				break;
+
+			case 'count':
+				$count = (float)Expr::value($parts->get($i+1), $data);
+				break;
+
+			case 'step':
+				$step = (float)Expr::value($parts->get($i+1), $data);
+				break;
+		}
+	}
+
+	$tpl = $parts->get($parts->length-1);
+
+	if ($to !== null)
+	{
+		if ($step === null)
+			$step = $from > $to ? -1 : 1;
+
+		if ($step < 0)
+		{
+			for ($i = $from; $i >= $to; $i += $step)
+			{
+				try {
+					$data->set($var_name, $i);
+					Expr::value($tpl, $data);
+				}
+				catch (\Exception $e) {
+					$name = $e->getMessage();
+					if ($name == 'EXC_BREAK') break;
+					if ($name == 'EXC_CONTINUE') continue;
+					throw $e;
+				}
+			}
+		}
+		else
+		{
+			for ($i = $from; $i <= $to; $i += $step)
+			{
+				try {
+					$data->set($var_name, $i);
+					Expr::value($tpl, $data);
+				}
+				catch (\Exception $e) {
+					$name = $e->getMessage();
+					if ($name == 'EXC_BREAK') break;
+					if ($name == 'EXC_CONTINUE') continue;
+					throw $e;
+				}
+			}
+		}
+	}
+	else if ($count !== null)
+	{
+		if ($step === null)
+			$step = 1;
+
+		for ($i = $from; $count > 0; $count--, $i += $step)
+		{
+			try {
+				$data->set($var_name, $i);
+				Expr::value($tpl, $data);
+			}
+			catch (\Exception $e) {
+				$name = $e->getMessage();
+				if ($name == 'EXC_BREAK') break;
+				if ($name == 'EXC_CONTINUE') continue;
+				throw $e;
+			}
+		}
+	}
+
+	$data->remove($var_name);
+	return null;
 });
 
 /**
@@ -1374,7 +1563,7 @@ Expr::register('_#', function ($parts, $data)
 /**
 **	Constructs a non-expanded list from the given arguments and returns it.
 **
-**	# <expr> [<expr>...]
+**	## <expr> [<expr>...]
 */
 Expr::register('_##', function ($parts, $data)
 {

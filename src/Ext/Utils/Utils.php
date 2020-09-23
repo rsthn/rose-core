@@ -20,6 +20,7 @@ namespace Rose\Ext;
 use Rose\Resources;
 use Rose\Strings;
 use Rose\Configuration;
+use Rose\Gateway;
 
 use Rose\Text;
 use Rose\Math;
@@ -28,6 +29,7 @@ use Rose\Map;
 use Rose\Arry;
 
 Expr::register('configuration', function ($args) { return Configuration::getInstance(); });
+Expr::register('config', function ($args) { return Configuration::getInstance(); });
 Expr::register('strings', function ($args) { return Strings::getInstance(); });
 Expr::register('resources', function ($args) { return Resources::getInstance(); });
 Expr::register('gateway', function ($args) { return Gateway::getInstance(); });
