@@ -87,12 +87,6 @@ class Session
 			if (!Session::$sessionId || Text::length(Session::$sessionId) != 48)
 				Session::$sessionId = '';
 		}
-
-		// If sessionId is valid, open the session automatically.
-		if (Session::$sessionId)
-		{
-			Session::open(false);
-		}
     }
 
 	/*
@@ -133,14 +127,14 @@ class Session
     public static function open ($createSession=true)
     {
 		if (Session::$sessionOpen == true || !Session::$sessionName)
-			return;
+			return true;
 
 		// Load session data from the database if specified in the configuration field 'Session.database'.
 		if (Configuration::getInstance()->Session->database == 'true')
 		{
 			try {
 				if (!Session::dbSessionLoad($createSession))
-					return;
+					return false;
 			}
 			catch (\Exception $e) {
 				throw new Error ('Fatal: Unable to connect to database for session initialization.');
@@ -164,7 +158,7 @@ class Session
 			catch (\Exception $e)
 			{
 				if (!$createSession)
-					return;
+					return false;
 
 				session_id (Session::generateId(48));
 				session_cache_limiter(false);
@@ -177,7 +171,7 @@ class Session
 				{
 					Cookies::getInstance()->remove(Session::$sessionName);
 					session_destroy();
-					return;
+					return false;
 				}
 
 				Session::$data = new Map ();
@@ -191,33 +185,39 @@ class Session
 		Cookies::getInstance()->setCookie (Session::$sessionName, Session::$sessionId, Configuration::getInstance()->Session->expires);
 
         $expires = Configuration::getInstance()->Session->expires;
-        if ($expires < 1) return;
-
-        if (Session::$data->last_activity != null)
-        {
-			if ((new DateTime())->sub(Session::$data->last_activity) > $expires)
-                Session::clear();
-        }
+		if ($expires > 0)
+		{
+			if (Session::$data->last_activity != null)
+			{
+				if ((new DateTime())->sub(Session::$data->last_activity) > $expires)
+					Session::clear();
+			}
+		}
 
 		Session::$data->last_activity = (string)(new DateTime());
 		Session::$sessionOpen = true;
+
+		return true;
     }
 
 	/*
-	**	Closes the session and flushes the data to storage.
+	**	Closes the session and flushes the data to storage. If nosave is true, session will be closed but no data will be saved.
 	*/
-    public static function close()
+    public static function close($nosave=false)
     {
 		if (Session::$sessionOpen == false)
 			return;
 
 		if (Configuration::getInstance()->Session->database == 'true')
 		{
-			Session::dbSessionSave();
+			if (!$nosave)
+				Session::dbSessionSave();
 		}
 		else
 		{
-			$_SESSION['session'] = serialize (Session::$data);
+			if (!$nosave)
+				$_SESSION['session'] = serialize (Session::$data);
+				
 			session_write_close();
 		}
 	

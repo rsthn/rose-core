@@ -23,11 +23,11 @@ use Rose\Expr;
 Expr::register('session', function ($args) { return Session::$data; });
 
 Expr::register('session::open', function ($args) {
-	return Session::open();
+	return Session::open($args->length == 2 ? $args->get(1) : true);
 });
 
 Expr::register('session::close', function ($args) {
-	return Session::close();
+	return Session::close($args->length == 2 ? $args->get(1) : false);
 });
 
 Expr::register('session::destroy', function ($args) {

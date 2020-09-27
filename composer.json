@@ -1,7 +1,7 @@
 {
     "name": "rsthn/rose-core",
     "description": "Rose Framework - Core",
-    "version": "3.0.34",
+    "version": "3.0.35",
     "homepage": "https://github.com/rsthn/rose-core",
     "type": "library",
     "license": "Apache-2.0",

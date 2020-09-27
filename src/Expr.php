@@ -1238,6 +1238,39 @@ Expr::register('_each', function ($parts, $data)
 });
 
 /**
+**	Expands the given template for each of the items in the list-expr, the mandatory varname parameter (namely 'i') indicates the name of the variable
+**	that will contain the data of each item as the list-expr is traversed. Extra variables i# and i## (suffix '#' and '##') are introduced to denote
+**	the index/key and numeric index of the current item respectively, note that the later will always have a numeric value.
+**
+**	Does not produce any output (returns null).
+**
+**	foreach <varname> <list-expr> <template>
+*/
+Expr::register('_foreach', function ($parts, $data)
+{
+	$var_name = Expr::value($parts->get(1), $data);
+	$list = Expr::value($parts->get(2), $data);
+
+	$j = 0;
+	if (!$list) return null;
+
+	$list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$parts, &$data)
+	{
+		$data->set($var_name, $item);
+		$data->set($var_name . '##', $j++);
+		$data->set($var_name . '#', $key);
+
+		Expr::expand($parts->get(3), $data, 'text');
+	});
+
+	$data->remove($var_name);
+	$data->remove($var_name . '##');
+	$data->remove($var_name . '#');
+
+	return null;
+});
+
+/**
 **	Returns the valueA if the expression is true otherwise valueB, this is a short version of the 'if' function with the
 **	difference that the result is 'obj' instead of text.
 **

@@ -103,8 +103,8 @@ class Configuration extends Map
 	**
 	**	Note that you can use the equal-sign in the field value without any issues because the parser will look only for the first to delimit the name.
 	**
-	**	If a multiline value is desired, back-ticks can be used to span multiple lines, each line will be trimmed first before concatenating it to
-	**	the value, and new-line character is preserved.
+	**	If a multiline value is desired, single back-ticks can be used (after the equal sign to start, and on a single line to end) to span multiple
+	**	lines, each line will be trimmed first before concatenating it to the value, and new-line character is preserved.
 	*/
     public static function loadFromBuffer ($source, $target=null, $merge=false)
     {
