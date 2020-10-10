@@ -811,7 +811,7 @@ class Expr
 						$tmp = Expr::expand($i->data, $data, $ret, 'template');
 						break;
 
-					case 'string': case 'identifier':
+					case 'string': case 'identifier': case 'access':
 						$tmp = $i->data;
 						break;
 
@@ -1772,14 +1772,17 @@ Expr::register('_filter', function ($parts, $data)
 
 
 /**
-**	Expands the specified template string with the given data. The sym_open and sym_close will be '{' and '}' respectively.
+**	Expands the specified template string (or already parsed template [array]) with the given data. The sym_open and sym_close will be '{' and '}' respectively.
 **	If no data is provided, current data parameter will be used.
 **
 **	expand <template> <data>
 */
 Expr::register('expand', function ($args, $parts, $data)
 {
-	return Expr::expand (Expr::parseTemplate ($args->get(1), '{', '}'), $args->length == 3 ? $args->get(2) : $data);
+	if (typeOf($args->get(1)) == 'Rose\\Arry')
+		return Expr::expand ($args->get(1), $args->length == 3 ? $args->get(2) : $data);
+	else
+		return Expr::expand (Expr::parseTemplate ($args->get(1), '{', '}'), $args->length == 3 ? $args->get(2) : $data);
 });
 
 /**

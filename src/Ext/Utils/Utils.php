@@ -30,7 +30,11 @@ use Rose\Arry;
 
 Expr::register('configuration', function ($args) { return Configuration::getInstance(); });
 Expr::register('config', function ($args) { return Configuration::getInstance(); });
+Expr::register('c', function ($args) { return Configuration::getInstance(); });
+
 Expr::register('strings', function ($args) { return Strings::getInstance(); });
+Expr::register('s', function ($args) { return Strings::getInstance(); });
+
 Expr::register('resources', function ($args) { return Resources::getInstance(); });
 Expr::register('gateway', function ($args) { return Gateway::getInstance(); });
 

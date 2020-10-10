@@ -411,12 +411,12 @@ class Arry
 	*/
     public function map ($filter)
     {
-		foreach ($this->__nativeArray as &$item)
-		{
-			$item = $filter($item);
-		}
+		$tmp = new Arry();
 
-        return $this;
+		foreach ($this->__nativeArray as $item)
+			$tmp->push($filter($item));
+
+        return $tmp;
 	}
 
 	/*

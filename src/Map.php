@@ -225,12 +225,14 @@ class Map
 	*/
     public function map ($filter)
     {
-		foreach ($this->__nativeArray as $name => &$item)
+		$tmp = new Map();
+
+		foreach ($this->__nativeArray as $name => $item)
 		{
-			$item = $filter($item, $name);
+			$tmp->set($name, $filter($item, $name));
 		}
 
-        return $this;
+        return $tmp;
 	}
 
 	/*
