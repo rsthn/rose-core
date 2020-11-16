@@ -102,15 +102,15 @@ class Locale
 
 			case 'TIME':
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime($config->Locale->time, $value) : null;
+				return $value ? strftime($config->Locale->time, $value + DateTime::$offset) : null;
 
 			case 'DATE':
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime($config->Locale->date, $value) : null;
+				return $value ? strftime($config->Locale->date, $value + DateTime::$offset) : null;
 
 			case 'DATETIME':
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime($config->Locale->datetime, $value) : null;
+				return $value ? strftime($config->Locale->datetime, $value + DateTime::$offset) : null;
 
 			case 'GMT':
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
@@ -122,21 +122,21 @@ class Locale
 
 			case 'ISO_DATE':
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime('%Y-%m-%d', $value) : null;
+				return $value ? strftime('%Y-%m-%d', $value + DateTime::$offset) : null;
 
 			case 'ISO_TIME':
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime('%H:%M:%S', $value) : null;
+				return $value ? strftime('%H:%M:%S', $value + DateTime::$offset) : null;
 
 			case 'ISO_DATETIME':
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime('%Y-%m-%d %H:%M:%S', $value) : null;
+				return $value ? strftime('%Y-%m-%d %H:%M:%S', $value + DateTime::$offset) : null;
 
 			default:
 				if (Text::toUpperCase(Text::substring ($formatType, 0, 3)) == 'DT_')
 				{
 					$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-					return $value ? strftime ($config->Locale->get($formatType), $value) : null;
+					return $value ? strftime($config->Locale->get($formatType), $value + DateTime::$offset) : null;
 				}
 
 				if (Text::toUpperCase(Text::substring($formatType,0,7)) == 'NUMERIC')

@@ -311,6 +311,15 @@ class Arry
 	*/
     public function has ($index)
     {
+		if ($index != null)
+		{
+			if ($index[0] == '#' || $index == 'length')
+				return true;
+
+			if ($index[0] == '@')
+				return $this->has(Text::substring($index, 1));
+		}
+
         return array_key_exists($index, $this->__nativeArray) ? true : false;
     }
 
@@ -494,6 +503,14 @@ class Arry
         {
             case 'length':
 				return sizeof($this->__nativeArray);
+
+            default:
+                if ($name[0] == '#')
+                    return $this->has(Text::substring($name, 1)) ? '1' : '0';
+
+                if ($name[0] == '@')
+                    return $this->get(Text::substring($name, 1));
+
         }
 
 		$name = (int)$name;

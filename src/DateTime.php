@@ -71,6 +71,8 @@ class DateTime
 
 		if (!self::$timezone)
 			self::$timezone = 'UTC';
+
+		self::$offset = self::timezoneOffset(self::$timezone);
 	}
 
 	/*
@@ -79,6 +81,7 @@ class DateTime
 	public static function setTimezone ($name)
 	{
 		self::$timezone = $name;
+		self::$offset = self::timezoneOffset($name);
 	}
 
 	/*

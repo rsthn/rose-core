@@ -649,7 +649,7 @@ class Expr
 				if ($failed && $parts->length == 1)
 				{
 					if (Expr::$strict == true)
-						throw new \Error ('Expression function `'.$str.'` not found.');
+						throw new Error ('Expression function `'.$str.'` not found.');
 				}
 			}
 
@@ -764,7 +764,7 @@ class Expr
 			if (!(Expr::$functions->has($args->get(0))))
 			{
 				if (Expr::$strict == true)
-					throw new \Error ('Expression function `'.$args->get(0).'` not found.');
+					throw new Error ('Expression function `'.$args->get(0).'` not found.');
 
 				return '(Unknown: '.$args->get(0).')';
 			}
@@ -963,12 +963,13 @@ Expr::register('le', function($args) { return $args->get(1) <= $args->get(2); })
 Expr::register('gt', function($args) { return $args->get(1) > $args->get(2); });
 Expr::register('ge', function($args) { return $args->get(1) >= $args->get(2); });
 Expr::register('and', function($args) { for ($i = 1; $i < $args->length(); $i++) if (!$args->get($i)) return false; return true; });
-Expr::register('or', function($args) { for ($i = 1; $i < $args->length(); $i++) if (~~$args->get($i)) return true; return false; });
+Expr::register('or', function($args) { for ($i = 1; $i < $args->length(); $i++) if (!!$args->get($i)) return true; return false; });
 
 Expr::register('isnotnull', function($args) { return $args->get(1) !== null; });
 Expr::register('isnull', function($args) { return $args->get(1) === null; });
 Expr::register('isnotempty', function($args) { return !!$args->get(1); });
 Expr::register('isempty', function($args) { return !$args->get(1); });
+Expr::register('typeof', function($args) { return typeOf($args->get(1)); });
 
 Expr::register('*', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
 Expr::register('mul', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
@@ -1807,3 +1808,47 @@ Expr::register('expand', function ($args, $parts, $data)
 
 	return call_user_func_array ($ref[0]->{$ref[1]}, $args);
 });*/
+
+/**
+**	Try-catch block support.
+**
+**	try <block> [catch <block>] [finally <block>]
+*/
+Expr::register('_try', function ($parts, $data)
+{
+	$i = 2;
+
+	$_catch = 0;
+	$_finally = 0;
+
+	if ($parts->length > 2)
+	{
+		switch (Expr::value($parts->get(2), $data))
+		{
+			case 'catch':
+				$_catch = 3;
+
+				if ($parts->length > 4 && Expr::value($parts->get(4), $data) == 'finally')
+					$_finally = 5;
+
+				break;
+
+			case 'finally':
+				$_finally = 3;
+				break;
+		}
+	}
+
+	try {
+		Expr::value($parts->get(1), $data);
+	}
+	catch (\Exception $e) {
+		$data->err = $e->getMessage();
+
+		if ($_catch)
+			Expr::value($parts->get($_catch), $data);
+	}
+
+	if ($_finally) Expr::value($parts->get($_finally), $data);
+
+});

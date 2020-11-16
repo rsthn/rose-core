@@ -153,7 +153,7 @@ class Table
 			foreach ($row->__nativeArray as $col)
 				$i .= "<td>$col</td>";
 
-			$s .= "<tr>$i</tr>";
+			$s .= '<tr>'.nl2br($i).'</tr>';
 		}
 
 		return "<table style='font-family: monospace;' border='1'>$s</table>";

@@ -175,7 +175,8 @@ class Map
 	*/
     public function has ($key)
     {
-		if ($key != null) {
+		if ($key != null)
+		{
 			if ($key[0] == '#' || $key == 'length')
 				return true;
 

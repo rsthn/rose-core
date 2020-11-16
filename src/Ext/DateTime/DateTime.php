@@ -35,10 +35,17 @@ Expr::register('datetime::now:int', function ($args) {
 });
 
 /*
-**	datetime::parse <datetime> [target_timezone]
+**	datetime::parse <datetime> [target_timezone] [from_timezone]
 */
 Expr::register('datetime::parse', function ($args) {
-	return new DateTime($args->get(1), $args->length == 3 ? $args->get(2) : null);
+	return new DateTime($args->get(1), $args->length >= 3 ? $args->get(2) : null, $args->length >= 4 ? $args->get(3) : null);
+});
+
+/*
+**	datetime::int <datetime>
+*/
+Expr::register('datetime::int', function ($args) {
+	return DateTime::getUnixTimestamp($args->get(1));
 });
 
 /*
