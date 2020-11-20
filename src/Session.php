@@ -332,20 +332,20 @@ class Session
             {
                 try
                 {
-					Session::$data = unserialize (base64_decode (Session::$data->data));
+					Session::$data = Map::fromNativeArray(json_decode(base64_decode (Session::$data->data), true));
                     if (!Session::$data || \Rose\typeOf(Session::$data) != 'Rose\\Map')
                         Session::$data = new Map();
                 }
                 catch (\Exception $e)
                 {
                     Session::$data = new Map();
-                    \Rose\trace ('(Error: Session): ' + $e->getMessage());
+                    \Rose\trace ('(Error: Session): ' . $e->getMessage());
                 }
             }
 		}
 
         if ($create == true)
-            $conn->execQuery("INSERT INTO ##sessions SET last_activity='".(string)(new DateTime())."', session_id=".Connection::escape(Session::$sessionId).", data=''");
+            $conn->execQuery("INSERT INTO ##sessions SET created='".(string)(new DateTime())."', last_activity='".(string)(new DateTime())."', session_id=".Connection::escape(Session::$sessionId).", data=''");
 
 		return true;
     }
@@ -356,10 +356,11 @@ class Session
     public static function dbSessionSave ()
     {
         $user_id = Session::$data->has('user') && Session::$data->user->user_id ? Connection::escape(Session::$data->user->user_id) : 'NULL';
-		$data = Connection::escape(base64_encode(serialize(Session::$data)));
+        $device_id = Session::$data->has('device_id') ? Connection::escape(Session::$data->device_id) : 'NULL';
+		$data = Connection::escape(base64_encode((string)(Session::$data)));
 
         Resources::getInstance()->Database->execQuery(
-			"UPDATE ##sessions SET last_activity='".(string)(new DateTime())."', user_id=".$user_id.", data=".$data." WHERE session_id=".Connection::escape(Session::$sessionId)
+			"UPDATE ##sessions SET last_activity='".(string)(new DateTime())."', user_id=".$user_id.", device_id=".$device_id.", data=".$data." WHERE session_id=".Connection::escape(Session::$sessionId)
 		);
 	}
 
@@ -380,15 +381,22 @@ class Session
 	DROP TABLE IF EXISTS sessions;
 	CREATE TABLE sessions
 	(
-		session_id char(48) primary key unique not null,
+		session_id varchar(48) primary key unique not null,
+
+		created datetime default null,
 		last_activity datetime default null,
+
+		device_id varchar(48) default null,
 
 		user_id int unsigned default null,
 		constraint foreign key (user_id) references users (user_id) on delete cascade,
 
-		data varbinary(4096) default null
+		data varchar(8192) default null
 	)
 	ENGINE=InnoDB CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+	ALTER TABLE sessions ADD INDEX n_device_id (device_id);
+
 
 	DROP PROCEDURE IF EXISTS session_cleanup;
 	DELIMITER //
