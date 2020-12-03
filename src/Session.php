@@ -52,6 +52,11 @@ class Session
 	**	Contains the session ID for the current session.
 	*/
 	public static $sessionId;
+
+	/*
+	**	Indicates if the active session ID is a valid session.
+	*/
+	public static $validSessionId;
 	
 	/*
 	**	Contains the name of the session cookie.
@@ -71,6 +76,8 @@ class Session
 		Session::$data = new Map();
 
 		Session::$sessionOpen = false;
+		Session::$validSessionId = false;
+
 		Session::$sessionName = Configuration::getInstance()->Session->name;
 		Session::$sessionId = '';
 
@@ -96,7 +103,7 @@ class Session
     {
 		Session::$data = new Map();
 
-		if (Session::$sessionOpen == false)
+		if (Session::$validSessionId == false)
 			return;
 
 		if (Configuration::getInstance()->Session->database == 'true')
@@ -109,7 +116,9 @@ class Session
 		}
 
 		Cookies::getInstance()->remove(Session::$sessionName);
+
 		Session::$sessionOpen = false;
+		Session::$validSessionId = false;
 	}
 
 	/*
@@ -195,27 +204,28 @@ class Session
 		}
 
 		Session::$data->last_activity = (string)(new DateTime());
+
 		Session::$sessionOpen = true;
+		Session::$validSessionId = true;
 
 		return true;
     }
 
 	/*
-	**	Closes the session and flushes the data to storage. If nosave is true, session will be closed but no data will be saved.
+	**	Closes the session and flushes the data to storage. If shallow is true, only internal fields of the session will be saved.
 	*/
-    public static function close($nosave=false)
+    public static function close ($shallow=false)
     {
 		if (Session::$sessionOpen == false)
 			return;
 
 		if (Configuration::getInstance()->Session->database == 'true')
 		{
-			if (!$nosave)
-				Session::dbSessionSave();
+			Session::dbSessionSave($shallow);
 		}
 		else
 		{
-			if (!$nosave)
+			if (!$shallow)
 				$_SESSION['session'] = serialize (Session::$data);
 				
 			session_write_close();
@@ -345,23 +355,34 @@ class Session
 		}
 
         if ($create == true)
-            $conn->execQuery("INSERT INTO ##sessions SET created='".(string)(new DateTime())."', last_activity='".(string)(new DateTime())."', session_id=".Connection::escape(Session::$sessionId).", data=''");
+            $conn->execQuery("INSERT INTO ##sessions SET created='".(string)(new DateTime())."', session_id=".Connection::escape(Session::$sessionId).", data=''");
 
 		return true;
     }
 
 	/*
-	**	Saves the session data to the database. Fields sessionId and sessionName must already be set.
+	**	Saves the session data to the database. Fields sessionId and sessionName must already be set. When 'shallow' is true, only internal session fields will be saved.
 	*/
-    public static function dbSessionSave ()
+    public static function dbSessionSave ($shallow)
     {
         $user_id = Session::$data->has('user') && Session::$data->user->user_id ? Connection::escape(Session::$data->user->user_id) : 'NULL';
-        $device_id = Session::$data->has('device_id') ? Connection::escape(Session::$data->device_id) : 'NULL';
-		$data = Connection::escape(base64_encode((string)(Session::$data)));
+		$device_id = Session::$data->has('device_id') ? Connection::escape(Session::$data->device_id) : 'NULL';
+		$last_activity = Session::$data->has('last_activity') ? Connection::escape(Session::$data->last_activity) : 'NULL';
 
-        Resources::getInstance()->Database->execQuery(
-			"UPDATE ##sessions SET last_activity='".(string)(new DateTime())."', user_id=".$user_id.", device_id=".$device_id.", data=".$data." WHERE session_id=".Connection::escape(Session::$sessionId)
-		);
+		if (!$shallow)
+		{
+			$data = Connection::escape(base64_encode((string)(Session::$data)));
+
+			Resources::getInstance()->Database->execQuery(
+				"UPDATE ##sessions SET last_activity=".$last_activity.", user_id=".$user_id.", device_id=".$device_id.", data=".$data." WHERE session_id=".Connection::escape(Session::$sessionId)
+			);
+		}
+		else
+		{
+			Resources::getInstance()->Database->execQuery(
+				"UPDATE ##sessions SET last_activity=".$last_activity." WHERE session_id=".Connection::escape(Session::$sessionId)
+			);
+		}
 	}
 
 	/*

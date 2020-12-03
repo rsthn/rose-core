@@ -130,3 +130,8 @@ Expr::register('db::lastInsertId', function ($args)
 {
 	return Resources::getInstance()->Database->getLastInsertId();
 });
+
+Expr::register('db::affectedRows', function ($args)
+{
+	return Resources::getInstance()->Database->getAffectedRows();
+});

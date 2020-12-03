@@ -18,6 +18,7 @@
 namespace Rose;
 
 use Rose\Errors\Error;
+use Rose\Errors\MetaError;
 use Rose\Regex;
 use Rose\Arry;
 use Rose\Map;
@@ -803,31 +804,60 @@ class Expr
 		// Expand parts.
 		if ($mode == 'base-string')
 		{
-			$parts->forEach(function($i, $index, $list) use(&$s, &$data, &$ret)
-			{
-				switch ($i->type)
+			try {
+				$parts->forEach(function($i, $index, $list) use(&$s, &$data, &$ret)
 				{
-					case 'template':
-						$tmp = Expr::expand($i->data, $data, $ret, 'template');
+					try
+					{
+						switch ($i->type)
+						{
+							case 'template':
+								$tmp = Expr::expand($i->data, $data, $ret, 'template');
+								break;
+
+							case 'string': case 'identifier': case 'access':
+								$tmp = $i->data;
+								break;
+
+							case 'base-string':
+								$tmp = Expr::expand($i->data, $data, $ret, 'base-string');
+								break;
+						}
+
+						if ($ret == 'void')
+							return;
+
+						if ($ret == 'last' && $index != $list->length-1)
+							return;
+
+						$s->push($tmp);
+					}
+					catch (MetaError $e)
+					{
+						switch ($e->code)
+						{
+							case 'EXPR_YIELD':
+								$s->clear();
+								$s->push($e->value);
+								throw new MetaError('EXPR_END');
+
+							default:
+								throw $e;
+						}
+					}
+				});
+			}
+			catch (MetaError $e)
+			{
+				switch ($e->code)
+				{
+					case 'EXPR_END':
 						break;
 
-					case 'string': case 'identifier': case 'access':
-						$tmp = $i->data;
-						break;
-
-					case 'base-string':
-						$tmp = Expr::expand($i->data, $data, $ret, 'base-string');
-						break;
+					default:
+						throw $e;
 				}
-
-				if ($ret == 'void')
-					return;
-
-				if ($ret == 'last' && $index != $list->length-1)
-					return;
-
-				$s->push($tmp);
-			});
+			}
 		}
 
 		// Return types for direct objects.
@@ -970,6 +1000,17 @@ Expr::register('isnull', function($args) { return $args->get(1) === null; });
 Expr::register('isnotempty', function($args) { return !!$args->get(1); });
 Expr::register('isempty', function($args) { return !$args->get(1); });
 Expr::register('typeof', function($args) { return typeOf($args->get(1)); });
+
+Expr::register('eq?', function($args) { return $args->get(1) == $args->get(2); });
+Expr::register('ne?', function($args) { return $args->get(1) != $args->get(2); });
+Expr::register('lt?', function($args) { return $args->get(1) < $args->get(2); });
+Expr::register('le?', function($args) { return $args->get(1) <= $args->get(2); });
+Expr::register('gt?', function($args) { return $args->get(1) > $args->get(2); });
+Expr::register('ge?', function($args) { return $args->get(1) >= $args->get(2); });
+Expr::register('notnull?', function($args) { return $args->get(1) !== null; });
+Expr::register('null?', function($args) { return $args->get(1) === null; });
+Expr::register('notempty?', function($args) { return !!$args->get(1); });
+Expr::register('empty?', function($args) { return !$args->get(1); });
 
 Expr::register('*', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
 Expr::register('mul', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
@@ -1851,4 +1892,41 @@ Expr::register('_try', function ($parts, $data)
 
 	if ($_finally) Expr::value($parts->get($_finally), $data);
 
+});
+
+/**
+**	Yields a value to the inner-most expression evaluation loop to force result to be the specified value.
+**
+**	yield <value>
+*/
+Expr::register('yield', function($args) {
+	throw new MetaError('EXPR_YIELD', $args->get(1));
+});
+
+/**
+**	Introduces a new temporal variable with the specified value. Returns the value returned by the expression.
+**
+**	with <varname> <value> <expr>
+*/
+Expr::register('_with', function($parts, $data)
+{
+	$var_name = Expr::expand($parts->get(1), $data, 'arg');
+
+	$old_value_present = false;
+	$old_value = null;
+
+	if ($data->has($var_name))
+	{
+		$old_value_present = true;
+		$old_value = $data->{$var_name};
+	}
+
+	$data->{$var_name} = Expr::expand($parts->get(2), $data, 'arg');
+
+	$value = Expr::expand($parts->get(3), $data, 'arg');
+
+	if ($old_value_present)
+		$data->{$var_name} = $old_value;
+
+	return $value;
 });
