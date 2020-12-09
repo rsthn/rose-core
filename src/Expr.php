@@ -1031,7 +1031,12 @@ Expr::register('pow', function($args) { $x = $args->get(1); for ($i = 2; $i < $a
 */
 Expr::register('json', function ($args)
 {
-	return (string)$args->get(1);
+	$value = $args->get(1);
+
+	if (typeOf($value) == 'Rose\\Arry' || typeOf($value) == 'Rose\\Map')
+		return (string)$value;
+
+	return json_encode($value);
 });
 
 /**

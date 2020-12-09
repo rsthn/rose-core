@@ -2,6 +2,7 @@ Add recursive chmod to Path.
 Remove references to dummy functions located on Main
 Add session storage from database (not currently working).
 
+Load 'rose-env' from environment variables.
 
 ---> Remove all alpha() calls and replace with new().
 ---> Ensure all uses of typeOf() correctly compare with Rose\ClassName

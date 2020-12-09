@@ -38,8 +38,6 @@ Expr::register('s', function ($args) { return Strings::getInstance(); });
 Expr::register('resources', function ($args) { return Resources::getInstance(); });
 Expr::register('gateway', function ($args) { return Gateway::getInstance(); });
 
-Expr::register('request', function ($args) { return Gateway::getInstance()->requestParams; });
-
 Expr::register('math::rand', function() { return Math::rand(); });
 Expr::register('math::randstr', function($args) { return bin2hex(random_bytes((int)$args->get(1))); });
 Expr::register('math::uuid', function() {
@@ -50,11 +48,122 @@ Expr::register('math::uuid', function() {
 });
 
 Expr::register('utils::sleep', function($args) { sleep($args->get(1)); return null; });
+
 Expr::register('utils::base64:encode', function($args) { return base64_encode ($args->get(1)); });
 Expr::register('utils::base64:decode', function($args) { return base64_decode ($args->get(1)); });
+
 Expr::register('utils::hex:encode', function($args) { return bin2hex ($args->get(1)); });
 Expr::register('utils::hex:decode', function($args) { return hex2bin ($args->get(1)); });
+
 Expr::register('utils::url:encode', function($args) { return urlencode ($args->get(1)); });
 Expr::register('utils::url:decode', function($args) { return urldecode ($args->get(1)); });
-Expr::register('utils::json:stringify', function($args) { return (string)($args->get(1)); });
-Expr::register('utils::json:parse', function($args) { return Text::substring($args->get(1), 0, 1) == '[' ? Arry::fromNativeArray(json_decode($args->get(1), true)) : Map::fromNativeArray(json_decode($args->get(1), true)); });
+
+Expr::register('utils::json:stringify', function($args)
+{
+	$value = $args->get(1);
+
+	if (\Rose\typeOf($value) == 'Rose\\Arry' || \Rose\typeOf($value) == 'Rose\\Map')
+		return (string)$value;
+
+	return json_encode($value);
+});
+
+Expr::register('utils::json:parse', function($args)
+{
+	$value = $args->get(1);
+	return $value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true));
+});
+
+/* ************ */
+Expr::register('array::new', function($args)
+{
+	$array = new Arry();
+
+	for ($i = 1; $i < $args->length; $i++)
+		$array->push($args->get($i));
+
+	return $array;
+});
+
+Expr::register('array::sort:asc', function($args)
+{
+	$array = $args->get(1);
+	$array->sort('ASC');
+	return null;
+});
+
+Expr::register('array::sort:desc', function($args)
+{
+	$array = $args->get(1);
+	$array->sort('DESC');
+	return null;
+});
+
+Expr::register('array::sortl:asc', function($args)
+{
+	$array = $args->get(1);
+	$array->sortl('ASC');
+	return null;
+});
+
+Expr::register('array::sortl:desc', function($args)
+{
+	$array = $args->get(1);
+	$array->sortl('DESC');
+	return null;
+});
+
+Expr::register('array::push', function($args)
+{
+	$array = $args->get(1);
+
+	for ($i = 2; $i < $args->length; $i++)
+		$array->push($args->get($i));
+
+	return null;
+});
+
+Expr::register('array::unshift', function($args)
+{
+	$array = $args->get(1);
+
+	for ($i = 2; $i < $args->length; $i++)
+		$array->unshift($args->get($i));
+
+	return null;
+});
+
+Expr::register('array::pop', function($args)
+{
+	return $args->get(1)->pop();
+});
+
+Expr::register('array::shift', function($args)
+{
+	return $args->get(1)->shift();
+});
+
+Expr::register('array::first', function($args)
+{
+	return $args->get(1)->first();
+});
+
+Expr::register('array::last', function($args)
+{
+	return $args->get(1)->last();
+});
+
+Expr::register('array::remove', function($args)
+{
+	return $args->get(1)->remove((int)$args->get(2));
+});
+
+Expr::register('array::indexof', function($args)
+{
+	return $args->get(1)->indexOf($args->get(2));
+});
+
+Expr::register('array::length', function($args)
+{
+	return $args->get(1)->length();
+});

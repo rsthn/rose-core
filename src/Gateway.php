@@ -49,11 +49,13 @@ class Gateway
 	**	Client request parameters (both GET and POST).
 	*/
 	public $requestParams;
+	public $request;
 
 	/*
 	**	Server parameters (basically the $_SERVER array).
 	*/
 	public $serverParams;
+	public $server;
 
 	/*
 	**	Relative path (if any) obtained from the PHP_SELF server parameter.
@@ -105,8 +107,8 @@ class Gateway
 			$file['path'] = $file['tmp_name'];
 		}
 
-		$this->requestParams = new Map (array_merge ($_REQUEST, $_FILES));
-		$this->serverParams = new Map ($_SERVER);
+		$this->request = $this->requestParams = new Map (array_merge ($_REQUEST, $_FILES));
+		$this->server = $this->serverParams = new Map ($_SERVER);
 		$this->cookies = new Map ($_COOKIE);
 
 		$this->registeredServices = new Map();

@@ -6,6 +6,16 @@
 
 	\Rose\DateTime::setTimezone('GMT-6');
 
-	echo \Rose\Expr::eval("
-		(join ' ' (map i (for i from 1 count 20 (@  (if (eq 4 (i)) (break) else (echo (i))) ) ) (* 2 (i))))
-	")."\n";
+	echo (\Rose\Expr::eval("
+		(set x (array::new))
+		(set y asc)
+		(array::push (x) 'AAA' 'BB' 'CCCCC')
+		(array::unshift (x) 'X' 'Y' 'Z')
+		(array::push (x) (array::shift (x)))
+		(array::unshift (x) (array::pop (x)))
+		(array::sortl:(y) (x))
+		(array::remove (x) 0)
+		(yield (array::length (x)))
+	", null, 'arg'));
+
+	echo "\n";
