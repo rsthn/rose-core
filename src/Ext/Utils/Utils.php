@@ -37,6 +37,7 @@ Expr::register('s', function ($args) { return Strings::getInstance(); });
 
 Expr::register('resources', function ($args) { return Resources::getInstance(); });
 Expr::register('gateway', function ($args) { return Gateway::getInstance(); });
+Expr::register('gateway::redirect', function ($args) { return Gateway::redirect($args->get(1)); });
 
 Expr::register('math::rand', function() { return Math::rand(); });
 Expr::register('math::randstr', function($args) { return bin2hex(random_bytes((int)$args->get(1))); });
@@ -166,4 +167,20 @@ Expr::register('array::indexof', function($args)
 Expr::register('array::length', function($args)
 {
 	return $args->get(1)->length();
+});
+
+Expr::register('array::append', function($args)
+{
+	$args->get(1)->append($args->get(2));
+	return null;
+});
+
+Expr::register('array::unique', function($args)
+{
+	return $args->get(1)->unique();
+});
+
+Expr::register('array::reverse', function($args)
+{
+	return $args->get(1)->reverse();
 });

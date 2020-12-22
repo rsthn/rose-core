@@ -929,6 +929,7 @@ class Expr
 	**	Expands the template as 'arg' and returns the result.
 	**
 	**	>> object value (string parts, object data);
+	**	>> object value (array parts, object data);
 	*/
 	public static function value ($parts, $data=null)
 	{
@@ -963,6 +964,38 @@ class Expr
 			return Expr::$functions->get($name) ($args, null, $data);
 
 		return null;
+	}
+
+	/**
+	**	Returns a map given a 'parts' array having values of the form "name: value" or ":name value".
+	**
+	**	>> Map getNamedValues (array parts, object data, int i=1, bool expanded=true);
+	*/
+	public static function getNamedValues ($parts, $data, $i=1, $expanded=true)
+	{
+		$s = new Map();
+		$mode = 0;
+	
+		for (; $i < $parts->length(); $i += 2)
+		{
+			$key = Expr::expand($parts->get($i), $data, 'arg');
+
+			if (!$mode) {
+				if ($key[0] == ':') $mode = 1; else $mode = substr($key, -1) == ':' ? 2 : 3;
+			}
+
+			if ($mode == 1)
+				$key = substr($key, 1);
+			else if ($mode == 2)
+				$key = substr($key, 0, strlen($key)-1);
+
+			if ($expanded)
+				$s->set($key, Expr::expand($parts->get($i+1), $data, 'arg'));
+			else
+				$s->set($key, $parts->get($i+1));
+		}
+
+		return $s;
 	}
 };
 
@@ -999,7 +1032,7 @@ Expr::register('isnotnull', function($args) { return $args->get(1) !== null; });
 Expr::register('isnull', function($args) { return $args->get(1) === null; });
 Expr::register('isnotempty', function($args) { return !!$args->get(1); });
 Expr::register('isempty', function($args) { return !$args->get(1); });
-Expr::register('typeof', function($args) { return typeOf($args->get(1)); });
+Expr::register('iszero', function($args) { return (float)$args->get(1) == 0; });
 
 Expr::register('eq?', function($args) { return $args->get(1) == $args->get(2); });
 Expr::register('ne?', function($args) { return $args->get(1) != $args->get(2); });
@@ -1011,6 +1044,20 @@ Expr::register('notnull?', function($args) { return $args->get(1) !== null; });
 Expr::register('null?', function($args) { return $args->get(1) === null; });
 Expr::register('notempty?', function($args) { return !!$args->get(1); });
 Expr::register('empty?', function($args) { return !$args->get(1); });
+Expr::register('zero?', function($args) { return (float)$args->get(1) == 0; });
+
+Expr::register('typeof', function($args)
+{
+	$type = typeOf($args->get(1), true);
+
+	if ($type == 'Rose\\Arry') $type = 'array';
+	if ($type == 'Rose\\Map') $type = 'object';
+
+	if (substr($type, 0, 5) == 'Rose\\')
+		$type = strtolower(substr($type, 5));
+
+	return $type;
+});
 
 Expr::register('*', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
 Expr::register('mul', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
@@ -1357,10 +1404,10 @@ Expr::register('_if', function ($parts, $data)
 	for ($i = 0; $i < $parts->length(); $i += 3)
 	{
 		if (Expr::expand($parts->get($i), $data, 'arg') == 'else')
-			return Expr::expand($parts->get($i+1), $data, 'text');
+			return Expr::expand($parts->get($i+1), $data, 'arg');
 
 		if (Expr::expand($parts->get($i+1), $data, 'arg'))
-			return Expr::expand($parts->get($i+2), $data, 'text');
+			return Expr::expand($parts->get($i+2), $data, 'arg');
 	}
 
 	return '';
@@ -1379,7 +1426,7 @@ Expr::register('_switch', function ($parts, $data)
 	{
 		$case_value = Expr::expand($parts->get($i), $data, 'arg');
 		if ($case_value == $value || $case_value == 'default')
-			return Expr::expand($parts->get($i+1), $data, 'text');
+			return Expr::expand($parts->get($i+1), $data, 'arg');
 	}
 
 	return '';
@@ -1504,6 +1551,25 @@ Expr::register('_repeat', function ($parts, $data)
 			}
 		}
 	}
+	else
+	{
+		if ($step === null)
+			$step = 1;
+
+		for ($i = $from; ; $i += $step)
+		{
+			try {
+				$data->set($var_name, $i);
+				$arr->push(Expr::value($tpl, $data));
+			}
+			catch (\Exception $e) {
+				$name = $e->getMessage();
+				if ($name == 'EXC_BREAK') break;
+				if ($name == 'EXC_CONTINUE') continue;
+				throw $e;
+			}
+		}
+	}
 
 	$data->remove($var_name);
 	return $arr;
@@ -1607,8 +1673,55 @@ Expr::register('_for', function ($parts, $data)
 			}
 		}
 	}
+	else
+	{
+		if ($step === null)
+			$step = 1;
+
+		for ($i = $from; ; $i += $step)
+		{
+			try {
+				$data->set($var_name, $i);
+				Expr::value($tpl, $data);
+			}
+			catch (\Exception $e) {
+				$name = $e->getMessage();
+				if ($name == 'EXC_BREAK') break;
+				if ($name == 'EXC_CONTINUE') continue;
+				throw $e;
+			}
+		}
+	}
 
 	$data->remove($var_name);
+	return null;
+});
+
+/**
+**	Repeats the specified template infinitely until a "break" is found.
+**
+**	loop <template>
+*/
+Expr::register('_loop', function ($parts, $data)
+{
+	if ($parts->length < 2)
+		return '(`loop`: Wrong number of parameters)';
+
+	$tpl = $parts->get(1);
+
+	while (true)
+	{
+		try {
+			Expr::value($tpl, $data);
+		}
+		catch (\Exception $e) {
+			$name = $e->getMessage();
+			if ($name == 'EXC_BREAK') break;
+			if ($name == 'EXC_CONTINUE') continue;
+			throw $e;
+		}
+	}
+
 	return null;
 });
 
@@ -1659,42 +1772,22 @@ Expr::register('_##', function ($parts, $data)
 **	Constructs an associative array (dictionary) and returns it.
 **
 **	& <name>: <expr> [<name>: <expr>...]
+**	& :<name> <expr> [:<name> <expr>...]
 */
 Expr::register('_&', function ($parts, $data)
 {
-	$s = new Map();
-
-	for ($i = 1; $i < $parts->length(); $i += 2)
-	{
-		$key = Expr::expand($parts->get($i), $data, 'arg');
-		if (substr($key, -1) == ':')
-			$key = substr($key, 0, strlen($key)-1);
-
-		$s->set($key, Expr::expand($parts->get($i+1), $data, 'arg'));
-	}
-
-	return $s;
+	return Expr::getNamedValues ($parts, $data, 1, true);
 });
 
 /**
-**	Constructs a non-expanded associative array (dictionary) and returns it.
-**
-**	&& <name>: <expr> [<name>: <expr>...]
-*/
+ **	Constructs a non-expanded associative array (dictionary) and returns it.
+ **
+ **	&& <name>: <expr> [<name>: <expr>...]
+ **	&& :<name> <expr> [:<name> <expr>...]
+ */
 Expr::register('_&&', function ($parts, $data)
 {
-	$s = new Map();
-
-	for ($i = 1; $i < $parts->length(); $i += 2)
-	{
-		$key = Expr::expand($parts->get($i), $data, 'arg');
-		if (substr($key, -1) == ':')
-			$key = substr($key, 0, strlen($key)-1);
-
-		$s->set($key, $parts->get($i+1));
-	}
-
-	return $s;
+	return Expr::getNamedValues ($parts, $data, 1, false);
 });
 
 /**
@@ -1897,6 +1990,33 @@ Expr::register('_try', function ($parts, $data)
 
 	if ($_finally) Expr::value($parts->get($_finally), $data);
 
+});
+
+/**
+**	Throws an error exception. If no parameter is specified, the internal variable 'err' will be used as message.
+**
+**	throw <expr>
+**	throw
+*/
+Expr::register('throw', function ($args, $parts, $data)
+{
+	if ($args->length > 1)
+		throw new \Exception ($args->get(1));
+
+	throw new \Exception ($data->get('err'));
+});
+
+/**
+**	Throws an error if the specified condition is not true.
+**
+**	assert <condition> <message>
+*/
+Expr::register('_assert', function ($parts, $data)
+{
+	if (Expr::expand($parts->get(1), $data, 'arg'))
+		return null;
+
+	throw new \Exception (Expr::expand($parts->get(2), $data));
 });
 
 /**

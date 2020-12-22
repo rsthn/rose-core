@@ -158,7 +158,7 @@ class Arry
 	*/
     public function last ($offset=0)
     {
-		return $this->get($this->length() - ($offset+1));
+		return $this->length() > 0 ? $this->get($this->length() - ($offset+1)) : null;
 	}
 
 	/*
@@ -166,7 +166,7 @@ class Arry
 	*/
     public function first ($offset=0)
     {
-		return $this->get($offset);
+		return $this->length() > 0 ? $this->get($offset) : null;
     }
 
 	/*
@@ -391,11 +391,11 @@ class Arry
     }
 
 	/*
-	**	Concatenates the contents of the given array to the current array.
+	**	Appends the contents of the given array to the current array.
 	*/
-    public function concat ($anArray)
+    public function append ($array)
     {
-        $this->__nativeArray = array_merge($this->__nativeArray,$anArray->__nativeArray);
+        $this->__nativeArray = array_merge($this->__nativeArray, $array->__nativeArray);
         return $this;
     }
 
