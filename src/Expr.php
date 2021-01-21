@@ -1019,15 +1019,15 @@ Expr::register('not', function($args) { return !$args->get(1); });
 Expr::register('neg', function($args) { return -$args->get(1); });
 Expr::register('abs', function($args) { return abs($args->get(1)); });
 
+Expr::register('and', function($args) { for ($i = 1; $i < $args->length(); $i++) if (!$args->get($i)) return false; return true; });
+Expr::register('or', function($args) { for ($i = 1; $i < $args->length(); $i++) if (!!$args->get($i)) return true; return false; });
+
 Expr::register('eq', function($args) { return $args->get(1) == $args->get(2); });
 Expr::register('ne', function($args) { return $args->get(1) != $args->get(2); });
 Expr::register('lt', function($args) { return $args->get(1) < $args->get(2); });
 Expr::register('le', function($args) { return $args->get(1) <= $args->get(2); });
 Expr::register('gt', function($args) { return $args->get(1) > $args->get(2); });
 Expr::register('ge', function($args) { return $args->get(1) >= $args->get(2); });
-Expr::register('and', function($args) { for ($i = 1; $i < $args->length(); $i++) if (!$args->get($i)) return false; return true; });
-Expr::register('or', function($args) { for ($i = 1; $i < $args->length(); $i++) if (!!$args->get($i)) return true; return false; });
-
 Expr::register('isnotnull', function($args) { return $args->get(1) !== null; });
 Expr::register('isnull', function($args) { return $args->get(1) === null; });
 Expr::register('isnotempty', function($args) { return !!$args->get(1); });
@@ -1087,25 +1087,48 @@ Expr::register('json', function ($args)
 });
 
 /**
-**	Sets a variable in the data context.
+**	Sets one or more variables in the data context.
 **
-**	set <var-name> <expr>
+**	set <var-name> <expr> [<var-name> <expr>]*
 */
 Expr::register('_set', function ($parts, $data)
 {
-	$value = Expr::value($parts->get(2), $data);
-
-	if ($parts->get(1)->length > 1)
+	for ($i = 1; $i+1 < $parts->length; $i += 2)
 	{
-		$ref = Expr::expand($parts->get(1), $data, 'varref');
-		if ($ref != null) $ref[0]->{$ref[1]} = $value;
-		return '';
+		$value = Expr::value($parts->get($i+1), $data);
+
+		if ($parts->get($i)->length > 1)
+		{
+			$ref = Expr::expand($parts->get($i), $data, 'varref');
+			if ($ref != null) $ref[0]->{$ref[1]} = $value;
+		}
+		else
+			$data->set(Expr::value($parts->get($i), $data), $value);
 	}
 
-	$data->set(Expr::value($parts->get(1), $data), $value);
-	return '';
+	return null;
 });
 
+/**
+**	Removes one or more variables from the data context.
+**
+**	unset <var-name> [<var-name>]*
+*/
+Expr::register('_unset', function ($parts, $data)
+{
+	for ($i = 1; $i < $parts->length; $i++)
+	{
+		if ($parts->get($i)->length > 1)
+		{
+			$ref = Expr::expand($parts->get($i), $data, 'varref');
+			if ($ref != null) $ref[0]->remove ($ref[1]);
+		}
+		else
+			$data->remove(Expr::value($parts->get($i), $data));
+	}
+
+	return null;
+});
 
 /**
 **	Returns the expression without white-space on the left or right. The expression can be a string or an array.

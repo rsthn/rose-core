@@ -53,6 +53,11 @@ class DateTime
     private $timestamp;
 
 	/*
+	**	Target timezone, used to appropriately maintain a correct timestamp value when using setTimestamp().
+	*/
+	public $targetTimezone;
+
+	/*
 	**	Default timezone and timezone offset in seconds.
 	*/
 	public static $timezone;
@@ -99,7 +104,7 @@ class DateTime
 	/*
 	**	Constructs a DateTime object, by default will contain the current date and time.
 	*/
-	public function __construct ($datetime='', $targetTimezone='', $fromTimezone='')
+	public function __construct ($datetime=null, $targetTimezone=null, $fromTimezone=null)
     {
 		if (Text::toUpperCase($targetTimezone) == 'LTZ')
 			$targetTimezone = self::$timezone;
@@ -107,6 +112,11 @@ class DateTime
 		if (is_numeric($datetime))
 		{
 			$datetime = strftime('%Y-%m-%d %H:%M:%S', $datetime);
+		}
+		else if ($datetime instanceOf DateTime)
+		{
+			if (!$targetTimezone) $targetTimezone = $datetime->targetTimezone;
+			$datetime = strftime('%Y-%m-%d %H:%M:%S', $datetime->getTimestamp());
 		}
 		else
 		{
@@ -127,6 +137,7 @@ class DateTime
 		$tmp = new \DateTime ($datetime, self::$utc);
 		$tmp = mktime ($tmp->format('H'), $tmp->format('i'), $tmp->format('s'), $tmp->format('m'), $tmp->format('d'), $tmp->format('Y'));
 
+		$this->targetTimezone = $targetTimezone;
 		$this->setTimestamp($tmp, $targetTimezone, $fromTimezone);
 	}
 
@@ -141,8 +152,9 @@ class DateTime
 	/*
 	**	Sets the DateTime from the specified UNIX timestamp (UTC).
 	*/
-	public function setTimestamp ($timestamp, $targetTimezone='UTC', $fromTimezone='')
+	public function setTimestamp ($timestamp, $targetTimezone='', $fromTimezone='')
 	{
+		if (!$targetTimezone) $targetTimezone = $this->targetTimezone;
 		if (!$fromTimezone) $fromTimezone = 'UTC';
 
 		$this->timestamp = ($timestamp -= self::timezoneOffset($fromTimezone));

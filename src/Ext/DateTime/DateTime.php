@@ -52,14 +52,10 @@ Expr::register('datetime::int', function ($args) {
 **	datetime::sub <datetime> <datetime> [unit]
 */
 Expr::register('datetime::sub', function ($args) {
-	$a = $args->get(1);
-	if (\Rose\typeOf($a) != 'Rose\\DateTime') $a = new DateTime ($a);
-
-	$b = $args->get(2);
-	if (\Rose\typeOf($b) != 'Rose\\DateTime') $b = new DateTime ($b);
+	$a = new DateTime ($args->get(1));
+	$b = new DateTime ($args->get(2));
 
 	$unit = $args->length == 4 ? $args->get(3) : 'SECOND';
-
 	return $a->sub($b, $unit);
 });
 
@@ -67,12 +63,9 @@ Expr::register('datetime::sub', function ($args) {
 **	datetime::add <datetime> <value> [unit]
 */
 Expr::register('datetime::add', function ($args) {
-	$a = $args->get(1);
-	if (\Rose\typeOf($a) != 'Rose\\DateTime') $a = new DateTime ($a);
-
+	$a = new DateTime ($args->get(1));
 	$b = $args->get(2);
 
 	$unit = $args->length == 4 ? $args->get(3) : 'SECOND';
-
 	return $a->add($b, $unit);
 });
