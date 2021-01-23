@@ -1344,7 +1344,7 @@ Expr::register('_each', function ($parts, $data)
 		$data->set($var_name . '##', $j++);
 		$data->set($var_name . '#', $key);
 
-		$s->push(Expr::expand($parts->get(3), $data, 'text'));
+		$s->push(Expr::expand($parts->get(3), $data, 'arg'));
 	});
 
 	$data->remove($var_name);
@@ -1377,7 +1377,7 @@ Expr::register('_foreach', function ($parts, $data)
 		$data->set($var_name . '##', $j++);
 		$data->set($var_name . '#', $key);
 
-		Expr::expand($parts->get(3), $data, 'text');
+		Expr::expand($parts->get(3), $data, 'arg');
 	});
 
 	$data->remove($var_name);

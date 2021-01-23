@@ -30,7 +30,11 @@ use Rose\Text;
 class Net {
 	static $curl_last_info = null;
 	static $curl_last_data = null;
+
+	static $headers = null;
 };
+
+Net::$headers = new Map();
 
 
 /* ****************** */
@@ -72,6 +76,7 @@ Expr::register('http::get', function ($args)
 	curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
 	curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt ($c, CURLOPT_CUSTOMREQUEST, 'GET');
+	curl_setopt ($c, CURLOPT_HTTPHEADER, Net::$headers->values()->__nativeArray);
 
 	$data = curl_exec($c);
 
@@ -141,6 +146,7 @@ Expr::register('http::post', function ($args)
 	curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt ($c, CURLOPT_POSTFIELDS, $fields->__nativeArray);
 	curl_setopt ($c, CURLOPT_CUSTOMREQUEST, 'POST');
+	curl_setopt ($c, CURLOPT_HTTPHEADER, Net::$headers->values()->__nativeArray);
 
 	$data = curl_exec($c);
 
@@ -176,7 +182,25 @@ Expr::register('http::fetch:post', function ($args)
 
 
 /* ****************** */
+/* http::auth basic <username> <password> */
+/* http::auth basic <username> */
+/* http::auth false */
 
+Expr::register('http::auth', function ($args)
+{
+	if ($args->length == 2 && !$args->get(1))
+	{
+		Net::$headers->remove('Authorization');
+		return null;
+	}
+
+	if ($args->get(1) == 'basic')
+		Net::$headers->set('Authorization', 'Authorization: BASIC ' . base64_encode($args->get(2) . ':' . ($args->has(3) ? $args->get(3) : '')));
+
+	return null;
+});
+
+/* ****************** */
 Expr::register('http::code', function ($args)
 {
 	return Net::$curl_last_info['http_code'];
