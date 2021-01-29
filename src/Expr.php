@@ -1142,31 +1142,60 @@ class Expr
 	}
 
 	/*
-	**	Applies a function to a given input, could be array, map or string.
+	**	Applies a function to a given input.
 	**
-	**	>> object apply (object list, int startIndex, function fn);
-	**	>> array apply (array list, int startIndex, function fn);
-	**	>> string apply (string list, int startIndex, function fn);
+	**	>> object apply (array list, function fn);
 	*/
-	public static function apply ($list, $startIndex, $fn)
+	public static function apply ($list, $fn)
 	{
-		if (\Rose\typeOf($list) == 'Rose\Arry')
+		if ($list->length == 1)
 		{
-			$output = new Arry();
+			$list = $list->get(0);
 
-			for ($i = $startIndex; $i < $list->length(); $i++)
-				$output->push( $fn ($list->get($i)) );
-		}
-		else if (\Rose\typeOf($list) == 'Rose\Map')
-		{
-			$output = new Map();
-
-			foreach ($list->__nativeArray as $name => $value)
-				$output->set($name, $fn ($value));
+			if (\Rose\typeOf($list) == 'Rose\Arry')
+			{
+				$output = new Arry();
+	
+				for ($i = 0; $i < $list->length(); $i++)
+					$output->push( $fn ($list->get($i)) );
+			}
+			else if (\Rose\typeOf($list) == 'Rose\Map')
+			{
+				$output = new Map();
+	
+				foreach ($list->__nativeArray as $name => $value)
+					$output->set($name, $fn ($value));
+			}
+			else
+				$output = $fn ($list);
 		}
 		else
 		{
-			$output = $fn ($list);
+			$_output = new Arry();
+
+			$list->forEach(function($list) use (&$_output, &$fn)
+			{
+				if (\Rose\typeOf($list) == 'Rose\Arry')
+				{
+					$output = new Arry();
+		
+					for ($i = 0; $i < $list->length(); $i++)
+						$output->push( $fn ($list->get($i)) );
+				}
+				else if (\Rose\typeOf($list) == 'Rose\Map')
+				{
+					$output = new Map();
+		
+					foreach ($list->__nativeArray as $name => $value)
+						$output->set($name, $fn ($value));
+				}
+				else
+					$output = $fn ($list);
+
+				$_output->push($output);
+			});
+
+			$output = $_output;
 		}
 
 		return $output;
@@ -1222,8 +1251,8 @@ Expr::register('not', function($args) { return !$args->get(1); });
 Expr::register('neg', function($args) { return -$args->get(1); });
 Expr::register('abs', function($args) { return abs($args->get(1)); });
 
-Expr::register('_and', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!$v) return false; } return $v; });
-Expr::register('_or', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!!$v) return $v; } return false; });
+Expr::register('_and', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!$v) return null; } return $v; });
+Expr::register('_or', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!!$v) return $v; } return null; });
 
 Expr::register('eq', function($args) { return $args->get(1) == $args->get(2); });
 Expr::register('ne', function($args) { return $args->get(1) != $args->get(2); });
@@ -1272,6 +1301,9 @@ Expr::register('sum', function($args) { return Expr::reduce($args->get(1), $args
 Expr::register('sub', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum-$value; }); });
 Expr::register('mod', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum%$value; }); });
 Expr::register('pow', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return pow($accum, $value); }); });
+
+Expr::register('min', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::min($accum, $value); }); });
+Expr::register('max', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::max($accum, $value); }); });
 
 /**
 **	Returns the JSON representation of the expression.
@@ -1345,7 +1377,7 @@ Expr::register('_unset', function ($parts, $data)
 */
 Expr::register('trim', function ($args)
 {
-	return Expr::apply($args, 1, function($value) { return trim($value); });
+	return Expr::apply($args->slice(1), function($value) { return trim($value); });
 });
 
 /**
@@ -1355,7 +1387,7 @@ Expr::register('trim', function ($args)
 */
 Expr::register('upper', function ($args)
 {
-	return Expr::apply($args, 1, function($value) { return strtoupper($value); });
+	return Expr::apply($args->slice(1), function($value) { return strtoupper($value); });
 });
 
 /**
@@ -1365,7 +1397,7 @@ Expr::register('upper', function ($args)
 */
 Expr::register('lower', function ($args)
 {
-	return Expr::apply($args, 1, function($value) { return strtolower($value); });
+	return Expr::apply($args->slice(1), function($value) { return strtolower($value); });
 });
 
 /**
@@ -1411,7 +1443,7 @@ Expr::register('replace', function ($args)
 	$search = $args->get(1);
 	$replacement = $args->get(2);
 
-	return Expr::apply($args, 3, function($value) use(&$search, &$replacement) {
+	return Expr::apply($args->slice(3), function($value) use(&$search, &$replacement) {
 		return Text::replace($search, $replacement, $value);
 	});
 });
@@ -1423,7 +1455,7 @@ Expr::register('replace', function ($args)
 */
 Expr::register('nl2br', function ($args)
 {
-	return Expr::apply($args, 1, function($value) { return str_replace("\n", '<br/>', $value); });
+	return Expr::apply($args->slice(1), function($value) { return str_replace("\n", '<br/>', $value); });
 });
 
 /**
@@ -2344,6 +2376,15 @@ Expr::register('_with', function($parts, $data)
 	return $value;
 });
 
+/**
+**	Returns from a function with the specified value.
+**
+**	ret [<value>]
+*/
+Expr::register('ret', function($args) {
+	throw new MetaError('FN_RET', $args->has(1) ? $args->get(1) : null);
+});
+
 /*
 **	Creates a function and returns it.
 **
@@ -2372,7 +2413,25 @@ Expr::register('_fn', function($parts, $data)
 					$new->set($param, $args->get($index+1));
 				});
 
-				return Expr::blockValue($block, $new);
+				$value = null;
+
+				try {
+					$value = Expr::blockValue($block, $new);
+				}
+				catch (MetaError $e)
+				{
+					switch ($e->code)
+					{
+						case 'FN_RET':
+							$value = $e->value;
+							break;
+
+						default:
+							throw $e;
+					}
+				}
+
+				return $value;
 			};
 		}
 
@@ -2412,7 +2471,25 @@ Expr::register('_def-fn', function($parts, $data)
 					$new->set($param, $args->get($index+1));
 				});
 
-				return Expr::blockValue($block, $new);
+				$value = null;
+
+				try {
+					$value = Expr::blockValue($block, $new);
+				}
+				catch (MetaError $e)
+				{
+					switch ($e->code)
+					{
+						case 'FN_RET':
+							$value = $e->value;
+							break;
+
+						default:
+							throw $e;
+					}
+				}
+
+				return $value;
 			};
 
 			break;
