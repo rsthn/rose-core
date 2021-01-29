@@ -171,8 +171,7 @@ Expr::register('array::length', function($args)
 
 Expr::register('array::append', function($args)
 {
-	$args->get(1)->append($args->get(2));
-	return null;
+	return $args->get(1)->append($args->get(2));
 });
 
 Expr::register('array::unique', function($args)

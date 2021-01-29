@@ -22,6 +22,9 @@ use Rose\Errors\MetaError;
 use Rose\Regex;
 use Rose\Arry;
 use Rose\Map;
+use Rose\IO\Path;
+use Rose\IO\File;
+use Rose\Math;
 
 /**
 **	Expression module, based on the Rin's templating module. The formats available are shown below.
@@ -45,19 +48,54 @@ class Expr
 	static public $strict = true;
 
 	/*
-	**	Unescapes the back-slash escape sequences.
+	**	Imported sources.
 	*/
-	static private function unescape ($value)
+	static public $imported = null;
+
+	/*
+	**	Base path for imported sources.
+	*/
+	static public $importPath = 'resources/wind';
+
+	/*
+	**	Cache path.
+	*/
+	static public $cachePath = 'volatile/wind';
+
+	/*
+	**	Current source path.
+	*/
+	static public $currentPath = 'resources/wind';
+
+	/*
+	**	Post-processes a parsed expression. Unescapes the backslash escape sequences.
+	*/
+	static private function postprocess ($value)
 	{
 		if (typeOf($value) == 'Rose\\Arry')
 		{
-			$value->forEach(function($value) { Expr::unescape($value); });
+			$value->forEach(function($value) { Expr::postprocess($value); });
 			return $value;
 		}
 
 		if (typeOf($value) == 'Rose\\Map')
 		{
-			$value->data = Expr::unescape($value->data);
+			switch ($value->type)
+			{
+				case 'identifier':
+					break;
+
+				case 'integer':
+					break;
+
+				case 'number':
+					break;
+
+				default:
+					$value->data = Expr::postprocess($value->data);
+					break;
+			}
+
 			return $value;
 		}
 
@@ -135,6 +173,14 @@ class Expr
 			else if ($type == 'parse-merge-alt')
 			{
 				$data = Expr::parseTemplate ($data, '{', '}', false, 0);
+			}
+			else if ($type == 'integer')
+			{
+				$data = (int)$data;
+			}
+			else if ($type == 'number')
+			{
+				$data = (float)$data;
 			}
 
 			if ($type == 'parse-merge' || $type == 'parse-merge-alt' || $type == 'parse-trim-merge')
@@ -245,6 +291,19 @@ class Expr
 						$str = '';
 						break;
 					}
+					else if (Regex::_matches('/^([-+][0-9]|[0-9])/', $template[$i].$template[$i+1]) && $str == '')
+					{
+						if ($flush && $str)
+						{
+							$emit ($flush, $str);
+							$flush = $str = '';
+						}
+
+						$str = $template[$i];
+						$nflush = 'integer';
+						$state = 17;
+						break;
+					}
 					else if (Regex::_matches('/[\t\n\r\f\v ]/', $template[$i]))
 					{
 						$flush = $nflush;
@@ -301,7 +360,7 @@ class Expr
 						$str .= $template[$i];
 						break;
 					}
-	
+
 					if ($nflush != 'identifier')
 					{
 						$emit ($nflush, $str);
@@ -310,8 +369,6 @@ class Expr
 					}
 
 					$str .= $template[$i];
-					break;
-
 					break;
 	
 				case 11:
@@ -475,6 +532,33 @@ class Expr
 
 					$str .= $template[$i];
 					break;
+
+				case 17:
+					if ($template[$i] == '.')
+					{
+						$nflush = 'number';
+						$state = 18;
+					}
+					else if (!Regex::_matches('/[0-9]/', $template[$i]))
+					{
+						$state = 10;
+						$i--;
+						break;
+					}
+
+					$str .= $template[$i];
+					break;
+
+				case 18:
+					if (!Regex::_matches('/[0-9]/', $template[$i]))
+					{
+						$state = 10;
+						$i--;
+						break;
+					}
+
+					$str .= $template[$i];
+					break;
 			}
 
 			if ($flush)
@@ -509,7 +593,18 @@ class Expr
 		}
 
 		if ($root)
-			Expr::unescape($mparts);
+		{
+			Expr::postprocess($mparts);
+
+			if (false) {
+				echo "<pre>";
+				$s = (string)$mparts;
+				$s = json_decode($s);
+				echo json_encode($s, JSON_PRETTY_PRINT);
+				echo "</pre>";
+				exit;
+			}
+		}
 
 		return $mparts;
 	}
@@ -529,9 +624,9 @@ class Expr
 	**	Expands a template using the given data object, ret can be set to 'text' or 'obj' allowing to expand the template as
 	**	a string (text) or an array of objects (obj) respectively. If none provided it will be expanded as text.
 	**
-	**	>> string/array expand (array parts, object data, string ret='text', string mode='base-string');
+	**	>> string/array expand (array parts, object data, string ret='text', string mode='base-string', bool throwMeta=false);
 	*/
-	static public function expand ($parts, $data, $ret='text', $mode='base-string')
+	static public function expand ($parts, $data, $ret='text', $mode='base-string', $throwMeta=false)
 	{
 		$s = new Arry();
 
@@ -552,6 +647,8 @@ class Expr
 				{
 					case 'identifier':
 					case 'string':
+					case 'integer':
+					case 'number':
 						$str .= $parts->get($i)->data;
 						$last = null;
 						break;
@@ -680,7 +777,9 @@ class Expr
 				{
 					case 'identifier':
 					case 'string':
-						$str .= $parts->get($i)->data;
+					case 'integer':
+					case 'number':
+						$str .= (string)$parts->get($i)->data;
 						$last = null;
 						break;
 
@@ -757,7 +856,20 @@ class Expr
 		{
 			$args = new Arry();
 
-			$args->push(Expr::expand($parts->get(0), $data, 'text', 'base-string'));
+			$args->push(Expr::expand($parts->get(0), $data, 'arg', 'base-string'));
+
+			switch (\Rose\typeOf($args->get(0), true))
+			{
+				case 'function':
+					for ($i = 1; $i < $parts->length(); $i++)
+						$args->push(Expr::expand($parts->get($i), $data, 'arg', 'base-string'));
+
+					return $args->get(0) ($args, $parts, $data);
+
+				default:
+					$args->set(0, (string)$args->get(0));
+					break;
+			}
 
 			if (Expr::$functions->has('_'.$args->get(0)))
 				$args->set(0, '_'.$args->get(0));
@@ -784,15 +896,23 @@ class Expr
 		{
 			if ($parts->length() == 1)
 			{
-				if ($parts->get(0)->length() == 1 && $parts->get(0)->get(0)->type == 'string')
-					return $parts->get(0)->get(0)->data;
-
-				if ($parts->get(0)->length() == 1 && $parts->get(0)->get(0)->type == 'identifier')
+				if ($parts->get(0)->length() == 1)
 				{
-					$name = $parts->get(0)->get(0)->data;
+					switch ($parts->get(0)->get(0)->type)
+					{
+						case 'string':
+						case 'integer':
+						case 'number':
+							return $parts->get(0)->get(0)->data;
 
-					if (Expr::$functions->has($name) || Expr::$functions->has('_'.$name))
-						return Expr::expand($parts, $data, $ret, 'fn');
+						case 'identifier':
+							$name = $parts->get(0)->get(0)->data;
+
+							if (Expr::$functions->has($name) || Expr::$functions->has('_'.$name))
+								return Expr::expand($parts, $data, $ret, 'fn');
+
+							break;
+					}
 				}
 
 				return Expr::expand($parts->get(0), $data, $ret, 'var');
@@ -804,8 +924,9 @@ class Expr
 		// Expand parts.
 		if ($mode == 'base-string')
 		{
-			try {
-				$parts->forEach(function($i, $index, $list) use(&$s, &$data, &$ret)
+			try
+			{
+				$parts->forEach(function($i, $index, $list) use (&$s, &$data, &$ret, &$throwMeta)
 				{
 					try
 					{
@@ -815,7 +936,12 @@ class Expr
 								$tmp = Expr::expand($i->data, $data, $ret, 'template');
 								break;
 
-							case 'string': case 'identifier': case 'access':
+							
+							case 'identifier':
+							case 'access':
+							case 'string':
+							case 'integer':
+							case 'number':
 								$tmp = $i->data;
 								break;
 
@@ -834,6 +960,8 @@ class Expr
 					}
 					catch (MetaError $e)
 					{
+						if ($throwMeta) throw $e;
+
 						switch ($e->code)
 						{
 							case 'EXPR_YIELD':
@@ -849,6 +977,8 @@ class Expr
 			}
 			catch (MetaError $e)
 			{
+				if ($throwMeta) throw $e;
+
 				switch ($e->code)
 				{
 					case 'EXPR_END':
@@ -929,7 +1059,6 @@ class Expr
 	**	Expands the template as 'arg' and returns the result.
 	**
 	**	>> object value (string parts, object data);
-	**	>> object value (array parts, object data);
 	*/
 	public static function value ($parts, $data=null)
 	{
@@ -956,7 +1085,7 @@ class Expr
 	/**
 	**	Calls an expression function.
 	**
-	**	>> object call (string name, object $args, object $data);
+	**	>> object call (string name, object args, object data);
 	*/
 	public static function call ($name, $args, $data=null)
 	{
@@ -966,10 +1095,10 @@ class Expr
 		return null;
 	}
 
-	/**
+	/*
 	**	Returns a map given a 'parts' array having values of the form "name: value" or ":name value".
 	**
-	**	>> Map getNamedValues (array parts, object data, int i=1, bool expanded=true);
+	**	>> object getNamedValues (array parts, object data, int i=1, bool expanded=true);
 	*/
 	public static function getNamedValues ($parts, $data, $i=1, $expanded=true)
 	{
@@ -997,6 +1126,80 @@ class Expr
 
 		return $s;
 	}
+
+	/*
+	**	Performs a reduction operation by evaluating the specified function for each item in the list, passing two arguments (accum, value) and
+	**	saving the returned value as `accum`.
+	**
+	**	>> object reduce (object value, array list, int startIndex, function fn);
+	*/
+	public static function reduce ($value, $list, $startIndex, $fn)
+	{
+		for ($i = $startIndex; $i < $list->length(); $i++)
+			$value = $fn ($value, $list->get($i), $i-$startIndex);
+
+		return $value;
+	}
+
+	/*
+	**	Applies a function to a given input, could be array, map or string.
+	**
+	**	>> object apply (object list, int startIndex, function fn);
+	**	>> array apply (array list, int startIndex, function fn);
+	**	>> string apply (string list, int startIndex, function fn);
+	*/
+	public static function apply ($list, $startIndex, $fn)
+	{
+		if (\Rose\typeOf($list) == 'Rose\Arry')
+		{
+			$output = new Arry();
+
+			for ($i = $startIndex; $i < $list->length(); $i++)
+				$output->push( $fn ($list->get($i)) );
+		}
+		else if (\Rose\typeOf($list) == 'Rose\Map')
+		{
+			$output = new Map();
+
+			foreach ($list->__nativeArray as $name => $value)
+				$output->set($name, $fn ($value));
+		}
+		else
+		{
+			$output = $fn ($list);
+		}
+
+		return $output;
+	}
+
+	/*
+	**	Evaluates a block of expressions, returns the last value.
+	**
+	**	>> object value (array parts, object data);
+	*/
+	public static function blockValue ($parts, $data)
+	{
+		$value = null;
+
+		try
+		{
+			for ($i = 0; $i < $parts->length; $i++)
+				$value = Expr::expand($parts->get($i), $data, 'arg', 'base-string', true);
+		}
+		catch (MetaError $e)
+		{
+			switch ($e->code)
+			{
+				case 'EXPR_YIELD':
+					return $e->value;
+
+				default:
+					throw $e;
+			}
+		}
+
+		return $value;
+	}
 };
 
 Expr::$functions = new Map();
@@ -1008,9 +1211,9 @@ Expr::register('null', function($args) { return null; });
 Expr::register('true', function($args) { return true; });
 Expr::register('false', function($args) { return false; });
 
-Expr::register('len', function($args) { return strlen((string)$args->get(1)); });
+Expr::register('len', function($args) { $s = $args->get(1); return \Rose\typeOf($s) == 'primitive' ? strlen((string)$s) : $s->length; });
 Expr::register('int', function($args) { return (int)$args->get(1); });
-Expr::register('str', function($args) { return (string)$args->get(1); });
+Expr::register('str', function($args) { $s = ''; for ($i = 1; $i < $args->length; $i++) $s .= (string)$args->get($i); return $s; });
 Expr::register('float', function($args) { return (float)$args->get(1); });
 Expr::register('chr', function($args) { return chr($args->get(1)); });
 Expr::register('ord', function($args) { return ord($args->get(1)); });
@@ -1019,8 +1222,8 @@ Expr::register('not', function($args) { return !$args->get(1); });
 Expr::register('neg', function($args) { return -$args->get(1); });
 Expr::register('abs', function($args) { return abs($args->get(1)); });
 
-Expr::register('and', function($args) { for ($i = 1; $i < $args->length(); $i++) if (!$args->get($i)) return false; return true; });
-Expr::register('or', function($args) { for ($i = 1; $i < $args->length(); $i++) if (!!$args->get($i)) return true; return false; });
+Expr::register('_and', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!$v) return false; } return $v; });
+Expr::register('_or', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!!$v) return $v; } return false; });
 
 Expr::register('eq', function($args) { return $args->get(1) == $args->get(2); });
 Expr::register('ne', function($args) { return $args->get(1) != $args->get(2); });
@@ -1059,17 +1262,16 @@ Expr::register('typeof', function($args)
 	return $type;
 });
 
-Expr::register('*', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
-Expr::register('mul', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x *= $args->get($i); return $x; });
-Expr::register('/', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x /= $args->get($i); return $x; });
-Expr::register('div', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x /= $args->get($i); return $x; });
-Expr::register('+', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= -$args->get($i); return $x; });
-Expr::register('sum', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= -$args->get($i); return $x; });
-Expr::register('-', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= $args->get($i); return $x; });
-Expr::register('sub', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x -= $args->get($i); return $x; });
-Expr::register('mod', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x %= $args->get($i); return $x; });
-Expr::register('**', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x = pow($x, $args->get($i)); return $x; });
-Expr::register('pow', function($args) { $x = $args->get(1); for ($i = 2; $i < $args->length(); $i++) $x = pow($x, $args->get($i)); return $x; });
+Expr::register('*', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum*$value; }); });
+Expr::register('/', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum/$value; }); });
+Expr::register('+', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum+$value; }); });
+Expr::register('-', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum-$value; }); });
+Expr::register('mul', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum*$value; }); });
+Expr::register('div', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum/$value; }); });
+Expr::register('sum', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum+$value; }); });
+Expr::register('sub', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum-$value; }); });
+Expr::register('mod', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum%$value; }); });
+Expr::register('pow', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return pow($accum, $value); }); });
 
 /**
 **	Returns the JSON representation of the expression.
@@ -1100,7 +1302,13 @@ Expr::register('_set', function ($parts, $data)
 		if ($parts->get($i)->length > 1)
 		{
 			$ref = Expr::expand($parts->get($i), $data, 'varref');
-			if ($ref != null) $ref[0]->{$ref[1]} = $value;
+			if ($ref != null)
+			{
+				if (!$ref[0])
+					throw new Error('Unable to set: ' . $parts->get($i)->map(function($i) { return $i->data; })->join('')  );
+
+				$ref[0]->{$ref[1]} = $value;
+			}
 		}
 		else
 			$data->set(Expr::value($parts->get($i), $data), $value);
@@ -1133,31 +1341,31 @@ Expr::register('_unset', function ($parts, $data)
 /**
 **	Returns the expression without white-space on the left or right. The expression can be a string or an array.
 **
-**	trim <expr>
+**	trim <args>
 */
 Expr::register('trim', function ($args)
 {
-	return $args->get(1) ? (typeOf($args->get(1)) == 'Rose\\Arry' ? $args->get(1)->map(function($e) { return trim($e); }) : trim($args->get(1))) : '';
+	return Expr::apply($args, 1, function($value) { return trim($value); });
 });
 
 /**
 **	Returns the expression in uppercase. The expression can be a string or an array.
 **
-**	upper <expr>
+**	upper <args>
 */
 Expr::register('upper', function ($args)
 {
-	return $args->get(1) ? (typeOf($args->get(1)) == 'Rose\\Arry' ? $args->get(1)->map(function($e) { return strtoupper($e); }) : strtoupper($args->get(1))) : '';
+	return Expr::apply($args, 1, function($value) { return strtoupper($value); });
 });
 
 /**
 **	Returns the expression in lower. The expression can be a string or an array.
 **
-**	lower <expr>
+**	lower <args>
 */
 Expr::register('lower', function ($args)
 {
-	return $args->get(1) ? (typeOf($args->get(1)) == 'Rose\\Arry' ? $args->get(1)->map(function($e) { return strtolower($e); }) : strtolower($args->get(1))) : '';
+	return Expr::apply($args, 1, function($value) { return strtolower($value); });
 });
 
 /**
@@ -1196,27 +1404,32 @@ Expr::register('substr', function ($args)
 /**
 **	Replaces a matching string with the given replacement string in a given text.
 **
-**	replace <search> <replacement> <text>
+**	replace <search> <replacement> <args>
 */
 Expr::register('replace', function ($args)
 {
-	return Text::replace($args->get(1), $args->get(2), $args->get(3));
+	$search = $args->get(1);
+	$replacement = $args->get(2);
+
+	return Expr::apply($args, 3, function($value) use(&$search, &$replacement) {
+		return Text::replace($search, $replacement, $value);
+	});
 });
 
 /**
 **	Converts all new-line chars in the expression to <br/>, the expression can be a string or an array.
 **
-**	nl2br <expr>
+**	nl2br <args>
 */
 Expr::register('nl2br', function ($args)
 {
-	return $args->get(1) ? (typeOf($args->get(1)) == 'Rose\\Arry' ? $args->get(1)->map(function($e) { return str_replace("\n", '<br/>', $e); }) : str_replace("\n", '<br/>', $args->get(1))) : '';
+	return Expr::apply($args, 1, function($value) { return str_replace("\n", '<br/>', $value); });
 });
 
 /**
 **	Returns the expression inside an XML tag named 'tag-name', the expression can be a string or an array.
 **
-**	% <tag-name> <expr>
+**	% <tag-name> <arg>
 */
 Expr::register('%', function ($args)
 {
@@ -1246,7 +1459,7 @@ Expr::register('%', function ($args)
 /**
 **	Returns the expression inside an XML tag named 'tag-name', attributes are supported.
 **
-**	%% <tag-name> [<attr> <value>]* [<content>]
+**	%% <tag-name> [<attr> <value>]* [<arg>]
 */
 Expr::register('%%', function ($args)
 {
@@ -1269,9 +1482,9 @@ Expr::register('%%', function ($args)
 
 
 /**
-**	Joins the given array expression into a string. The provided string-expr will be used as separator.
+**	Joins the given list expression into a string. The provided glue will be used as separator.
 **
-**	join <string-expr> <array-expr>
+**	join <glue> <list-expr>
 */
 Expr::register('join', function ($args)
 {
@@ -1282,9 +1495,9 @@ Expr::register('join', function ($args)
 });
 
 /**
-**	Splits the given expression by the specified string. Returns an array.
+**	Splits the given expression by the specified delimiter. Returns an array.
 **
-**	split <string-expr> <expr>
+**	split <delimiter> <str-expr>
 */
 Expr::register('split', function ($args)
 {
@@ -1321,12 +1534,12 @@ Expr::register('values', function ($args)
 });
 
 /**
-**	Constructs an array obtained by expanding the given template for each of the items in the list-expr, the mandatory varname
+**	Constructs an array obtained by expanding the given block for each of the items in the list-expr, the mandatory varname
 **	parameter (namely 'i') indicates the name of the variable that will contain the data of each item as the list-expr is
 **	traversed. Extra variables i# and i## (suffix '#' and '##') are introduced to denote the index/key and numeric index
 **	of the current item respectively, note that the later will always have a numeric value.
 **
-**	each <varname> <list-expr> <template>
+**	each <varname> <list-expr> <block>
 */
 Expr::register('_each', function ($parts, $data)
 {
@@ -1338,13 +1551,15 @@ Expr::register('_each', function ($parts, $data)
 
 	if (!$list) return $s;
 
-	$list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$parts, &$data)
+	$block = $parts->slice(3);
+
+	$list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$data, &$block)
 	{
 		$data->set($var_name, $item);
 		$data->set($var_name . '##', $j++);
 		$data->set($var_name . '#', $key);
 
-		$s->push(Expr::expand($parts->get(3), $data, 'arg'));
+		$s->push(Expr::blockValue($block, $data));
 	});
 
 	$data->remove($var_name);
@@ -1355,13 +1570,13 @@ Expr::register('_each', function ($parts, $data)
 });
 
 /**
-**	Expands the given template for each of the items in the list-expr, the mandatory varname parameter (namely 'i') indicates the name of the variable
+**	Expands the given block for each of the items in the list-expr, the mandatory varname parameter (namely 'i') indicates the name of the variable
 **	that will contain the data of each item as the list-expr is traversed. Extra variables i# and i## (suffix '#' and '##') are introduced to denote
 **	the index/key and numeric index of the current item respectively, note that the later will always have a numeric value.
 **
-**	Does not produce any output (returns null).
+**	Returns the source list.
 **
-**	foreach <varname> <list-expr> <template>
+**	foreach <varname> <list-expr> <block>
 */
 Expr::register('_foreach', function ($parts, $data)
 {
@@ -1369,22 +1584,24 @@ Expr::register('_foreach', function ($parts, $data)
 	$list = Expr::value($parts->get(2), $data);
 
 	$j = 0;
-	if (!$list) return null;
+	if (!$list) return $list;
 
-	$list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$parts, &$data)
+	$block = $parts->slice(3);
+
+	$list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$data, &$block)
 	{
 		$data->set($var_name, $item);
 		$data->set($var_name . '##', $j++);
 		$data->set($var_name . '#', $key);
 
-		Expr::expand($parts->get(3), $data, 'arg');
+		Expr::blockValue($block, $data);
 	});
 
 	$data->remove($var_name);
 	$data->remove($var_name . '##');
 	$data->remove($var_name . '#');
 
-	return null;
+	return $list;
 });
 
 /**
@@ -1418,7 +1635,7 @@ Expr::register('_??', function ($parts, $data)
 });
 
 /**
-**	Returns the value if the expression is true, supports 'elif' and 'else' as well. The result of this function is always text.
+**	Returns the value if the expression is true, supports 'elif' and 'else' as well.
 **
 **	if <expr> <value> [elif <expr> <value>] [else <value>]
 */
@@ -1437,11 +1654,38 @@ Expr::register('_if', function ($parts, $data)
 });
 
 /**
+**	Returns the value returned by the block if the expression is true.
+**
+**	when <expr> <block>
+*/
+Expr::register('_when', function ($parts, $data)
+{
+	if (Expr::expand($parts->get(1), $data, 'arg'))
+		return Expr::blockValue($parts->slice(2), $data);
+
+	return null;
+});
+
+/**
 **	Loads the expression value and attempts to match one case.
 **
-**	switch <expr> <case1> <value1> ... <caseN> <valueN> default <defvalue> 
+**	case <expr> <case1> <value1> ... <caseN> <valueN> default <defvalue> 
 */
 Expr::register('_switch', function ($parts, $data)
+{
+	$value = Expr::expand($parts->get(1), $data, 'arg');
+
+	for ($i = 2; $i < $parts->length(); $i += 2)
+	{
+		$case_value = Expr::expand($parts->get($i), $data, 'arg');
+		if ($case_value == $value || $case_value == 'default')
+			return Expr::expand($parts->get($i+1), $data, 'arg');
+	}
+
+	return '';
+});
+
+Expr::register('_case', function ($parts, $data)
 {
 	$value = Expr::expand($parts->get(1), $data, 'arg');
 
@@ -1721,21 +1965,21 @@ Expr::register('_for', function ($parts, $data)
 });
 
 /**
-**	Repeats the specified template infinitely until a "break" is found.
+**	Repeats the specified block infinitely until a "break" is found.
 **
-**	loop <template>
+**	loop <block>
 */
 Expr::register('_loop', function ($parts, $data)
 {
 	if ($parts->length < 2)
 		return '(`loop`: Wrong number of parameters)';
 
-	$tpl = $parts->get(1);
+	$block = $parts->slice(1);
 
 	while (true)
 	{
 		try {
-			Expr::value($tpl, $data);
+			Expr::blockValue($block, $data);
 		}
 		catch (\Exception $e) {
 			$name = $e->getMessage();
@@ -1745,6 +1989,17 @@ Expr::register('_loop', function ($parts, $data)
 		}
 	}
 
+	return null;
+});
+
+/**
+**	Writes the raw data to the output.
+**
+**	expr_debug <expr>
+*/
+Expr::register('_expr_debug', function ($parts, $data)
+{
+	echo $parts->get(1);
 	return null;
 });
 
@@ -1846,24 +2101,28 @@ Expr::register('contains', function ($args, $parts, $data)
 });
 
 /**
-**	Returns true if the specified map has the specified key. Returns boolean.
+**	Returns true if a map has some key, or if a list has some value. Returns boolean.
 **
-**	has <name> <expr>
+**	has <name> <map-expr>
+**	has <value> <list-expr>
 */
 Expr::register('has', function ($args, $parts, $data)
 {
 	$value = $args->get(2);
 
-	if (typeOf($value) != 'Rose\\Map')
-		return false;
+	if (typeOf($value) == 'Rose\\Map')
+		return $value->has($args->get(1));
 
-	return $value->has($args->get(1));
+	if (typeOf($value) == 'Rose\\Arry')
+		return $value->indexOf($args->get(1)) !== null;
+
+	return false;
 });
 
 /**
-**	Returns a new array/map contaning the transformed values of the array/map (evaluating the template). And just as in 'each', the i# and i## variables be available.
+**	Returns a new array/map contaning the transformed values of the array/map (evaluating the block). And just as in 'each', the i# and i## variables be available.
 **
-**	map <varname> <list-expr> <template>
+**	map <varname> <list-expr> <block>
 */
 Expr::register('_map', function ($parts, $data)
 {
@@ -1876,16 +2135,18 @@ Expr::register('_map', function ($parts, $data)
 	$output = $arrayMode ? new Arry() : new Map();
 	$j = 0;
 
-	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$parts, &$data)
+	$block = $parts->slice(3);
+
+	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$block)
 	{
 		$data->set($var_name, $item);
 		$data->set($var_name . '##', $j++);
 		$data->set($var_name . '#', $key);
 
 		if ($arrayMode)
-			$output->push(Expr::expand($parts->get(3), $data, 'arg'));
+			$output->push(Expr::blockValue($block, $data));
 		else
-			$output->set($key, Expr::expand($parts->get(3), $data, 'arg'));
+			$output->set($key, Expr::blockValue($block, $data));
 	});
 
 	$data->remove($var_name);
@@ -1896,9 +2157,9 @@ Expr::register('_map', function ($parts, $data)
 });
 
 /**
-**	Returns a new array/map contaning the elements where the template evaluates to non-zero. Just as in 'each', the i# and i## variables be available.
+**	Returns a new array/map contaning the elements where the block evaluates to non-zero. Just as in 'each', the i# and i## variables be available.
 **
-**	filter <varname> <list-expr> <template>
+**	filter <varname> <list-expr> <block>
 */
 Expr::register('_filter', function ($parts, $data)
 {
@@ -1911,13 +2172,15 @@ Expr::register('_filter', function ($parts, $data)
 	$output = $arrayMode ? new Arry() : new Map();
 	$j = 0;
 
-	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$parts, &$data)
+	$block = $parts->slice(3);
+
+	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$block)
 	{
 		$data->set($var_name, $item);
 		$data->set($var_name . '##', $j++);
 		$data->set($var_name . '#', $key);
 
-		if ((int)Expr::expand($parts->get(3), $data, 'arg'))
+		if (!!Expr::blockValue($block, $data))
 		{
 			if ($arrayMode)
 				$output->push($item);
@@ -2052,9 +2315,9 @@ Expr::register('yield', function($args) {
 });
 
 /**
-**	Introduces a new temporal variable with the specified value. Returns the value returned by the expression.
+**	Introduces a new temporal variable with the specified value. Returns the value returned by the block.
 **
-**	with <varname> <value> <expr>
+**	with <varname> <value> <block>
 */
 Expr::register('_with', function($parts, $data)
 {
@@ -2071,10 +2334,224 @@ Expr::register('_with', function($parts, $data)
 
 	$data->{$var_name} = Expr::expand($parts->get(2), $data, 'arg');
 
-	$value = Expr::expand($parts->get(3), $data, 'arg');
+	$value = Expr::blockValue($parts->slice(3), $data);
 
 	if ($old_value_present)
 		$data->{$var_name} = $old_value;
+	else
+		$data->remove($var_name);
 
 	return $value;
+});
+
+/*
+**	Creates a function and returns it.
+**
+**	fn <param-name>* <block>
+*/
+Expr::register('_fn', function($parts, $data)
+{
+	$params = new Arry();
+
+	for ($i = 1; $i < $parts->length; $i++)
+	{
+		if ($parts->get($i)->get(0)->type != 'identifier')
+		{
+			$block = $parts->slice($i);
+
+			return function ($args, $parts, $data) use (&$params, &$block)
+			{
+				if ($args->length-1 < $params->length)
+					throw new Error ("Invalid number of parameters, expected ".($params->length)." got ".($args->length-1).".");
+
+				$new = new Map();
+				$new->set('global', $data);
+
+				$params->forEach(function ($param, $index) use (&$new, &$args)
+				{
+					$new->set($param, $args->get($index+1));
+				});
+
+				return Expr::blockValue($block, $new);
+			};
+		}
+
+		$params->push(Expr::value($parts->get($i), $data));
+	}
+
+	return null;
+});
+
+/*
+**	Defines a global function. Note that functions are isolated and do not have access to the global scope, however this
+**	action defines a local variable named `global` which can be used to access it.
+**
+**	def-fn <fn-name> <param-name>* <block>
+*/
+Expr::register('_def-fn', function($parts, $data)
+{
+	$name = Expr::value($parts->get(1), $data);
+	$params = new Arry();
+
+	for ($i = 2; $i < $parts->length; $i++)
+	{
+		if ($parts->get($i)->get(0)->type != 'identifier')
+		{
+			$block = $parts->slice($i);
+
+			$fn = function ($args, $parts, $data) use (&$params, &$block, &$name)
+			{
+				if ($args->length-1 < $params->length)
+					throw new Error ("Invalid number of parameters in call of `".$name."`, expected ".($params->length)." got ".($args->length-1).".");
+
+				$new = new Map();
+				$new->set('global', $data);
+
+				$params->forEach(function ($param, $index) use (&$new, &$args)
+				{
+					$new->set($param, $args->get($index+1));
+				});
+
+				return Expr::blockValue($block, $new);
+			};
+
+			break;
+		}
+
+		$params->push(Expr::value($parts->get($i), $data));
+	}
+
+	Expr::register($name, $fn);
+	return null;
+});
+
+
+/*
+**	Defines an alias for a function.
+**
+**	def-alias <fn-name> <fn-expr>
+*/
+Expr::register('_def-alias', function($parts, $data)
+{
+	$name = Expr::value($parts->get(1), $data);
+	$value = Expr::value($parts->get(2), $data);
+
+	if (\Rose\typeOf($value) != 'function')
+	{
+		$tmp = Expr::$functions->get((string)$value);
+		if (!$tmp)
+			throw new Error ('Value for an alias must be a function, undefined: ' . (string)$value);
+		else
+			$value = $tmp;
+	}
+
+	Expr::register($name, $value);
+	return null;
+});
+
+
+/*
+**	Imports a file and evaluates it. Any file is imported just once.
+**
+**	require <str-expr>+
+*/
+Expr::register('require', function($args, $parts, $data)
+{
+	if (Expr::$imported == null)
+	{
+		Expr::$imported = new Map();
+
+		Expr::$currentPath = Path::resolve(Expr::$currentPath);
+		Expr::$importPath = Path::resolve(Expr::$importPath);
+	}
+
+	for ($i = 1; $i < $args->length; $i++)
+	{
+		$currentPath = Expr::$currentPath;
+		$path = $args->get($i);
+
+		if (Text::startsWith($path, './'))
+			$path = Path::append(Expr::$currentPath, Text::substring($path, 2));
+		else if (!Text::startsWith($path, '/'))
+			$path = Path::append(Expr::$importPath, $path);
+
+		if (!Text::endsWith($path, '.fn'))
+			$path .= '.fn';
+
+		$path = Path::resolve($path);
+		$path_cache = null;
+
+		if (Text::startsWith($path, Expr::$importPath))
+			$path_cache = Path::append(Expr::$cachePath, Text::replace('/', '-', Text::substring($path, 1+Text::length(Expr::$importPath))));
+
+		if (!Path::exists($path))
+			throw new Error ("Source does not exist: " . $path);
+
+		if (Expr::$imported->get($path) == File::mtime($path, true))
+			continue;
+
+		Expr::$imported->set($path, File::mtime($path, true));
+
+		if ($path_cache && Path::exists($path_cache) && File::mtime($path_cache, true) == File::mtime($path, true))
+		{
+			$expr = unserialize(File::getContents($path_cache));
+		}
+		else
+		{
+			$expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path), ''));
+
+			for ($i = 0; $i < $expr->length; $i++)
+			{
+				if ($expr->get($i)->type != 'template')
+				{
+					$expr->remove($i);
+					$i--;
+				}
+			}
+
+			if ($path_cache) {
+				File::setContents($path_cache, serialize($expr));
+				File::touch($path_cache, File::mtime($path, true));
+			}
+		}
+
+		Expr::$currentPath = Path::dirname($path);
+		Expr::expand ($expr, $data, 'void');
+		Expr::$currentPath = $currentPath;
+	}
+
+	return null;
+});
+
+/*
+**	Creates a new map by zipping the respective keys and values together.
+**
+**	zipmap key-name+ <arr-expr>
+**	zipmap <arr-expr> <arr-expr>
+*/
+Expr::register('zipmap', function($args, $parts, $data)
+{
+	$map = new Map();
+
+	if (\Rose\typeOf($args->get(1)) == 'Rose\Arry')
+	{
+		$keys = $args->get(1);
+		$values = $args->get(2);
+
+		$n = Math::min($keys->length, $values->length);
+
+		for ($i = 0; $i < $n; $i++)
+			$map->set($keys->get($i), $values->get($i));
+	}
+	else
+	{
+		$values = $args->last();
+
+		$n = Math::min($args->length-2, $values->length);
+
+		for ($i = 0; $i < $n; $i++)
+			$map->set($args->get($i+1), $values->get($i));
+	}
+
+	return $map;
 });

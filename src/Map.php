@@ -427,6 +427,10 @@ class Map
 					$s[] = $name . \json_encode($item);
 					break;
 
+				case 'function':
+					$s[] = '(function)';
+					break;
+	
 				default:
 					$s[] = $name . \json_encode((string)$item);
 					break;

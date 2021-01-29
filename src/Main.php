@@ -46,11 +46,13 @@ function trace ($string, $out=null)
 */
 function typeOf ($object, $detailed=false)
 {
-	if (is_callable($object))
-		return 'function';
-
 	if (is_object ($object))
+	{
+		if ($object instanceof \Closure)
+			return 'function';
+
 		return get_class($object);
+	}
 
 	if ($detailed)
 	{
@@ -71,6 +73,9 @@ function typeOf ($object, $detailed=false)
 
 		if (is_numeric($object))
 			return 'number';
+
+		if (is_callable($object))
+			return 'function';
 	}
 
 	return 'primitive';

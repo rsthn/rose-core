@@ -513,7 +513,7 @@ class Arry
 
         }
 
-		$name = (int)$name;
+		//$name = (int)$name;
 
 		if (!($this->has($name)))
 			return null;
@@ -562,6 +562,10 @@ class Arry
 					$s[] = \json_encode($item);
 					break;
 
+				case 'function':
+					$s[] = '(function)';
+					break;
+	
 				default:
 					$s[] = \json_encode((string)$item);
 					break;

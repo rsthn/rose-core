@@ -99,10 +99,17 @@ Expr::register('http::post', function ($args)
 
 	$fields = new Map();
 	$files = new Arry();
+	$raw_data = null;
 
 	for ($i = 2; $i < $args->length; $i++)
 	{
 		$data = $args->get($i);
+
+		if (\Rose\typeOf($data, true) == 'string')
+		{
+			$raw_data = $data;
+			break;
+		}
 
 		if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
 			continue;
@@ -141,12 +148,17 @@ Expr::register('http::post', function ($args)
 		});
 	}
 
+	$headers = Net::$headers->values()->__nativeArray;
+
+	if ($raw_data && !Net::$headers->has('Content-Type'))
+		$headers[] = 'Content-Type: ' . ($raw_data[0] == '<' ? 'text/xml' : ($raw_data[0] == '[' || $raw_data[0] == '{' ? 'application/json' : ''));
+
 	curl_setopt ($c, CURLOPT_URL, $url);
 	curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
 	curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt ($c, CURLOPT_POSTFIELDS, $fields->__nativeArray);
+	curl_setopt ($c, CURLOPT_POSTFIELDS, $raw_data ? $raw_data : $fields->__nativeArray);
 	curl_setopt ($c, CURLOPT_CUSTOMREQUEST, 'POST');
-	curl_setopt ($c, CURLOPT_HTTPHEADER, Net::$headers->values()->__nativeArray);
+	curl_setopt ($c, CURLOPT_HTTPHEADER, $headers);
 
 	$data = curl_exec($c);
 
@@ -180,6 +192,17 @@ Expr::register('http::fetch:post', function ($args)
 	return Expr::call('utils::json:parse', $args);
 });
 
+
+/* ****************** */
+/* http::header header-line */
+
+Expr::register('http::header', function ($args)
+{
+	$line = $args->get(1);
+	Net::$headers->set(explode(':', $line)[0], $line);
+
+	return null;
+});
 
 /* ****************** */
 /* http::auth basic <username> <password> */
