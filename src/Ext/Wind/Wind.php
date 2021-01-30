@@ -86,9 +86,6 @@ class Wind
 		self::$base = Main::$CORE_DIR.'/wind';
 		self::$cache = 'volatile/wind';
 
-		if (!Path::exists(self::$cache))
-			Directory::create(self::$cache, true);
-
 		self::$callStack = new Arry();
 	
 		self::$contentFlushed = false;
@@ -191,16 +188,7 @@ class Wind
 		}
 		else if (Path::exists($path1))
 		{
-			$expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path1), ''));
-
-			for ($i = 0; $i < $expr->length; $i++)
-			{
-				if ($expr->get($i)->type != 'template')
-				{
-					$expr->remove($i);
-					$i--;
-				}
-			}
+			$expr = Expr::clean(Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path1), '')));
 
 			File::setContents($path2, serialize($expr));
 			File::touch($path2, File::mtime($path1, true));
@@ -220,6 +208,31 @@ class Wind
 
 		if ($response != null)
 			self::reply ($response);
+	}
+
+	public static function run ($path, $data=null)
+	{
+		self::$data = $data ? $data : new Map();
+		self::$data->internal_call = 1;
+
+		self::$response = null;
+
+		if (Path::exists($path))
+			$expr = Expr::clean(Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path), '')));
+		else
+			throw new Error ('File not found: ' . $path);
+
+		try {
+			$response = Expr::expand($expr, self::$data, 'last');
+
+			if ($response != null)
+				self::reply ($response);
+		}
+		catch (SubReturn $e) {
+			echo self::$response;
+		}
+		catch (FalseError $e) {
+		}
 	}
 
 	private static function requiresJsonReply()

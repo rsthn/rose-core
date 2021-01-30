@@ -147,19 +147,19 @@ function fatal_handler()
 
 	ob_end_clean();
 
-	echo '<html>';
-	echo '<body style="background: #070710; padding: 24px;">';
-	echo '<pre style="font-size: 12px; line-height: 1em; color: #fff; background: #070710; padding: 16px 24px;">';
+	echo '<html>'."\n";
+	echo '<body style="background: #070710; padding: 24px;">'."\n";
+	echo '<pre style="font-size: 12px; line-height: 1em; color: #fff; background: #070710; padding: 16px 24px;">'."\n";
 
 	if ($error != null)
 	{
-		echo '<div style="padding: 2px; color: #0cf; font-size: 1.3em;">' . sprintf('Fatal Error %04u', $error['type']) . '</div>';
-		echo '<div style="padding: 2px; color: #ccc;">' . basename($error['file']) . ':' . $error['line'] . '</div>';
+		echo '<div style="padding: 2px; color: #0cf; font-size: 1.3em;">' . sprintf('Fatal Error %04u', $error['type']) . '</div>'."\n";
+		echo '<div style="padding: 2px; color: #ccc;">' . basename($error['file']) . ':' . $error['line'] . '</div>'."\n";
 
 		$msg = trim(Regex::_getString('/.*?:(.+) in/', $error['message'], 1));
 		if ($msg)
 		{
-			echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $msg . '</div>';
+			echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $msg . '</div>'."\n";
 
 			$a = Regex::_matchAll('/#.+? (.+?)\(([0-9]+)\): ([^:(-]+)(->|::)?(.*)\(/', $msg, true);
 			$n = $a->shift()->length;
@@ -175,15 +175,15 @@ function fatal_handler()
 			}
 		}
 		else
-			echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $error['message'] . '</div>';
+			echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $error['message'] . '</div>'."\n";
 	}
 
 	if ($lastException != null)
 	{
-		echo '<div style="padding: 2px; color: #0cf; font-size: 1.3em;">' . typeOf($lastException) . '</div>';
-		echo '<div style="padding: 2px; color: #ccc;">' . basename($lastException->getFile()) . ':' . $lastException->getLine() . '</div>';
+		echo '<div style="padding: 2px; color: #0cf; font-size: 1.3em;">' . typeOf($lastException) . '</div>'."\n";
+		echo '<div style="padding: 2px; color: #ccc;">' . basename($lastException->getFile()) . ':' . $lastException->getLine() . '</div>'."\n";
 
-		echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $lastException->getMessage() . '</div>';
+		echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $lastException->getMessage() . '</div>'."\n";
 
 		$stackTrace = $lastException->getTrace();
 	}
@@ -192,44 +192,44 @@ function fatal_handler()
 	{
 		foreach ($stackTrace as $err)
 		{
-			echo '<div style="margin-top: 4px; padding: 2px; color: #0c7;">';
+			echo '<div style="margin-top: 4px; padding: 2px; color: #0c7;">'."\n";
 
 			if (isset($err['class']))
-				echo '<span style="color: #c0f;">(' . $err['class'] . ') </span>';
+				echo '<span style="color: #c0f;">(' . $err['class'] . ') </span>'."\n";
 
-			echo '<b>'.$err['function'].'</b>';
+			echo '<b>'.$err['function'].'</b>'."\n";
 
-			echo ' (';
+			echo ' ('."\n";
 			if (isset($err['args']))
 			{
 				for ($i = 0; $i < count($err['args']); $i++)
 				{
-					echo typeOf($err['args'][$i], true);
+					echo typeOf($err['args'][$i], true)."\n";
 
 					if ($i != count($err['args']) - 1)
-						echo ', ';
+						echo ', '."\n";
 				}
 			}
-			echo ')';
+			echo ')'."\n";
 
 			if (isset($err['file']))
 			{
-				echo '<span style="color: #ccc;">';
-				echo ' ' . basename($err['file']) . ':' . $err['line'] . ' ';
-				echo '</span>';
+				echo '<span style="color: #ccc;">'."\n";
+				echo ' ' . basename($err['file']) . ':' . $err['line'] . ' '."\n";
+				echo '</span>'."\n";
 			}
 
-			echo '</div>';
+			echo '</div>'."\n";
 		}
 	}
 
-	echo '<div style="color: #676770; margin-top: 24px;">';
-	echo '@rsthn/rose ' . json_decode(file_get_contents(dirname(__FILE__).'/../composer.json'))->version;
-	echo '</div>';
+	echo '<div style="color: #676770; margin-top: 24px;">'."\n";
+	echo '@rsthn/rose ' . json_decode(file_get_contents(dirname(__FILE__).'/../composer.json'))->version."\n";
+	echo '</div>'."\n";
 
-	echo '</pre>';
-	echo '</body>';
-	echo '</html>';
+	echo '</pre>'."\n";
+	echo '</body>'."\n";
+	echo '</html>'."\n";
 }
 
 /*

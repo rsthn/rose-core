@@ -621,6 +621,25 @@ class Expr
 	}
 
 	/**
+	**	Removes all static parts from a parsed template.
+	**
+	**	>> array clean (array parts);
+	*/
+	static public function clean ($parts)
+	{
+		for ($i = 0; $i < $parts->length; $i++)
+		{
+			if ($parts->get($i)->type != 'template')
+			{
+				$parts->remove($i);
+				$i--;
+			}
+		}
+
+		return $parts;
+	}
+
+	/**
 	**	Expands a template using the given data object, ret can be set to 'text' or 'obj' allowing to expand the template as
 	**	a string (text) or an array of objects (obj) respectively. If none provided it will be expanded as text.
 	**
