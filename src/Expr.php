@@ -55,17 +55,17 @@ class Expr
 	/*
 	**	Base path for imported sources.
 	*/
-	static public $importPath = 'resources/wind';
-
-	/*
-	**	Cache path.
-	*/
-	static public $cachePath = 'volatile/wind';
+	static public $importPath;
 
 	/*
 	**	Current source path.
 	*/
-	static public $currentPath = 'resources/wind';
+	static public $currentPath;
+
+	/*
+	**	Cache path.
+	*/
+	static public $cachePath = 'volatile/expr';
 
 	/*
 	**	Post-processes a parsed expression. Unescapes the backslash escape sequences.
@@ -1231,7 +1231,14 @@ class Expr
 	}
 };
 
+
+/*
+**	Initialize class constants.
+*/
+
 Expr::$functions = new Map();
+Expr::$importPath = Main::$CORE_DIR;
+Expr::$currentPath = Main::$CORE_DIR;
 
 /**
 **	Expression functions.

@@ -111,7 +111,7 @@ class Strings
 		$this->loadedMaps = new Map ();
         $this->debug = Configuration::getInstance()->Strings->debug;
 
-		$this->altLangBase = $this->altBase = $this->langBase = $this->base = 'resources/strings/';
+		$this->altLangBase = $this->altBase = $this->langBase = $this->base = Main::$CORE_DIR.'/strings/';
 
 		// Use default internal language code.
 		$this->langFrom = Strings::FROM_NOWHERE;
@@ -121,7 +121,7 @@ class Strings
     }
 
 	/*
-	**	Sets the strings language code to the specified value. The language directory resources/strings/XX for code XX should exist, if the
+	**	Sets the strings language code to the specified value. The language directory CORE_DIR/strings/XX for code XX should exist, if the
 	**	parameter is not specified, the lang code will be loaded from one of the supported locations.
 	*/
     public function setLang ($lang=null)
@@ -185,7 +185,7 @@ class Strings
 	*/
     public function setBase ($base)
     {
-		if (!$base) $base = 'resources/strings/';
+		if (!$base) $base = Main::$CORE_DIR.'/strings/';
 
         if (Text::substring($base, -1) != '/')
             $base .= '/';
@@ -199,7 +199,7 @@ class Strings
 	*/
     public function setAltBase ($base)
     {
-		if (!$base) $base = 'resources/strings/';
+		if (!$base) $base = Main::$CORE_DIR.'/strings/';
 
         if (Text::substring($base, -1) != '/')
             $base .= '/';

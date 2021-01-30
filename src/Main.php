@@ -2,7 +2,7 @@
 /*
 **	Rose Framework Initializer
 **
-**	Copyright (c) 2010-2020, RedStar Technologies, All rights reserved.
+**	Copyright (c) 2010-2021, RedStar Technologies, All rights reserved.
 **	https://rsthn.com/
 **
 **	THIS LIBRARY IS PROVIDED BY REDSTAR TECHNOLOGIES "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -238,7 +238,17 @@ function fatal_handler()
 class Main
 {
 	/*
-	**	Sets the global definitions and PHP configuration.
+	**	Project's core directory.
+	*/
+	public static $CORE_DIR;
+
+	/*
+	**	Constant that indicates if the framework has been loaded and initialized. Used as a dummy var to force autoload of the Main class by using `Main::$loaded`.
+	*/
+	public static $loaded = true;
+
+	/*
+	**	Sets the global definitions and PHP configuration. Automatically called when loading this class.
 	*/
 	static function defs ()
 	{
@@ -272,6 +282,12 @@ class Main
 		set_error_handler ('Rose\\error_handler', E_STRICT | E_WARNING | E_USER_ERROR | E_USER_WARNING);
 		register_shutdown_function ('Rose\\fatal_handler');
 		ini_set('display_errors', '0');
+
+		// Set global project core directory (use 'resources' for legacy systems, and 'core' for Rose 3.1+ systems).
+		if (file_exists('resources/'))
+			self::$CORE_DIR = 'resources';
+		else
+			self::$CORE_DIR = 'core';
 	}
 
 	/*
@@ -279,8 +295,6 @@ class Main
 	*/
 	static function cli ()
 	{
-		self::defs();
-
 		try {
 			Gateway::getInstance()->init();
 		}
@@ -300,8 +314,6 @@ class Main
 	*/
 	static function initialize ($callback=null)
 	{
-		self::defs();
-
 		// Load specially encoded request if "req64" parameter is set.
 		if (isset($_REQUEST['req64']))
 		{
@@ -340,3 +352,5 @@ class Main
 			trace (sprintf ('%s   %7.2f MB   %6d ms   %s   %s', (string)(new DateTime()), memory_get_peak_usage()/1048576, $ms_end-$ms_start, $_SERVER['REMOTE_ADDR'], $_SERVER['REQUEST_URI']), 'logs/access.log');
 	}
 };
+
+Main::defs();

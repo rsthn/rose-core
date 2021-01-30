@@ -66,7 +66,7 @@ class Configuration extends Map
 
 		// Load default configuration file.
 		try {
-			Configuration::loadFrom ('resources/system.conf', $this, true);
+			Configuration::loadFrom (Main::$CORE_DIR.'/system.conf', $this, true);
 		}
 		catch (\Exception $e) { }
 
@@ -75,10 +75,10 @@ class Configuration extends Map
 		{
 			$env = Text::trim(File::getContents('rose-env'));
 
-			if (Path::exists('resources/'.$env.'.conf'))
+			if (Path::exists(Main::$CORE_DIR.'/'.$env.'.conf'))
 			{
 				try {
-					Configuration::loadFrom ('resources/'.$env.'.conf', $this, true);
+					Configuration::loadFrom (Main::$CORE_DIR.'/'.$env.'.conf', $this, true);
 				}
 				catch (\Exception $e) {
 				}
