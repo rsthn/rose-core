@@ -41,6 +41,8 @@ use Rose\Configuration;
 use Rose\Ext\Wind\SubReturn;
 use Rose\Ext\Wind\WindError;
 
+use Rose\Main;
+
 /*
 **	Wind extension.
 */
@@ -81,7 +83,7 @@ class Wind
 	{
 		Gateway::registerService ('wind', new WindProxy());
 
-		self::$base = 'resources/wind';
+		self::$base = Main::$CORE_DIR.'/wind';
 		self::$cache = 'volatile/wind';
 
 		if (!Path::exists(self::$cache))

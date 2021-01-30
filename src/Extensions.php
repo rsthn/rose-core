@@ -39,14 +39,14 @@ class Extensions
 	{
 		self::$loaded = new Map();
 
-		// Load native extensions.
+		// Native extensions.
 		Directory::readDirs(Path::append(Path::dirname(__FILE__), 'Ext'))->dirs->forEach(function($i) { self::load($i->name); });
 
-		// Load installed extensions.
+		// Installed extensions.
 		if (Path::exists($path = Path::append(Path::dirname(__FILE__), '../../extensions')))
 			Directory::readDirs(Path::append($path))->dirs->forEach(function($i) { self::load($i->name, '../../extensions'); });
 
-		// Load user extensions.
+		// User extensions.
 		if (Path::exists($path = Path::append(Path::dirname(__FILE__), '../../../../extensions')))
 			Directory::readDirs($path)->dirs->forEach(function($i) { self::load($i->name, '../../../../extensions'); });
 	}
@@ -69,7 +69,18 @@ class Extensions
 	*/
     public static function isInstalled ($identifier)
     {
-		return Path::exists(Path::append(Path::dirname(__FILE__), '../../extensions', $identifier, $identifier.'.php'));
+		$identifier = Path::append($identifier, $identifier.'.php');
+
+		// Native extension.
+		if (Path::exists(Path::append(Path::dirname(__FILE__), 'Ext', $identifier)))
+			return true;
+
+		// Installed extension.
+		if (Path::exists(Path::append(Path::dirname(__FILE__), '../../extensions', $identifier)))
+			return true;
+
+		// User extension.
+		return Path::exists(Path::append(Path::dirname(__FILE__), '../../../../extensions', $identifier));
 	}
 
 	/*
