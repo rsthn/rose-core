@@ -363,14 +363,6 @@ class Wind
 	}
 
 	/**
-	**	error <message>
-	*/
-	public static function error ($args, $parts, $data)
-	{
-		throw new Error ($args->get(1));
-	}
-
-	/**
 	**	echo <message> [<message>...]
 	*/
 	public static function _echo ($parts, $data)
@@ -503,7 +495,6 @@ Expr::register('_echo', function(...$args) { return Wind::_echo(...$args); });
 Expr::register('_trace', function(...$args) { return Wind::_trace(...$args); });
 Expr::register('_call', function(...$args) { return Wind::_call(...$args); });
 Expr::register('_icall', function(...$args) { return Wind::_icall(...$args); });
-Expr::register('error', function(...$args) { return Wind::error(...$args); });
 
 /* ****************************************************************************** */
 Wind::init();

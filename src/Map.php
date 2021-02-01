@@ -428,7 +428,7 @@ class Map
 					break;
 
 				case 'function':
-					$s[] = '(function)';
+					$s[] = $name . '(function)';
 					break;
 	
 				default:

@@ -63,6 +63,11 @@ class Expr
 	static public $currentPath;
 
 	/*
+	**	Current namespace.
+	*/
+	static public $namespace = '';
+
+	/*
 	**	Cache path.
 	*/
 	static public $cachePath = 'volatile/expr';
@@ -675,6 +680,13 @@ class Expr
 					case 'template':
 						$last = Expr::expand($parts->get($i)->data, $root, 'arg', 'template');
 						$str .= typeOf($last) == 'primitive' ? $last : '';
+
+						if (\Rose\typeOf($last) == 'function')
+						{
+							$data = $last (new Arry(['']), null, $root);
+							$last = null;
+						}
+
 						break;
 
 					case 'base-string':
@@ -710,6 +722,7 @@ class Expr
 
 								if ($data === null && $first)
 								{
+									// VIOLET: Possibly no longer required.
 									if (Expr::$functions->has($str))
 										$data = Expr::$functions->get($str) (null, null, $tmp);
 								}
@@ -741,7 +754,7 @@ class Expr
 					break;
 			}
 
-			if ($str != 'this')
+			if ($str && $str != 'this')
 			{
 				$failed = false;
 
@@ -770,14 +783,14 @@ class Expr
 				}
 			}
 
-			if (is_string($data))
+			/*if (is_string($data))
 			{
 				//if ($escape)
 				//	$data = str_replace('&', '&amp;', str_replace('<', '&lt;', str_replace('>', '&gt;', $data)));
 
 				//if ($quote)
 				//	$data = '"' . $data . '"';
-			}
+			}*/
 
 			$s->push($data);
 		}
@@ -874,10 +887,9 @@ class Expr
 		if ($mode == 'fn')
 		{
 			$args = new Arry();
-
 			$args->push(Expr::expand($parts->get(0), $data, 'arg', 'base-string'));
 
-			switch (\Rose\typeOf($args->get(0), true))
+			switch (\Rose\typeOf($args->get(0)))
 			{
 				case 'function':
 					for ($i = 1; $i < $parts->length(); $i++)
@@ -934,6 +946,7 @@ class Expr
 					}
 				}
 
+				// case 'template':
 				return Expr::expand($parts->get(0), $data, $ret, 'var');
 			}
 
@@ -1012,6 +1025,7 @@ class Expr
 		// Return types for direct objects.
 		if ($ret == 'obj') return $s;
 
+		// Returns only the last obtained value.
 		if ($ret == 'last')
 		{
 			if (typeOf($s) == 'Rose\\Arry')
@@ -1256,8 +1270,11 @@ class Expr
 */
 
 Expr::$functions = new Map();
-Expr::$importPath = Main::$CORE_DIR;
-Expr::$currentPath = Main::$CORE_DIR;
+Expr::$imported = new Map();
+
+Expr::$currentPath = Path::resolve(Main::$CORE_DIR);
+Expr::$importPath = Path::resolve(Main::$CORE_DIR);
+
 
 /**
 **	Expression functions.
@@ -2524,7 +2541,13 @@ Expr::register('_def-fn', function($parts, $data)
 		$params->push(Expr::value($parts->get($i), $data));
 	}
 
-	Expr::register($name, $fn);
+	if (Text::startsWith($name, '::'))
+		Expr::register(Text::substring($name, 2), $fn);
+	else if (Text::indexOf($name, '::'))
+		Expr::register($name, $fn);
+	else
+		Expr::register((Expr::$namespace ? (Expr::$namespace . '::') : '') . $name, $fn);
+
 	return null;
 });
 
@@ -2537,18 +2560,35 @@ Expr::register('_def-fn', function($parts, $data)
 Expr::register('_def-alias', function($parts, $data)
 {
 	$name = Expr::value($parts->get(1), $data);
-	$value = Expr::value($parts->get(2), $data);
+	$fn = Expr::value($parts->get(2), $data);
 
-	if (\Rose\typeOf($value) != 'function')
+	if (\Rose\typeOf($fn) != 'function')
 	{
-		$tmp = Expr::$functions->get((string)$value);
+		$tmp = Expr::$functions->get((string)$fn);
 		if (!$tmp)
-			throw new Error ('Value for an alias must be a function, undefined: ' . (string)$value);
+			throw new Error ('Value for an alias must be a function, undefined: ' . (string)$fn);
 		else
-			$value = $tmp;
+			$fn = $tmp;
 	}
 
-	Expr::register($name, $value);
+	if (Text::startsWith($name, '::'))
+		Expr::register(Text::substring($name, 2), $fn);
+	else if (Text::indexOf($name, '::'))
+		Expr::register($name, $fn);
+	else
+		Expr::register((Expr::$namespace ? (Expr::$namespace . '::') : '') . $name, $fn);
+
+	return null;
+});
+
+/*
+**	Sets the namespace for any def-* statements.
+**
+**	ns <str-expr>
+*/
+Expr::register('ns', function($args, $parts, $data)
+{
+	Expr::$namespace = $args->get(1);
 	return null;
 });
 
@@ -2560,17 +2600,11 @@ Expr::register('_def-alias', function($parts, $data)
 */
 Expr::register('require', function($args, $parts, $data)
 {
-	if (Expr::$imported == null)
-	{
-		Expr::$imported = new Map();
-
-		Expr::$currentPath = Path::resolve(Expr::$currentPath);
-		Expr::$importPath = Path::resolve(Expr::$importPath);
-	}
-
 	for ($i = 1; $i < $args->length; $i++)
 	{
 		$currentPath = Expr::$currentPath;
+		$namespace = Expr::$namespace;
+
 		$path = $args->get($i);
 
 		if (Text::startsWith($path, './'))
@@ -2619,11 +2653,30 @@ Expr::register('require', function($args, $parts, $data)
 		}
 
 		Expr::$currentPath = Path::dirname($path);
-		Expr::expand ($expr, $data, 'void');
+		Expr::$namespace = '';
+
+		try
+		{
+			$value = Expr::expand ($expr, $data, 'void');
+		}
+		catch (MetaError $e)
+		{
+			switch ($e->code)
+			{
+				case 'FN_RET':
+					$value = $e->value;
+					break;
+
+				default:
+					throw $e;
+			}
+		}
+
 		Expr::$currentPath = $currentPath;
+		Expr::$namespace = $namespace;
 	}
 
-	return null;
+	return $value;
 });
 
 /*
