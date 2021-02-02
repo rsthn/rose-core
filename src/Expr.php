@@ -19,6 +19,7 @@ namespace Rose;
 
 use Rose\Errors\Error;
 use Rose\Errors\MetaError;
+use Rose\Data\Connection;
 use Rose\Regex;
 use Rose\Arry;
 use Rose\Map;
@@ -27,17 +28,7 @@ use Rose\IO\File;
 use Rose\Math;
 
 /**
-**	Expression module, based on the Rin's templating module. The formats available are shown below.
-**
-**	HTML Escaped Output:			(data.value)					Escapes HTML characters from the output.
-**	Raw Output:						(!data.value)					Does not escape HTML characters from the output (used to output direct HTML).
-**	Double-Quoted Escaped Output:	($data.value)					Escapes HTML characters and surrounds with double quotes.
-**	Immediate Reparse:				[<....] [@....] "..." '...'		Reparses the contents as if parseTemplate() was called again.
-**	Immediate Output:				(:...)							Takes the contents and outputs exactly as-is without format and optionally enclosed by ()
-**																	when the first character is not '<', ( or space.
-**	Filtered Output:				(functionName ... <expr> ...)	Runs a function call, 'expr' can be any of the allowed formats shown here (nested if desired),
-**																	functionName should map to one of the available expression functions registered in
-**																	the Rin.Expr::$functions map, each of which have their own parameters.
+**	Expression class, based on the Rin's templating module.
 */
 
 class Expr
@@ -657,8 +648,8 @@ class Expr
 		// Expand variable parts.
 		if ($mode == 'var')
 		{
-			$escape = true;
-			$quote = false;
+			$modifier1 = false;
+			$modifier2 = false;
 
 			$root = $data;
 			$last = null;
@@ -704,12 +695,12 @@ class Expr
 								if ($str[0] == '!')
 								{
 									$str = substr($str, 1);
-									$escape = false;
+									$modifier1 = true;
 								}
 								else if ($str[0] == '$')
 								{
 									$str = substr($str, 1);
-									$quote = true;
+									$modifier2 = true;
 								}
 								else
 									break;
@@ -743,12 +734,12 @@ class Expr
 				if ($str[0] == '!')
 				{
 					$str = substr($str, 1);
-					$escape = false;
+					$modifier1 = true;
 				}
 				else if ($str[0] == '$')
 				{
 					$str = substr($str, 1);
-					$quote = true;
+					$modifier2 = true;
 				}
 				else
 					break;
@@ -783,14 +774,8 @@ class Expr
 				}
 			}
 
-			/*if (is_string($data))
-			{
-				//if ($escape)
-				//	$data = str_replace('&', '&amp;', str_replace('<', '&lt;', str_replace('>', '&gt;', $data)));
-
-				//if ($quote)
-				//	$data = '"' . $data . '"';
-			}*/
+			if ($modifier1)
+				$data = Connection::escape($data);
 
 			$s->push($data);
 		}
@@ -1285,7 +1270,7 @@ Expr::register('false', function($args) { return false; });
 
 Expr::register('len', function($args) { $s = $args->get(1); return \Rose\typeOf($s) == 'primitive' ? strlen((string)$s) : $s->length; });
 Expr::register('int', function($args) { return (int)$args->get(1); });
-Expr::register('bool', function($args) { return !!$args->get(1); });
+Expr::register('bool', function($args) { return \Rose\bool($args->get(1)); });
 Expr::register('str', function($args) { $s = ''; for ($i = 1; $i < $args->length; $i++) $s .= (string)$args->get($i); return $s; });
 Expr::register('float', function($args) { return (float)$args->get(1); });
 Expr::register('chr', function($args) { return chr($args->get(1)); });

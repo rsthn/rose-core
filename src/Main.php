@@ -155,19 +155,19 @@ function fatal_handler()
 
 	ob_end_clean();
 
-	echo '<html>'."\n";
-	echo '<body style="background: #070710; padding: 24px;">'."\n";
-	echo '<pre style="font-size: 12px; line-height: 1em; color: #fff; background: #070710; padding: 16px 24px;">'."\n";
+	echo '<html>';
+	echo '<body style="background: #070710; padding: 24px;">';
+	echo '<pre style="font-size: 12px; line-height: 1em; color: #fff; background: #070710; padding: 16px 24px;">';
 
 	if ($error != null)
 	{
-		echo '<div style="padding: 2px; color: #0cf; font-size: 1.3em;">' . sprintf('Fatal Error %04u', $error['type']) . '</div>'."\n";
-		echo '<div style="padding: 2px; color: #ccc;">' . basename($error['file']) . ':' . $error['line'] . '</div>'."\n";
+		echo '<div style="padding: 2px; color: #0cf; font-size: 1.3em;">' . sprintf('Fatal Error %04u', $error['type']) . '</div>';
+		echo '<div style="padding: 2px; color: #ccc;">' . basename($error['file']) . ':' . $error['line'] . '</div>';
 
 		$msg = trim(Regex::_getString('/.*?:(.+) in/', $error['message'], 1));
 		if ($msg)
 		{
-			echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $msg . '</div>'."\n";
+			echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $msg . '</div>';
 
 			$a = Regex::_matchAll('/#.+? (.+?)\(([0-9]+)\): ([^:(-]+)(->|::)?(.*)\(/', $msg, true);
 			$n = $a->shift()->length;
@@ -183,15 +183,15 @@ function fatal_handler()
 			}
 		}
 		else
-			echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $error['message'] . '</div>'."\n";
+			echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $error['message'] . '</div>';
 	}
 
 	if ($lastException != null)
 	{
-		echo '<div style="padding: 2px; color: #0cf; font-size: 1.3em;">' . typeOf($lastException) . '</div>'."\n";
-		echo '<div style="padding: 2px; color: #ccc;">' . basename($lastException->getFile()) . ':' . $lastException->getLine() . '</div>'."\n";
+		echo '<div style="padding: 2px; color: #0cf; font-size: 1.3em;">' . typeOf($lastException) . '</div>';
+		echo '<div style="padding: 2px; color: #ccc;">' . basename($lastException->getFile()) . ':' . $lastException->getLine() . '</div>';
 
-		echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $lastException->getMessage() . '</div>'."\n";
+		echo '<div style="color: #fa0; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $lastException->getMessage() . '</div>';
 
 		$stackTrace = $lastException->getTrace();
 	}
@@ -200,44 +200,44 @@ function fatal_handler()
 	{
 		foreach ($stackTrace as $err)
 		{
-			echo '<div style="margin-top: 4px; padding: 2px; color: #0c7;">'."\n";
+			echo '<div style="margin-top: 4px; padding: 2px; color: #0c7;">';
 
 			if (isset($err['class']))
-				echo '<span style="color: #c0f;">(' . $err['class'] . ') </span>'."\n";
+				echo '<span style="color: #c0f;">(' . $err['class'] . ') </span>';
 
-			echo '<b>'.$err['function'].'</b>'."\n";
+			echo '<b>'.$err['function'].'</b>';
 
-			echo ' ('."\n";
+			echo ' (';
 			if (isset($err['args']))
 			{
 				for ($i = 0; $i < count($err['args']); $i++)
 				{
-					echo typeOf($err['args'][$i], true)."\n";
+					echo typeOf($err['args'][$i], true);
 
 					if ($i != count($err['args']) - 1)
-						echo ', '."\n";
+						echo ', ';
 				}
 			}
-			echo ')'."\n";
+			echo ')';
 
 			if (isset($err['file']))
 			{
-				echo '<span style="color: #ccc;">'."\n";
-				echo ' ' . basename($err['file']) . ':' . $err['line'] . ' '."\n";
-				echo '</span>'."\n";
+				echo '<span style="color: #ccc;">';
+				echo ' ' . basename($err['file']) . ':' . $err['line'] . ' ';
+				echo '</span>';
 			}
 
-			echo '</div>'."\n";
+			echo '</div>';
 		}
 	}
 
-	echo '<div style="color: #676770; margin-top: 24px;">'."\n";
-	echo '@rsthn/rose ' . json_decode(file_get_contents(dirname(__FILE__).'/../composer.json'))->version."\n";
-	echo '</div>'."\n";
+	echo '<div style="color: #676770; margin-top: 24px;">';
+	echo '@rsthn/rose ' . json_decode(file_get_contents(dirname(__FILE__).'/../composer.json'))->version;
+	echo '</div>';
 
-	echo '</pre>'."\n";
-	echo '</body>'."\n";
-	echo '</html>'."\n";
+	echo '</pre>';
+	echo '</body>';
+	echo '</html>';
 }
 
 /*
@@ -273,11 +273,11 @@ class Main
 		register_shutdown_function ('Rose\\fatal_handler');
 		ini_set ('display_errors', '0');
 
-		// Set global project core directory (use 'resources' for legacy systems, and 'xcore' for Rose 3.1+ systems).
+		// Set global project core directory (use 'resources' for legacy systems, and 'rcore' for Rose 3.1+ systems).
 		if (file_exists('resources/'))
 			self::$CORE_DIR = 'resources';
 		else
-			self::$CORE_DIR = 'xcore';
+			self::$CORE_DIR = 'rcore';
 	}
 
 	/*
