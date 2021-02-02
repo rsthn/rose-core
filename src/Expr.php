@@ -715,7 +715,7 @@ class Expr
 								{
 									// VIOLET: Possibly no longer required.
 									if (Expr::$functions->has($str))
-										$data = Expr::$functions->get($str) (null, null, $tmp);
+										$data = Expr::$functions->get($str) (new Arry([$str]), null, $tmp);
 								}
 
 								$first = false;
@@ -769,13 +769,17 @@ class Expr
 
 				if ($failed && $parts->length == 1)
 				{
-					if (Expr::$strict == true)
-						throw new Error ('Expression function `'.$str.'` not found.');
+					if (Expr::$functions->has($str)) {
+						$data = Expr::$functions->get($str) (new Arry([$str]), null, $root);
+					} else {
+						if (Expr::$strict == true)
+							throw new Error ('Expression function `'.$str.'` not found.');
+					}
 				}
 			}
 
 			if ($modifier1)
-				$data = Connection::escape($data);
+				$data = Resources::getInstance()->Database->escapeExt($data);
 
 			$s->push($data);
 		}
@@ -837,7 +841,7 @@ class Expr
 								if ($data === null && $first)
 								{
 									if (Expr::$functions->has($str))
-										$data = Expr::$functions->get($str) (null, null, $tmp);
+										$data = Expr::$functions->get($str) (new Arry([$str]), null, $tmp);
 								}
 
 								$first = false;
@@ -1698,20 +1702,55 @@ Expr::register('_??', function ($parts, $data)
 /**
 **	Returns the value if the expression is true, supports 'elif' and 'else' as well.
 **
-**	if <expr> <value> [elif <expr> <value>] [else <value>]
+**	if <condition> <block> [elif <condition> <block>] [else <block>]
 */
 Expr::register('_if', function ($parts, $data)
 {
-	for ($i = 0; $i < $parts->length(); $i += 3)
-	{
-		if (Expr::expand($parts->get($i), $data, 'arg') == 'else')
-			return Expr::expand($parts->get($i+1), $data, 'arg');
+	$mode = 0;
+	$start = 0;
 
-		if (Expr::expand($parts->get($i+1), $data, 'arg'))
-			return Expr::expand($parts->get($i+2), $data, 'arg');
+	for ($i = 1; $i < $parts->length(); $i++)
+	{
+		$value = $parts->get($i)->get(0);
+		
+		switch ($mode)
+		{
+			case 0: // Verify condition.
+				if (\Rose\bool(Expr::value($parts->get($i), $data)))
+				{
+					$mode = 1;
+					$start = $i+1;
+				}
+				else
+					$mode = 2;
+
+				break;
+
+			case 1: // Find else/elif and run block.
+				if ($value->type == 'identifier' && ($value->data == 'else' || $value->data == 'elif'))
+					return Expr::blockValue($parts->slice($start, $i-$start), $data);
+
+				break;
+
+			case 2: // Find else and run block, or elif and evaluate condition.
+				if ($value->type == 'identifier')
+				{
+					if ($value->data == 'else')
+					{
+						$mode = 1;
+						$start = $i+1;
+					}
+					else if ($value->data == 'elif')
+					{
+						$mode = 0;
+					}
+				}
+
+				break;
+		}
 	}
 
-	return '';
+	return $mode == 1 ? Expr::blockValue($parts->slice($start, $parts->length-$start), $data) : null;
 });
 
 /**
@@ -2372,7 +2411,7 @@ Expr::register('_assert', function ($parts, $data)
 **	yield <value>
 */
 Expr::register('yield', function($args) {
-	throw new MetaError('EXPR_YIELD', $args->get(1));
+	throw new MetaError('EXPR_YIELD', $args->has(1) ? $args->get(1) : null);
 });
 
 /**
@@ -2694,6 +2733,36 @@ Expr::register('zipmap', function($args, $parts, $data)
 		for ($i = 0; $i < $n; $i++)
 			$map->set($args->get($i+1), $values->get($i));
 	}
+
+	return $map;
+});
+
+/*
+**	Extracts the specified keys from a given map and returns a new map.
+**
+**	map-get key-name+ <map-expr>
+**	map-get <arr-expr> <map-expr>
+*/
+Expr::register('map-get', function($args, $parts, $data)
+{
+	$map = new Map();
+
+	if (\Rose\typeOf($args->get(1)) == 'Rose\Arry')
+	{
+		$keys = $args->get(1);
+		$values = $args->get(2);
+	}
+	else
+	{
+		$keys = $args->slice(1, $args->length-2);
+		$values = $args->get($args->length-1);
+	}
+
+	$keys->forEach(function ($key) use (&$map, &$values)
+	{
+		if ($values->has($key))
+			$map->set ($key, $values->get($key));
+	});
 
 	return $map;
 });
