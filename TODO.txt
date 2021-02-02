@@ -21,7 +21,6 @@ Modifications to Expr:
 - Convert null/nil/true/false to keywords
 - Make "if" just 3 parameters (if yes no) and omit the else
 - Possibly replace (@ ...) with (do ...) like clojure does.
-- Add "when" operator (when <cond> ...) which is a combination of if and do.
 - Add conditionals that end with ? (null? eq? etc)
 - POSSIBLY: Ensure strings are actually strings, not re-evaluated templates.
 - POSSIBLY: Force arrays to be created with [] rather than (# ).

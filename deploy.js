@@ -47,7 +47,7 @@ run('svn-msg "Published: v'+package.version+'"')
 
 .then(r => run('del .gitignore'))
 .then(r => run('del deploy.js'))
-.then(r => run('del README.md'))
+.then(r => run('del *.md'))
 .then(r => run('del TODO.txt'))
 .then(r => run('del test.php'))
 

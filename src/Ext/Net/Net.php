@@ -134,7 +134,7 @@ Expr::register('http::post', function ($args)
 				{
 					Directory::create('./tmp/uploads');
 
-					$path = './tmp/uploads/'.Expr::call('math::uuid', null).Path::extname($value->get('name'));
+					$path = './tmp/uploads/'.Expr::call('utils::uuid', null).Path::extname($value->get('name'));
 					File::setContents($path, $value->get('data'));
 
 					$value = curl_file_create (Path::resolve($path), '', $value->get('name'));
@@ -207,18 +207,27 @@ Expr::register('http::header', function ($args)
 /* ****************** */
 /* http::auth basic <username> <password> */
 /* http::auth basic <username> */
+/* http::auth bearer <token> */
 /* http::auth false */
 
 Expr::register('http::auth', function ($args)
 {
-	if ($args->length == 2 && !$args->get(1))
+	if ($args->length == 2 && (!$args->get(1) || $args->get(1) == 'false'))
 	{
 		Net::$headers->remove('Authorization');
 		return null;
 	}
 
-	if ($args->get(1) == 'basic')
-		Net::$headers->set('Authorization', 'Authorization: BASIC ' . base64_encode($args->get(2) . ':' . ($args->has(3) ? $args->get(3) : '')));
+	switch (strtolower($args->get(1)))
+	{
+		case 'basic':
+			Net::$headers->set('Authorization', 'Authorization: BASIC ' . base64_encode($args->get(2) . ':' . ($args->has(3) ? $args->get(3) : '')));
+			break;
+
+		case 'bearer':
+			Net::$headers->set('Authorization', 'Authorization: BEARER ' . $args->get(2));
+			break;
+	}
 
 	return null;
 });

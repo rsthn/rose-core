@@ -73,6 +73,16 @@ class Gateway
 	public $ep;
 
 	/*
+	**	HTTP Method used to access this entry point.
+	*/
+	public $method;
+
+	/*
+	**	Remote client address and port.
+	*/
+	public $remoteAddress, $remotePort;
+
+	/*
 	**	Relative URL root where the index is found. Usually it is "/".
 	*/
 	public $root;
@@ -126,6 +136,10 @@ class Gateway
 		$n = Text::length(Regex::_getString ('/(.+)index\.php/', $this->serverParams->SCRIPT_NAME, 1));
 		$this->relativePath = Regex::_getString ('/^.{'.$n.'}(index\.php)?\/?([-\/_A-Za-z0-9]+)/', $this->serverParams->REQUEST_URI, 2);
 		if ($this->relativePath) $this->relativePath = '/'.$this->relativePath;
+
+		$this->method = $this->serverParams->REQUEST_METHOD;
+		$this->remoteAddress = $this->serverParams->REMOTE_ADDR;
+		$this->remotePort = $this->serverParams->REMOTE_PORT;
 
 		$this->ep = ($this->secure ? 'https://' : 'http://')
 					.(Configuration::getInstance()->Gateway->server_name ? Configuration::getInstance()->Gateway->server_name : $this->serverParams->SERVER_NAME)

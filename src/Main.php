@@ -90,6 +90,14 @@ function isString ($object)
 }
 
 /*
+**	Returns the boolean value of the given argument.
+*/
+function bool ($value)
+{
+	return $value === 'true' || ($value !== 'false' && !!$value);
+}
+
+/*
 **	Raises a warning.
 */
 function raiseWarning ($message)
@@ -254,40 +262,22 @@ class Main
 	{
 		// Configure PHP environment.
 		gc_disable();
-		ignore_user_abort (false);
+		ignore_user_abort(false);
 		umask(0);
 		error_reporting (E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 		mt_srand (((double)microtime ()) * 10000);
-		set_time_limit(300);
-
-		// Activate strip slashes if magic_quotes_gpc is enabled, but issue a warning since that is not required in this framework.
-		if (version_compare(PHP_VERSION, '7.4.0') < 0)
-		{
-			if (get_magic_quotes_gpc())
-			{
-				trace ('WARNING: magic_quotes_gpc is enabled, please disable or performance will not be optimal.');
-
-				function stripslashes_gpc(&$value) {
-					$value = stripslashes($value);
-				}
-
-				array_walk_recursive ($_GET, 'stripslashes_gpc');
-				array_walk_recursive ($_POST, 'stripslashes_gpc');
-				array_walk_recursive ($_COOKIE, 'stripslashes_gpc');
-				array_walk_recursive ($_REQUEST, 'stripslashes_gpc');
-			}
-		}
+		set_time_limit (300);
 
 		// Set global error handlers and disable PHP error output.
 		set_error_handler ('Rose\\error_handler', E_STRICT | E_WARNING | E_USER_ERROR | E_USER_WARNING);
 		register_shutdown_function ('Rose\\fatal_handler');
-		ini_set('display_errors', '0');
+		ini_set ('display_errors', '0');
 
-		// Set global project core directory (use 'resources' for legacy systems, and 'core' for Rose 3.1+ systems).
+		// Set global project core directory (use 'resources' for legacy systems, and 'xcore' for Rose 3.1+ systems).
 		if (file_exists('resources/'))
 			self::$CORE_DIR = 'resources';
 		else
-			self::$CORE_DIR = 'core';
+			self::$CORE_DIR = 'xcore';
 	}
 
 	/*

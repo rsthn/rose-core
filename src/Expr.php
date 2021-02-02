@@ -1285,6 +1285,7 @@ Expr::register('false', function($args) { return false; });
 
 Expr::register('len', function($args) { $s = $args->get(1); return \Rose\typeOf($s) == 'primitive' ? strlen((string)$s) : $s->length; });
 Expr::register('int', function($args) { return (int)$args->get(1); });
+Expr::register('bool', function($args) { return !!$args->get(1); });
 Expr::register('str', function($args) { $s = ''; for ($i = 1; $i < $args->length; $i++) $s .= (string)$args->get($i); return $s; });
 Expr::register('float', function($args) { return (float)$args->get(1); });
 Expr::register('chr', function($args) { return chr($args->get(1)); });
