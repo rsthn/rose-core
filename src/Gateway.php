@@ -133,8 +133,11 @@ class Gateway
 		$this->root = Text::substring($this->serverParams->SCRIPT_NAME, 0, -9);
 		$this->secure = Text::toUpperCase($this->serverParams->HTTPS) == 'ON';
 
-		$n = Text::length(Regex::_getString ('/(.+)index\.php/', $this->serverParams->SCRIPT_NAME, 1));
-		$this->relativePath = Regex::_getString ('/^.{'.$n.'}(index\.php)?\/?([-\/_A-Za-z0-9]+)/', $this->serverParams->REQUEST_URI, 2);
+		$n = Text::length(Regex::_getString ('/^(.+)index\.php/', $this->serverParams->SCRIPT_NAME, 1));
+		$tmp = Text::substring($this->serverParams->REQUEST_URI, $n);
+		if (Text::startsWith($tmp, 'index.php')) $tmp = Text::substring($tmp, 9);
+		if (Text::startsWIth($tmp, '/')) $tmp = Text::substring($tmp, 1);
+		$this->relativePath = Regex::_getString ('/^[-\/_A-Za-z0-9.]+/', $tmp);
 		if ($this->relativePath) $this->relativePath = '/'.$this->relativePath;
 
 		$this->method = $this->serverParams->REQUEST_METHOD;

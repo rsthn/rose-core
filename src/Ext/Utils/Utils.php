@@ -32,10 +32,33 @@ Expr::register('configuration', function ($args) { return Configuration::getInst
 Expr::register('config', function ($args) { return Configuration::getInstance(); });
 Expr::register('c', function ($args) { return Configuration::getInstance(); });
 
-Expr::register('strings', function ($args) { return Strings::getInstance(); });
-Expr::register('s', function ($args) { return Strings::getInstance(); });
+Expr::register('strings', function ($args)
+{
+	if ($args->length == 1)
+		return Strings::getInstance();
+
+	return Strings::get($args->get(1));
+});
+
+Expr::register('s', function ($args)
+{
+	if ($args->length == 1)
+		return Strings::getInstance();
+
+	return Strings::get($args->get(1));
+});
+
+Expr::register('s::lang', function ($args)
+{
+	if ($args->length == 1)
+		return Strings::getInstance()->lang;
+
+	Strings::getInstance()->setLang($args->get(1));
+	return null;
+});
 
 Expr::register('resources', function ($args) { return Resources::getInstance(); });
+
 Expr::register('gateway', function ($args) { return Gateway::getInstance(); });
 Expr::register('gateway::redirect', function ($args) { return Gateway::redirect($args->get(1)); });
 

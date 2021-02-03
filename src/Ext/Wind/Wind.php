@@ -2,7 +2,7 @@
 /*
 **	Rose\Ext\Wind
 **
-**	Copyright (c) 2019-2020, RedStar Technologies, All rights reserved.
+**	Copyright (c) 2019-2021, RedStar Technologies, All rights reserved.
 **	https://rsthn.com/
 **
 **	THIS LIBRARY IS PROVIDED BY REDSTAR TECHNOLOGIES "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -19,6 +19,7 @@ namespace Rose\Ext;
 
 use Rose\Errors\FalseError;
 use Rose\Errors\Error;
+use Rose\Errors\MetaError;
 
 use Rose\IO\Directory;
 use Rose\IO\Path;
@@ -194,7 +195,7 @@ class Wind
 			File::touch($path2, File::mtime($path1, true));
 		}
 		else
-			throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'error' => 'Function not found: ' . $path ]);
+			throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'error' => Strings::get('@messages/function_not_found') . ': ' . $path ]);
 
 		$tmp = Text::split('.', $path);
 		$tmp->pop();
@@ -220,7 +221,7 @@ class Wind
 		if (Path::exists($path))
 			$expr = Expr::clean(Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path), '')));
 		else
-			throw new Error ('File not found: ' . $path);
+			throw new Error (Strings::get('@messages/file_not_found') . ': ' . $path);
 
 		try {
 			$response = Expr::expand($expr, self::$data, 'last');
@@ -278,7 +279,12 @@ class Wind
 
 				try {
 					$f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $gateway->requestParams->f);
-					if (!$f) throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'error' => ($f ? 'Function not found: ' . $f : 'Function name not specified.') ]);
+					if (!$f) {
+						if (!$gateway->requestParams->has('f'))
+							throw new WindError ([ 'response' => self::R_OK, 'message' => Strings::get('@messages/service_operational') ]);
+						else
+							throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages/function_not_found') . ': ' . $gateway->requestParams->f ]);
+					}
 
 					self::process($f, true);
 				}
@@ -286,6 +292,19 @@ class Wind
 				}
 				catch (WindError $e) {
 					self::$response = self::prepare($e->getResponse());
+				}
+				catch (MetaError $e)
+				{
+					switch ($e->code)
+					{
+						case 'EXPR_YIELD':
+						case 'FN_RET':
+							self::$response = self::prepare($e->value);
+							break;
+		
+						default:
+							throw $e;
+					}
 				}
 				catch (\Exception $e) {
 					self::$response = new Map([ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
@@ -298,11 +317,17 @@ class Wind
 			self::reply($r);
 		}
 
-		if ($gateway->relativePath) $params->f = Text::replace('/', '.', Text::trim($gateway->relativePath, '/'));
+		if ($gateway->relativePath)
+			$params->f = Text::replace('/', '.', Text::trim($gateway->relativePath, '/'));
 
 		try {
 			$f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $params->f);
-			if (!$f) throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'error' => ($f ? 'Function not found: ' . $f : 'Function name not specified.') ]);
+			if (!$f) {
+				if (!$params->has('f'))
+					throw new WindError ([ 'response' => self::R_OK, 'message' => Strings::get('@messages/service_operational') ]);
+				else
+					throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages/function_not_found') . ': ' . $params->f ]);
+			}
 
 			self::process($f, true);
 		}
@@ -310,6 +335,19 @@ class Wind
 		}
 		catch (WindError $e) {
 			self::reply ($e->getResponse());
+		}
+		catch (MetaError $e)
+		{
+			switch ($e->code)
+			{
+				case 'EXPR_YIELD':
+				case 'FN_RET':
+					self::reply ($e->value);
+					break;
+
+				default:
+					throw $e;
+			}
 		}
 		catch (\Exception $e)
 		{
@@ -367,16 +405,20 @@ class Wind
 	*/
 	public static function _echo ($parts, $data)
 	{
+		$s = '';
+
+		for ($i = 1; $i < $parts->length(); $i++)
+			$s .= Expr::expand($parts->get($i), $data, 'arg') . ' ';
+
+		$s .= "\n";
+
 		if (!self::$contentFlushed)
 		{
 			Gateway::header(self::$contentType ? self::$contentType : 'Content-Type: text/plain; charset=utf-8');
 			self::$contentFlushed = true;
 		}
 
-		for ($i = 1; $i < $parts->length(); $i++)
-			echo (Expr::expand($parts->get($i), $data, 'arg') . ' ');
-
-		echo "\n";
+		echo $s;
 
 		return null;
 	}
@@ -424,6 +466,19 @@ class Wind
 			self::$data->args = $p_args;
 			throw $e;
 		}
+		catch (MetaError $e)
+		{
+			switch ($e->code)
+			{
+				case 'EXPR_YIELD':
+				case 'FN_RET':
+					$response = $e->value;
+					break;
+
+				default:
+					throw $e;
+			}
+		}
 		catch (\Exception $e)
 		{
 			self::$data->internal_call = self::$data->internal_call - 1;
@@ -467,6 +522,19 @@ class Wind
 			self::$data = $p_data;
 			self::$data->internal_call = self::$data->internal_call - 1;
 			throw $e;
+		}
+		catch (MetaError $e)
+		{
+			switch ($e->code)
+			{
+				case 'EXPR_YIELD':
+				case 'FN_RET':
+					$response = $e->value;
+					break;
+
+				default:
+					throw $e;
+			}
 		}
 		catch (\Exception $e)
 		{

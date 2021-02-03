@@ -155,7 +155,8 @@ class Strings
 			if (Regex::_matches('/^\/[a-z]{2}\//', $gateway->relativePath))
 			{
 				$lang = Text::substring($gateway->relativePath, 1, 2);
-				$gateway->relativePath = Text::substring($gateway->relativePath, 3);
+				$gateway->relativePath = Text::substring($gateway->relativePath, 4);
+				if ($gateway->relativePath) $gateway->relativePath = '/'.$gateway->relativePath;
 
 				$this->langFrom = Strings::FROM_RELATIVE_PATH;
 			}
@@ -326,7 +327,12 @@ class Strings
 
 		foreach ($args->__nativeArray as $i)
 		{
-			$tmp = $tmp->{$i};
+			try {
+				$tmp = $tmp->{$i};
+			}
+			catch (\Exception $e) {
+				$tmp = null;
+			}
 
 			if ($tmp == null)
 				return $placeholder ? $path : null;
