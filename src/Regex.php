@@ -69,7 +69,7 @@ class Regex
     {
         $result = null;
         preg_match ($this->pattern, $text, $result, $flags);
-        return new Arry ($result);
+        return new Map ($result);
     }
 
 	/*
@@ -79,7 +79,7 @@ class Regex
     {
         $result = null;
         preg_match ($pattern, $text, $result, $flags);
-        return new Arry ($result);
+        return new Map ($result);
     }
 
 	/*

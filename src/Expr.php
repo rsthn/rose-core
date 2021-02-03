@@ -921,10 +921,10 @@ class Expr
 					switch ($parts->get(0)->get(0)->type)
 					{
 						case 'string':
-						case 'integer':
 						case 'number':
 							return $parts->get(0)->get(0)->data;
 
+						case 'integer':
 						case 'identifier':
 							$name = $parts->get(0)->get(0)->data;
 
