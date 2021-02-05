@@ -28,7 +28,7 @@ use Rose\IO\File;
 use Rose\Math;
 
 /**
-**	Expression class, based on the Rin's templating module.
+**	Expression compiler and evaluator. Adapted from (Rin)[https://github.com/rsthn/rin/] templating module.
 */
 
 class Expr
@@ -100,6 +100,7 @@ class Expr
 			if ($value[$i] == '\\')
 			{
 				$r = $value[$i+1];
+				$n = 2;
 
 				switch ($r)
 				{
@@ -108,12 +109,13 @@ class Expr
 					case 'f': $r = "\f"; break;
 					case 'v': $r = "\v"; break;
 					case 't': $r = "\t"; break;
-					case 's': $r = "\s"; break;
 					case '"': $r = "\""; break;
 					case "'": $r = "\'"; break;
+					case 'x': $r = chr(hexdec(Text::substring($value, $i+2, 2))); $n = 4; break;
+					default: continue 2;
 				}
 
-				$value = substr($value, 0, $i) . $r . substr($value, $i+2);
+				$value = Text::substring($value, 0, $i) . $r . Text::substring($value, $i+$n);
 			}
 		}
 
@@ -694,12 +696,12 @@ class Expr
 							{
 								if ($str[0] == '!')
 								{
-									$str = substr($str, 1);
+									$str = Text::substring($str, 1);
 									$modifier1 = true;
 								}
 								else if ($str[0] == '$')
 								{
-									$str = substr($str, 1);
+									$str = Text::substring($str, 1);
 									$modifier2 = true;
 								}
 								else
@@ -733,12 +735,12 @@ class Expr
 			{
 				if ($str[0] == '!')
 				{
-					$str = substr($str, 1);
+					$str = Text::substring($str, 1);
 					$modifier1 = true;
 				}
 				else if ($str[0] == '$')
 				{
-					$str = substr($str, 1);
+					$str = Text::substring($str, 1);
 					$modifier2 = true;
 				}
 				else
@@ -823,11 +825,11 @@ class Expr
 							{
 								if ($str[0] == '!')
 								{
-									$str = substr($str, 1);
+									$str = Text::substring($str, 1);
 								}
 								else if ($str[0] == '$')
 								{
-									$str = substr($str, 1);
+									$str = Text::substring($str, 1);
 								}
 								else
 									break;
@@ -859,11 +861,11 @@ class Expr
 			{
 				if ($str[0] == '!')
 				{
-					$str = substr($str, 1);
+					$str = Text::substring($str, 1);
 				}
 				else if ($str[0] == '$')
 				{
-					$str = substr($str, 1);
+					$str = Text::substring($str, 1);
 				}
 				else
 					break;
@@ -1026,13 +1028,19 @@ class Expr
 		// When the output is not really needed.
 		if ($ret == 'void') return null;
 
-		// Return as argument ('object' if only one, or string if more than one), that is, the first item in the result.
+		// Return as argument ('object' if only one, or `string` if more than one), that is, the first item in the result.
 		if ($ret == 'arg')
 		{
 			if (typeOf($s) == 'Rose\\Arry')
 			{
 				if ($s->length() != 1)
-					return $s->join('');
+				{
+					$f = function($e) use(&$f) {
+						return $e != null && \Rose\typeOf($e) == 'Rose\\Arry' ? $e->map($f)->join('') : (string)$e;
+					};
+		
+					return $s->map($f)->join('');
+				}
 
 				return $s->get(0);
 			}
@@ -1040,10 +1048,11 @@ class Expr
 			return $s;
 		}
 
+		// Text mode causes the final slices to be joined in a single string.
 		if ($ret == 'text' && typeOf($s) == 'Rose\\Arry')
 		{
 			$f = function($e) use(&$f) {
-				return $e != null && typeOf($e) == 'Rose\\Arry' ? $e->map($f)->join('') : (string)$e;
+				return $e != null && \Rose\typeOf($e) == 'Rose\\Arry' ? $e->map($f)->join('') : (string)$e;
 			};
 
 			$s = $s->map($f)->join('');
@@ -1132,13 +1141,13 @@ class Expr
 			$key = Expr::expand($parts->get($i), $data, 'arg');
 
 			if (!$mode) {
-				if ($key[0] == ':') $mode = 1; else $mode = substr($key, -1) == ':' ? 2 : 3;
+				if ($key[0] == ':') $mode = 1; else $mode = Text::substring($key, -1) == ':' ? 2 : 3;
 			}
 
 			if ($mode == 1)
-				$key = substr($key, 1);
+				$key = Text::substring($key, 1);
 			else if ($mode == 2)
-				$key = substr($key, 0, strlen($key)-1);
+				$key = Text::substring($key, 0, strlen($key)-1);
 
 			if ($expanded)
 				$s->set($key, Expr::expand($parts->get($i+1), $data, 'arg'));
@@ -1318,8 +1327,8 @@ Expr::register('typeof', function($args)
 	if ($type == 'Rose\\Arry') $type = 'array';
 	if ($type == 'Rose\\Map') $type = 'object';
 
-	if (substr($type, 0, 5) == 'Rose\\')
-		$type = strtolower(substr($type, 5));
+	if (Text::substring($type, 0, 5) == 'Rose\\')
+		$type = Text::toLowerCase(Text::substring($type, 5));
 
 	return $type;
 });
@@ -1337,6 +1346,17 @@ Expr::register('pow', function($args) { return Expr::reduce($args->get(1), $args
 
 Expr::register('min', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::min($accum, $value); }); });
 Expr::register('max', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::max($accum, $value); }); });
+
+/**
+**	Executes the block and returns null.
+**
+**	void <block>
+*/
+Expr::register('_void', function ($parts, $data)
+{
+	Expr::blockValue($parts->slice(1), $data);
+	return null;
+});
 
 /**
 **	Returns the JSON representation of the expression.
@@ -1370,7 +1390,7 @@ Expr::register('_set', function ($parts, $data)
 			if ($ref != null)
 			{
 				if (!$ref[0])
-					throw new Error('Unable to set: ' . $parts->get($i)->map(function($i) { return $i->data; })->join('')  );
+					throw new Error('Unable to assign: ' . $parts->get($i)->map(function($i) { return $i->data; })->join('')  );
 
 				$ref[0]->{$ref[1]} = $value;
 			}
@@ -1379,6 +1399,40 @@ Expr::register('_set', function ($parts, $data)
 			$data->set(Expr::value($parts->get($i), $data), $value);
 	}
 
+	return null;
+});
+
+/**
+**	Increments the value of a variable.
+**
+**	inc <var-name>
+*/
+Expr::register('_inc', function ($parts, $data)
+{
+	$ref = Expr::expand($parts->get(1), $data, 'varref');
+	if (!$ref) return null;
+
+	if (!$ref[0])
+		throw new Error('Unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join('')  );
+
+	$ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} + 1;
+	return null;
+});
+
+/**
+**	Decrements the value of a variable.
+**
+**	dec <var-name>
+*/
+Expr::register('_dec', function ($parts, $data)
+{
+	$ref = Expr::expand($parts->get(1), $data, 'varref');
+	if (!$ref) return null;
+
+	if (!$ref[0])
+		throw new Error('Unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join('')  );
+
+	$ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} - 1;
 	return null;
 });
 
@@ -1420,7 +1474,7 @@ Expr::register('trim', function ($args)
 */
 Expr::register('upper', function ($args)
 {
-	return Expr::apply($args->slice(1), function($value) { return strtoupper($value); });
+	return Expr::apply($args->slice(1), function($value) { return Text::toUpperCase($value); });
 });
 
 /**
@@ -1430,7 +1484,7 @@ Expr::register('upper', function ($args)
 */
 Expr::register('lower', function ($args)
 {
-	return Expr::apply($args->slice(1), function($value) { return strtolower($value); });
+	return Expr::apply($args->slice(1), function($value) { return Text::toLowerCase($value); });
 });
 
 /**
@@ -1547,16 +1601,23 @@ Expr::register('%%', function ($args)
 
 
 /**
-**	Joins the given list expression into a string. The provided glue will be used as separator.
+**	Joins the given list expression into a string. If glue is provided, it will be used as separator.
 **
 **	join <glue> <list-expr>
+**	join <list-expr>
 */
 Expr::register('join', function ($args)
 {
-	if ($args->get(2) && typeOf($args->get(2)) == 'Rose\\Arry')
-		return $args->get(2)->join($args->get(1));
+	$glue = '';
+	$list = $args->get(1);
 
-	return '';
+	if ($args->length == 3)
+	{
+		$glue = $args->get(1);
+		$list = $args->get(2);
+	}
+
+	return \Rose\typeOf($list) == 'Rose\Arry' ? $list->join($glue) : '';
 });
 
 /**
@@ -1614,7 +1675,8 @@ Expr::register('_each', function ($parts, $data)
 	$s = new Arry();
 	$j = 0;
 
-	if (!$list) return $s;
+	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
+		return $s;
 
 	$block = $parts->slice(3);
 
@@ -1649,7 +1711,9 @@ Expr::register('_foreach', function ($parts, $data)
 	$list = Expr::value($parts->get(2), $data);
 
 	$j = 0;
-	if (!$list) return $list;
+
+	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
+		return $list;
 
 	$block = $parts->slice(3);
 
@@ -2093,6 +2157,35 @@ Expr::register('_loop', function ($parts, $data)
 });
 
 /**
+**	Repeats the specified block until the condition is false or a "break" is found.
+**
+**	while <condition> <block>
+*/
+Expr::register('_while', function ($parts, $data)
+{
+	if ($parts->length < 3)
+		return '(`while`: Wrong number of parameters)';
+
+	$block = $parts->slice(2);
+	$condition = $parts->get(1);
+
+	while ( Expr::value($condition, $data) )
+	{
+		try {
+			Expr::blockValue($block, $data);
+		}
+		catch (\Exception $e) {
+			$name = $e->getMessage();
+			if ($name == 'EXC_BREAK') break;
+			if ($name == 'EXC_CONTINUE') continue;
+			throw $e;
+		}
+	}
+
+	return null;
+});
+
+/**
 **	Writes the raw data to the output.
 **
 **	expr_debug <expr>
@@ -2229,9 +2322,11 @@ Expr::register('_map', function ($parts, $data)
 	$var_name = Expr::expand($parts->get(1), $data, 'arg');
 
 	$list = Expr::expand($parts->get(2), $data, 'arg');
-	if (!$list) return $list;
 
-	$arrayMode = typeOf($list) == 'Rose\\Arry' ? true : false;
+	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
+		return $list;
+
+	$arrayMode = \Rose\typeOf($list) == 'Rose\\Arry' ? true : false;
 	$output = $arrayMode ? new Arry() : new Map();
 	$j = 0;
 
@@ -2266,7 +2361,9 @@ Expr::register('_filter', function ($parts, $data)
 	$var_name = Expr::expand($parts->get(1), $data, 'arg');
 
 	$list = Expr::expand($parts->get(2), $data, 'arg');
-	if (!$list) return $list;
+
+	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
+		return $list;
 
 	$arrayMode = typeOf($list) == 'Rose\\Arry' ? true : false;
 	$output = $arrayMode ? new Arry() : new Map();
@@ -2740,7 +2837,7 @@ Expr::register('zipmap', function($args, $parts, $data)
 /*
 **	Extracts the specified keys from a given map and returns a new map.
 **
-**	map-get key-name+ <map-expr>
+**	map-get <key-name>+ <map-expr>
 **	map-get <arr-expr> <map-expr>
 */
 Expr::register('map-get', function($args, $parts, $data)

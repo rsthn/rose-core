@@ -195,7 +195,7 @@ class Wind
 			File::touch($path2, File::mtime($path1, true));
 		}
 		else
-			throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'error' => Strings::get('@messages/function_not_found') . ': ' . $path ]);
+			throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'error' => Strings::get('@messages.function_not_found') . ': ' . $path ]);
 
 		$tmp = Text::split('.', $path);
 		$tmp->pop();
@@ -221,7 +221,7 @@ class Wind
 		if (Path::exists($path))
 			$expr = Expr::clean(Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path), '')));
 		else
-			throw new Error (Strings::get('@messages/file_not_found') . ': ' . $path);
+			throw new Error (Strings::get('@messages.file_not_found') . ': ' . $path);
 
 		try {
 			$response = Expr::expand($expr, self::$data, 'last');
@@ -281,9 +281,9 @@ class Wind
 					$f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $gateway->requestParams->f);
 					if (!$f) {
 						if (!$gateway->requestParams->has('f'))
-							throw new WindError ([ 'response' => self::R_OK, 'message' => Strings::get('@messages/service_operational') ]);
+							throw new WindError ([ 'response' => self::R_OK, 'message' => Strings::get('@messages.service_operational') ]);
 						else
-							throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages/function_not_found') . ': ' . $gateway->requestParams->f ]);
+							throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $gateway->requestParams->f ]);
 					}
 
 					self::process($f, true);
@@ -324,9 +324,9 @@ class Wind
 			$f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $params->f);
 			if (!$f) {
 				if (!$params->has('f'))
-					throw new WindError ([ 'response' => self::R_OK, 'message' => Strings::get('@messages/service_operational') ]);
+					throw new WindError ([ 'response' => self::R_OK, 'message' => Strings::get('@messages.service_operational') ]);
 				else
-					throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages/function_not_found') . ': ' . $params->f ]);
+					throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $params->f ]);
 			}
 
 			self::process($f, true);

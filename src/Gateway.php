@@ -73,6 +73,11 @@ class Gateway
 	public $ep;
 
 	/*
+	**	Server name. Obtained from the $_SERVER array or from configuration settings (Gateway.server_name).
+	*/
+	public $serverName;
+
+	/*
 	**	HTTP Method used to access this entry point.
 	*/
 	public $method;
@@ -144,8 +149,9 @@ class Gateway
 		$this->remoteAddress = $this->serverParams->REMOTE_ADDR;
 		$this->remotePort = $this->serverParams->REMOTE_PORT;
 
+		$this->serverName = Configuration::getInstance()->Gateway->server_name ? Configuration::getInstance()->Gateway->server_name : $this->serverParams->SERVER_NAME;
 		$this->ep = ($this->secure ? 'https://' : 'http://')
-					.(Configuration::getInstance()->Gateway->server_name ? Configuration::getInstance()->Gateway->server_name : $this->serverParams->SERVER_NAME)
+					.$this->serverName
 					.(
 						($this->secure ? $this->serverParams->SERVER_PORT != '443' : $this->serverParams->SERVER_PORT != '80')
 						? ':'.$this->serverParams->SERVER_PORT
@@ -156,11 +162,11 @@ class Gateway
 		if (Configuration::getInstance()->Gateway->allow_origin && $this->serverParams->has('HTTP_ORIGIN'))
 		{
 			if (Configuration::getInstance()->Gateway->allow_origin == '*')
-				header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
+				self::header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
 			else
-				header('Access-Control-Allow-Origin: '.Configuration::getInstance()->Gateway->allow_origin);
+				self::header('Access-Control-Allow-Origin: '.Configuration::getInstance()->Gateway->allow_origin);
 
-			header('Access-Control-Allow-Credentials: true');
+			self::header('Access-Control-Allow-Credentials: true');
 		}
 
 		$this->localroot = getcwd();
@@ -239,7 +245,7 @@ class Gateway
 	*/
     public static function redirect ($location)
     {
-        Gateway::header('location: '.$location);
+        self::header('location: '.$location);
         throw new FalseError ();
     }
 

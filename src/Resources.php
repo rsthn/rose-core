@@ -23,7 +23,7 @@ use Rose\Map;
 use Rose\Arry;
 
 /*
-**	Provides an interface to register, unregister and retrieve system resources. One major advantage of using system resources is that they can be
+**	Provides an interface to register, unregister and retrieve system resources. The advantage of using system resources is that they can be
 **	created only when they are required, this is done by using resource constructors which are registered using this class as well.
 */
 

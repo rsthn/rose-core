@@ -61,6 +61,7 @@ Expr::register('resources', function ($args) { return Resources::getInstance(); 
 
 Expr::register('gateway', function ($args) { return Gateway::getInstance(); });
 Expr::register('gateway::redirect', function ($args) { return Gateway::redirect($args->get(1)); });
+Expr::register('gateway::flush', function ($args) { return Gateway::flush(); });
 
 Expr::register('utils::rand', function() { return Math::rand(); });
 Expr::register('utils::randstr', function($args) { return bin2hex(random_bytes((int)$args->get(1))); });
@@ -97,6 +98,75 @@ Expr::register('utils::json:parse', function($args)
 {
 	$value = $args->get(1);
 	return $value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true));
+});
+
+Expr::register('utils::html', function($args)
+{
+	$data = $args->get(1);
+
+	if (\Rose\typeOf($data) == 'Rose\Data\Reader')
+	{
+		$s = '';
+
+		foreach ($data->fields->__nativeArray as $name)
+		{
+			$s .= "<th>$name</th>";
+		}
+
+		$s = "<tr>$s</tr>";
+
+		$data->forEach(function ($row) use (&$s)
+		{
+			$i = '';
+
+			foreach ($row->__nativeArray as $col)
+				$i .= "<td>$col</td>";
+
+			$s .= '<tr>'.nl2br($i).'</tr>';
+		});
+
+		return "<table style='font-family: monospace;' border='1'>$s</table>";
+	}
+
+	if (\Rose\typeOf($data) == 'Rose\Arry')
+	{
+		if (!$data->length) return '';
+
+		$s = '';
+
+		foreach ($data->get(0)->keys()->__nativeArray as $name)
+		{
+			$s .= "<th>$name</th>";
+		}
+
+		$s = "<tr>$s</tr>";
+
+		$data->forEach(function ($row) use (&$s)
+		{
+			$i = '';
+
+			foreach ($row->__nativeArray as $col)
+				$i .= "<td>$col</td>";
+
+			$s .= '<tr>'.nl2br($i).'</tr>';
+		});
+
+		return "<table style='font-family: monospace;' border='1'>$s</table>";
+	}
+
+	if (\Rose\typeOf($data) == 'Rose\Map')
+	{
+		$s = '';
+
+		$data->forEach(function ($value, $key) use (&$s)
+		{
+			$s .= '<tr>'.nl2br("<th>$key</th>td>$value</td>").'</tr>';
+		});
+
+		return "<table style='font-family: monospace;' border='1'>$s</table>";
+	}
+
+	return $data;
 });
 
 /* ************ */

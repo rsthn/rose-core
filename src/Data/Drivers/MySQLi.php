@@ -85,7 +85,12 @@ class MySQLi extends Driver
 
     public function query ($query, $conn)
 	{
-        return mysqli_query ($conn, $query);
+        return mysqli_query ($conn, $query, MYSQLI_STORE_RESULT);
+    }
+
+    public function reader ($query, $conn)
+	{
+		return mysqli_query ($conn, $query, MYSQLI_USE_RESULT);
     }
 
     public function getNumRows ($rs, $conn)

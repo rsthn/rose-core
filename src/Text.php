@@ -147,91 +147,25 @@ class Text
         return str_replace ($a, $b, $text);
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-    public static function truncate ($text, $maxLength)
+	/*
+	**	Truncates a string (and adds ellipsis) if its length is greater than the specified maximum.
+	*/
+    public static function truncate ($value, $maxLength)
     {
-        if ((Text::length($text)>$maxLength))
-        {
-            return Text::substring($text,0,($maxLength-3)).'...';
-        }
-        return $text;
+        if (Text::length($value) > $maxLength)
+            return Text::substring ($value, 0, $maxLength-3) . '...';
+
+        return $value;
     }
 
-    public static function formatString ($fmt)
+	/*
+	**	Splits a string and returns the slices.
+	*/
+   	public static function split ($delimiter, $text)
     {
-        $args = Arry::fromNativeArray (func_get_args (), false)->slice (1);
-        return vsprintf($fmt,$args->__nativeArray);
-    }
-
-    public static function split ($delimiter, $text, $allowEmpty=true)
-    {
-        if ((!$allowEmpty&&!$text))
-        {
-            return new Arry();
-        }
-        if (($delimiter!=''))
-        {
-            return Arry::fromNativeArray(call_user_func('explode',$delimiter,$text));
-        }
+        if ($delimiter != '')
+            return Arry::fromNativeArray(\explode ($delimiter, $text));
         else
-        {
             return Arry::fromNativeArray(str_split($text));
-        }
-    }
-
-    public static function repeat ($text, $N)
-    {
-        return str_repeat($text,$N);
-    }
-
-
-    public static function blanks ($text)
-    {
-        $result='';
-        $prev='';
-        $n=Text::length($text);
-        $i=null;;
-        for ($i=0; ($i<$n); $i++)
-        {
-            switch ($text[$i])
-            {
-                case ' ':
-                case '\t':
-                case "\r":
-                case "\n":
-                case "\f":
-                case "\v":
-                if (($prev==' '))
-                {
-					break;
-                }
-                else
-                {
-                    $result.=' ';
-                }
-                $prev=' ';
-                break;
-                default:
-                $result.=($prev=$text[$i]);
-                break;
-            }
-        }
-        return $result;
-    }
-
-    public static function padString ($text, $len, $str=' ')
-    {
-        return str_pad($text,$len,$str);
     }
 };

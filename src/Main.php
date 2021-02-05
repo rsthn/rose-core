@@ -24,6 +24,7 @@ use Rose\Configuration;
 use Rose\Map;
 use Rose\DateTime;
 use Rose\Gateway;
+use Rose\Text;
 
 /*
 **	Prints a tracing message into the log file.

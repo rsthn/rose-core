@@ -26,7 +26,7 @@ use Rose\Map;
 use Rose\Math;
 
 /*
-**	Generic container for objects. This class allows the items to be indexed using only a numeric index.
+**	Generic container for objects. This class allows the items to be indexed using only numeric indices.
 */
 
 class Arry
@@ -455,34 +455,6 @@ class Arry
 		}
 
         return $this;
-    }
-
-	/*
-	**	Calls Text.format with the given string and one parameter which is the value of each item in the array.
-	*/
-    public function format ($formatString, $useContents=false)
-    {
-		$result = new Arry();
-
-        if ($useContents)
-        {
-            foreach ($this->__nativeArray as $item)
-            {
-                $result->push (Text::format ($formatString, $item));
-            }
-        }
-        else
-        {
-            $temp = new Map (array('0'=>'', 'index'=>0), false);
-            foreach ($this->__nativeArray as $index => $item)
-            {
-                $temp->{'0'} = $item;
-                $temp->index = $index;
-                $result->push (Text::format ($formatString, $temp));
-			}
-		}
-
-        return $result;
     }
 
 	/*

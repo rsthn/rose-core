@@ -23,64 +23,15 @@ use Rose\Text;
 use Rose\DateTime;
 
 /*
-**	Stores and retrieves persistent system parameters.
+**	Stores and retrieves persistent system parameters (cookies).
 */
 
 class Cookies
 {
 	/*
-	**	Primary and only instance of this class.
+	**	Sets a cookie with optional expiration value (TTL, time-to-live, delta from current time).
 	*/
-    private static $objectInstance = null;
-
-	/*
-	**	Returns the instance of this class.
-	*/
-    public static function getInstance ()
-    {
-		if (Cookies::$objectInstance == null)
-			Cookies::$objectInstance = new Cookies();
-
-        return Cookies::$objectInstance;
-    }
-
-	/*
-	**	Constructs the cookies object, this is a private constructor as this class can have only one instance.
-	*/
-    private function __construct ()
-    {
-		// Loads cookies from its configuration section if present.
-        if (Configuration::getInstance()->has('Cookies'))
-        {
-            foreach (Configuration::getInstance()->Cookies->__nativeArray as $name => $value)
-            {
-                if (!$this->has ($name))
-                    $this->set ($name, Text::format ($value));
-			}
-        }
-    }
-
-	/*
-	**	Returns true if the given cookie exists.
-	*/
-    public function has ($name)
-    {
-        return Gateway::getInstance()->cookies->has($name);
-    }
-
-	/*
-	**	Returns the cookie value matching the given name or null if not found.
-	*/
-    public function get ($name)
-    {
-        return Gateway::getInstance()->cookies->get($name);
-    }
-
-	/*
-	**	Sets a cookie with optional expiration value (delta from current time), the cookie is added to the
-	**	cookies of the Gateway.
-	*/
-    private function setCookieHeader ($name, $value, $ttl=null, $domain=null, $path=null)
+    private static function setCookieHeader ($name, $value, $ttl=null, $domain=null, $path=null)
     {
 		$path = $path == null ? Gateway::getInstance()->root : $path;
 		$domain = $domain == null ? Configuration::getInstance()->Gateway->server_name : $domain;
@@ -114,73 +65,42 @@ class Cookies
 
 		$header .= '; HttpOnly';
 
-		header('Set-Cookie: '.$header);
+		Gateway::header('Set-Cookie: '.$header);
 	}
 
 	/*
-	**	Sets a cookie with optional ttl value (time to live from current time), the cookie is added to the
-	**	cookies of the Gateway.
+	**	Returns true if the given cookie name exists.
 	*/
-    public function set ($name, $value, $ttl=null, $domain=null)
+    public static function has ($name)
     {
-        if (!$name) return;
-
-		if ($value == null)
-		{
-			$this->remove ($name, $domain);
-			return;
-		}
-
-		if ($ttl !== null)
-			$this->setCookieHeader ($name, $value, $ttl, $domain);
-		else
-			$this->setCookieHeader ($name, $value, 0, $domain);
+        return Gateway::getInstance()->cookies->has($name);
     }
 
 	/*
-	**	Similar to set() but the request parameters of Gateway will not be modified.
+	**	Returns the cookie value matching the given name or null if not found.
 	*/
-    public function setCookie ($name, $value, $ttl=null, $domain=null)
+    public static function get ($name)
     {
-		if (!$name) return;
+        return Gateway::getInstance()->cookies->get($name);
+    }
 
-        if ($value == null)
-        {
-			$this->remove ($name, $domain);
-            return;
-		}
-
+	/*
+	**	Sets a cookie with optional TTL value.
+	*/
+    public static function set ($name, $value, $ttl=null, $domain=null)
+    {
 		if ($ttl !== null)
-			$this->setCookieHeader ($name, $value, $ttl, $domain);
+			self::setCookieHeader ($name, $value, $ttl, $domain);
 		else
-			$this->setCookieHeader ($name, $value, 0, $domain);
+			self::setCookieHeader ($name, $value, 0, $domain);
     }
 
 	/*
 	**	Removes a cookie given its name.
 	*/
-    public function remove ($name, $domain=null)
+    public static function remove ($name, $domain=null)
     {
-        if (!$name) return;
-
-		$this->setCookieHeader ($name, null, 0, $domain);
-
+		self::setCookieHeader ($name, null, 0, $domain);
         Gateway::getInstance()->cookies->remove($name);
-    }
-
-	/*
-	**	Returns the value of the given cookie. Or null if the cookie doesn't exist.
-	*/
-    public function __get ($name)
-    {
-		return $this->get ($name);
-    }
-
-	/*
-	**	Sets the value of a cookie.
-	*/
-    public function __set ($name, $value)
-    {
-        $this->set ($name, $value);
     }
 };

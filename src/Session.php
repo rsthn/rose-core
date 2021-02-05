@@ -23,7 +23,6 @@ use Rose\Data\Connection;
 
 use Rose\Configuration;
 use Rose\Resources;
-use Rose\Filter;
 use Rose\Text;
 use Rose\Map;
 use Rose\Math;
@@ -87,7 +86,7 @@ class Session
 			if (Gateway::getInstance()->requestParams->has('m_'.Session::$sessionName))
 				Session::$sessionId = Gateway::getInstance()->requestParams->get('m_'.Session::$sessionName);
 			else
-				Session::$sessionId = Cookies::getInstance()->get(Session::$sessionName);
+				Session::$sessionId = Cookies::get(Session::$sessionName);
 
 			Session::$sessionId = Regex::_extract('/^['.Session::$charset.']+$/', Session::$sessionId);
 
@@ -115,7 +114,7 @@ class Session
 			session_destroy();
 		}
 
-		Cookies::getInstance()->remove(Session::$sessionName);
+		Cookies::remove(Session::$sessionName);
 
 		Session::$sessionOpen = false;
 		Session::$validSessionId = false;
@@ -178,7 +177,7 @@ class Session
 			{
 				if (!$createSession)
 				{
-					Cookies::getInstance()->remove(Session::$sessionName);
+					Cookies::remove(Session::$sessionName);
 					session_destroy();
 					return false;
 				}
@@ -191,7 +190,7 @@ class Session
 			Session::$sessionId = session_id();
 		}
 
-		Cookies::getInstance()->setCookie (Session::$sessionName, Session::$sessionId, Configuration::getInstance()->Session->expires);
+		Cookies::set(Session::$sessionName, Session::$sessionId, Configuration::getInstance()->Session->expires);
 
         $expires = Configuration::getInstance()->Session->expires;
 		if ($expires > 0)

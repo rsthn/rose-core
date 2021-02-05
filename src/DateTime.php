@@ -22,7 +22,7 @@ use Rose\Locale;
 use Rose\Text;
 
 /*
-**	Provides an interface to manipulate date and time, stored always in UTC.
+**	Provides an interface to manipulate date and time. Stored always in UTC. Shown always in LTZ (local timezone).
 */
 
 class DateTime

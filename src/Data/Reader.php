@@ -31,7 +31,6 @@ class Reader
 	*/
 	private $driver;
 
-
 	/*
 	**	Connection resource.
 	*/
@@ -45,7 +44,22 @@ class Reader
 	/*
 	**	Index of the last row retrieved.
 	*/
-    private $index;
+	private $index;
+
+	/*
+	**	Data of the last row retrieved.
+	*/
+	private $data;
+
+	/*
+	**	Names of the fields in the result.
+	*/
+	private $fields;
+
+	/*
+	**	Rows of the result, populated only if the `rows` property is accessed directly.
+	*/
+    private $rows;
 
 	/*
 	**	Constructs the Reader.
@@ -57,22 +71,13 @@ class Reader
 		$this->rs = $rs;
 
 		$this->index = -1;
-    }
+		$this->data = null;
 
-	/*
-	**	Returns the number of items available.
-	*/
-    public function count()
-    {
-        return $this->driver->getNumRows ($this->rs, $this->conn);
-	}
+		$this->fields = new Arry();
+		$this->rows = null;
 
-	/*
-	**	Returns the number of items remaining.
-	*/
-    public function remaining()
-    {
-        return $this->driver->getNumRows ($this->rs, $this->conn) - ($this->index+1);
+		for ($i = $driver->getNumFields($rs, $conn)-1; $i >= 0; $i--)
+			$this->fields->unshift ($driver->getFieldName($rs, $i, $conn));
     }
 
 	/*
@@ -84,21 +89,32 @@ class Reader
 	}
 
 	/*
-	**	Returns the next item as an assoc array or null if no more items are left on the reader.
+	**	Returns the data of the last row retrieved.
 	*/
-    public function getAssoc ()
+    public function getData()
     {
-		$this->index++;
-        return Map::fromNativeArray($this->driver->fetchAssoc($this->rs, $this->conn), false);
-    }
+        return $this->data;
+	}
 
 	/*
-	**	Returns the next item as an array or null if no more items are left on the reader.
+	**	Returns boolean indicating if an item was loaded from the reader or null if no more items left.
 	*/
-    public function getArray ()
+    public function fetch ()
     {
+		if ($this->rs == null)
+			return false;
+
+		$data = $this->driver->fetchAssoc($this->rs, $this->conn);
+		if (!$data)
+		{
+			$this->close();
+			return false;
+		}
+
 		$this->index++;
-        return Arry::fromNativeArray($this->driver->fetchRow($this->rs, $this->conn), false);
+		$this->data = Map::fromNativeArray($data, false);
+
+		return true;
     }
 
 	/*
@@ -106,7 +122,59 @@ class Reader
 	*/
     public function close ()
     {
-		$this->driver->freeResult ($this->rs, $this->conn);
-		$this->rs = null;
+		if ($this->rs != null)
+		{
+			$this->driver->freeResult ($this->rs, $this->conn);
+			$this->rs = null;
+		}
+	}
+
+	/*
+	**	Runs the specified function for each of the rows from the reader.
+	*/
+    public function forEach ($function)
+    {
+		while ($this->fetch())
+			$function ($this->data, $this->index);
+
+        return $this;
     }
+
+	/*
+	**	Allows to directly access several functions as properties.
+	*/
+    public function __get ($name)
+    {
+        switch ($name)
+        {
+            case 'fields':
+				return $this->fields;
+
+			case 'rows':
+				if ($this->rows == null)
+				{
+					$this->rows = new Arry();
+					$this->forEach(function ($item) { $this->rows->push($item); });
+				}
+
+				return $this->rows;
+
+			case 'index':
+				return $this->getIndex();
+
+			case 'data':
+				return $this->getData();
+
+			case 'fetch':
+				return $this->fetch();
+        }
+    }
+
+	/*
+	**	Returns the string representation of the reader.
+	*/
+	public function __toString()
+	{
+		return '[Rose\Data\Reader]';
+	}
 };

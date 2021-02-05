@@ -34,7 +34,7 @@ class Map
     public $__nativeArray;
 
 	/*
-	**	Constructs an instance of a Map.
+	**	Constructs an instance of Map.
 	*/
     public function __construct ($nativeArray=null, $recursiveScan=true)
     {
@@ -263,26 +263,6 @@ class Map
 		}
 
         return $this;
-    }
-
-	/*
-	**	Calls Text.format with the given string and two parameters which are the key and value of each item in the map.
-	*/
-    public function format ($formatString)
-    {
-		$result = new Arry();
-
-		$temp = new Arry (array(null, null), false);
-
-        foreach ($this->__nativeArray as $key => $value)
-        {
-            $temp->set (0, $key);
-			$temp->set (1, $value);
-
-            $result->push (Text::format($formatString, $temp));
-		}
-
-        return $result;
     }
 
 	/*

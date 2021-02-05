@@ -32,7 +32,7 @@ use Rose\Regex;
 use Rose\Map;
 
 /*
-**	Provides an interface to automatically load and manipulate string resources stored in .conf and .plain files.
+**	Provides an interface to load and manipulate string resources stored in .conf and .plain files.
 */
 
 class Strings
@@ -138,9 +138,9 @@ class Strings
 			}
 
 			// Attempt to load language code from cookie.
-			if (!$lang && Cookies::getInstance()->has('lang'))
+			if (!$lang && Cookies::has('lang'))
 			{
-				$lang = Cookies::getInstance()->lang;
+				$lang = Cookies::get('lang');
 				$this->langFrom = Strings::FROM_COOKIE;
 			}
 
@@ -212,18 +212,21 @@ class Strings
 	/*
 	**	Retrieves a strings map given its name. Will attempt to retrieve the strings map from the cache, however if not loaded it will load it
 	**	from whichever file is found first (conf, or plain) using the base directory, if not found, will retry using the alternative base
-	**	directory, and if still not found an error will be issues.
+	**	directory, and if still not found an error will be issued.
 	**
-	**	If $name starts with '//' it will be treated as an absolute path. If it starts with '@' it will be considered a language string
+	**	If `name` starts with '//' it will be treated as an absolute path. If it starts with '@' it will be considered a language string
 	**	and the `langBase` directory will be used, in other cases the `base` directory will be used.
 	*/
     public function retrieve ($name)
     {
-        if ($this->debug == 'blank')
-            return null;
+		if ($this->debug)
+		{
+			if ($this->debug == 'blank')
+            	return null;
 
-        if ($this->debug == 'code')
-            return $name;
+			if ($this->debug == 'code')
+				return $name;
+		}
 
 		if ($this->loadedMaps->has($name))
 			return $this->loadedMaps->get($name);
@@ -318,11 +321,20 @@ class Strings
 	}
 
 	/*
- 	**	Utility function to return a string.
+	**	Utility function to return a string. If the target string is not found then the given string path will be returned (as a placeholder).
 	*/
 	public static function get ($path, $placeholder=true)
 	{
-		$args = Text::split('/', $path);
+		if (Strings::getInstance()->debug)
+		{
+			if (Strings::getInstance()->debug == 'blank')
+            	return null;
+
+			if (Strings::getInstance()->debug == 'code')
+				return $path;
+		}
+
+		$args = Text::split('.', $path);
 		$tmp = Strings::getInstance();
 
 		foreach ($args->__nativeArray as $i)

@@ -33,7 +33,7 @@ class Extensions
 	private static $loaded = null;
 
 	/*
-	**	Load all installed extensions from the 'Ext' directory.
+	**	Load all available extensions from the native, installed and user extension directories.
 	*/
 	public static function init()
 	{

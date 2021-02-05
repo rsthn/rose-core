@@ -20,7 +20,6 @@ namespace Rose\Data;
 use Rose\Errors\Error;
 
 use Rose\Data\Driver;
-use Rose\Data\Table;
 use Rose\Data\Reader;
 
 use Rose\Map;
@@ -290,7 +289,7 @@ class Connection
 	}
 
 	/*
-	**	Executes a query (or an statement) and returns a `Table` (for queries) or a `boolean` (for statements).
+	**	Executes a query (or an statement) and returns an array (for queries) or a `boolean` (for statements).
 	*/
     public function execQuery ($queryString)
     {
@@ -312,7 +311,7 @@ class Connection
         if ($rs === true)
             return $rs;
 
-		$dt = new Table();
+		$dt = new Arry();
 		$i = null;
 
 		while (true)
@@ -320,11 +319,8 @@ class Connection
 			$i = $this->driver->fetchAssoc($rs, $this->conn);
 			if ($i == null) break;
 
-			$dt->rows->push(Map::fromNativeArray($i, false));
+			$dt->push(Map::fromNativeArray($i, false));
 		}
-
-		for ($i=$this->driver->getNumFields($rs, $this->conn)-1; $i >= 0; $i--)
-			$dt->fields->unshift($this->driver->getFieldName($rs, $i, $this->conn));
 
 		$this->driver->freeResult($rs, $this->conn);
 		return $dt;
@@ -344,7 +340,7 @@ class Connection
         if (!$this->driver->isAlive ($this->conn))
             $this->connect();
 
-        try { $rs = $this->driver->query ($queryString, $this->conn); }
+        try { $rs = $this->driver->reader ($queryString, $this->conn); }
 		catch (\Exception $e) { }
 
         if ($rs === false || $rs === null)

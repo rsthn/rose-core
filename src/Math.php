@@ -18,7 +18,7 @@
 namespace Rose;
 
 /*
-**	Provides several methods and constants to work with mathematics.
+**	Provides a few basic math methods.
 */
 
 abstract class Math

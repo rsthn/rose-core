@@ -26,41 +26,116 @@ use Rose\Arry;
 use Rose\Map;
 use Rose\Text;
 
-/* ****************** */
-class Net {
-	static $curl_last_info = null;
-	static $curl_last_data = null;
+/*
+**	Small utility class to execute HTTP requests.
+*/
 
-	static $headers = null;
-};
-
-Net::$headers = new Map();
-
-
-/* ****************** */
-/* http::get <url> [<fields>] [<fields>...] */
-
-Expr::register('http::get', function ($args)
+class Http
 {
-	$c = curl_init();
+	private static $curl_last_info = null;
+	private static $curl_last_data = null;
 
-	$url = $args->get(1);
+	/*
+	**	HTTP request headers.
+	*/
+	private static $headers = null;
 
-	if (Text::indexOf($url, '?') === false)
-		$url .= '?';
-
-	for ($i = 2; $i < $args->length; $i++)
+	/**
+	**	Initializes the Http class properties.
+	*/
+	public static function init ()
 	{
-		$data = $args->get($i);
+		self::$headers = new Map();
 
-		if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
-			continue;
+		self::header ('Accept: text/html,application/json,application/xhtml+xml,application/xml;q=0.9');
+	}
+
+	/**
+	**	Sets an HTTP header for subsequent requests.
+	**
+	**	@param $headerLine string
+	*/
+	public static function header ($headerLine)
+	{
+		self::$headers->set(Text::split(':', $headerLine)->get(0), $headerLine);
+	}
+
+	/*
+	**	Returns the HTTP code of the last request.
+	*/
+	public static function getCode ()
+	{
+		return self::$curl_last_info['http_code'];
+	}
+
+	/*
+	**	Returns the content-type of the last request.
+	*/
+	public static function getContentType ()
+	{
+		return self::$curl_last_info['content_type'];
+	}
+
+	/*
+	**	Returns the data returned by the last request.
+	*/
+	public static function getData ()
+	{
+		return self::$curl_last_data;
+	}
+
+	/**
+	**	Sets the HTTP Authorization header.
+	**
+	**	@param $method string|bool Either `Bearer` or `Basic`, or a `false` value to remove the authorization header.
+	**	@param $username string The username when using `Basic` method, or the access token when using `Bearer`.
+	**	@param $password string The password when using `Basic` method, or null when using `Bearer`.
+	*/
+	public static function auth ($method, $username=null, $password=null)
+	{
+		if (!$method)
+		{
+			self::$headers->remove('Authorization');
+			return;
+		}
+
+		switch (Text::toLowerCase($method))
+		{
+			case 'basic':
+				self::$headers->set('Authorization', 'Authorization: Basic ' . base64_encode($username . ':' . $password));
+				break;
+	
+			case 'bearer':
+				self::$headers->set('Authorization', 'Authorization: Bearer ' . $username);
+				break;
+		}
+
+		return null;
+	}
+
+	/**
+	**	Returns the result of executing a GET request.
+	**
+	**	@param $url string
+	**	@param $fields Rose\Map
+	**	@param $requestHeaders Rose\Map
+	*/
+	public static function get ($url, $fields, $requestHeaders=null)
+	{
+		$c = curl_init();
+
+		$headers = new Map();
+		$headers->merge(self::$headers, true);
+		if ($requestHeaders) $headers->merge($requestHeaders, true);
+
+		if (Text::indexOf($url, '?') === false)
+			$url .= '?';
 
 		$list = new Arry();
 
-		$data->forEach(function(&$value, $name) use(&$list)
+		$fields->forEach(function(&$value, $name) use(&$list)
 		{
-			if (\Rose\typeOf($value) == 'Rose\\Map')
+			if (\Rose\typeOf($value) != 'primitive')
 				return;
 
 			$list->push(urlencode($name) . '=' . urlencode($value));
@@ -70,36 +145,154 @@ Expr::register('http::get', function ($args)
 		if ($ch != '?' && $ch != '&') $url .= '&';
 
 		$url .= $list->join('&');
+
+		curl_setopt ($c, CURLOPT_URL, $url);
+		curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt ($c, CURLOPT_CUSTOMREQUEST, 'GET');
+		curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
+
+		$data = curl_exec($c);
+
+		self::$curl_last_info = curl_getinfo($c);
+		self::$curl_last_data = $data;
+
+		curl_close($c);
+		return $data;
 	}
 
-	curl_setopt ($c, CURLOPT_URL, $url);
-	curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
-	curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt ($c, CURLOPT_CUSTOMREQUEST, 'GET');
-	curl_setopt ($c, CURLOPT_HTTPHEADER, Net::$headers->values()->__nativeArray);
+	/**
+	**	Returns the result of executing a POST request. The data parameter can be a Map or a string.
+	**
+	**	-	When a map is specified the data will be posted as "application/x-www-form-urlencoded", however note that if the map
+	**		contains objects of the form { name, path } or { name, path, data } the content type will be set to "multipart/form-data"
+	**		and files will be uploaded.
+	**
+	**	- When data is a string, it will be posted as a data stream as either "application/json" or "text/xml".
+	**
+	**	@param $url string
+	**	@param $data Rose\Map or string
+	**	@param $requestHeaders Rose\Map
+	*/
+	public static function post ($url, $data, $requestHeaders=null)
+	{
+		$c = curl_init();
 
-	$data = curl_exec($c);
+		$headers = new Map();
+		$headers->merge(self::$headers, true);
+		if ($requestHeaders) $headers->merge($requestHeaders, true);
 
-	Net::$curl_last_info = curl_getinfo($c);
-	Net::$curl_last_data = $data;
+		$fields = new Map();
+		$tempFiles = new Arry();
 
-	curl_close($c);
+		if (\Rose\typeOf($data) == 'Rose\Map')
+		{
+			$data->forEach(function($value, $name) use(&$fields, &$tempFiles)
+			{
+				if (\Rose\typeOf($value) == 'Rose\Map')
+				{
+					if ($value->has('path'))
+					{
+						$path = Path::resolve($value->get('path'));
 
-	return $data;
+						if (!Path::exists($path))
+							throw new Error ('File for field \''.$name.'\' not found.');
+
+						if ($value->has('name'))
+							$value = curl_file_create ($path, '', $value->get('name'));
+						else
+							$value = curl_file_create ($path, '', Path::basename($path));
+					}
+					else if ($value->has('name') && $value->has('data'))
+					{
+						$path = './tmp/uploads/'.Expr::call('utils::uuid', null).Path::extname($value->get('name'));
+						File::setContents($path, $value->get('data'));
+
+						$value = curl_file_create (Path::resolve($path), '', $value->get('name'));
+						$tempFiles->push($path);
+					}
+					else
+						return;
+				}
+
+				$fields->set($name, $value);
+			});
+
+			$fields = $fields->__nativeArray;
+		}
+		else
+		{
+			if (!$headers->has('Content-Type'))
+				$headers->set('Content-Type', 'Content-Type: ' . ($data[0] == '<' ? 'text/xml' : ($data[0] == '[' || $data[0] == '{' ? 'application/json' : 'application/octet-stream')));
+
+			$fields = $data;
+		}
+
+		curl_setopt ($c, CURLOPT_URL, $url);
+		curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt ($c, CURLOPT_POSTFIELDS, $fields);
+		curl_setopt ($c, CURLOPT_CUSTOMREQUEST, 'POST');
+		curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
+
+		$data = curl_exec($c);
+
+		$tempFiles->forEach(function($path) { File::remove($path); });
+
+		self::$curl_last_info = curl_getinfo($c);
+		self::$curl_last_data = $data;
+
+		curl_close($c);
+
+		return $data;
+	}
+
+	/**
+	**	Forwards the parameters to Http::get(), parses the JSON result and returns a Map or Arry.
+	*/
+	public static function fetch ($url, $fields)
+	{
+		return Expr::call('utils::json:parse', new Arry ([null, self::get($url, $fields, new Map([ 'Accept' => 'Accept: application/json' ]))]));
+	}
+
+	/**
+	**	Forwards the parameters to Http::post(), parses the JSON result and returns a Map or Arry.
+	*/
+	public static function fetchPost ($url, $data)
+	{
+		return Expr::call('utils::json:parse', new Arry ([null, self::post($url, $data, new Map([ 'Accept' => 'Accept: application/json' ]))]));
+	}
+
+};
+
+Http::init();
+
+/* ****************** */
+/* http::get <url> [<fields>*] */
+
+Expr::register('http::get', function ($args)
+{
+	$fields = new Map();
+
+	for ($i = 2; $i < $args->length; $i++)
+	{
+		$data = $args->get($i);
+
+		if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
+			continue;
+
+		$fields->merge($data, true);
+	}
+
+	return Http::get($args->get(1), $fields);
 });
 
 /* ****************** */
-/* http::post <url> [<fields>] */
+/* http::post <url> [<fields>*] */
 
 Expr::register('http::post', function ($args)
 {
-	$c = curl_init();
-
-	$url = $args->get(1);
-
 	$fields = new Map();
-	$files = new Arry();
-	$raw_data = null;
 
 	for ($i = 2; $i < $args->length; $i++)
 	{
@@ -107,69 +300,17 @@ Expr::register('http::post', function ($args)
 
 		if (\Rose\typeOf($data, true) == 'string')
 		{
-			$raw_data = $data;
+			$fields = $data;
 			break;
 		}
 
 		if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
 			continue;
 
-		$data->forEach(function($value, $name) use(&$fields, &$files)
-		{
-			if (\Rose\typeOf($value) == 'Rose\\Map')
-			{
-				if ($value->has('path'))
-				{
-					$path = Path::resolve($value->get('path'));
-
-					if (!Path::exists($path))
-						throw new Error ('File for field \''.$name.'\' not found.');
-
-					if ($value->has('name'))
-						$value = curl_file_create ($path, '', $value->get('name'));
-					else
-						$value = curl_file_create ($path, '', Path::basename($path));
-				}
-				else if ($value->has('name') && $value->has('data'))
-				{
-					Directory::create('./tmp/uploads');
-
-					$path = './tmp/uploads/'.Expr::call('utils::uuid', null).Path::extname($value->get('name'));
-					File::setContents($path, $value->get('data'));
-
-					$value = curl_file_create (Path::resolve($path), '', $value->get('name'));
-					$files->push($path);
-				}
-				else
-					return;
-			}
-
-			$fields->set($name, $value);
-		});
+		$fields->merge($data, true);
 	}
 
-	$headers = Net::$headers->values()->__nativeArray;
-
-	if ($raw_data && !Net::$headers->has('Content-Type'))
-		$headers[] = 'Content-Type: ' . ($raw_data[0] == '<' ? 'text/xml' : ($raw_data[0] == '[' || $raw_data[0] == '{' ? 'application/json' : ''));
-
-	curl_setopt ($c, CURLOPT_URL, $url);
-	curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
-	curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt ($c, CURLOPT_POSTFIELDS, $raw_data ? $raw_data : $fields->__nativeArray);
-	curl_setopt ($c, CURLOPT_CUSTOMREQUEST, 'POST');
-	curl_setopt ($c, CURLOPT_HTTPHEADER, $headers);
-
-	$data = curl_exec($c);
-
-	$files->forEach(function($path) { File::remove($path); });
-
-	Net::$curl_last_info = curl_getinfo($c);
-	Net::$curl_last_data = $data;
-
-	curl_close($c);
-
-	return $data;
+	return Http::post($args->get(1), $fields);
 });
 
 
@@ -178,31 +319,56 @@ Expr::register('http::post', function ($args)
 
 Expr::register('http::fetch', function ($args)
 {
-	$args = new Arry ([null, Expr::call('http::get', $args)]);
-	return Expr::call('utils::json:parse', $args);
+	$fields = new Map();
+
+	for ($i = 2; $i < $args->length; $i++)
+	{
+		$data = $args->get($i);
+
+		if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
+			continue;
+
+		$fields->merge($data, true);
+	}
+
+	return Http::fetch($args->get(1), $fields);
 });
 
-
 /* ****************** */
-/* http::fetch:post <url> [<fields>] */
+/* http::fetch:post <url> [<fields>*] */
 
 Expr::register('http::fetch:post', function ($args)
 {
-	$args = new Arry ([null, Expr::call('http::post', $args)]);
-	return Expr::call('utils::json:parse', $args);
-});
+	$fields = new Map();
 
+	for ($i = 2; $i < $args->length; $i++)
+	{
+		$data = $args->get($i);
+
+		if (\Rose\typeOf($data, true) == 'string')
+		{
+			$fields = $data;
+			break;
+		}
+
+		if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
+			continue;
+
+		$fields->merge($data, true);
+	}
+
+	return Http::fetchPost($args->get(1), $fields);
+});
 
 /* ****************** */
 /* http::header header-line */
 
 Expr::register('http::header', function ($args)
 {
-	$line = $args->get(1);
-	Net::$headers->set(explode(':', $line)[0], $line);
-
+	Http::header($args->get(1));
 	return null;
 });
+
 
 /* ****************** */
 /* http::auth basic <username> <password> */
@@ -214,36 +380,26 @@ Expr::register('http::auth', function ($args)
 {
 	if ($args->length == 2 && (!$args->get(1) || $args->get(1) == 'false'))
 	{
-		Net::$headers->remove('Authorization');
+		Http::auth (false);
 		return null;
 	}
 
-	switch (strtolower($args->get(1)))
-	{
-		case 'basic':
-			Net::$headers->set('Authorization', 'Authorization: BASIC ' . base64_encode($args->get(2) . ':' . ($args->has(3) ? $args->get(3) : '')));
-			break;
-
-		case 'bearer':
-			Net::$headers->set('Authorization', 'Authorization: BEARER ' . $args->get(2));
-			break;
-	}
-
+	Http::auth ($args->get(1), $args->get(2), $args->{3});
 	return null;
 });
 
 /* ****************** */
 Expr::register('http::code', function ($args)
 {
-	return Net::$curl_last_info['http_code'];
+	return Http::getCode();
 });
 
 Expr::register('http::content-type', function ($args)
 {
-	return Net::$curl_last_info['content-type'];
+	return Http::getContentType();
 });
 
 Expr::register('http::data', function ($args)
 {
-	return Net::$curl_last_data;
+	return Http::getData();
 });
