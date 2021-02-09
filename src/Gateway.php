@@ -68,9 +68,14 @@ class Gateway
     public $cookies;
 
 	/*
-	**	Full URL address to the Gateway's entry point.
+	**	Full URL address to the entry point of the active service.
 	*/
 	public $ep;
+
+	/*
+	**	Full URL address to the entry point of the system (root entry point).
+	*/
+	public $rep;
 
 	/*
 	**	Server name. Obtained from the $_SERVER array or from configuration settings (Gateway.server_name).
@@ -91,7 +96,7 @@ class Gateway
 	**	Relative URL root where the index is found. Usually it is "/".
 	*/
 	public $root;
-	
+
 	/*
 	**	Local file system root where the index is found.
 	*/
@@ -158,6 +163,9 @@ class Gateway
 						: ''
 					)
 					.$this->root;
+
+		if (!Text::endsWith($this->ep, '/')) $this->ep .= '/';
+		$this->rep = $this->ep;
 
 		if (Configuration::getInstance()->Gateway->allow_origin && $this->serverParams->has('HTTP_ORIGIN'))
 		{

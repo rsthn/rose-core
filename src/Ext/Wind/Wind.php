@@ -298,6 +298,9 @@ class Wind
 					switch ($e->code)
 					{
 						case 'EXPR_YIELD':
+							self::$response = self::prepare($e->value);
+							break;
+
 						case 'FN_RET':
 							self::$response = self::prepare($e->value);
 							break;

@@ -182,3 +182,9 @@ Expr::register('dir::entries:recursive', function ($args)
 {
 	return Directory::read ($args->get(1), true, $args->{2} ? $args->{2} : '/.+/', 0, Directory::READ_FILES | Directory::READ_DIRS);
 });
+
+Expr::register('dir::remove', function ($args)
+{
+	Directory::remove($args->get(1), \Rose\bool($args->{2}));
+	return null;
+});

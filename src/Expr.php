@@ -111,6 +111,10 @@ class Expr
 					case 't': $r = "\t"; break;
 					case '"': $r = "\""; break;
 					case "'": $r = "\'"; break;
+					case "(": $r = "("; break;
+					case ")": $r = ")"; break;
+					case "{": $r = "{"; break;
+					case "}": $r = "}"; break;
 					case 'x': $r = chr(hexdec(Text::substring($value, $i+2, 2))); $n = 4; break;
 					default: continue 2;
 				}
@@ -269,6 +273,10 @@ class Expr
 					else if ($template[$i] == $sym_open)
 					{
 						$count++;
+					}
+					else if ($template[$i] == '`')
+					{
+						$state = 19;
 					}
 	
 					$str .= $template[$i];
@@ -557,6 +565,18 @@ class Expr
 
 					$str .= $template[$i];
 					break;
+
+				case 19:
+					if ($template[$i] == "\0")
+					{
+						throw new Error ("Parse error: Unexpected end of template");
+					}
+	
+					if ($template[$i] == '`')
+						$state = 1;
+
+					$str .= $template[$i];
+					break;
 			}
 
 			if ($flush)
@@ -641,9 +661,9 @@ class Expr
 	**	Expands a template using the given data object, ret can be set to 'text' or 'obj' allowing to expand the template as
 	**	a string (text) or an array of objects (obj) respectively. If none provided it will be expanded as text.
 	**
-	**	>> string/array expand (array parts, object data, string ret='text', string mode='base-string', bool throwMeta=false);
+	**	>> string/array expand (array parts, object data, string ret='text', string mode='base-string');
 	*/
-	static public function expand ($parts, $data, $ret='text', $mode='base-string', $throwMeta=false)
+	static public function expand ($parts, $data, $ret='text', $mode='base-string')
 	{
 		$s = new Arry();
 
@@ -747,7 +767,7 @@ class Expr
 					break;
 			}
 
-			if ($str && $str != 'this')
+			if ($str != '' && $str != 'this')
 			{
 				$failed = false;
 
@@ -949,7 +969,7 @@ class Expr
 		{
 			try
 			{
-				$parts->forEach(function($i, $index, $list) use (&$s, &$data, &$ret, &$throwMeta)
+				$parts->forEach(function($i, $index, $list) use (&$s, &$data, &$ret)
 				{
 					try
 					{
@@ -959,7 +979,6 @@ class Expr
 								$tmp = Expr::expand($i->data, $data, $ret, 'template');
 								break;
 
-							
 							case 'identifier':
 							case 'access':
 							case 'string':
@@ -983,7 +1002,7 @@ class Expr
 					}
 					catch (MetaError $e)
 					{
-						if ($throwMeta) throw $e;
+						if (!$e->isForMe()) throw $e;
 
 						switch ($e->code)
 						{
@@ -1000,7 +1019,7 @@ class Expr
 			}
 			catch (MetaError $e)
 			{
-				if ($throwMeta) throw $e;
+				if (!$e->isForMe()) throw $e;
 
 				switch ($e->code)
 				{
@@ -1241,21 +1260,30 @@ class Expr
 	{
 		$value = null;
 
+		MetaError::incBaseLevel();
+
 		try
 		{
 			for ($i = 0; $i < $parts->length; $i++)
-				$value = Expr::expand($parts->get($i), $data, 'arg', 'base-string', true);
+				$value = Expr::expand($parts->get($i), $data, 'arg', 'base-string');
 		}
 		catch (MetaError $e)
 		{
+			if (!$e->isForMe(-1)) throw $e;
+
 			switch ($e->code)
 			{
 				case 'EXPR_YIELD':
-					return $e->value;
+					$value = $e->value;
+					break;
 
 				default:
 					throw $e;
 			}
+		}
+		finally
+		{
+			MetaError::decBaseLevel();
 		}
 
 		return $value;
@@ -1355,6 +1383,16 @@ Expr::register('max', function($args) { return Expr::reduce($args->get(1), $args
 Expr::register('_void', function ($parts, $data)
 {
 	Expr::blockValue($parts->slice(1), $data);
+	return null;
+});
+
+/**
+**	Does nothing but return null.
+**
+**	nop <block>
+*/
+Expr::register('_nop', function ($parts, $data)
+{
 	return null;
 });
 
@@ -1704,6 +1742,7 @@ Expr::register('_each', function ($parts, $data)
 **	Returns the source list.
 **
 **	foreach <varname> <list-expr> <block>
+**	for <varname> <list-expr> <block>
 */
 Expr::register('_foreach', function ($parts, $data)
 {
@@ -1732,6 +1771,35 @@ Expr::register('_foreach', function ($parts, $data)
 
 	return $list;
 });
+
+Expr::register('_for', function ($parts, $data)
+{
+	$var_name = Expr::value($parts->get(1), $data);
+	$list = Expr::value($parts->get(2), $data);
+
+	$j = 0;
+
+	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
+		return $list;
+
+	$block = $parts->slice(3);
+
+	$list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$data, &$block)
+	{
+		$data->set($var_name, $item);
+		$data->set($var_name . '##', $j++);
+		$data->set($var_name . '#', $key);
+
+		Expr::blockValue($block, $data);
+	});
+
+	$data->remove($var_name);
+	$data->remove($var_name . '##');
+	$data->remove($var_name . '#');
+
+	return $list;
+});
+
 
 /**
 **	Returns the valueA if the expression is true otherwise valueB, this is a short version of the 'if' function with the
@@ -2007,128 +2075,6 @@ Expr::register('_repeat', function ($parts, $data)
 });
 
 /**
-**	Repeats the specified template for a number of times.
-**
-**	for <varname:i> [from <number>] [to <number>] [count <number>] [step <number>] <template>
-*/
-Expr::register('_for', function ($parts, $data)
-{
-	if ($parts->length < 3 || ($parts->length & 1) != 1)
-		return '(`for`: Wrong number of parameters)';
-
-	$var_name = Expr::value($parts->get(1), $data);
-	$count = null;
-	$from = 0; $to = null;
-	$step = null;
-
-	for ($i = 2; $i < $parts->length-1; $i+=2)
-	{
-		$value = Expr::value($parts->get($i), $data);
-
-		switch (Text::toLowerCase($value))
-		{
-			case 'from':
-				$from = (float)Expr::value($parts->get($i+1), $data);
-				break;
-
-			case 'to':
-				$to = (float)Expr::value($parts->get($i+1), $data);
-				break;
-
-			case 'count':
-				$count = (float)Expr::value($parts->get($i+1), $data);
-				break;
-
-			case 'step':
-				$step = (float)Expr::value($parts->get($i+1), $data);
-				break;
-		}
-	}
-
-	$tpl = $parts->get($parts->length-1);
-
-	if ($to !== null)
-	{
-		if ($step === null)
-			$step = $from > $to ? -1 : 1;
-
-		if ($step < 0)
-		{
-			for ($i = $from; $i >= $to; $i += $step)
-			{
-				try {
-					$data->set($var_name, $i);
-					Expr::value($tpl, $data);
-				}
-				catch (\Exception $e) {
-					$name = $e->getMessage();
-					if ($name == 'EXC_BREAK') break;
-					if ($name == 'EXC_CONTINUE') continue;
-					throw $e;
-				}
-			}
-		}
-		else
-		{
-			for ($i = $from; $i <= $to; $i += $step)
-			{
-				try {
-					$data->set($var_name, $i);
-					Expr::value($tpl, $data);
-				}
-				catch (\Exception $e) {
-					$name = $e->getMessage();
-					if ($name == 'EXC_BREAK') break;
-					if ($name == 'EXC_CONTINUE') continue;
-					throw $e;
-				}
-			}
-		}
-	}
-	else if ($count !== null)
-	{
-		if ($step === null)
-			$step = 1;
-
-		for ($i = $from; $count > 0; $count--, $i += $step)
-		{
-			try {
-				$data->set($var_name, $i);
-				Expr::value($tpl, $data);
-			}
-			catch (\Exception $e) {
-				$name = $e->getMessage();
-				if ($name == 'EXC_BREAK') break;
-				if ($name == 'EXC_CONTINUE') continue;
-				throw $e;
-			}
-		}
-	}
-	else
-	{
-		if ($step === null)
-			$step = 1;
-
-		for ($i = $from; ; $i += $step)
-		{
-			try {
-				$data->set($var_name, $i);
-				Expr::value($tpl, $data);
-			}
-			catch (\Exception $e) {
-				$name = $e->getMessage();
-				if ($name == 'EXC_BREAK') break;
-				if ($name == 'EXC_CONTINUE') continue;
-				throw $e;
-			}
-		}
-	}
-
-	$data->remove($var_name);
-	return null;
-});
-
-/**
 **	Repeats the specified block infinitely until a "break" is found.
 **
 **	loop <block>
@@ -2393,6 +2339,81 @@ Expr::register('_filter', function ($parts, $data)
 	return $output;
 });
 
+/**
+**	Returns a new array/map contaning the elements where the condition evaluates to non-zero. Just as in 'each', the i# and i## variables be available.
+**
+**	select <varname> <condition> <list-expr>
+*/
+Expr::register('_select', function ($parts, $data)
+{
+	$var_name = Expr::expand($parts->get(1), $data, 'arg');
+
+	$list = Expr::expand($parts->get(3), $data, 'arg');
+
+	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
+		return $list;
+
+	$arrayMode = typeOf($list) == 'Rose\\Arry' ? true : false;
+	$output = $arrayMode ? new Arry() : new Map();
+	$j = 0;
+
+	$condition = $parts->get(2);
+
+	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$condition)
+	{
+		$data->set($var_name, $item);
+		$data->set($var_name . '##', $j++);
+		$data->set($var_name . '#', $key);
+
+		if (!!Expr::value($condition, $data))
+		{
+			if ($arrayMode)
+				$output->push($item);
+			else
+				$output->set($key, $item);
+		}
+	});
+
+	$data->remove($var_name);
+	$data->remove($var_name . '##');
+	$data->remove($var_name . '#');
+
+	return $output;
+});
+
+/**
+**	Pipes one or more expressions such that on each respective result is stored in a variable for the subsequent expression,
+**	the last expression is returned. If no varname is provided "_" will be used.
+**
+**	pipe [<varname>] <expression>+
+*/
+Expr::register('_pipe', function ($parts, $data)
+{
+	$var_name = '_';
+	$i = 1;
+
+	if ($parts->get(1)->length == 1 && $parts->get(1)->get(0)->type == 'identifier')
+	{
+		$var_name = Expr::expand($parts->get(1), $data, 'arg');
+		$i = 2;
+	}
+
+	$_value_has = $data->has($var_name);
+	$_value = $data->get($var_name);
+	$value = null;
+
+	for (; $i < $parts->length; $i++)
+	{
+		$data->set($var_name, $value = Expr::value($parts->get($i), $data));
+	}
+
+	if ($_value_has)
+		$data->set($var_name, $_value);
+	else
+		$data->remove($var_name);
+
+	return $value;
+});
 
 /**
 **	Expands the specified template string (or already parsed template [array]) with the given data. The sym_open and sym_close will be '{' and '}' respectively.
@@ -2505,10 +2526,15 @@ Expr::register('_assert', function ($parts, $data)
 /**
 **	Yields a value to the inner-most expression evaluation loop to force result to be the specified value.
 **
-**	yield <value>
+**	yield <level> <value>
+**	yield [<value>]
 */
 Expr::register('yield', function($args) {
-	throw new MetaError('EXPR_YIELD', $args->has(1) ? $args->get(1) : null);
+	
+	if ($args->length == 3)
+		throw new MetaError('EXPR_YIELD', $args->get(2), Math::max(1, $args->get(1)));
+	else
+		throw new MetaError('EXPR_YIELD', $args->has(1) ? $args->get(1) : null, 1);
 });
 
 /**
@@ -2547,7 +2573,7 @@ Expr::register('_with', function($parts, $data)
 **	ret [<value>]
 */
 Expr::register('ret', function($args) {
-	throw new MetaError('FN_RET', $args->has(1) ? $args->get(1) : null);
+	throw new MetaError ('FN_RET', $args->has(1) ? $args->get(1) : null);
 });
 
 /*
@@ -2580,13 +2606,21 @@ Expr::register('_fn', function($parts, $data)
 
 				$value = null;
 
+				MetaError::incBaseLevel();
+
 				try {
 					$value = Expr::blockValue($block, $new);
 				}
 				catch (MetaError $e)
 				{
+					if (!$e->isForMe(-1)) throw $e;
+
 					switch ($e->code)
 					{
+						case 'EXPR_YIELD':
+							$value = $e->value;
+							break;
+
 						case 'FN_RET':
 							$value = $e->value;
 							break;
@@ -2594,6 +2628,10 @@ Expr::register('_fn', function($parts, $data)
 						default:
 							throw $e;
 					}
+				}
+				finally
+				{
+					MetaError::decBaseLevel();
 				}
 
 				return $value;
@@ -2638,13 +2676,21 @@ Expr::register('_def-fn', function($parts, $data)
 
 				$value = null;
 
+				MetaError::incBaseLevel();
+
 				try {
 					$value = Expr::blockValue($block, $new);
 				}
 				catch (MetaError $e)
 				{
+					if (!$e->isForMe(-1)) throw $e;
+
 					switch ($e->code)
 					{
+						case 'EXPR_YIELD':
+							$value = $e->value;
+							break;
+
 						case 'FN_RET':
 							$value = $e->value;
 							break;
@@ -2652,6 +2698,10 @@ Expr::register('_def-fn', function($parts, $data)
 						default:
 							throw $e;
 					}
+				}
+				finally
+				{
+					MetaError::decBaseLevel();
 				}
 
 				return $value;
@@ -2777,14 +2827,22 @@ Expr::register('require', function($args, $parts, $data)
 		Expr::$currentPath = Path::dirname($path);
 		Expr::$namespace = '';
 
+		MetaError::incBaseLevel();
+
 		try
 		{
 			$value = Expr::expand ($expr, $data, 'void');
 		}
 		catch (MetaError $e)
 		{
+			if (!$e->isForMe(-1)) throw $e;
+
 			switch ($e->code)
 			{
+				case 'EXPR_YIELD':
+					$value = $e->value;
+					break;
+
 				case 'FN_RET':
 					$value = $e->value;
 					break;
@@ -2792,6 +2850,10 @@ Expr::register('require', function($args, $parts, $data)
 				default:
 					throw $e;
 			}
+		}
+		finally
+		{
+			MetaError::decBaseLevel();
 		}
 
 		Expr::$currentPath = $currentPath;

@@ -25,13 +25,29 @@ use Rose\Map;
 use Rose\DateTime;
 use Rose\Gateway;
 use Rose\Text;
+use Rose\IO\Path;
+use Rose\IO\Directory;
 
 /*
 **	Prints a tracing message into the log file.
 */
 function trace ($string, $out=null)
 {
+	static $paths = null;
+
 	if (!$out) $out = 'logs/system.log';
+
+	if (!$paths)
+		$paths = new Map();
+
+	$path = Path::dirname($out);
+	if (!$paths->has($path))
+	{
+		if (!Path::exists($path))
+			Directory::create($path, true);
+
+		$paths->set($path, true);
+	}
 
 	$fp = @fopen ($out, 'a+t');
 	if (!$fp) return;

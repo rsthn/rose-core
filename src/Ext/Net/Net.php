@@ -47,7 +47,7 @@ class Http
 	{
 		self::$headers = new Map();
 
-		self::header ('Accept: text/html,application/json,application/xhtml+xml,application/xml;q=0.9');
+		self::header ('Accept: text/html,application/json,application/xhtml+xml,application/xml, */*');
 	}
 
 	/**
