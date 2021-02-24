@@ -20,6 +20,7 @@ namespace Rose;
 use Rose\IO\Directory;
 use Rose\IO\Path;
 use Rose\Map;
+use Rose\Arry;
 
 /*
 **	Provides functionality to load and query status of extensions.
@@ -33,33 +34,35 @@ class Extensions
 	private static $loaded = null;
 
 	/*
+	**	Directories to look for extensions. Treated as relative paths unless it starts with '/'.
+	*/
+	public static $sources;
+
+	/*
 	**	Load all available extensions from the native, installed and user extension directories.
 	*/
 	public static function init()
 	{
 		self::$loaded = new Map();
 
-		// Native extensions.
-		Directory::readDirs(Path::append(Path::dirname(__FILE__), 'Ext'))->dirs->forEach(function($i) { self::load($i->name); });
+		foreach (self::$sources->__nativeArray as $path)
+		{
+			$path = Text::startsWith('/', $path) ? $path : Path::append(Path::dirname(__FILE__), $path);
+			if (!Path::exists($path)) continue;
 
-		// Installed extensions.
-		if (Path::exists($path = Path::append(Path::dirname(__FILE__), '../../extensions')))
-			Directory::readDirs(Path::append($path))->dirs->forEach(function($i) { self::load($i->name, '../../extensions'); });
-
-		// User extensions.
-		if (Path::exists($path = Path::append(Path::dirname(__FILE__), '../../../../extensions')))
-			Directory::readDirs($path)->dirs->forEach(function($i) { self::load($i->name, '../../../../extensions'); });
+			Directory::readDirs($path)->dirs->forEach(function($i) use(&$path) { self::load($i->name, $path); });
+		}
 	}
 
 	/*
-	**	Loads an extension given its identifier.
+	**	Loads an extension given its identifier and the source path.
 	*/
-    public static function load ($identifier, $path='Ext')
+    public static function load ($identifier, $path)
     {
 		if (self::isLoaded($identifier))
 			return;
 
-		require_once(Path::append(Path::dirname(__FILE__), ($path), $identifier, $identifier.'.php'));
+		require_once(Path::append($path, $identifier, $identifier.'.php'));
 
 		self::$loaded->set($identifier, true);
 	}
@@ -71,16 +74,12 @@ class Extensions
     {
 		$identifier = Path::append($identifier, $identifier.'.php');
 
-		// Native extension.
-		if (Path::exists(Path::append(Path::dirname(__FILE__), 'Ext', $identifier)))
-			return true;
-
-		// Installed extension.
-		if (Path::exists(Path::append(Path::dirname(__FILE__), '../../extensions', $identifier)))
-			return true;
-
-		// User extension.
-		return Path::exists(Path::append(Path::dirname(__FILE__), '../../../../extensions', $identifier));
+		foreach (self::$sources->__nativeArray as $path)
+		{
+			$path = Text::startsWith('/', $path) ? $path : Path::append(Path::dirname(__FILE__), $path);
+			$path = Path::append($path, $identifier);
+			if (Path::exists($path)) return true;
+		}
 	}
 
 	/*
@@ -91,3 +90,12 @@ class Extensions
 		return self::$loaded->has($identifier);
 	}
 };
+
+/*
+**	Set source directories.
+*/
+Extensions::$sources = new Arry([
+	'Ext',						// Native extensions.
+	'../../extensions',			// Extensions installed with composer.
+	'../../../../extensions'	// User extensions.
+]);
