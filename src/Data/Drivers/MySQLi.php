@@ -39,6 +39,8 @@ class MySQLi extends Driver
 
 		if ($conn == null) return null;
 
+		mysqli_options ($conn, MYSQLI_OPT_INT_AND_FLOAT_NATIVE, true);
+
 		mysqli_query ($conn, 'SET time_zone = \'+00:00\'');
 		mysqli_query ($conn, 'SET @@group_concat_max_len = 16777216');
 

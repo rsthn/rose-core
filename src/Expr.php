@@ -2766,9 +2766,9 @@ Expr::register('ns', function($args, $parts, $data)
 
 
 /*
-**	Imports a file and evaluates it. Any file is imported just once.
+**	Imports a source file and evaluates it. Sources are imported only once.
 **
-**	require <str-expr>+
+**	require <source-path>+
 */
 Expr::register('require', function($args, $parts, $data)
 {
@@ -2809,12 +2809,12 @@ Expr::register('require', function($args, $parts, $data)
 		{
 			$expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path), ''));
 
-			for ($i = 0; $i < $expr->length; $i++)
+			for ($j = 0; $j < $expr->length; $j++)
 			{
-				if ($expr->get($i)->type != 'template')
+				if ($expr->get($j)->type != 'template')
 				{
-					$expr->remove($i);
-					$i--;
+					$expr->remove($j);
+					$j--;
 				}
 			}
 
@@ -2826,6 +2826,111 @@ Expr::register('require', function($args, $parts, $data)
 
 		Expr::$currentPath = Path::dirname($path);
 		Expr::$namespace = '';
+
+		MetaError::incBaseLevel();
+
+		try
+		{
+			$value = Expr::expand ($expr, $data, 'void');
+		}
+		catch (MetaError $e)
+		{
+			if (!$e->isForMe(-1)) throw $e;
+
+			switch ($e->code)
+			{
+				case 'EXPR_YIELD':
+					$value = $e->value;
+					break;
+
+				case 'FN_RET':
+					$value = $e->value;
+					break;
+
+				default:
+					throw $e;
+			}
+		}
+		finally
+		{
+			MetaError::decBaseLevel();
+		}
+
+		Expr::$currentPath = $currentPath;
+		Expr::$namespace = $namespace;
+	}
+
+	return $value;
+});
+
+/*
+**	Imports definitions from a source file into a namespace. Different namespaces will cause the source to be reloaded.
+**
+**	import (<source-path> [as <namespace-name>])+
+*/
+Expr::register('import', function($args, $parts, $data)
+{
+	for ($i = 1; $i < $args->length; $i++)
+	{
+		$currentPath = Expr::$currentPath;
+		$namespace = Expr::$namespace;
+
+		$path = $args->get($i);
+		$ns = '';
+
+		if ($i+1 < $args->length && $args->get($i+1) == 'as')
+		{
+			$ns = $args->get($i+2);
+			$i += 2;
+		}
+
+		if (Text::startsWith($path, './'))
+			$path = Path::append(Expr::$currentPath, Text::substring($path, 2));
+		else if (!Text::startsWith($path, '/'))
+			$path = Path::append(Expr::$importPath, $path);
+
+		if (!Text::endsWith($path, '.fn'))
+			$path .= '.fn';
+
+		$path = Path::resolve($path);
+		$path_cache = null;
+
+		if (Text::startsWith($path, Expr::$importPath))
+			$path_cache = Path::append(Expr::$cachePath, Text::replace('/', '-', Text::substring($path, 1+Text::length(Expr::$importPath))));
+
+		if (!Path::exists($path))
+			throw new Error ("Source does not exist: " . $path);
+
+		if (Expr::$imported->get($ns.'::'.$path) == File::mtime($path, true))
+			continue;
+
+		Expr::$imported->set($ns.'::'.$path, File::mtime($path, true));
+
+		if ($path_cache && Path::exists($path_cache) && File::mtime($path_cache, true) == File::mtime($path, true))
+		{
+			$expr = unserialize(File::getContents($path_cache));
+		}
+		else
+		{
+			$expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path), ''));
+
+			for ($j = 0; $j < $expr->length; $j++)
+			{
+				if ($expr->get($j)->type != 'template')
+				{
+					$expr->remove($j);
+					$j--;
+				}
+			}
+
+			if ($path_cache) {
+				File::setContents($path_cache, serialize($expr));
+				File::touch($path_cache, File::mtime($path, true));
+			}
+		}
+
+		Expr::$currentPath = Path::dirname($path);
+		Expr::$namespace = $ns;
 
 		MetaError::incBaseLevel();
 
