@@ -710,7 +710,7 @@ class Expr
 					case 'access':
 						if (!$last || typeOf($last) == 'primitive')
 						{
-							if (!$str) $str = 'this';
+							if ($str == '') $str = 'this';
 
 							while (true)
 							{
@@ -839,7 +839,7 @@ class Expr
 					case 'access':
 						if (!$last || typeOf($last) == 'primitive')
 						{
-							if (!$str) $str = 'this';
+							if ($str == '') $str = 'this';
 
 							while (true)
 							{
@@ -1137,8 +1137,10 @@ class Expr
 	**
 	**	>> object call (string name, object args, object data);
 	*/
-	public static function call ($name, $args, $data=null)
+	public static function call ($name, $args=null, $data=null)
 	{
+		if (!$args) $args = new Arry();
+
 		if (Expr::$functions->has($name))
 			return Expr::$functions->get($name) ($args, null, $data);
 

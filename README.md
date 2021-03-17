@@ -12,7 +12,7 @@ The host language is the language on which the `rose-core` was built, for the re
 
 In the future we're planning to build ports of Rose and its extensions for other host languages such as Python, NodeJS or whatever hot crazy lang may be available in the future. And when that happens, all of your current code written for Rose will **continue to work seamlessly** in the new host language (given that all required extensions are _of course_ ported to the new host language as well).
 
-And that my friend, is the power of Rose.
+And _that_ dear readers, is the power of Rose.
 
 <br/>
 
@@ -25,3 +25,11 @@ As any other package of the modern web, this one should be installed using a pac
 |Project Type|Package URL|Description|
 |------------|-----------|-----------|
 |Web Service|[https://github.com/rsthn/rose-webservice](https://github.com/rsthn/rose-webservice)|Deploy flexible and secure web services in the blink of an eye with Rose's internal web-service extension, Wind.
+
+<br/>
+
+# FAQ
+
+**Q: If there is no need to write host-language code, what happens when I need something new that is not doable using current expressions?**
+
+A: Given such case, you're free to build your own Rose-extensions in the host-language, and use it in any expression. Read our extensions documentation for more information.

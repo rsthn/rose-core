@@ -68,9 +68,53 @@ Expr::register('utils::randstr', function($args) { return bin2hex(random_bytes((
 Expr::register('utils::randstr:base64', function($args) { return base64_encode(random_bytes((int)$args->get(1))); });
 Expr::register('utils::uuid', function() {
 	$data = random_bytes(16);
+
+	$tmp = explode(' ', microtime());
+	$tmp[0] = (int)($tmp[0] * 0xFFFF);
+	$tmp[1] = (int)$tmp[1];
+
+	$data[15] = chr(($tmp[0] & 0xFF00) >> 8);
+	$data[14] = chr(($tmp[1] & 0xFF000000) >> 24);
+	$data[13] = chr(($tmp[1] & 0x00FF0000) >> 16);
+	$data[12] = chr(($tmp[0] & 0x00FF) >> 0);
+	$data[11] = chr(($tmp[1] & 0x000000FF) >> 0);
+	$data[10] = chr(($tmp[1] & 0x0000FF00) >> 8);
+
     $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
     $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+
     return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+});
+
+Expr::register('utils::unique', function($args) {
+
+	$tmp = explode(' ', microtime());
+	$tmp[0] = ((int)($tmp[0] * 0x1000000)) & 0xFFFFFF;
+	$tmp[1] = ((int)$tmp[1]) & 0xFFFFFFFF;
+
+	$data = [
+		(($tmp[1] >> 24) & 0x3F),
+		(($tmp[1] >> 0) & 0x3F),
+		(($tmp[1] >> 12) & 0x3F),
+		(($tmp[1] >> 18) & 0x3F),
+		(($tmp[1] >> 6) & 0x3F),
+		(($tmp[0] >> 6) & 0x3F),
+		(((($tmp[1] >> 30) & 0x03) << 4) | (($tmp[0] >> 12) & 0x0F)),
+		(($tmp[0] >> 0) & 0x3F),
+	];
+
+	$n = $args->length > 1 ? (int)$args->get(1) : 0;
+
+	while ($n-- > 0)
+		$data[] = ord(random_bytes(1)) & 0x3F;
+
+	$tmp = '';
+	$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@_';
+
+	for ($i = 0; $i < count($data); $i++)
+		$tmp .= $chars[ $data[$i] ^ (ord(random_bytes(1)) & 0x3F) ];
+
+	return $tmp;
 });
 
 Expr::register('utils::sleep', function($args) { sleep($args->get(1)); return null; });
