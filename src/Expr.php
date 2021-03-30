@@ -243,6 +243,12 @@ class Expr
 						$flush = 'string';
 						$nflush = 'template';
 					}
+					else if ($template[$i] == ';')
+					{
+						$state = 20; $count = 1;
+						$flush = 'string';
+						$nflush = 'string';
+					}
 					else
 					{
 						$str .= $template[$i];
@@ -297,7 +303,7 @@ class Expr
 						$str = '';
 						break;
 					}
-					else if (Regex::_matches('/^([-+][0-9]|[0-9])/', $template[$i].$template[$i+1]) && $str == '')
+					else if (Regex::_matches('/^(([-+][0-9])|([0-9]))/', $template[$i].$template[$i+1]) && $str == '')
 					{
 						if ($flush && $str)
 						{
@@ -316,9 +322,27 @@ class Expr
 						$nflush = 'identifier';
 						$nparts = true;
 
-						while (Regex::_matches('/[\t\n\r\f\v ]/', $template[$i])) $i++;
-						$i--;
+						$keep = true;
+						$n = strlen($template)-1;
 
+						while ($keep && $i < $n)
+						{
+							while ($i < $n && Regex::_matches('/[\t\n\r\f\v ]/', $template[$i])) $i++;
+
+							if ($template[$i] == ';') {
+								while ($i < $n && $template[$i] != "\n") $i++;
+							}
+							else
+								$keep = false;
+						}
+
+						if ($template[$i] == "\0")
+						{
+							$nflush = '';
+							$nparts = false;
+						}
+
+						$i--;
 						break;
 					}
 					else if ($template[$i] == $sym_open && $template[$i+1] == '<')
@@ -364,6 +388,11 @@ class Expr
 						if ($str) $emit ($nflush, $str);
 						$state = 11; $count = 1; $str = ''; $nflush = 'parse';
 						$str .= $template[$i];
+						break;
+					}
+					else if ($template[$i] == ';')
+					{
+						$state = 21;
 						break;
 					}
 
@@ -466,9 +495,7 @@ class Expr
 
 				case 14:
 					if ($template[$i] == "\0")
-					{
 						throw new Error ("Parse error: Unexpected end of template");
-					}
 	
 					if ($template[$i] == '"')
 					{
@@ -480,7 +507,7 @@ class Expr
 						if ($count == 0)
 						{
 							$state = 10;
-	
+
 							if ($nflush == 'parse-merge' || $nflush == 'parse-merge-alt' || $nflush == 'parse-trim-merge')
 								break;
 						}
@@ -491,21 +518,19 @@ class Expr
 
 				case 15:
 					if ($template[$i] == "\0")
-					{
 						throw new Error ("Parse error: Unexpected end of template");
-					}
-	
+
 					if ($template[$i] == '\'')
 					{
 						$count--;
-	
+
 						if ($count < 0)
 							throw new Error ("Parse error: Unmatched " + '\'');
 
 						if ($count == 0)
 						{
 							$state = 10;
-	
+
 							if ($nflush == 'parse-merge' || $nflush == 'parse-merge-alt' || $nflush == 'parse-trim-merge')
 								break;
 						}
@@ -516,9 +541,7 @@ class Expr
 
 				case 16:
 					if ($template[$i] == "\0")
-					{
 						throw new Error ("Parse error: Unexpected end of template");
-					}
 	
 					if ($template[$i] == '`')
 					{
@@ -568,14 +591,33 @@ class Expr
 
 				case 19:
 					if ($template[$i] == "\0")
-					{
 						throw new Error ("Parse error: Unexpected end of template");
-					}
 	
 					if ($template[$i] == '`')
 						$state = 1;
 
 					$str .= $template[$i];
+					break;
+
+				case 20:
+					if ($template[$i] == "\0" || $template[$i] == "\n")
+					{
+						$str = ';' . $str;
+						$state = 0;
+						$flush = $nflush;
+					}
+					else
+						$str .= $template[$i];
+
+					break;
+
+				case 21:
+					if ($template[$i] == "\0" || $template[$i] == "\n")
+					{
+						$state = 10; $i--;
+						break;
+					}
+
 					break;
 			}
 
@@ -635,16 +677,23 @@ class Expr
 	*/
 	static public function parse ($template)
 	{
-		return Expr::parseTemplate(trim($template), '(', ')', false);
+		return Expr::parseTemplate(Expr::clean($template), '(', ')', false);
 	}
 
 	/**
-	**	Removes all static parts from a parsed template.
+	**	Removes all static parts from a parsed template, or removes comments from a given string.
 	**
 	**	>> array clean (array parts);
 	*/
 	static public function clean ($parts)
 	{
+		if (\Rose\typeOf($parts) == 'primitive')
+		{
+			$data = (string)$parts;
+			$data = Regex::_replace ('|/\*(.*?)\*/|s', $data, '');
+			return $data;
+		}
+
 		for ($i = 0; $i < $parts->length; $i++)
 		{
 			if ($parts->get($i)->type != 'template')
@@ -1156,7 +1205,7 @@ class Expr
 	{
 		$s = new Map();
 		$mode = 0;
-	
+
 		for (; $i < $parts->length(); $i += 2)
 		{
 			$key = Expr::expand($parts->get($i), $data, 'arg');
@@ -1171,9 +1220,9 @@ class Expr
 				$key = Text::substring($key, 0, strlen($key)-1);
 
 			if ($expanded)
-				$s->set($key, Expr::expand($parts->get($i+1), $data, 'arg'));
+				$s->set((string)$key, Expr::expand($parts->get($i+1), $data, 'arg'));
 			else
-				$s->set($key, $parts->get($i+1));
+				$s->set((string)$key, $parts->get($i+1));
 		}
 
 		return $s;
@@ -2428,7 +2477,7 @@ Expr::register('expand', function ($args, $parts, $data)
 	if (typeOf($args->get(1)) == 'Rose\\Arry')
 		return Expr::expand ($args->get(1), $args->length == 3 ? $args->get(2) : $data);
 	else
-		return Expr::expand (Expr::parseTemplate ($args->get(1), '{', '}'), $args->length == 3 ? $args->get(2) : $data);
+		return Expr::expand (Expr::parseTemplate (Expr::clean($args->get(1)), '{', '}'), $args->length == 3 ? $args->get(2) : $data);
 });
 
 /**
@@ -2487,8 +2536,10 @@ Expr::register('_try', function ($parts, $data)
 	try {
 		Expr::value($parts->get(1), $data);
 	}
-	catch (\Exception $e) {
+	catch (\Exception $e)
+	{
 		$data->err = $e->getMessage();
+		$data->ex = $e;
 
 		if ($_catch)
 			Expr::value($parts->get($_catch), $data);

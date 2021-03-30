@@ -189,7 +189,7 @@ class Wind
 		}
 		else if (Path::exists($path1))
 		{
-			$expr = Expr::clean(Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path1), '')));
+			$expr = Expr::clean(Expr::parse(File::getContents($path1)));
 
 			File::setContents($path2, serialize($expr));
 			File::touch($path2, File::mtime($path1, true));
@@ -219,7 +219,7 @@ class Wind
 		self::$response = null;
 
 		if (Path::exists($path))
-			$expr = Expr::clean(Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path), '')));
+			$expr = Expr::clean(Expr::parse(File::getContents($path)));
 		else
 			throw new Error (Strings::get('@messages.file_not_found') . ': ' . $path);
 

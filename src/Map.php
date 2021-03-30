@@ -381,7 +381,7 @@ class Map
 
 		foreach ($this->__nativeArray as $name => $item)
 		{
-			$name = \json_encode($name).':';
+			$name = \json_encode((string)$name).':';
 
 			switch (typeOf($item, true))
 			{

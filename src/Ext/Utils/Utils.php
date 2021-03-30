@@ -105,11 +105,11 @@ Expr::register('utils::unique', function($args) {
 
 	$n = $args->length > 1 ? (int)$args->get(1) : 0;
 
-	while ($n-- > 0)
+	while ($n-- > 8)
 		$data[] = ord(random_bytes(1)) & 0x3F;
 
 	$tmp = '';
-	$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@_';
+	$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._';
 
 	for ($i = 0; $i < count($data); $i++)
 		$tmp .= $chars[ $data[$i] ^ (ord(random_bytes(1)) & 0x3F) ];

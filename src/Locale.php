@@ -88,29 +88,44 @@ class Locale
 	/*
 	**	Formats an object using the specified format type, which can be: NUMBER, INTEGER, TIME, DATE, DATETIME, GMT, UTC, SDATE, and SDATETIME.
 	*/
-    public function format ($formatType, $value)
+    public function format ($formatType, $value, $format=null)
     {
 		$config = Configuration::getInstance();
 
         switch (Text::toUpperCase($formatType))
         {
             case 'NUMBER':
-				return number_format((double)$value, $config->Locale->numeric[1], $config->Locale->numeric[0], $config->Locale->numeric[2]);
+				if (!$format) $format = 'numeric';
+				if ($config->Locale->has($format)) $format = $config->Locale->get($format);
+
+				return number_format((double)$value, $format[1], $format[0], $format[2]);
 
             case 'INTEGER':
-				return number_format((double)$value, 0, 0, $config->Locale->numeric[2]);
+				if (!$format) $format = 'numeric';
+				if ($config->Locale->has($format)) $format = $config->Locale->get($format);
+
+				return number_format((double)$value, 0, 0, $format[2]);
 
 			case 'TIME':
+				if (!$format) $format = 'time';
+				if ($config->Locale->has($format)) $format = $config->Locale->get($format);
+
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime($config->Locale->time, $value + DateTime::$offset) : null;
+				return $value ? strftime($format, $value + DateTime::$offset) : null;
 
 			case 'DATE':
+				if (!$format) $format = 'date';
+				if ($config->Locale->has($format)) $format = $config->Locale->get($format);
+
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime($config->Locale->date, $value + DateTime::$offset) : null;
+				return $value ? strftime($format, $value + DateTime::$offset) : null;
 
 			case 'DATETIME':
+				if (!$format) $format = 'datetime';
+				if ($config->Locale->has($format)) $format = $config->Locale->get($format);
+
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime($config->Locale->datetime, $value + DateTime::$offset) : null;
+				return $value ? strftime($format, $value + DateTime::$offset) : null;
 
 			case 'GMT':
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
@@ -154,11 +169,11 @@ class Locale
 **	Register expression functions to access locale formatting functions.
 */
 
-Expr::register('locale::number', function ($args) { return Locale::getInstance()->format('NUMBER', $args->get(1)); });
-Expr::register('locale::integer', function ($args) { return Locale::getInstance()->format('INTEGER', $args->get(1)); });
-Expr::register('locale::time', function ($args) { return Locale::getInstance()->format('TIME', $args->get(1)); });
-Expr::register('locale::date', function ($args) { return Locale::getInstance()->format('DATE', $args->get(1)); });
-Expr::register('locale::datetime', function ($args) { return Locale::getInstance()->format('DATETIME', $args->get(1)); });
+Expr::register('locale::number', function ($args) { return Locale::getInstance()->format('NUMBER', $args->get($args->length == 3 ? 2 : 1), $args->{1}); });
+Expr::register('locale::integer', function ($args) { return Locale::getInstance()->format('INTEGER', $args->get($args->length == 3 ? 2 : 1), $args->{1}); });
+Expr::register('locale::time', function ($args) { return Locale::getInstance()->format('TIME', $args->get($args->length == 3 ? 2 : 1), $args->{1}); });
+Expr::register('locale::date', function ($args) { return Locale::getInstance()->format('DATE', $args->get($args->length == 3 ? 2 : 1), $args->{1}); });
+Expr::register('locale::datetime', function ($args) { return Locale::getInstance()->format('DATETIME', $args->get($args->length == 3 ? 2 : 1), $args->{1}); });
 Expr::register('locale::gmt', function ($args) { return Locale::getInstance()->format('GMT', $args->get(1)); });
 Expr::register('locale::utc', function ($args) { return Locale::getInstance()->format('UTC', $args->get(1)); });
 Expr::register('locale::iso_date', function ($args) { return Locale::getInstance()->format('ISO_DATE', $args->get(1)); });
