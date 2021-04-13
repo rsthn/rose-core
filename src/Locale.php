@@ -169,11 +169,11 @@ class Locale
 **	Register expression functions to access locale formatting functions.
 */
 
-Expr::register('locale::number', function ($args) { return Locale::getInstance()->format('NUMBER', $args->get($args->length == 3 ? 2 : 1), $args->{1}); });
-Expr::register('locale::integer', function ($args) { return Locale::getInstance()->format('INTEGER', $args->get($args->length == 3 ? 2 : 1), $args->{1}); });
-Expr::register('locale::time', function ($args) { return Locale::getInstance()->format('TIME', $args->get($args->length == 3 ? 2 : 1), $args->{1}); });
-Expr::register('locale::date', function ($args) { return Locale::getInstance()->format('DATE', $args->get($args->length == 3 ? 2 : 1), $args->{1}); });
-Expr::register('locale::datetime', function ($args) { return Locale::getInstance()->format('DATETIME', $args->get($args->length == 3 ? 2 : 1), $args->{1}); });
+Expr::register('locale::number', function ($args) { return Locale::getInstance()->format('NUMBER', $args->get($args->length == 3 ? 2 : 1), $args->length == 3 ? $args->get(1) : null); });
+Expr::register('locale::integer', function ($args) { return Locale::getInstance()->format('INTEGER', $args->get($args->length == 3 ? 2 : 1), $args->length == 3 ? $args->get(1) : null); });
+Expr::register('locale::time', function ($args) { return Locale::getInstance()->format('TIME', $args->get($args->length == 3 ? 2 : 1), $args->length == 3 ? $args->get(1) : null); });
+Expr::register('locale::date', function ($args) { return Locale::getInstance()->format('DATE', $args->get($args->length == 3 ? 2 : 1), $args->length == 3 ? $args->get(1) : null); });
+Expr::register('locale::datetime', function ($args) { return Locale::getInstance()->format('DATETIME', $args->get($args->length == 3 ? 2 : 1), $args->length == 3 ? $args->get(1) : null); });
 Expr::register('locale::gmt', function ($args) { return Locale::getInstance()->format('GMT', $args->get(1)); });
 Expr::register('locale::utc', function ($args) { return Locale::getInstance()->format('UTC', $args->get(1)); });
 Expr::register('locale::iso_date', function ($args) { return Locale::getInstance()->format('ISO_DATE', $args->get(1)); });
