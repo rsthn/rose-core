@@ -129,9 +129,9 @@ class Expr
 	/**
 	**	Parses a template and returns the compiled 'parts' structure to be used by the 'expand' method.
 	**
-	**	>> array parseTemplate (string template, char sym_open, char sym_close, bool is_tpl=false);
+	**	>> array parseTemplate (string template, char sym_open, char sym_close, bool is_tpl=false, bool remove_comments=true);
 	*/
-	static public function parseTemplate ($template, $sym_open, $sym_close, $is_tpl=false, $root=1)
+	static public function parseTemplate ($template, $sym_open, $sym_close, $is_tpl=false, $root=1, $remove_comments=true)
 	{
 		$nflush = 'string'; $flush = null; $state = 0; $count = 0;
 		$str = ''; $parts = new Arry(); $mparts = $parts; $nparts = false;
@@ -151,11 +151,11 @@ class Expr
 		{
 			if ($type == 'template')
 			{
-				$data = Expr::parseTemplate ($data, $sym_open, $sym_close, true, 0);
+				$data = Expr::parseTemplate ($data, $sym_open, $sym_close, true, 0, $remove_comments);
 			}
 			else if ($type == 'parse')
 			{
-				$data = Expr::parseTemplate ($data, $sym_open, $sym_close, false, 0);
+				$data = Expr::parseTemplate ($data, $sym_open, $sym_close, false, 0, $remove_comments);
 				$type = 'base-string';
 
 				if (typeOf($data) == 'Rose\\Arry')
@@ -166,15 +166,15 @@ class Expr
 			}
 			else if ($type == 'parse-trim-merge')
 			{
-				$data = Expr::parseTemplate (Text::split ("\n", trim($data))->map(function($i) { return Text::trim($i); })->join("\n"), $sym_open, $sym_close, false, 0);
+				$data = Expr::parseTemplate (Text::split ("\n", trim($data))->map(function($i) { return Text::trim($i); })->join("\n"), $sym_open, $sym_close, false, 0, $remove_comments);
 			}
 			else if ($type == 'parse-merge')
 			{
-				$data = Expr::parseTemplate ($data, $sym_open, $sym_close, false, 0);
+				$data = Expr::parseTemplate ($data, $sym_open, $sym_close, false, 0, $remove_comments);
 			}
 			else if ($type == 'parse-merge-alt')
 			{
-				$data = Expr::parseTemplate ($data, '{', '}', false, 0);
+				$data = Expr::parseTemplate ($data, '{', '}', false, 0, $remove_comments);
 			}
 			else if ($type == 'integer')
 			{
@@ -243,7 +243,7 @@ class Expr
 						$flush = 'string';
 						$nflush = 'template';
 					}
-					else if ($template[$i] == ';')
+					else if ($template[$i] == ';' && $remove_comments)
 					{
 						$state = 20; $count = 1;
 						$flush = 'string';
@@ -390,7 +390,7 @@ class Expr
 						$str .= $template[$i];
 						break;
 					}
-					else if ($template[$i] == ';')
+					else if ($template[$i] == ';' && $remove_comments)
 					{
 						$state = 21;
 						break;
@@ -675,9 +675,9 @@ class Expr
 	**
 	**	>> array parse (string template);
 	*/
-	static public function parse ($template)
+	static public function parse ($template, $remove_comments=true)
 	{
-		return Expr::parseTemplate(Expr::clean($template), '(', ')', false);
+		return Expr::parseTemplate(Expr::clean($template), '(', ')', false, $remove_comments);
 	}
 
 	/**
@@ -1466,6 +1466,7 @@ Expr::register('json', function ($args)
 **	Sets one or more variables in the data context.
 **
 **	set <var-name> <expr> [<var-name> <expr>]*
+**	= <var-name> <expr> [<var-name> <expr>]*
 */
 Expr::register('_set', function ($parts, $data)
 {
@@ -1522,6 +1523,23 @@ Expr::register('_dec', function ($parts, $data)
 		throw new Error('Unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join('')  );
 
 	$ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} - 1;
+	return null;
+});
+
+/**
+**	Appends the value to a variable.
+**
+**	append <var-name> <value>
+*/
+Expr::register('_append', function ($parts, $data)
+{
+	$ref = Expr::expand($parts->get(1), $data, 'varref');
+	if (!$ref) return null;
+
+	if (!$ref[0])
+		throw new Error('Unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join('')  );
+
+	$ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} . Expr::value($parts->get(2), $data);
 	return null;
 });
 
@@ -1807,14 +1825,22 @@ Expr::register('_foreach', function ($parts, $data)
 
 	$block = $parts->slice(3);
 
-	$list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$data, &$block)
+	foreach ($list->__nativeArray as $key => $item)
 	{
 		$data->set($var_name, $item);
 		$data->set($var_name . '##', $j++);
 		$data->set($var_name . '#', $key);
 
-		Expr::blockValue($block, $data);
-	});
+		try {
+			Expr::blockValue($block, $data);
+		}
+		catch (\Exception $e) {
+			$name = $e->getMessage();
+			if ($name == 'EXC_BREAK') break;
+			if ($name == 'EXC_CONTINUE') continue;
+			throw $e;
+		}
+	}
 
 	$data->remove($var_name);
 	$data->remove($var_name . '##');
@@ -1835,14 +1861,22 @@ Expr::register('_for', function ($parts, $data)
 
 	$block = $parts->slice(3);
 
-	$list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$data, &$block)
+	foreach ($list->__nativeArray as $key => $item)
 	{
 		$data->set($var_name, $item);
 		$data->set($var_name . '##', $j++);
 		$data->set($var_name . '#', $key);
 
-		Expr::blockValue($block, $data);
-	});
+		try {
+			Expr::blockValue($block, $data);
+		}
+		catch (\Exception $e) {
+			$name = $e->getMessage();
+			if ($name == 'EXC_BREAK') break;
+			if ($name == 'EXC_CONTINUE') continue;
+			throw $e;
+		}
+	}
 
 	$data->remove($var_name);
 	$data->remove($var_name . '##');
@@ -2477,7 +2511,7 @@ Expr::register('expand', function ($args, $parts, $data)
 	if (typeOf($args->get(1)) == 'Rose\\Arry')
 		return Expr::expand ($args->get(1), $args->length == 3 ? $args->get(2) : $data);
 	else
-		return Expr::expand (Expr::parseTemplate (Expr::clean($args->get(1)), '{', '}'), $args->length == 3 ? $args->get(2) : $data);
+		return Expr::expand (Expr::parseTemplate (Expr::clean($args->get(1)), '{', '}', false, 1, false), $args->length == 3 ? $args->get(2) : $data);
 });
 
 /**
@@ -2588,6 +2622,16 @@ Expr::register('yield', function($args) {
 		throw new MetaError('EXPR_YIELD', $args->get(2), Math::max(1, $args->get(1)));
 	else
 		throw new MetaError('EXPR_YIELD', $args->has(1) ? $args->get(1) : null, 1);
+});
+
+/**
+**	Yields a null value to the inner-most expression evaluation loop to force result to be the specified value.
+**
+**	exit <level>
+*/
+Expr::register('exit', function($args) {
+	
+	throw new MetaError('EXPR_YIELD', null, Math::max(1, $args->get(1)));
 });
 
 /**
