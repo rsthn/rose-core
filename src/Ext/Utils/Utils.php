@@ -24,6 +24,7 @@ use Rose\Gateway;
 
 use Rose\Text;
 use Rose\Math;
+use Rose\Regex;
 use Rose\Expr;
 use Rose\Map;
 use Rose\Arry;
@@ -128,6 +129,9 @@ Expr::register('utils::hex:decode', function($args) { return hex2bin ($args->get
 Expr::register('utils::url:encode', function($args) { return urlencode ($args->get(1)); });
 Expr::register('utils::url:decode', function($args) { return urldecode ($args->get(1)); });
 
+Expr::register('utils::html:encode', function($args) { return htmlspecialchars ($args->get(1)); });
+Expr::register('utils::html:decode', function($args) { return htmlspecialchars_decode ($args->get(1)); });
+
 Expr::register('utils::json:stringify', function($args)
 {
 	$value = $args->get(1);
@@ -224,6 +228,11 @@ Expr::register('utils::html', function($args)
 	}
 
 	return $data;
+});
+
+Expr::register('utils::shell', function($args)
+{
+	return shell_exec ($args->get(1));
 });
 
 /* ************ */
@@ -333,4 +342,132 @@ Expr::register('array::unique', function($args)
 Expr::register('array::reverse', function($args)
 {
 	return $args->get(1)->reverse();
+});
+
+Expr::register('array::clear', function($args)
+{
+	return $args->get(1)->clear();
+});
+
+/* ************ */
+Expr::register('map::new', function($args)
+{
+	$map = new Map();
+
+	for ($i = 1; $i+1 < $args->length; $i += 2)
+		$map->set($args->get($i), $args->get($i+1));
+
+	return $map;
+});
+
+Expr::register('map::sort:asc', function($args)
+{
+	$map = $args->get(1);
+	$map->sort('ASC');
+	return null;
+});
+
+Expr::register('map::sort:desc', function($args)
+{
+	$map = $args->get(1);
+	$map->sort('DESC');
+	return null;
+});
+
+Expr::register('map::sortk:asc', function($args)
+{
+	$map = $args->get(1);
+	$map->sortk('ASC');
+	return null;
+});
+
+Expr::register('map::sortk:desc', function($args)
+{
+	$map = $args->get(1);
+	$map->sortk('DESC');
+	return null;
+});
+
+Expr::register('map::keys', function($args)
+{
+	$map = $args->get(1);
+	return $map->keys();
+});
+
+Expr::register('map::values', function($args)
+{
+	$map = $args->get(1);
+	return $map->values();
+});
+
+Expr::register('map::set', function($args)
+{
+	$map = $args->get(1);
+
+	for ($i = 2; $i+1 < $args->length; $i+=2)
+		$map->set($args->get($i), $args->get($i+1));
+
+	return null;
+});
+
+Expr::register('map::get', function($args)
+{
+	$map = $args->get(1);
+	return $map->{$args->get(2)};
+});
+
+Expr::register('map::remove', function($args)
+{
+	return $args->get(1)->remove((string)$args->get(2));
+});
+
+Expr::register('map::keyof', function($args)
+{
+	return $args->get(1)->keyOf($args->get(2));
+});
+
+Expr::register('map::length', function($args)
+{
+	return $args->get(1)->length();
+});
+
+Expr::register('map::merge', function($args)
+{
+	return $args->get(1)->merge($args->get(2), true);
+});
+
+Expr::register('map::clear', function($args)
+{
+	return $args->get(1)->clear();
+});
+
+/* ************ */
+Expr::register('re::matches', function($args)
+{
+	return Regex::_matches($args->get(1), $args->get(2));
+});
+
+Expr::register('re::matchFirst', function($args)
+{
+	return Regex::_matchFirst($args->get(1), $args->get(2));
+});
+
+Expr::register('re::matchAll', function($args)
+{
+	return Regex::_matchAll($args->get(1), $args->get(2));
+});
+
+Expr::register('re::split', function($args)
+{
+	return Regex::_split($args->get(1), $args->get(2));
+});
+
+Expr::register('re::replace', function($args)
+{
+	return Regex::_split($args->get(1), $args->get(2), $args->get(3));
+});
+
+Expr::register('re::extract', function($args)
+{
+	return Regex::_extract($args->get(1), $args->get(2));
 });

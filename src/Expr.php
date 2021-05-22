@@ -1669,7 +1669,7 @@ Expr::register('%', function ($args)
 		if (typeOf($args->get($i)) == 'Rose\\Arry')
 		{
 			$s .= '<'.$name.'>';
-			
+
 			for ($j = 0; $j < $args->get($i)->length(); $j++)
 				$s .= $args->get($i)->get($j);
 
@@ -2884,14 +2884,14 @@ Expr::register('require', function($args, $parts, $data)
 		if (!Text::endsWith($path, '.fn'))
 			$path .= '.fn';
 
-		$path = Path::resolve($path);
+		$path = Path::resolve($_path = $path);
 		$path_cache = null;
 
 		if (Text::startsWith($path, Expr::$importPath))
 			$path_cache = Path::append(Expr::$cachePath, Text::replace('/', '-', Text::substring($path, 1+Text::length(Expr::$importPath))));
 
 		if (!Path::exists($path))
-			throw new Error ("Source does not exist: " . $path);
+			throw new Error ("Source does not exist: " . $_path);
 
 		if (Expr::$imported->get($path) == File::mtime($path, true))
 			continue;
@@ -2989,14 +2989,14 @@ Expr::register('import', function($args, $parts, $data)
 		if (!Text::endsWith($path, '.fn'))
 			$path .= '.fn';
 
-		$path = Path::resolve($path);
+		$path = Path::resolve($_path = $path);
 		$path_cache = null;
 
 		if (Text::startsWith($path, Expr::$importPath))
 			$path_cache = Path::append(Expr::$cachePath, Text::replace('/', '-', Text::substring($path, 1+Text::length(Expr::$importPath))));
 
 		if (!Path::exists($path))
-			throw new Error ("Source does not exist: " . $path);
+			throw new Error ("Source does not exist: " . $_path);
 
 		if (Expr::$imported->get($ns.'::'.$path) == File::mtime($path, true))
 			continue;
