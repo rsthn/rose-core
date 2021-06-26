@@ -81,7 +81,7 @@ There are different types of data source, each describing how many functions are
 |Full Access     |✅ |✅   |✅   |✅  |✅ |✅   |✅  |✅  |✅  |
 |Enumerator Only |   |      |     |    |   |      |✅  |    |     |
 |Read Only       |   |      |✅   |✅  |✅ |     |    |✅  |✅    |
-|Minimal         |   |      |✅   |✅  |✅ |     |    |    |     |
+|Minimal         |   |      |✅   |✅  |   |     |    |    |     |
 
 <br/>
 

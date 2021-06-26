@@ -1356,6 +1356,11 @@ Expr::$importPath = Path::resolve(Main::$CORE_DIR);
 /**
 **	Expression functions.
 */
+global $_glb_object;
+$_glb_object = new Map();
+
+Expr::register('global', function($args) { global $_glb_object; return $_glb_object; });
+
 Expr::register('null', function($args) { return null; });
 Expr::register('true', function($args) { return true; });
 Expr::register('false', function($args) { return false; });
@@ -1450,9 +1455,9 @@ Expr::register('_nop', function ($parts, $data)
 /**
 **	Returns the JSON representation of the expression.
 **
-**	json <expr>
+**	dump <expr>
 */
-Expr::register('json', function ($args)
+Expr::register('dump', function ($args)
 {
 	$value = $args->get(1);
 
@@ -2538,7 +2543,7 @@ Expr::register('expand', function ($args, $parts, $data)
 });*/
 
 /**
-**	Try-catch block support.
+**	Try-catch block support. The catch block provides `err` and `ex` variables.
 **
 **	try <block> [catch <block>] [finally <block>]
 */
@@ -2580,7 +2585,6 @@ Expr::register('_try', function ($parts, $data)
 	}
 
 	if ($_finally) Expr::value($parts->get($_finally), $data);
-
 });
 
 /**
