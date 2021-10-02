@@ -63,6 +63,7 @@ Expr::register('resources', function ($args) { return Resources::getInstance(); 
 Expr::register('gateway', function ($args) { return Gateway::getInstance(); });
 Expr::register('gateway::redirect', function ($args) { return Gateway::redirect($args->get(1)); });
 Expr::register('gateway::flush', function ($args) { return Gateway::flush(); });
+Expr::register('gateway::persistent', function ($args) { return Gateway::persistent(); });
 
 Expr::register('utils::rand', function() { return Math::rand(); });
 Expr::register('utils::randstr', function($args) { return bin2hex(random_bytes((int)$args->get(1))); });
@@ -250,28 +251,28 @@ Expr::register('array::sort:asc', function($args)
 {
 	$array = $args->get(1);
 	$array->sort('ASC');
-	return null;
+	return $array;
 });
 
 Expr::register('array::sort:desc', function($args)
 {
 	$array = $args->get(1);
 	$array->sort('DESC');
-	return null;
+	return $array;
 });
 
 Expr::register('array::sortl:asc', function($args)
 {
 	$array = $args->get(1);
 	$array->sortl('ASC');
-	return null;
+	return $array;
 });
 
 Expr::register('array::sortl:desc', function($args)
 {
 	$array = $args->get(1);
 	$array->sortl('DESC');
-	return null;
+	return $array;
 });
 
 Expr::register('array::push', function($args)
@@ -281,7 +282,7 @@ Expr::register('array::push', function($args)
 	for ($i = 2; $i < $args->length; $i++)
 		$array->push($args->get($i));
 
-	return null;
+	return $array;
 });
 
 Expr::register('array::unshift', function($args)
@@ -291,7 +292,7 @@ Expr::register('array::unshift', function($args)
 	for ($i = 2; $i < $args->length; $i++)
 		$array->unshift($args->get($i));
 
-	return null;
+	return $array;
 });
 
 Expr::register('array::pop', function($args)
@@ -364,28 +365,28 @@ Expr::register('map::sort:asc', function($args)
 {
 	$map = $args->get(1);
 	$map->sort('ASC');
-	return null;
+	return $map;
 });
 
 Expr::register('map::sort:desc', function($args)
 {
 	$map = $args->get(1);
 	$map->sort('DESC');
-	return null;
+	return $map;
 });
 
 Expr::register('map::sortk:asc', function($args)
 {
 	$map = $args->get(1);
 	$map->sortk('ASC');
-	return null;
+	return $map;
 });
 
 Expr::register('map::sortk:desc', function($args)
 {
 	$map = $args->get(1);
 	$map->sortk('DESC');
-	return null;
+	return $map;
 });
 
 Expr::register('map::keys', function($args)

@@ -44,7 +44,7 @@ class Directory
 	**
 	**	NOTE: Output parameter is used internally.
 	*/
-    public static function read (string $path, bool $recursive=true, string $pattern='/.+/', int $offset=0, int $flags=Directory::READ_FILES | Directory::READ_DIRS, $output=null)
+    public static function read (string $path, bool $recursive=true, string $pattern='/./', int $offset=0, int $flags=Directory::READ_FILES | Directory::READ_DIRS, $output=null)
     {
         $result = null;
         $hdl = null;
@@ -107,7 +107,7 @@ class Directory
                 }
                 else
                 {
-                    if (!($flags & Directory::READ_FILES) || !Regex::_matches($pattern, $fpath))
+                    if (!($flags & Directory::READ_FILES) || !Regex::_matches($pattern, $item))
                         continue;
 
                     if ($flags & Directory::READ_SIZE)
@@ -126,7 +126,7 @@ class Directory
 	/*
 	**	Returns an array only with file entries in the directory.
 	*/
-    public static function readFiles (string $path, bool $recursive=false, string $pattern='/.+/', int $offset=0, int $flags=0)
+    public static function readFiles (string $path, bool $recursive=false, string $pattern='/./', int $offset=0, int $flags=0)
     {
 		return Directory::read ($path, $recursive, $pattern, $offset, $flags | Directory::READ_FILES);
     }
@@ -134,7 +134,7 @@ class Directory
 	/*
 	**	Returns an array only with directory entries in the directory.
 	*/
-    public static function readDirs (string $path, bool $recursive=false, string $pattern='/.+/', int $offset=0, int $flags=0)
+    public static function readDirs (string $path, bool $recursive=false, string $pattern='/./', int $offset=0, int $flags=0)
     {
         return Directory::read ($path, $recursive, $pattern, $offset, $flags | Directory::READ_DIRS);
     }

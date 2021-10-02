@@ -143,11 +143,13 @@ class Gateway
 		$this->root = Text::substring($this->serverParams->SCRIPT_NAME, 0, -9);
 		$this->secure = Text::toUpperCase($this->serverParams->HTTPS) == 'ON';
 
+		$name = Regex::_getString('|.+/(.+)\.php$|', $this->serverParams->SCRIPT_NAME, 1);
+
 		/* ** */
-		$n = Text::length(Regex::_getString ('/^(.+)index\.php/', $this->serverParams->SCRIPT_NAME, 1));
+		$n = Text::length(Regex::_getString ('/^(.+)'.$name.'\.php/', $this->serverParams->SCRIPT_NAME, 1));
 
 		$tmp = Text::substring($this->serverParams->REQUEST_URI, $n);
-		if (Text::startsWith($tmp, 'index.php')) $tmp = Text::substring($tmp, 9);
+		if (Text::startsWith($tmp, $name.'.php')) $tmp = Text::substring($tmp, strlen($name)+4);
 		if (Text::startsWIth($tmp, '/')) $tmp = Text::substring($tmp, 1);
 
 		$this->relativePath = Regex::_getString ('/^[-\/_A-Za-z0-9.]+/', $tmp);
@@ -287,5 +289,14 @@ class Gateway
 		//set_time_limit(0);
 		//ob_implicit_flush(1);
 		flush();
+    }
+
+	/*
+	**	Configures the system to use persistent execution mode.
+	*/
+    public static function persistent ()
+    {
+		ignore_user_abort(true);
+		set_time_limit(0);
     }
 };

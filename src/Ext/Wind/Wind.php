@@ -275,7 +275,7 @@ class Wind
 					continue;
 				}
 
-				if (++$n > 256) break;
+				if (++$n > 64) break;
 
 				try {
 					$f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $gateway->requestParams->f);

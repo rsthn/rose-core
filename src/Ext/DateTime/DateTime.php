@@ -60,6 +60,17 @@ Expr::register('datetime::sub', function ($args) {
 });
 
 /*
+**	datetime::diff <datetime> <datetime> [unit]
+*/
+Expr::register('datetime::diff', function ($args) {
+	$a = new DateTime ($args->get(1));
+	$b = new DateTime ($args->get(2));
+
+	$unit = $args->length == 4 ? $args->get(3) : 'SECOND';
+	return $a->sub($b, $unit);
+});
+
+/*
 **	datetime::add <datetime> <value> [unit]
 */
 Expr::register('datetime::add', function ($args) {

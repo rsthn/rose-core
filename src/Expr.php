@@ -1995,11 +1995,11 @@ Expr::register('_when', function ($parts, $data)
 */
 Expr::register('_switch', function ($parts, $data)
 {
-	$value = Expr::expand($parts->get(1), $data, 'arg');
+	$value = (string)Expr::expand($parts->get(1), $data, 'arg');
 
 	for ($i = 2; $i < $parts->length(); $i += 2)
 	{
-		$case_value = Expr::expand($parts->get($i), $data, 'arg');
+		$case_value = (string)Expr::expand($parts->get($i), $data, 'arg');
 		if ($case_value == $value || $case_value == 'default')
 			return Expr::expand($parts->get($i+1), $data, 'arg');
 	}
@@ -2009,11 +2009,11 @@ Expr::register('_switch', function ($parts, $data)
 
 Expr::register('_case', function ($parts, $data)
 {
-	$value = Expr::expand($parts->get(1), $data, 'arg');
+	$value = (string)Expr::expand($parts->get(1), $data, 'arg');
 
 	for ($i = 2; $i < $parts->length(); $i += 2)
 	{
-		$case_value = Expr::expand($parts->get($i), $data, 'arg');
+		$case_value = (string)Expr::expand($parts->get($i), $data, 'arg');
 		if ($case_value == $value || $case_value == 'default')
 			return Expr::expand($parts->get($i+1), $data, 'arg');
 	}
@@ -2813,6 +2813,31 @@ Expr::register('_def-fn', function($parts, $data)
 
 		$params->push(Expr::value($parts->get($i), $data));
 	}
+
+	if (Text::startsWith($name, '::'))
+		Expr::register(Text::substring($name, 2), $fn);
+	else if (Text::indexOf($name, '::'))
+		Expr::register($name, $fn);
+	else
+		Expr::register((Expr::$namespace ? (Expr::$namespace . '::') : '') . $name, $fn);
+
+	return null;
+});
+
+
+/*
+**	Defines a global variable.
+**
+**	def <var-name> <value>
+*/
+Expr::register('_def', function($parts, $data)
+{
+	$name = Expr::value($parts->get(1), $data);
+	$value = Expr::value($parts->get(2), $data);
+
+	$fn = function () use (&$value) {
+		return $value;
+	};
 
 	if (Text::startsWith($name, '::'))
 		Expr::register(Text::substring($name, 2), $fn);
