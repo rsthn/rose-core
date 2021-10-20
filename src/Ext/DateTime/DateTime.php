@@ -80,3 +80,19 @@ Expr::register('datetime::add', function ($args) {
 	$unit = $args->length == 4 ? $args->get(3) : 'SECOND';
 	return $a->add($b, $unit);
 });
+
+/*
+**	datetime::date <datetime>
+*/
+Expr::register('datetime::date', function ($args) {
+	$a = (string)(new DateTime ($args->get(1)));
+	return Text::substring($a, 0, 10);
+});
+
+/*
+**	datetime::time <datetime>
+*/
+Expr::register('datetime::time', function ($args) {
+	$a = (string)(new DateTime ($args->get(1)));
+	return Text::substring($a, 11, 5);
+});

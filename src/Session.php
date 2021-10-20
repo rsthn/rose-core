@@ -226,10 +226,10 @@ class Session
 		{
 			if (!$shallow)
 				$_SESSION['session'] = serialize (Session::$data);
-				
+
 			session_write_close();
 		}
-	
+
 		Session::$sessionOpen = false;
     }
 
