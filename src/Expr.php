@@ -720,7 +720,6 @@ class Expr
 		if ($mode == 'var')
 		{
 			$modifier1 = false;
-			$modifier2 = false;
 
 			$root = $data;
 			$last = null;
@@ -768,11 +767,6 @@ class Expr
 									$str = Text::substring($str, 1);
 									$modifier1 = true;
 								}
-								else if ($str[0] == '$')
-								{
-									$str = Text::substring($str, 1);
-									$modifier2 = true;
-								}
 								else
 									break;
 							}
@@ -806,11 +800,6 @@ class Expr
 				{
 					$str = Text::substring($str, 1);
 					$modifier1 = true;
-				}
-				else if ($str[0] == '$')
-				{
-					$str = Text::substring($str, 1);
-					$modifier2 = true;
 				}
 				else
 					break;
@@ -896,10 +885,6 @@ class Expr
 								{
 									$str = Text::substring($str, 1);
 								}
-								else if ($str[0] == '$')
-								{
-									$str = Text::substring($str, 1);
-								}
 								else
 									break;
 							}
@@ -929,10 +914,6 @@ class Expr
 			while ($str != '')
 			{
 				if ($str[0] == '!')
-				{
-					$str = Text::substring($str, 1);
-				}
-				else if ($str[0] == '$')
 				{
 					$str = Text::substring($str, 1);
 				}
@@ -1379,6 +1360,7 @@ Expr::register('abs', function($args) { return abs($args->get(1)); });
 
 Expr::register('_and', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!$v) return null; } return $v; });
 Expr::register('_or', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!!$v) return $v; } return null; });
+Expr::register('_coalesce', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if ($v !== null) return $v; } return null; });
 
 Expr::register('eq', function($args) { return $args->get(1) == $args->get(2); });
 Expr::register('ne', function($args) { return $args->get(1) != $args->get(2); });
