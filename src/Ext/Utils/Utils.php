@@ -130,6 +130,10 @@ Expr::register('utils::hex:decode', function($args) { return hex2bin ($args->get
 Expr::register('utils::url:encode', function($args) { return urlencode ($args->get(1)); });
 Expr::register('utils::url:decode', function($args) { return urldecode ($args->get(1)); });
 
+Expr::register('utils::urlSearchParams', function($args) {
+	return $args->get(1)->map(function($value, $key) { return urlencode($key).'='.urlencode($value); })->values()->join('&');
+});
+
 Expr::register('utils::html:encode', function($args) { return htmlspecialchars ($args->get(1)); });
 Expr::register('utils::html:decode', function($args) { return htmlspecialchars_decode ($args->get(1)); });
 

@@ -33,7 +33,7 @@ class Cookies
 	*/
     private static function setCookieHeader ($name, $value, $ttl=null, $domain=null, $path=null)
     {
-		$path = $path == null ? Gateway::getInstance()->root : $path;
+		$path = $path == null ? Gateway::getInstance()->root.'/' : $path;
 		$domain = $domain == null ? Configuration::getInstance()->Gateway->server_name : $domain;
 
 		if ($value === null)

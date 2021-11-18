@@ -71,6 +71,7 @@ class Gateway
 	**	Full URL address to the entry point of the active service.
 	*/
 	public $ep;
+	public $url;
 
 	/*
 	**	Full URL address to the entry point of the system (root entry point).
@@ -143,6 +144,9 @@ class Gateway
 		$this->root = Text::substring($this->serverParams->SCRIPT_NAME, 0, -9);
 		$this->secure = Text::toUpperCase($this->serverParams->HTTPS) == 'ON';
 
+		while (Text::endsWith($this->root, '/'))
+			$this->root = Text::substring($this->root, 0, -1);
+
 		$name = Regex::_getString('|.+/(.+)\.php$|', $this->serverParams->SCRIPT_NAME, 1);
 
 		/* ** */
@@ -170,7 +174,7 @@ class Gateway
 					)
 					.$this->root;
 
-		if (!Text::endsWith($this->ep, '/')) $this->ep .= '/';
+		$this->url = $this->ep;
 		$this->rep = $this->ep;
 
 		if (Configuration::getInstance()->Gateway->allow_origin && $this->serverParams->has('HTTP_ORIGIN'))
@@ -185,8 +189,8 @@ class Gateway
 
 		$this->localroot = getcwd();
 
-        if (Text::substring($this->localroot, -1) != '/')
-            $this->localroot .= '/';
+        while (Text::endsWith($this->localroot, '/'))
+			$this->localroot = Text::substring($this->localroot, 0, -1);
 
 		// Initialize system classes.
 		Session::init();

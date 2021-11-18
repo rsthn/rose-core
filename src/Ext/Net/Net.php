@@ -40,6 +40,11 @@ class Http
 	*/
 	private static $headers = null;
 
+	/*
+	**	Current request method for `fetch` function.
+	*/
+	public static $method = 'GET';
+
 	/**
 	**	Initializes the Http class properties.
 	*/
@@ -218,7 +223,16 @@ class Http
 				$fields->set($name, $value);
 			});
 
-			$fields = $fields->__nativeArray;
+			if ($headers->get('content-type') == 'content-type: application/x-www-form-urlencoded')
+			{
+				$fields = $fields->map(function ($value, $name) {
+					return urlencode($name) . '=' . urlencode($value);
+				});
+
+				$fields = $fields->values()->join('&');
+			}
+			else
+				$fields = $fields->__nativeArray;
 		}
 		else
 		{
@@ -231,9 +245,9 @@ class Http
 		curl_setopt ($c, CURLOPT_URL, $url);
 		curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
 		curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt ($c, CURLOPT_POSTFIELDS, $fields);
 		curl_setopt ($c, CURLOPT_CUSTOMREQUEST, 'POST');
 		curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
+		curl_setopt ($c, CURLOPT_POSTFIELDS, $fields);
 
 		$data = curl_exec($c);
 
@@ -248,9 +262,20 @@ class Http
 	}
 
 	/**
-	**	Forwards the parameters to Http::get(), parses the JSON result and returns a Map or Arry.
+	**	Forwards the parameters to fetchGet or fetchPost (based on current method), parses the JSON result and returns a Map or Arry.
 	*/
 	public static function fetch ($url, $fields)
+	{
+		$method = self::$method;
+		self::$method = 'GET';
+
+		return $method == 'POST' ? self::fetchPost($url, $fields) : self::fetchGet($url, $fields);
+	}
+
+	/**
+	**	Forwards the parameters to Http::get(), parses the JSON result and returns a Map or Arry.
+	*/
+	public static function fetchGet ($url, $fields)
 	{
 		return Expr::call('utils::json:parse', new Arry ([null, self::get($url, $fields, new Map([ 'Accept' => 'Accept: application/json' ]))]));
 	}
@@ -325,26 +350,6 @@ Expr::register('http::fetch', function ($args)
 	{
 		$data = $args->get($i);
 
-		if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
-			continue;
-
-		$fields->merge($data, true);
-	}
-
-	return Http::fetch($args->get(1), $fields);
-});
-
-/* ****************** */
-/* http::fetch:post <url> [<fields>*] */
-
-Expr::register('http::fetch:post', function ($args)
-{
-	$fields = new Map();
-
-	for ($i = 2; $i < $args->length; $i++)
-	{
-		$data = $args->get($i);
-
 		if (\Rose\typeOf($data, true) == 'string')
 		{
 			$fields = $data;
@@ -357,7 +362,7 @@ Expr::register('http::fetch:post', function ($args)
 		$fields->merge($data, true);
 	}
 
-	return Http::fetchPost($args->get(1), $fields);
+	return Http::fetch($args->get(1), $fields);
 });
 
 /* ****************** */
@@ -366,6 +371,15 @@ Expr::register('http::fetch:post', function ($args)
 Expr::register('http::header', function ($args)
 {
 	Http::header($args->get(1));
+	return null;
+});
+
+/* ****************** */
+/* http::method method */
+
+Expr::register('http::method', function ($args)
+{
+	Http::$method = Text::toUpperCase($args->get(1));
 	return null;
 });
 
