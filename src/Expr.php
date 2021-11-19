@@ -184,6 +184,15 @@ class Expr
 			{
 				$data = (float)$data;
 			}
+			else if ($type == 'identifier')
+			{
+				switch ($data)
+				{
+					case 'null': $data = null; break;
+					case 'true': $data = true; break;
+					case 'false': $data = false; break;
+				}
+			}
 
 			if ($type == 'parse-merge' || $type == 'parse-merge-alt' || $type == 'parse-trim-merge')
 			{
@@ -1342,9 +1351,9 @@ $_glb_object = new Map();
 
 Expr::register('global', function($args) { global $_glb_object; return $_glb_object; });
 
-Expr::register('null', function($args) { return null; });
-Expr::register('true', function($args) { return true; });
-Expr::register('false', function($args) { return false; });
+//Expr::register('null', function($args) { return null; });
+//Expr::register('true', function($args) { return true; });
+//Expr::register('false', function($args) { return false; });
 
 Expr::register('len', function($args) { $s = $args->get(1); return \Rose\typeOf($s) == 'primitive' ? strlen((string)$s) : $s->length; });
 Expr::register('int', function($args) { return (int)$args->get(1); });
@@ -1630,7 +1639,7 @@ Expr::register('replace', function ($args)
 });
 
 /**
-**	Converts all new-line chars in the expression to <br/>, the expression can be a string or an array.
+**	Converts all new-line chars in the expression to <br/>, the expression can be a string, sequence or an array.
 **
 **	nl2br <args>
 */
@@ -1640,7 +1649,7 @@ Expr::register('nl2br', function ($args)
 });
 
 /**
-**	Returns the expression inside an XML tag named 'tag-name', the expression can be a string or an array.
+**	Returns a string with the value inside an XML tag named `tag-name`, the value can be a string, sequence or an array.
 **
 **	% <tag-name> <arg>
 */
@@ -1670,9 +1679,10 @@ Expr::register('%', function ($args)
 });
 
 /**
-**	Returns the expression inside an XML tag named 'tag-name', attributes are supported.
+**	Returns a string with the value inside an XML tag named `tag-name`, each pair of attr-value will become attributes of the tag
+**	and the last value will be treated as the tag contents.
 **
-**	%% <tag-name> [<attr> <value>]* [<arg>]
+**	%% <tag-name> [<attr> <value>]* [<value>]
 */
 Expr::register('%%', function ($args)
 {
@@ -1695,7 +1705,7 @@ Expr::register('%%', function ($args)
 
 
 /**
-**	Joins the given list expression into a string. If glue is provided, it will be used as separator.
+**	Joins the array into a string. If glue is provided, it will be used as separator.
 **
 **	join <glue> <list-expr>
 **	join <list-expr>
@@ -1715,7 +1725,7 @@ Expr::register('join', function ($args)
 });
 
 /**
-**	Splits the given expression by the specified delimiter. Returns an array.
+**	Splits the expression by the specified delimiter. Returns an array.
 **
 **	split <delimiter> <str-expr>
 */
@@ -1728,7 +1738,7 @@ Expr::register('split', function ($args)
 });
 
 /**
-**	Returns an array with the keys of the given object-expr.
+**	Returns an array with the keys of the object.
 **
 **	keys <object-expr>
 */
@@ -1741,7 +1751,7 @@ Expr::register('keys', function ($args)
 });
 
 /**
-**	Returns an array with the values of the given object-expr.
+**	Returns an array with the values of the object.
 **
 **	values <object-expr>
 */
@@ -1874,8 +1884,7 @@ Expr::register('_for', function ($parts, $data)
 
 
 /**
-**	Returns the valueA if the expression is true otherwise valueB, this is a short version of the 'if' function with the
-**	difference that the result is 'obj' instead of text.
+**	Returns `valueA` if the expression is `true` otherwise returns `valueB` or empty string if valueB was not specified. This is a short version of the `if` function.
 **
 **	? <expr> <valueA> [<valueB>]
 */
@@ -1891,7 +1900,7 @@ Expr::register('_?', function ($parts, $data)
 });
 
 /**
-**	Returns the valueA if it is not null (or empty or zero), otherwise returns valueB.
+**	Returns `valueA` if it is not `null` or empty string or zero, otherwise returns `valueB`.
 **
 **	?? <valueA> <valueB>
 */
@@ -1931,7 +1940,7 @@ Expr::register('_if', function ($parts, $data)
 				break;
 
 			case 1: // Find else/elif and run block.
-				if ($value->type == 'identifier' && ($value->data == 'else' || $value->data == 'elif'))
+				if ($value->type == 'identifier' && ($value->data === 'else' || $value->data === 'elif'))
 					return Expr::blockValue($parts->slice($start, $i-$start), $data);
 
 				break;
@@ -2204,7 +2213,7 @@ Expr::register('_while', function ($parts, $data)
 });
 
 /**
-**	Writes the raw data to the output.
+**	Writes the raw data to standard output.
 **
 **	expr_debug <expr>
 */
@@ -2215,14 +2224,14 @@ Expr::register('_expr_debug', function ($parts, $data)
 });
 
 /**
-**	Writes the specified arguments to the console.
+**	Writes the specified arguments to standard output separated by space.
 **
 **	echo <expr> [<expr>...]
 */
 Expr::register('_echo', function ($parts, $data)
 {
 	for ($i = 1; $i < $parts->length(); $i++)
-		echo(Expr::expand($parts->get($i), $data, 'arg')."\n");
+		echo(Expr::expand($parts->get($i), $data, 'arg').' ');
 
 	return '';
 });

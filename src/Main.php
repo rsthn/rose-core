@@ -111,6 +111,9 @@ function isString ($object)
 */
 function bool ($value)
 {
+	if ($value === true || $value === false)
+		return $value;
+
 	return $value === 'true' || ($value !== 'false' && !!$value);
 }
 
