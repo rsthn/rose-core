@@ -1725,16 +1725,17 @@ Expr::register('join', function ($args)
 });
 
 /**
-**	Splits the expression by the specified delimiter. Returns an array.
+**	Splits the string by the specified delimiter (or empty string if none specified). Returns an array.
 **
 **	split <delimiter> <str-expr>
+**	split <str-expr>
 */
 Expr::register('split', function ($args)
 {
-	if ($args->get(2) && is_string($args->get(2)))
-		return Text::split($args->get(1), $args->get(2));
+	if ($args->length == 2)
+		return Text::split('', $args->get(1));
 
-	return new Arry();
+	return Text::split($args->get(1), (string)$args->get(2));
 });
 
 /**
@@ -2213,7 +2214,7 @@ Expr::register('_while', function ($parts, $data)
 });
 
 /**
-**	Writes the raw data to standard output.
+**	Writes the raw expression data to standard output. Used to debug expressions.
 **
 **	expr_debug <expr>
 */
@@ -2267,7 +2268,7 @@ Expr::register('_##', function ($parts, $data)
 });
 
 /**
-**	Constructs an associative array (dictionary) and returns it.
+**	Constructs an object.
 **
 **	& <name>: <expr> [<name>: <expr>...]
 **	& :<name> <expr> [:<name> <expr>...]

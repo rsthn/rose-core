@@ -1,5 +1,5 @@
 
-# Built-In Expression Functions
+# Built-In Functions
 
 - [Core](#core)
 - [Locale](#locale)
@@ -533,7 +533,8 @@ Joins the array into a string. If `glue` is provided, it will be used as separat
 ```
 
 ## `split` \<delimiter> \<str-expr>
-Splits the string by the specified delimiter. Returns an array.
+## `split` \<str-expr>
+Splits the string by the specified delimiter (or empty string if none specified). Returns an array.
 ```lisp
 (split "," "A,B,C")
 ; ["A","B","C"]
