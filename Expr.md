@@ -42,25 +42,11 @@ Constructs an array/list.
 ; [1,2,3]
 ```
 
-## `##` \<value>+
-Constructs a non-expanded array/list.
-```lisp
-(# 1 2 3)
-; [[{"type":"integer","data":1}],[{"type":"integer","data":2}],[{"type":"integer","data":3}]]
-```
-
 ## `&` \<name> \<expr> [\<name> \<expr>]*
 Constructs an object.
 ```lisp
 (& name "John" last "Doe")
 ; {"name":"John","last":"Doe"}
-```
-
-## `&&`
-Constructs a non-expanded object.
-```lisp
-(&& valid true)
-; {"valid":[{"type":"identifier","data":true}]}
 ```
 
 ## `global`

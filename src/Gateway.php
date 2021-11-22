@@ -147,7 +147,7 @@ class Gateway
 		while (Text::endsWith($this->root, '/'))
 			$this->root = Text::substring($this->root, 0, -1);
 
-		$name = Regex::_getString('|.+/(.+)\.php$|', $this->serverParams->SCRIPT_NAME, 1);
+		$name = Regex::_getString('|.*/(.+)\.php$|', $this->serverParams->SCRIPT_NAME, 1);
 
 		/* ** */
 		$n = Text::length(Regex::_getString ('/^(.+)'.$name.'\.php/', $this->serverParams->SCRIPT_NAME, 1));

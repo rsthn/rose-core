@@ -1187,7 +1187,7 @@ class Expr
 	}
 
 	/*
-	**	Returns a map given a 'parts' array having values of the form "name: value" or ":name value".
+	**	Returns a map given a 'parts' array having values of the form "name value", "name: value" or ":name value".
 	**
 	**	>> object getNamedValues (array parts, object data, int i=1, bool expanded=true);
 	*/
@@ -2270,6 +2270,7 @@ Expr::register('_##', function ($parts, $data)
 /**
 **	Constructs an object.
 **
+**	& <name> <expr> [<name> <expr>...]
 **	& <name>: <expr> [<name>: <expr>...]
 **	& :<name> <expr> [:<name> <expr>...]
 */
@@ -2281,6 +2282,7 @@ Expr::register('_&', function ($parts, $data)
 /**
  **	Constructs a non-expanded associative array (dictionary) and returns it.
  **
+ **	&& <name> <expr> [<name> <expr>...]
  **	&& <name>: <expr> [<name>: <expr>...]
  **	&& :<name> <expr> [:<name> <expr>...]
  */
