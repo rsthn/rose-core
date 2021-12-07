@@ -268,7 +268,7 @@ class Main
 	/*
 	**	Project's core directory.
 	*/
-	public static $CORE_DIR;
+	public static $CORE_DIR = null;
 
 	/*
 	**	Constant that indicates if the framework has been loaded and initialized. Used as a dummy var to force autoload of the Main class by using `Main::$loaded`.
@@ -294,10 +294,13 @@ class Main
 		ini_set ('display_errors', '0');
 
 		// Set global project core directory (use 'resources' for legacy systems, and 'rcore' for Rose 3.1+ systems).
-		if (file_exists('resources/'))
-			self::$CORE_DIR = 'resources';
-		else
-			self::$CORE_DIR = 'rcore';
+		if (self::$CORE_DIR == null)
+		{
+			if (file_exists('resources/'))
+				self::$CORE_DIR = 'resources';
+			else
+				self::$CORE_DIR = 'rcore';
+		}
 	}
 
 	/*

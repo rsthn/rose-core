@@ -1,8 +1,8 @@
 # Wind API Behavior
 
-Below are the guidelines required to create a web service compliant with Wind. A service made compatible with this behavior is very useful because certain applications and libraries are expecting Wind-compliant interfaces (for instance, [Rin-Front](https://github.com/rsthn/rin-front)), and could make front-end development or integrations much easier.
+Below are the guidelines required to create an API compliant with Wind. A service made compatible with this behavior is very useful because certain applications and libraries are expecting Wind-compliant interfaces (for instance, [Rin-Front](https://github.com/rsthn/rin-front)), and could make front-end development or integrations much easier.
 
-We do not enforce any language for this purpose, however if you'd like to set sail into new waters please consider using [Rose](https://github.com/rsthn/rose-webservice) for your project.
+We do not enforce any language for this purpose, however if you'd like to set sail into new waters please consider using [Rose](https://github.com/rsthn/rose-api) for your project.
 
 <br/>
 

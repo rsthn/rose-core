@@ -35,14 +35,19 @@ class Http
 	private static $curl_last_info = null;
 	private static $curl_last_data = null;
 
-	/*
-	**	HTTP request headers.
-	*/
+	/**
+	 * 	Indicates if request data should be output to the log file.
+	 */
+	public static $debug = false;
+
+	/**
+	 * 	HTTP request headers.
+	 */
 	private static $headers = null;
 
-	/*
-	**	Current request method for `fetch` function.
-	*/
+	/**
+	 * 	Current request method for `fetch` function.
+	 */
 	public static $method = 'GET';
 
 	/**
@@ -157,6 +162,12 @@ class Http
 		curl_setopt ($c, CURLOPT_CUSTOMREQUEST, 'GET');
 		curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
 
+		if (self::$debug)
+		{
+			\Rose\trace('GET ' . $url);
+			\Rose\trace('HEADERS ' . $headers->values());
+		}
+
 		$data = curl_exec($c);
 
 		self::$curl_last_info = curl_getinfo($c);
@@ -248,6 +259,13 @@ class Http
 		curl_setopt ($c, CURLOPT_CUSTOMREQUEST, 'POST');
 		curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
 		curl_setopt ($c, CURLOPT_POSTFIELDS, $fields);
+
+		if (self::$debug)
+		{
+			\Rose\trace('POST ' . $url);
+			\Rose\trace('HEADERS ' . $headers->values());
+			\Rose\trace('FIELDS ' . $fields);
+		}
 
 		$data = curl_exec($c);
 
@@ -380,6 +398,16 @@ Expr::register('http::header', function ($args)
 Expr::register('http::method', function ($args)
 {
 	Http::$method = Text::toUpperCase($args->get(1));
+	return null;
+});
+
+
+/* ****************** */
+/* http::debug value */
+
+Expr::register('http::debug', function ($args)
+{
+	Http::$debug = \Rose\bool($args->get(1));
 	return null;
 });
 
