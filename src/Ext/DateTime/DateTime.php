@@ -96,3 +96,12 @@ Expr::register('datetime::time', function ($args) {
 	$a = (string)(new DateTime ($args->get(1)));
 	return Text::substring($a, 11, 5);
 });
+
+/*
+**	datetime::format <datetime> <string>
+*/
+Expr::register('datetime::format', function ($args) {
+	$value = $args->get(1);
+	$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
+	return $value ? strftime($args->get(2), $value + DateTime::$offset) : null;
+});

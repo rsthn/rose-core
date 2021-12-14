@@ -240,6 +240,11 @@ Expr::register('utils::shell', function($args)
 	return shell_exec ($args->get(1));
 });
 
+Expr::register('utils::hash', function($args)
+{
+	return hash($args->get(1), $args->get(2));
+});
+
 /* ************ */
 Expr::register('array::new', function($args)
 {
