@@ -235,14 +235,30 @@ Expr::register('utils::html', function($args)
 	return $data;
 });
 
-Expr::register('utils::shell', function($args)
+/* ************************** */
+Expr::register('utils::hashes', function($args)
 {
-	return shell_exec ($args->get(1));
+	return Arry::fromNativeArray(hash_algos());
 });
 
 Expr::register('utils::hash', function($args)
 {
 	return hash($args->get(1), $args->get(2));
+});
+
+Expr::register('utils::hash:binary', function($args)
+{
+	return hash($args->get(1), $args->get(2), true);
+});
+
+Expr::register('utils::hmac', function($args)
+{
+	return hash_hmac($args->get(1), $args->get(3), $args->get(2));
+});
+
+Expr::register('utils::hmac:binary', function($args)
+{
+	return hash_hmac($args->get(1), $args->get(3), $args->get(2), true);
 });
 
 /* ************ */

@@ -3150,3 +3150,45 @@ Expr::register('map-get', function($args, $parts, $data)
 
 	return $map;
 });
+
+/**
+**	Returns a new map created with the specified key-expression and value-expression. Just as in 'each', the i# and i## variables be available.
+**
+**	mapify <varname> <list-expr> <key-expr> [<value-expr>]
+*/
+Expr::register('_mapify', function ($parts, $data)
+{
+	$var_name = Expr::expand($parts->get(1), $data, 'arg');
+
+	$list = Expr::expand($parts->get(2), $data, 'arg');
+
+	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
+		return $list;
+
+	$output = new Map();
+	$j = 0;
+
+	$key_expr = $parts->get(3);
+	$val_expr = $parts->length > 4 ? $parts->get(4) : null;
+
+	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$key_expr, &$val_expr)
+	{
+		$data->set($var_name, $item);
+		$data->set($var_name . '##', $j++);
+		$data->set($var_name . '#', $key);
+
+		$key = Expr::expand($key_expr, $data, 'arg');
+		$value = $item;
+
+		if ($val_expr != null)
+			$value = Expr::expand($val_expr, $data, 'arg');
+
+		$output->set($key, $value);
+	});
+
+	$data->remove($var_name);
+	$data->remove($var_name . '##');
+	$data->remove($var_name . '#');
+
+	return $output;
+});

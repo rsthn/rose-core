@@ -722,6 +722,10 @@ Returns `true` if the object has the specified key, or if the array/list has the
 ```lisp
 ```
 
+## `mapify`
+```lisp
+```
+
 
 <br/>
 
@@ -805,6 +809,7 @@ Returns `true` if the object has the specified key, or if the array/list has the
 ## `datetime::add`
 ## `datetime::date`
 ## `datetime::time`
+## `datetime::format`
 
 <br/>
 
@@ -934,6 +939,12 @@ Returns `true` if the object has the specified key, or if the array/list has the
 ## `utils::json:parse`
 ## `utils::html`
 ## `utils::shell`
+
+## `utils::hashes`
+## `utils::hash`
+## `utils::hash:binary`
+## `utils::hmac`
+## `utils::hmac:binary`
 
 <br/>
 
