@@ -467,3 +467,14 @@ PostgreSQL::register();
 MSSQL::register();
 SQLServer::register();
 ODBC::register();
+
+/*
+	[Database]
+	server=
+	database=
+	user=
+	password=
+	prefix=
+	trace=
+	driver=mysqli
+*/

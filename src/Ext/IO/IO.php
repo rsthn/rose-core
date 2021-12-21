@@ -21,8 +21,14 @@ use Rose\Expr;
 use Rose\IO\File;
 use Rose\IO\Directory;
 use Rose\IO\Path;
+use Rose\Gateway;
 
 /* ****************** */
+Expr::register('path::fsroot', function ($args)
+{
+	return Gateway::getInstance()->localroot;
+});
+
 Expr::register('path::basename', function ($args)
 {
 	return Path::basename ($args->get(1));
@@ -54,6 +60,12 @@ Expr::register('path::resolve', function ($args)
 });
 
 Expr::register('path::append', function ($args)
+{
+	$args->shift();
+	return Path::append (...$args->__nativeArray);
+});
+
+Expr::register('path::join', function ($args)
 {
 	$args->shift();
 	return Path::append (...$args->__nativeArray);

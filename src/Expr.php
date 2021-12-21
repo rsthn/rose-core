@@ -28,6 +28,220 @@ use Rose\IO\File;
 use Rose\Math;
 
 /**
+ * 	Description of a linked context.
+ */
+class LinkedContext
+{
+	public $context;
+	public $ns;
+
+	public function __construct ($context, $ns='')
+	{
+		$this->context = $context;
+		$this->ns = $ns;
+	}
+
+	public function getBaseName ($name)
+	{
+		if (!$this->ns)
+			return $name;
+
+		if (Text::startsWith($name, $this->ns . '::'))
+			return Text::substring($name, Text::length($this->ns)+2);
+
+		return $name;
+	}
+}
+
+/**
+ * 	Encapsulated context.
+ */
+class Context
+{
+	static private $contextArray = null;
+
+	private $id;
+	public $data;
+	public $privateFunctions;
+	public $publicFunctions;
+	public $exportedFunctions;
+	public $chain;
+
+	public $currentNamespace;
+	public $currentPath;
+	public $currentScope;
+	public $lastFunction;
+
+	public static function reset()
+	{
+		self::$contextArray = new Arry();
+	}
+
+	public static function getContext ($contextId)
+	{
+		return self::$contextArray->get($contextId);
+	}
+
+	/**
+	 * 	Constructs a new context.
+	 */
+	public function __construct()
+	{
+		if (self::$contextArray == null)
+			self::reset();
+
+		self::$contextArray->push($this);
+		$this->id = self::$contextArray->length()-1;
+
+		$this->data = new Map();
+		$this->privateFunctions = new Map();
+		$this->publicFunctions = new Map();
+		$this->exportedFunctions = new Map();
+
+		$this->chain = new Arry();
+
+		if ($this->id != 0)
+			$this->chain->push(new LinkedContext (self::getContext(0)));
+
+		$this->currentNamespace = '';
+		$this->currentScope = 'public';
+	}
+
+	/**
+	 * 	Returns the ID of the context.
+	 */
+	public function getId()
+	{
+		return $this->id;
+	}
+
+	/**
+	 * 	Registers or overrides a function (ExprFn object).
+	 */
+	public function registerFunction ($name, $fn, $isPrivate=false, $isExported=false)
+	{
+		if ($isExported)
+		{
+			$this->exportedFunctions->set ($name, $fn);
+			return;
+		}
+
+		if ($isPrivate)
+			$this->privateFunctions->set ($name, $fn);
+		else
+			$this->publicFunctions->set ($name, $fn);
+	}
+
+	/**
+	 * 	Links a context to this context chain.
+	 */
+	public function linkContext ($context, $ns='')
+	{
+		$n = $this->chain->length();
+		for ($i = 0; $i < $n; $i++)
+		{
+			$linked = $this->chain->get($i);
+			if ($linked->ns == $ns && $linked->context === $context)
+				return;
+		}
+
+		$this->chain->push (new LinkedContext($context, $ns));
+	}
+
+	/**
+	 * 	Returns true if the specified function exists in the context chain.
+	 */
+	public function hasFunction ($name)
+	{
+		$n = $this->chain->length();
+
+		for ($i = 0; $i < $n; $i++)
+		{
+			$linked = $this->chain->get($i);
+			$tmp = $linked->getBaseName($name);
+
+			$list = $linked->context->publicFunctions;
+			if ($list->has($tmp))
+			{
+				$this->lastFunction = $list->get($tmp);
+				return true;
+			}
+
+			$list = $linked->context->exportedFunctions;
+			if ($list->has($tmp))
+			{
+				$this->lastFunction = $list->get($tmp);
+				return true;
+			}
+		}
+
+		$list = $this->publicFunctions;
+		if ($list->has($name))
+		{
+			$this->lastFunction = $list->get($name);
+			return true;
+		}
+
+		$list = $this->privateFunctions;
+		if ($list->has($name))
+		{
+			$this->lastFunction = $list->get($name);
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * 	Returns a function from the context chain given its name, or null if not found.
+	 */
+	public function getFunction ($name=null)
+	{
+		if ($name === null)
+			return $this->lastFunction;
+
+		if ($this->hasFunction($name))
+			return $this->lastFunction;
+
+		return null;
+	}
+};
+
+
+/**
+ * 	Expression function.
+ */
+class ExprFn
+{
+	private $context;
+	private $fn;
+	public $name;
+
+	public function __construct ($name, $fn, $context)
+	{
+		$this->name = $name;
+		$this->fn = $fn;
+		$this->context = $context;
+	}
+
+	public function getContext()
+	{
+		return $this->context;
+	}
+
+	public function exec3 ($args, $parts, $data)
+	{
+		return ($this->fn) ($args, $parts, $data);
+	}
+
+	public function exec2 ($parts, $data)
+	{
+		return ($this->fn) ($parts, $data);
+	}
+};
+
+
+/**
 **	Expression compiler and evaluator. Adapted from (Rin)[https://github.com/rsthn/rin/] templating module.
 */
 
@@ -39,9 +253,10 @@ class Expr
 	static public $strict = true;
 
 	/*
-	**	Imported sources.
+	**	File modification time and related context of imported files.
 	*/
-	static public $imported = null;
+	static public $importedTime = null;
+	static public $importedContext = null;
 
 	/*
 	**	Base path for imported sources.
@@ -49,19 +264,19 @@ class Expr
 	static public $importPath;
 
 	/*
-	**	Current source path.
-	*/
-	static public $currentPath;
-
-	/*
-	**	Current namespace.
-	*/
-	static public $namespace = '';
-
-	/*
 	**	Cache path.
 	*/
 	static public $cachePath = 'volatile/expr';
+
+	/**
+	 * 	Current context.
+	 */
+	static public $context;
+
+	/*
+	**	Context stack.
+	*/
+	static public $contextStack;
 
 	/*
 	**	Post-processes a parsed expression. Unescapes the backslash escape sequences.
@@ -95,7 +310,7 @@ class Expr
 			return $value;
 		}
 
-		for ($i = 0; $i < strlen($value); $i++)
+		for ($i = 0; $i < Text::length($value); $i++)
 		{
 			if ($value[$i] == '\\')
 			{
@@ -210,7 +425,7 @@ class Expr
 			}
 		};
 
-		for ($i = 0; $i < strlen($template); $i++)
+		for ($i = 0; $i < Text::length($template); $i++)
 		{
 			if ($template[$i] == "\\")
 			{
@@ -332,7 +547,7 @@ class Expr
 						$nparts = true;
 
 						$keep = true;
-						$n = strlen($template)-1;
+						$n = Text::length($template)-1;
 
 						while ($keep && $i < $n)
 						{
@@ -455,7 +670,7 @@ class Expr
 
 						if ($count == 0)
 						{
-							if (strlen($str) != 0)
+							if (Text::length($str) != 0)
 							{
 								if (!($str[0] == '<' || $str[0] == '[' || $str[0] == ' '))
 									$str = $sym_open . $str . $sym_close;
@@ -787,9 +1002,8 @@ class Expr
 
 								if ($data === null && $first)
 								{
-									// VIOLET: Possibly no longer required.
-									if (Expr::$functions->has($str))
-										$data = Expr::$functions->get($str) (new Arry([$str]), null, $tmp);
+									if (Expr::hasFunction($str))
+										$data = Expr::getFunction()->exec3 (new Arry([$str]), null, $tmp);
 								}
 
 								$first = false;
@@ -838,11 +1052,12 @@ class Expr
 
 				if ($failed && $parts->length == 1)
 				{
-					if (Expr::$functions->has($str)) {
-						$data = Expr::$functions->get($str) (new Arry([$str]), null, $root);
-					} else {
+					if (Expr::hasFunction($str)) {
+						$data = Expr::getFunction()->exec3 (new Arry([$str]), null, $root);
+					}
+					else {
 						if (Expr::$strict == true)
-							throw new Error ('Expression function `'.$str.'` not found.');
+							throw new Error ('Function `'.$str.'` not found.');
 					}
 				}
 			}
@@ -905,8 +1120,8 @@ class Expr
 
 								if ($data === null && $first)
 								{
-									if (Expr::$functions->has($str))
-										$data = Expr::$functions->get($str) (new Arry([$str]), null, $tmp);
+									if (Expr::hasFunction($str))
+										$data = Expr::getFunction()->exec3 (new Arry([$str]), null, $tmp);
 								}
 
 								$first = false;
@@ -952,24 +1167,24 @@ class Expr
 					break;
 			}
 
-			if (Expr::$functions->has('_'.$args->get(0)))
+			if (Expr::hasFunction('_'.$args->get(0)))
 				$args->set(0, '_'.$args->get(0));
 
-			if (!(Expr::$functions->has($args->get(0))))
+			if (!(Expr::hasFunction($args->get(0))))
 			{
 				if (Expr::$strict == true)
-					throw new Error ('Expression function `'.$args->get(0).'` not found.');
+					throw new Error ('Function `'.$args->get(0).'` not found.');
 
 				return '(Unknown: '.$args->get(0).')';
 			}
 
 			if ($args->get(0)[0] == '_')
-				return Expr::$functions->get($args->get(0)) ($parts, $data);
+				return Expr::getFunction($args->get(0))->exec2 ($parts, $data);
 
 			for ($i = 1; $i < $parts->length(); $i++)
-				$args->push(Expr::expand($parts->get($i), $data, 'arg', 'base-string'));
+				$args->push (Expr::expand($parts->get($i), $data, 'arg', 'base-string'));
 
-			$s->push(Expr::$functions->get($args->get(0)) ($args, $parts, $data));
+			$s->push (Expr::getFunction($args->get(0))->exec3 ($args, $parts, $data));
 		}
 
 		// Template mode.
@@ -989,7 +1204,7 @@ class Expr
 						case 'identifier':
 							$name = $parts->get(0)->get(0)->data;
 
-							if (Expr::$functions->has($name) || Expr::$functions->has('_'.$name))
+							if (Expr::hasFunction($name) || Expr::hasFunction('_'.$name))
 								return Expr::expand($parts, $data, $ret, 'fn');
 
 							break;
@@ -1145,30 +1360,35 @@ class Expr
 	}
 
 	/**
-	**	Expands the template as 'arg' and returns the result.
-	**
-	**	>> object value (string parts, object data);
-	*/
+	 * 	Expands the template as 'arg' and returns the result.
+	 */
 	public static function value ($parts, $data=null)
 	{
 		return typeOf($parts) != 'Rose\\Arry' ? $parts : Expr::expand($parts, $data ? $data : new Map(), 'arg');
 	}
 
 	/**
-	**	Template functions, functions that are used to format data. Each function takes three parameters (args, parts and data). By default the function arguments
-	**	are expanded and passed via 'args' for convenience, however if the function name starts with '_' the 'args' parameter will be skipped and only (parts, data)
-	**	will be available, each 'part' must be expanded manually by calling Expr::expand.
-	*/
-	public static $functions;
-
-	/**
-	**	Registers an expression function.
-	**
-	**	>> object register (string name, function fn);
-	*/
+	 * 	Registers an expression function in the current context.
+	 */
 	public static function register ($name, $fn)
 	{
-		Expr::$functions->set ($name, $fn);
+		self::$context->registerFunction ($name, new ExprFn ($name, $fn, self::$context));
+	}
+
+	/**
+	 * 	Returns true if the specified function exists in the current context.
+	 */
+	public static function hasFunction ($name)
+	{
+		return self::$context->hasFunction ($name);
+	}
+
+	/**
+	 * 	Returns an ExprFn from the current context or null if not found.
+	 */
+	public static function getFunction ($name=null)
+	{
+		return self::$context->getFunction ($name);
 	}
 
 	/**
@@ -1180,8 +1400,8 @@ class Expr
 	{
 		if (!$args) $args = new Arry();
 
-		if (Expr::$functions->has($name))
-			return Expr::$functions->get($name) ($args, null, $data);
+		if (Expr::hasFunction($name))
+			return Expr::getFunction()->exec3 ($args, null, $data);
 
 		return null;
 	}
@@ -1207,7 +1427,7 @@ class Expr
 			if ($mode == 1)
 				$key = Text::substring($key, 1);
 			else if ($mode == 2)
-				$key = Text::substring($key, 0, strlen($key)-1);
+				$key = Text::substring($key, 0, Text::length($key)-1);
 
 			if ($expanded)
 				$s->set((string)$key, Expr::expand($parts->get($i+1), $data, 'arg'));
@@ -1336,10 +1556,13 @@ class Expr
 **	Initialize class constants.
 */
 
-Expr::$functions = new Map();
-Expr::$imported = new Map();
+Expr::$contextStack = new Arry();
 
-Expr::$currentPath = Path::resolve(Main::$CORE_DIR);
+Expr::$context = new Context();
+Expr::$context->currentPath = Path::resolve(Main::$CORE_DIR);
+
+Expr::$importedTime = new Map();
+Expr::$importedContext = new Map();
 Expr::$importPath = Path::resolve(Main::$CORE_DIR);
 
 
@@ -1351,11 +1574,7 @@ $_glb_object = new Map();
 
 Expr::register('global', function($args) { global $_glb_object; return $_glb_object; });
 
-//Expr::register('null', function($args) { return null; });
-//Expr::register('true', function($args) { return true; });
-//Expr::register('false', function($args) { return false; });
-
-Expr::register('len', function($args) { $s = $args->get(1); return \Rose\typeOf($s) == 'primitive' ? strlen((string)$s) : $s->length; });
+Expr::register('len', function($args) { $s = $args->get(1); return \Rose\typeOf($s) == 'primitive' ? Text::length((string)$s) : $s->length; });
 Expr::register('int', function($args) { return (int)$args->get(1); });
 Expr::register('bool', function($args) { return \Rose\bool($args->get(1)); });
 Expr::register('str', function($args) { $s = ''; for ($i = 1; $i < $args->length; $i++) $s .= (string)$args->get($i); return $s; });
@@ -1395,6 +1614,11 @@ Expr::register('notempty?', function($args) { return !!$args->get(1); });
 Expr::register('empty?', function($args) { return !$args->get(1); });
 Expr::register('zero?', function($args) { return (float)$args->get(1) == 0; });
 
+Expr::register('int?', function($args) { return typeOf($args->get(1), true) === 'int'; });
+Expr::register('str?', function($args) { return typeOf($args->get(1), true) === 'string'; });
+Expr::register('bool?', function($args) { return typeOf($args->get(1), true) === 'bool'; });
+Expr::register('float?', function($args) { return typeOf($args->get(1), true) === 'number'; });
+
 Expr::register('typeof', function($args)
 {
 	$type = typeOf($args->get(1), true);
@@ -1413,8 +1637,8 @@ Expr::register('/', function($args) { return Expr::reduce($args->get(1), $args, 
 Expr::register('+', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum+$value; }); });
 Expr::register('-', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum-$value; }); });
 Expr::register('mul', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum*$value; }); });
-Expr::register('div', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum/$value; }); });
-Expr::register('sum', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum+$value; }); });
+Expr::register('mul', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return (int)($accum*$value); }); });
+Expr::register('div', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return (int)($accum/$value); }); });
 Expr::register('sub', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum-$value; }); });
 Expr::register('mod', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum%$value; }); });
 Expr::register('pow', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return pow($accum, $value); }); });
@@ -1489,9 +1713,9 @@ Expr::register('_set', function ($parts, $data)
 });
 
 /**
-**	Increments the value of a variable.
+**	Increments the value of a variable by the given value (or 1 if none provided).
 **
-**	inc <var-name>
+**	inc <var-name> [<value>]
 */
 Expr::register('_inc', function ($parts, $data)
 {
@@ -1501,14 +1725,16 @@ Expr::register('_inc', function ($parts, $data)
 	if (!$ref[0])
 		throw new Error('Unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join('')  );
 
-	$ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} + 1;
+	$value = $parts->has(2) ? Expr::value($parts->get(2), $data) : 1;
+
+	$ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} + $value;
 	return null;
 });
 
 /**
-**	Decrements the value of a variable.
+**	Decrements the value of a variable by the given value (or 1 if none provided).
 **
-**	dec <var-name>
+**	dec <var-name> [<value>]
 */
 Expr::register('_dec', function ($parts, $data)
 {
@@ -1518,7 +1744,9 @@ Expr::register('_dec', function ($parts, $data)
 	if (!$ref[0])
 		throw new Error('Unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join('')  );
 
-	$ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} - 1;
+	$value = $parts->has(2) ? Expr::value($parts->get(2), $data) : 1;
+
+	$ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} - $value;
 	return null;
 });
 
@@ -1975,6 +2203,19 @@ Expr::register('_if', function ($parts, $data)
 Expr::register('_when', function ($parts, $data)
 {
 	if (Expr::expand($parts->get(1), $data, 'arg'))
+		return Expr::blockValue($parts->slice(2), $data);
+
+	return null;
+});
+
+/**
+**	Returns the value returned by the block if the expression is false.
+**
+**	when-not <expr> <block>
+*/
+Expr::register('_when-not', function ($parts, $data)
+{
+	if (!Expr::expand($parts->get(1), $data, 'arg'))
 		return Expr::blockValue($parts->slice(2), $data);
 
 	return null;
@@ -2513,28 +2754,6 @@ Expr::register('expand', function ($args, $parts, $data)
 		return Expr::expand (Expr::parseTemplate (Expr::clean($args->get(1)), '{', '}', false, 1, false), $args->length == 3 ? $args->get(2) : $data);
 });
 
-/**
-**	Calls a function described by the given parameter.
-**
-**	call <function> <args...>
-*/
-/*Expr::register('_call', function ($parts, $data)
-{
-	$ref = Expr::expand($parts->get(1), $data, 'varref');
-	if (!$ref || typeOf($ref[0]->{$ref[1]}) != 'function')
-	{
-		echo $ref[0];
-		exit;
-		throw new Error ('Expression is not a function: ' . Expr::expand($parts->get(1), $data, 'obj')->map(function($i) { return $i == null ? '.' : $i; })->join(''));
-	}
-
-	$args = [];
-
-	for ($i = 2; $i < $parts->length; $i++)
-		$args[] = Expr::value($parts->get($i), $data);
-
-	return call_user_func_array ($ref[0]->{$ref[1]}, $args);
-});*/
 
 /**
 **	Try-catch block support. The catch block provides `err` and `ex` variables.
@@ -2543,42 +2762,99 @@ Expr::register('expand', function ($args, $parts, $data)
 */
 Expr::register('_try', function ($parts, $data)
 {
-	$i = 2;
+	$n = $parts->length;
 
-	$_catch = 0;
-	$_finally = 0;
+	$code = null;
+	$catch = null;
+	$finally = null;
 
-	if ($parts->length > 2)
+	$j = 1;
+
+	for ($i = 1; $i < $n; $i++)
 	{
-		switch (Expr::value($parts->get(2), $data))
+		if ($parts->get($i)->get(0)->type == 'identifier')
 		{
-			case 'catch':
-				$_catch = 3;
+			switch ($parts->get($i)->get(0)->data)
+			{
+				case 'catch':
+					if ($code === null)
+						$code = $parts->slice($j, $i-$j);
 
-				if ($parts->length > 4 && Expr::value($parts->get(4), $data) == 'finally')
-					$_finally = 5;
+					$catch = true;
+					$j = $i+1;
+					break;
 
-				break;
+				case 'finally':
+					if ($code === null)
+						$code = $parts->slice($j, $i-$j);
 
-			case 'finally':
-				$_finally = 3;
-				break;
+					if ($catch === true)
+						$catch = $parts->slice($j, $i-$j);
+			
+					$finally = true;
+					$j = $i+1;
+					break;
+			}
 		}
 	}
 
+	if ($code === null)
+		$code = $parts->slice($j);
+
+	if ($catch === true)
+		$catch = $parts->slice($j);
+
+	if ($finally === true)
+		$finally = $parts->slice($j);
+
+	MetaError::incBaseLevel();
+
+	$value = null;
+
 	try {
-		Expr::value($parts->get(1), $data);
+		$value = Expr::blockValue($code, $data);
+	}
+	catch (MetaError $e)
+	{
+		switch ($e->isForMe(-1) ? $e->code : null)
+		{
+			case 'EXPR_YIELD':
+				$value = $e->value;
+				break;
+
+			case 'FN_RET':
+				throw $e;
+				break;
+
+			default:
+				throw $e;
+				break;
+		}
 	}
 	catch (\Exception $e)
 	{
+		switch ($e->getMessage())
+		{
+			case 'EXC_BREAK':
+			case 'EXC_CONTINUE':
+				throw $e;
+		}
+
 		$data->err = $e->getMessage();
 		$data->ex = $e;
 
-		if ($_catch)
-			Expr::value($parts->get($_catch), $data);
+		if ($catch !== null)
+			Expr::blockValue($catch, $data);
+	}
+	finally
+	{
+		MetaError::decBaseLevel();
+
+		if ($finally !== null)
+			Expr::blockValue($finally, $data);
 	}
 
-	if ($_finally) Expr::value($parts->get($_finally), $data);
+	return $value;
 });
 
 /**
@@ -2680,31 +2956,39 @@ Expr::register('_fn', function($parts, $data)
 {
 	$params = new Arry();
 
+	$context = Expr::$context;
+	$contextData = $context->getId() == 0 && $data !== $context->data ? $data : $context->data;
+
 	for ($i = 1; $i < $parts->length; $i++)
 	{
 		if ($parts->get($i)->get(0)->type != 'identifier')
 		{
 			$block = $parts->slice($i);
 
-			return function ($args, $parts, $data) use (&$params, &$block)
+			return function ($args, $parts, $data) use (&$params, &$block, &$context, &$contextData)
 			{
+				global $_glb_object;
+
 				if ($args->length-1 < $params->length)
 					throw new Error ("Invalid number of parameters, expected ".($params->length)." got ".($args->length-1).".");
 
-				$new = new Map();
-				$new->set('global', $data);
+				$newData = new Map();
+				$newData->set('local', $contextData);
+				$newData->set('global', $_glb_object);
 
-				$params->forEach(function ($param, $index) use (&$new, &$args)
-				{
-					$new->set($param, $args->get($index+1));
+				$params->forEach(function ($param, $index) use (&$newData, &$args) {
+					$newData->set($param, $args->get($index+1));
 				});
+
+				Expr::$contextStack->push(Expr::$context);
+				Expr::$context = $context;
 
 				$value = null;
 
 				MetaError::incBaseLevel();
 
 				try {
-					$value = Expr::blockValue($block, $new);
+					$value = Expr::blockValue($block, $newData);
 				}
 				catch (MetaError $e)
 				{
@@ -2726,6 +3010,7 @@ Expr::register('_fn', function($parts, $data)
 				}
 				finally
 				{
+					Expr::$context = Expr::$contextStack->pop();
 					MetaError::decBaseLevel();
 				}
 
@@ -2739,42 +3024,77 @@ Expr::register('_fn', function($parts, $data)
 	return null;
 });
 
+
 /*
-**	Defines a global function. Note that functions are isolated and do not have access to the global scope, however this
-**	action defines a local variable named `global` which can be used to access it.
+**	Defines a function. Note that functions are isolated and do not have access to the outer scopes, however this
+**	action defines local variables named `local` and `global` which can be used.
 **
-**	def-fn <fn-name> <param-name>* <block>
+**	def-fn [private|public] <fn-name> <param-name>* <block>
 */
 Expr::register('_def-fn', function($parts, $data)
 {
-	$name = Expr::value($parts->get(1), $data);
+	$scope = Expr::$context->currentScope;
+
+	$i = 1;
+
+	while ($i < $parts->length)
+	{
+		if ($parts->get($i)->get(0)->data === 'private')
+		{
+			$scope = 'private';
+			$i++;
+			continue;
+		}
+
+		if ($parts->get($i)->get(0)->data === 'public')
+		{
+			$scope = 'public';
+			$i++;
+			continue;
+		}
+
+		break;
+	}
+
+	if ($i >= $parts->length)
+		return null;
+
+	$name = Expr::value($parts->get($i++), $data);
 	$params = new Arry();
 
-	for ($i = 2; $i < $parts->length; $i++)
+	$context = Expr::$context;
+	$contextData = $context->getId() == 0 && $data !== $context->data ? $data : $context->data;
+
+	for (; $i < $parts->length; $i++)
 	{
 		if ($parts->get($i)->get(0)->type != 'identifier')
 		{
 			$block = $parts->slice($i);
 
-			$fn = function ($args, $parts, $data) use (&$params, &$block, &$name)
+			$fn = function ($args, $parts, $data) use (&$params, &$block, &$name, &$context, &$contextData)
 			{
+				global $_glb_object;
+
 				if ($args->length-1 < $params->length)
 					throw new Error ("Invalid number of parameters in call of `".$name."`, expected ".($params->length)." got ".($args->length-1).".");
 
-				$new = new Map();
-				$new->set('global', $data);
+				$newData = new Map();
+				$newData->set('local', $contextData);
+				$newData->set('global', $_glb_object);
 
-				$params->forEach(function ($param, $index) use (&$new, &$args)
-				{
-					$new->set($param, $args->get($index+1));
+				$params->forEach(function ($param, $index) use (&$newData, &$args) {
+					$newData->set($param, $args->get($index+1));
 				});
+
+				Expr::$contextStack->push(Expr::$context);
+				Expr::$context = $context;
 
 				$value = null;
 
 				MetaError::incBaseLevel();
 
 				try {
-					$value = Expr::blockValue($block, $new);
+					$value = Expr::blockValue($block, $newData);
 				}
 				catch (MetaError $e)
 				{
@@ -2796,6 +3116,7 @@ Expr::register('_def-fn', function($parts, $data)
 				}
 				finally
 				{
+					Expr::$context = Expr::$contextStack->pop();
 					MetaError::decBaseLevel();
 				}
 
@@ -2808,99 +3129,164 @@ Expr::register('_def-fn', function($parts, $data)
 		$params->push(Expr::value($parts->get($i), $data));
 	}
 
+	$ns = Expr::$context->currentNamespace;
+	$flag = false;
+
+	if ($ns && Text::startsWith($name, $ns.'::'))
+	{
+		$name = Text::substring($name, Text::length($ns)+2);
+		$flag = true;
+	}
+
+	$isPrivate = $scope === 'private';
+
 	if (Text::startsWith($name, '::'))
-		Expr::register(Text::substring($name, 2), $fn);
-	else if (Text::indexOf($name, '::'))
-		Expr::register($name, $fn);
+	{
+		$name = Text::substring($name, 2);
+		Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
+	}
+	else if (Text::indexOf($name, '::') && !$flag)
+	{
+		if ($isPrivate)
+			Expr::$context->registerFunction($name, new ExprFn ($name, $fn, Expr::$context), true);
+		else
+			Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
+	}
 	else
-		Expr::register((Expr::$namespace ? (Expr::$namespace . '::') : '') . $name, $fn);
+	{
+		if ($ns)
+		{
+			if (!$isPrivate)
+				Expr::$context->registerFunction($ns.'::'.$name, new ExprFn ($ns.'::'.$name, $fn, Expr::$context));
+			else
+				Expr::$context->registerFunction($ns.'::'.$name, new ExprFn ($ns.'::'.$name, $fn, Expr::$context), true);
+		}
+		else
+			Expr::$context->registerFunction($name, new ExprFn ($name, $fn, Expr::$context), $isPrivate);
+	}
 
 	return null;
 });
 
 
 /*
-**	Defines a global variable.
+**	Defines a variable in the current context.
 **
-**	def <var-name> <value>
+**	def [public|private] <var-name> <value>
 */
 Expr::register('_def', function($parts, $data)
 {
-	$name = Expr::value($parts->get(1), $data);
-	$value = Expr::value($parts->get(2), $data);
+	$scope = Expr::$context->currentScope;
+
+	$i = 1;
+
+	while (true)
+	{
+		if ($parts->get($i)->get(0)->data === 'private')
+		{
+			$scope = 'private';
+			$i++;
+			continue;
+		}
+	
+		if ($parts->get($i)->get(0)->data === 'public')
+		{
+			$scope = 'public';
+			$i++;
+			continue;
+		}
+	
+		break;
+	}
+
+	$name = Expr::value($parts->get($i++), $data);
+	$value = Expr::value($parts->get($i), $data);
 
 	$fn = function () use (&$value) {
 		return $value;
 	};
 
-	if (Text::startsWith($name, '::'))
-		Expr::register(Text::substring($name, 2), $fn);
-	else if (Text::indexOf($name, '::'))
-		Expr::register($name, $fn);
-	else
-		Expr::register((Expr::$namespace ? (Expr::$namespace . '::') : '') . $name, $fn);
+	$ns = Expr::$context->currentNamespace;
+	$flag = false;
 
-	return null;
-});
-
-
-/*
-**	Defines an alias for a function.
-**
-**	def-alias <fn-name> <fn-expr>
-*/
-Expr::register('_def-alias', function($parts, $data)
-{
-	$name = Expr::value($parts->get(1), $data);
-	$fn = Expr::value($parts->get(2), $data);
-
-	if (\Rose\typeOf($fn) != 'function')
+	if ($ns && Text::startsWith($name, $ns.'::'))
 	{
-		$tmp = Expr::$functions->get((string)$fn);
-		if (!$tmp)
-			throw new Error ('Value for an alias must be a function, undefined: ' . (string)$fn);
-		else
-			$fn = $tmp;
+		$name = Text::substring($name, Text::length($ns)+2);
+		$flag = true;
 	}
 
-	if (Text::startsWith($name, '::'))
-		Expr::register(Text::substring($name, 2), $fn);
-	else if (Text::indexOf($name, '::'))
-		Expr::register($name, $fn);
-	else
-		Expr::register((Expr::$namespace ? (Expr::$namespace . '::') : '') . $name, $fn);
+	$isPrivate = $scope === 'private';
 
+	if (Text::startsWith($name, '::'))
+	{
+		$name = Text::substring($name, 2);
+		Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
+	}
+	else if (Text::indexOf($name, '::') && !$flag)
+	{
+		if ($isPrivate)
+			Expr::$context->registerFunction($name, new ExprFn ($name, $fn, Expr::$context), true);
+		else
+			Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
+	}
+	else
+	{
+		if ($ns)
+		{
+			if (!$isPrivate)
+				Expr::$context->registerFunction($ns.'::'.$name, new ExprFn ($ns.'::'.$name, $fn, Expr::$context));
+			else
+				Expr::$context->registerFunction($ns.'::'.$name, new ExprFn ($ns.'::'.$name, $fn, Expr::$context), true);
+		}
+		else
+			Expr::$context->registerFunction($name, new ExprFn ($name, $fn, Expr::$context), $isPrivate);
+	}
+	
 	return null;
 });
 
+
 /*
-**	Sets the namespace for any def-* statements.
+**	Sets the active namespace for any def-* statements.
 **
-**	ns <str-expr>
+**	ns [public|private] [<str-expr>]
 */
 Expr::register('ns', function($args, $parts, $data)
 {
-	Expr::$namespace = $args->get(1);
+	$scope = 'public';
+	$i = 1;
+
+	while  ($i < $args->length)
+	{
+		if ($args->get($i) == 'public' || $args->get($i) == 'private')
+		{
+			$scope = $args->get($i);
+			$i++;
+			continue;
+		}
+
+		break;
+	}
+
+	Expr::$context->currentScope = $scope;
+	Expr::$context->currentNamespace = $args->has($i) ? (string)$args->get($i) : '';
+
 	return null;
 });
 
-
 /*
-**	Imports a source file and evaluates it. Sources are imported only once.
+**	Includes a source file and evaluates it, as if it was written in the current source file.
 **
-**	require <source-path>+
+**	include <source-path>+
 */
-Expr::register('require', function($args, $parts, $data)
+Expr::register('include', function($args, $parts, $data)
 {
 	for ($i = 1; $i < $args->length; $i++)
 	{
-		$currentPath = Expr::$currentPath;
-		$namespace = Expr::$namespace;
-
 		$path = $args->get($i);
 
 		if (Text::startsWith($path, './'))
-			$path = Path::append(Expr::$currentPath, Text::substring($path, 2));
+			$path = Path::append(Expr::$context->currentPath, Text::substring($path, 2));
 		else if (!Text::startsWith($path, '/'))
 			$path = Path::append(Expr::$importPath, $path);
 
@@ -2908,50 +3294,24 @@ Expr::register('require', function($args, $parts, $data)
 			$path .= '.fn';
 
 		$path = Path::resolve($_path = $path);
-		$path_cache = null;
-
-		if (Text::startsWith($path, Expr::$importPath))
-			$path_cache = Path::append(Expr::$cachePath, Text::replace('/', '-', Text::substring($path, 1+Text::length(Expr::$importPath))));
-
 		if (!Path::exists($path))
 			throw new Error ("Source does not exist: " . $_path);
 
-		if (Expr::$imported->get($path) == File::mtime($path, true))
-			continue;
+		$expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path), ''));
 
-		Expr::$imported->set($path, File::mtime($path, true));
-
-		if ($path_cache && Path::exists($path_cache) && File::mtime($path_cache, true) == File::mtime($path, true))
+		for ($j = 0; $j < $expr->length; $j++)
 		{
-			$expr = unserialize(File::getContents($path_cache));
-		}
-		else
-		{
-			$expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path), ''));
-
-			for ($j = 0; $j < $expr->length; $j++)
+			if ($expr->get($j)->type != 'template')
 			{
-				if ($expr->get($j)->type != 'template')
-				{
-					$expr->remove($j);
-					$j--;
-				}
-			}
-
-			if ($path_cache) {
-				File::setContents($path_cache, serialize($expr));
-				File::touch($path_cache, File::mtime($path, true));
+				$expr->remove($j);
+				$j--;
 			}
 		}
-
-		Expr::$currentPath = Path::dirname($path);
-		Expr::$namespace = '';
 
 		MetaError::incBaseLevel();
 
-		try
-		{
-			$value = Expr::expand ($expr, $data, 'void');
+		try {
+			Expr::expand ($expr, Expr::$context->data, 'void');
 		}
 		catch (MetaError $e)
 		{
@@ -2960,11 +3320,9 @@ Expr::register('require', function($args, $parts, $data)
 			switch ($e->code)
 			{
 				case 'EXPR_YIELD':
-					$value = $e->value;
 					break;
 
 				case 'FN_RET':
-					$value = $e->value;
 					break;
 
 				default:
@@ -2975,16 +3333,14 @@ Expr::register('require', function($args, $parts, $data)
 		{
 			MetaError::decBaseLevel();
 		}
-
-		Expr::$currentPath = $currentPath;
-		Expr::$namespace = $namespace;
 	}
 
-	return $value;
+	return null;
 });
 
+
 /*
-**	Imports definitions from a source file into a namespace. Different namespaces will cause the source to be reloaded.
+**	Imports definitions from a source file into a namespace.
 **
 **	import (<source-path> [as <namespace-name>])+
 */
@@ -2992,10 +3348,8 @@ Expr::register('import', function($args, $parts, $data)
 {
 	for ($i = 1; $i < $args->length; $i++)
 	{
-		$currentPath = Expr::$currentPath;
-		$namespace = Expr::$namespace;
-
 		$path = $args->get($i);
+
 		$ns = '';
 
 		if ($i+1 < $args->length && $args->get($i+1) == 'as')
@@ -3005,7 +3359,7 @@ Expr::register('import', function($args, $parts, $data)
 		}
 
 		if (Text::startsWith($path, './'))
-			$path = Path::append(Expr::$currentPath, Text::substring($path, 2));
+			$path = Path::append(Expr::$context->currentPath, Text::substring($path, 2));
 		else if (!Text::startsWith($path, '/'))
 			$path = Path::append(Expr::$importPath, $path);
 
@@ -3021,10 +3375,13 @@ Expr::register('import', function($args, $parts, $data)
 		if (!Path::exists($path))
 			throw new Error ("Source does not exist: " . $_path);
 
-		if (Expr::$imported->get($ns.'::'.$path) == File::mtime($path, true))
+		if (Expr::$importedTime->get($path) == File::mtime($path, true))
+		{
+			Expr::$context->linkContext (Expr::$importedContext->get($path), $ns);
 			continue;
+		}
 
-		Expr::$imported->set($ns.'::'.$path, File::mtime($path, true));
+		Expr::$importedTime->set($path, File::mtime($path, true));
 
 		if ($path_cache && Path::exists($path_cache) && File::mtime($path_cache, true) == File::mtime($path, true))
 		{
@@ -3049,14 +3406,17 @@ Expr::register('import', function($args, $parts, $data)
 			}
 		}
 
-		Expr::$currentPath = Path::dirname($path);
-		Expr::$namespace = $ns;
+		Expr::$contextStack->push(Expr::$context);
+
+		Expr::$context = new Context();
+		Expr::$context->currentPath = Path::dirname($path);
+
+		Expr::$importedContext->set($path, Expr::$context);
 
 		MetaError::incBaseLevel();
 
-		try
-		{
-			$value = Expr::expand ($expr, $data, 'void');
+		try {
+			Expr::expand ($expr, Expr::$context->data, 'void');
 		}
 		catch (MetaError $e)
 		{
@@ -3065,11 +3425,9 @@ Expr::register('import', function($args, $parts, $data)
 			switch ($e->code)
 			{
 				case 'EXPR_YIELD':
-					$value = $e->value;
 					break;
 
 				case 'FN_RET':
-					$value = $e->value;
 					break;
 
 				default:
@@ -3078,14 +3436,15 @@ Expr::register('import', function($args, $parts, $data)
 		}
 		finally
 		{
+			$context = Expr::$context;
+			Expr::$context = Expr::$contextStack->pop();
+			Expr::$context->linkContext ($context, $ns);
+
 			MetaError::decBaseLevel();
 		}
-
-		Expr::$currentPath = $currentPath;
-		Expr::$namespace = $namespace;
 	}
 
-	return $value;
+	return null;
 });
 
 /*
@@ -3191,4 +3550,73 @@ Expr::register('_mapify', function ($parts, $data)
 	$data->remove($var_name . '#');
 
 	return $output;
+});
+
+Expr::register('debug::dumpContextChain', function($args)
+{
+	echo "Context " . Expr::$context->getId() . ":\n";
+
+	$i = 1;
+	$includeRoot = false;
+	$includePrivate = false;
+
+	while ($i < $args->length)
+	{
+		$value = $args->get($i++);
+
+		if ($value == 'include-root')
+		{
+			$includeRoot = true;
+			continue;
+		}
+
+		if ($value == 'include-private')
+		{
+			$includePrivate = true;
+			continue;
+		}
+	}
+
+	if ((Expr::$context->getId() == 0 && $includeRoot) || Expr::$context->getId() != 0)
+	{
+		Expr::$context->publicFunctions->forEach(function($fn)
+		{
+			echo "  public " . $fn->name . "\n";
+		});
+
+		Expr::$context->exportedFunctions->forEach(function($fn)
+		{
+			echo "  exported " . $fn->name . "\n";
+		});
+
+		if ($includePrivate) Expr::$context->privateFunctions->forEach(function($fn)
+		{
+			echo "  private " . $fn->name . "\n";
+		});
+	}
+
+	echo "\n";
+
+	Expr::$context->chain->forEach(function($linked) use (&$includeRoot, &$includePrivate)
+	{
+		echo "  Linked Context " . $linked->context->getId() . " AS '" . $linked->ns . "'\n";
+
+		if ($linked->context->getId() == 0 && !$includeRoot)
+			return;
+
+		$linked->context->publicFunctions->forEach(function($fn)
+		{
+			echo "    public " . $fn->name . "\n";
+		});
+
+		$linked->context->exportedFunctions->forEach(function($fn)
+		{
+			echo "    exported " . $fn->name . "\n";
+		});
+
+		if ($includePrivate) $linked->context->privateFunctions->forEach(function($fn)
+		{
+			echo "    private " . $fn->name . "\n";
+		});
+	});
 });

@@ -417,7 +417,11 @@ class Wind
 
 		if (!self::$contentFlushed)
 		{
-			Gateway::header(self::$contentType ? self::$contentType : 'Content-Type: text/plain; charset=utf-8');
+			try {
+				Gateway::header(self::$contentType ? self::$contentType : 'Content-Type: text/plain; charset=utf-8'); }
+			catch (\Exception $e) {
+			}
+
 			self::$contentFlushed = true;
 		}
 

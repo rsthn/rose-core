@@ -295,7 +295,7 @@ class Http
 	*/
 	public static function fetchGet ($url, $fields)
 	{
-		return Expr::call('utils::json:parse', new Arry ([null, self::get($url, $fields, new Map([ 'Accept' => 'Accept: application/json' ]))]));
+		return Expr::call('utils::json::parse', new Arry ([null, self::get($url, $fields, new Map([ 'Accept' => 'Accept: application/json' ]))]));
 	}
 
 	/**
@@ -303,7 +303,7 @@ class Http
 	*/
 	public static function fetchPost ($url, $data)
 	{
-		return Expr::call('utils::json:parse', new Arry ([null, self::post($url, $data, new Map([ 'Accept' => 'Accept: application/json' ]))]));
+		return Expr::call('utils::json::parse', new Arry ([null, self::post($url, $data, new Map([ 'Accept' => 'Accept: application/json' ]))]));
 	}
 
 };

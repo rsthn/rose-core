@@ -580,6 +580,10 @@ Returns `valueA` if it is not `null` or empty string or zero, otherwise returns 
 ```lisp
 ```
 
+## `_when-not`
+```lisp
+```
+
 ## `_switch`
 ```lisp
 ```
@@ -706,7 +710,7 @@ Returns `true` if the object has the specified key, or if the array/list has the
 ```lisp
 ```
 
-## `require`
+## `include`
 ```lisp
 ```
 
@@ -832,13 +836,14 @@ Returns `true` if the object has the specified key, or if the array/list has the
 
 # Path
 
+## `path::fsroot`
 ## `path::basename`
 ## `path::extname`
 ## `path::name`
 ## `path::normalize`
 ## `path::dirname`
 ## `path::resolve`
-## `path::append`
+## `path::join`
 ## `path::is_file`
 ## `path::is_dir`
 ## `path::exists`
@@ -925,18 +930,20 @@ Returns `true` if the object has the specified key, or if the array/list has the
 ## `utils::uuid`
 ## `utils::unique`
 ## `utils::sleep`
-## `utils::base64:encode`
-## `utils::base64:decode`
-## `utils::hex:encode`
-## `utils::hex:decode`
-## `utils::url:encode`
-## `utils::url:decode`
+## `utils::base64::encode`
+## `utils::base64::decode`
+## `utils::hex::encode`
+## `utils::hex::decode`
+## `utils::url::encode`
+## `utils::url::decode`
+## `utils::serialize`
+## `utils::deserialize`
 ## `utils::urlSearchParams`
-## `utils::html:encode`
-## `utils::html:decode`
-## `utils::json:stringify`
-## `utils::json:prettify`
-## `utils::json:parse`
+## `utils::html::encode`
+## `utils::html::decode`
+## `utils::json::stringify`
+## `utils::json::prettify`
+## `utils::json::parse`
 ## `utils::html`
 ## `utils::shell`
 

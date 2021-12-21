@@ -121,23 +121,26 @@ Expr::register('utils::unique', function($args) {
 
 Expr::register('utils::sleep', function($args) { sleep($args->get(1)); return null; });
 
-Expr::register('utils::base64:encode', function($args) { return base64_encode ($args->get(1)); });
-Expr::register('utils::base64:decode', function($args) { return base64_decode ($args->get(1)); });
+Expr::register('utils::base64::encode', function($args) { return base64_encode ($args->get(1)); });
+Expr::register('utils::base64::decode', function($args) { return base64_decode ($args->get(1)); });
 
-Expr::register('utils::hex:encode', function($args) { return bin2hex ($args->get(1)); });
-Expr::register('utils::hex:decode', function($args) { return hex2bin ($args->get(1)); });
+Expr::register('utils::hex::encode', function($args) { return bin2hex ($args->get(1)); });
+Expr::register('utils::hex::decode', function($args) { return hex2bin ($args->get(1)); });
 
-Expr::register('utils::url:encode', function($args) { return urlencode ($args->get(1)); });
-Expr::register('utils::url:decode', function($args) { return urldecode ($args->get(1)); });
+Expr::register('utils::url::encode', function($args) { return urlencode ($args->get(1)); });
+Expr::register('utils::url::decode', function($args) { return urldecode ($args->get(1)); });
+
+Expr::register('utils::serialize', function($args) { return serialize ($args->get(1)); });
+Expr::register('utils::deserialize', function($args) { return unserialize ($args->get(1)); });
 
 Expr::register('utils::urlSearchParams', function($args) {
 	return $args->get(1)->map(function($value, $key) { return urlencode($key).'='.urlencode($value); })->values()->join('&');
 });
 
-Expr::register('utils::html:encode', function($args) { return htmlspecialchars ($args->get(1)); });
-Expr::register('utils::html:decode', function($args) { return htmlspecialchars_decode ($args->get(1)); });
+Expr::register('utils::html::encode', function($args) { return htmlspecialchars ($args->get(1)); });
+Expr::register('utils::html::decode', function($args) { return htmlspecialchars_decode ($args->get(1)); });
 
-Expr::register('utils::json:stringify', function($args)
+Expr::register('utils::json::stringify', function($args)
 {
 	$value = $args->get(1);
 
@@ -147,7 +150,7 @@ Expr::register('utils::json:stringify', function($args)
 	return json_encode($value);
 });
 
-Expr::register('utils::json:prettify', function($args)
+Expr::register('utils::json::prettify', function($args)
 {
 	$value = $args->get(1);
 
@@ -160,7 +163,7 @@ Expr::register('utils::json:prettify', function($args)
 	return json_encode($value, JSON_PRETTY_PRINT);
 });
 
-Expr::register('utils::json:parse', function($args)
+Expr::register('utils::json::parse', function($args)
 {
 	$value = $args->get(1);
 	return $value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true));
@@ -233,6 +236,11 @@ Expr::register('utils::html', function($args)
 	}
 
 	return $data;
+});
+
+Expr::register('utils::shell', function($args)
+{
+	return shell_exec ($args->get(1));
 });
 
 /* ************************** */
@@ -440,6 +448,12 @@ Expr::register('map::get', function($args)
 {
 	$map = $args->get(1);
 	return $map->{$args->get(2)};
+});
+
+Expr::register('map::has', function($args)
+{
+	$map = $args->get(1);
+	return $map->has($args->get(2));
 });
 
 Expr::register('map::remove', function($args)
