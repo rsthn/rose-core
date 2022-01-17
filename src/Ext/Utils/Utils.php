@@ -504,7 +504,7 @@ Expr::register('re::split', function($args)
 
 Expr::register('re::replace', function($args)
 {
-	return Regex::_split($args->get(1), $args->get(2), $args->get(3));
+	return Regex::_replace($args->get(1), $args->get(2), $args->get(3));
 });
 
 Expr::register('re::extract', function($args)

@@ -300,7 +300,7 @@ class Connection
         if ($this->dbTracing) \Rose\trace($queryString);
 
         if (!$this->driver->isAlive ($this->conn))
-            $this->connect();
+            $this->open();
 
         try { $rs = $this->driver->query ($queryString, $this->conn); }
 		catch (\Exception $e) { }
@@ -338,7 +338,7 @@ class Connection
         if ($this->dbTracing) \Rose\trace($queryString);
 
         if (!$this->driver->isAlive ($this->conn))
-            $this->connect();
+            $this->open();
 
         try { $rs = $this->driver->reader ($queryString, $this->conn); }
 		catch (\Exception $e) { }
@@ -364,7 +364,7 @@ class Connection
         if ($this->dbTracing) \Rose\trace($queryString);
 
         if (!$this->driver->isAlive ($this->conn))
-            $this->connect();
+            $this->open();
 
         try { $rs = $this->driver->query ($queryString, $this->conn); }
 		catch (\Exception $e) { }
@@ -393,7 +393,7 @@ class Connection
         if ($this->dbTracing) \Rose\trace($queryString);
 
         if (!$this->driver->isAlive ($this->conn))
-            $this->connect();
+            $this->open();
 
         try { $rs = $this->driver->query ($queryString, $this->conn); }
 		catch (\Exception $e) { }
@@ -431,7 +431,7 @@ class Connection
         if ($this->dbTracing) \Rose\trace($queryString);
 
         if (!$this->driver->isAlive ($this->conn))
-			$this->connect();
+			$this->open();
 
         try { $rs = $this->driver->query ($queryString, $this->conn); }
         catch (\Exception $e) { }

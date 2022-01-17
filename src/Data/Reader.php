@@ -167,6 +167,9 @@ class Reader
 
 			case 'fetch':
 				return $this->fetch();
+
+			case 'close':
+				return $this->close();
         }
     }
 

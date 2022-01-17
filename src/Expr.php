@@ -49,7 +49,7 @@ class LinkedContext
 		if (Text::startsWith($name, $this->ns . '::'))
 			return Text::substring($name, Text::length($this->ns)+2);
 
-		return $name;
+		return null;
 	}
 }
 
@@ -158,7 +158,9 @@ class Context
 		for ($i = 0; $i < $n; $i++)
 		{
 			$linked = $this->chain->get($i);
+
 			$tmp = $linked->getBaseName($name);
+			if (!$tmp) continue;
 
 			$list = $linked->context->publicFunctions;
 			if ($list->has($tmp))
@@ -3256,7 +3258,7 @@ Expr::register('ns', function($args, $parts, $data)
 	$scope = 'public';
 	$i = 1;
 
-	while  ($i < $args->length)
+	while ($i < $args->length)
 	{
 		if ($args->get($i) == 'public' || $args->get($i) == 'private')
 		{

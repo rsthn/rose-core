@@ -57,7 +57,7 @@ class Cookies
 		else
 			$sameSite = 'None';
 
-		if (Configuration::getInstance()->Gateway->allow_origin && Gateway::getInstance()->serverParams->has('HTTP_ORIGIN'))
+		if (Configuration::getInstance()->Gateway->allow_origin /*&& Gateway::getInstance()->serverParams->has('HTTP_ORIGIN')*/)
 			$header .= '; SameSite='.$sameSite;
 
 		if (Text::toLowerCase($sameSite) == 'none' && Gateway::getInstance()->secure)

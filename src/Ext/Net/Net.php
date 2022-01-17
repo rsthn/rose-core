@@ -129,10 +129,13 @@ class Http
 	**	@param $url string
 	**	@param $fields Rose\Map
 	**	@param $requestHeaders Rose\Map
+	**	@param $method string
 	*/
-	public static function get ($url, $fields, $requestHeaders=null)
+	public static function get ($url, $fields, $requestHeaders=null, $method='GET')
 	{
 		$c = curl_init();
+
+		$method = Text::toUpperCase($method);
 
 		$headers = new Map();
 		$headers->merge(self::$headers, true);
@@ -159,12 +162,12 @@ class Http
 		curl_setopt ($c, CURLOPT_URL, $url);
 		curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
 		curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt ($c, CURLOPT_CUSTOMREQUEST, 'GET');
+		curl_setopt ($c, CURLOPT_CUSTOMREQUEST, $method);
 		curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
 
 		if (self::$debug)
 		{
-			\Rose\trace('GET ' . $url);
+			\Rose\trace($method.' ' . $url);
 			\Rose\trace('HEADERS ' . $headers->values());
 		}
 
@@ -189,10 +192,13 @@ class Http
 	**	@param $url string
 	**	@param $data Rose\Map or string
 	**	@param $requestHeaders Rose\Map
+	**	@param $method string
 	*/
-	public static function post ($url, $data, $requestHeaders=null)
+	public static function post ($url, $data, $requestHeaders=null, $method='POST')
 	{
 		$c = curl_init();
+
+		$method = Text::toUpperCase($method) == 'PUT' ? 'PUT' : 'POST';
 
 		$headers = new Map();
 		$headers->merge(self::$headers, true);
@@ -234,21 +240,35 @@ class Http
 				$fields->set($name, $value);
 			});
 
-			if ($headers->get('content-type') == 'content-type: application/x-www-form-urlencoded')
+			if ($tempFiles->length == 0 && (!$headers->has('content-type') || $headers->get('content-type') == 'content-type: application/x-www-form-urlencoded'))
 			{
-				$fields = $fields->map(function ($value, $name) {
+				$temp = $fields->map(function ($value, $name) {
 					return urlencode($name) . '=' . urlencode($value);
 				});
 
-				$fields = $fields->values()->join('&');
+				$temp = $temp->values()->join('&');
+
+				if (Text::length($temp) > 2048)
+				{
+					$headers->set('content-type', 'content-type: multipart/form-data');
+					$fields = $fields->__nativeArray;
+				}
+				else
+				{
+					$headers->set('content-type', 'content-type: application/x-www-form-urlencoded');
+					$fields = $temp;
+				}
 			}
 			else
+			{
+				$headers->set('content-type', 'content-type: multipart/form-data');
 				$fields = $fields->__nativeArray;
+			}
 		}
 		else
 		{
-			if (!$headers->has('Content-Type'))
-				$headers->set('Content-Type', 'Content-Type: ' . ($data[0] == '<' ? 'text/xml' : ($data[0] == '[' || $data[0] == '{' ? 'application/json' : 'application/octet-stream')));
+			if (!$headers->has('content-type'))
+				$headers->set('content-type', 'content-type: ' . ($data[0] == '<' ? 'text/xml' : ($data[0] == '[' || $data[0] == '{' ? 'application/json' : 'application/octet-stream')));
 
 			$fields = $data;
 		}
@@ -256,15 +276,15 @@ class Http
 		curl_setopt ($c, CURLOPT_URL, $url);
 		curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
 		curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt ($c, CURLOPT_CUSTOMREQUEST, 'POST');
+		curl_setopt ($c, CURLOPT_CUSTOMREQUEST, $method);
 		curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
 		curl_setopt ($c, CURLOPT_POSTFIELDS, $fields);
 
 		if (self::$debug)
 		{
-			\Rose\trace('POST ' . $url);
+			\Rose\trace($method . ' ' . $url);
 			\Rose\trace('HEADERS ' . $headers->values());
-			\Rose\trace('FIELDS ' . $fields);
+			\Rose\trace('FIELDS ' . (is_array($fields) ? new Map($fields) : $fields));
 		}
 
 		$data = curl_exec($c);
@@ -287,23 +307,23 @@ class Http
 		$method = self::$method;
 		self::$method = 'GET';
 
-		return $method == 'POST' ? self::fetchPost($url, $fields) : self::fetchGet($url, $fields);
+		return ($method == 'POST' || $method == 'PUT') ? self::fetchPost($url, $fields, $method) : self::fetchGet($url, $fields, $method);
 	}
 
 	/**
 	**	Forwards the parameters to Http::get(), parses the JSON result and returns a Map or Arry.
 	*/
-	public static function fetchGet ($url, $fields)
+	public static function fetchGet ($url, $fields, $method='GET')
 	{
-		return Expr::call('utils::json::parse', new Arry ([null, self::get($url, $fields, new Map([ 'Accept' => 'Accept: application/json' ]))]));
+		return Expr::call('utils::json::parse', new Arry ([null, self::get($url, $fields, new Map([ 'Accept' => 'Accept: application/json' ]), $method)]));
 	}
 
 	/**
 	**	Forwards the parameters to Http::post(), parses the JSON result and returns a Map or Arry.
 	*/
-	public static function fetchPost ($url, $data)
+	public static function fetchPost ($url, $data, $method='POST')
 	{
-		return Expr::call('utils::json::parse', new Arry ([null, self::post($url, $data, new Map([ 'Accept' => 'Accept: application/json' ]))]));
+		return Expr::call('utils::json::parse', new Arry ([null, self::post($url, $data, new Map([ 'Accept' => 'Accept: application/json' ]), $method)]));
 	}
 
 };
@@ -356,11 +376,10 @@ Expr::register('http::post', function ($args)
 	return Http::post($args->get(1), $fields);
 });
 
-
 /* ****************** */
-/* http::fetch <url> [<fields>] */
+/* http::put <url> [<fields>*] */
 
-Expr::register('http::fetch', function ($args)
+Expr::register('http::put', function ($args)
 {
 	$fields = new Map();
 
@@ -380,7 +399,43 @@ Expr::register('http::fetch', function ($args)
 		$fields->merge($data, true);
 	}
 
-	return Http::fetch($args->get(1), $fields);
+	return Http::post($args->get(1), $fields, null, 'PUT');
+});
+
+
+/* ****************** */
+/* http::fetch [<method>] <url> [<fields>] */
+
+Expr::register('http::fetch', function ($args)
+{
+	$fields = new Map();
+
+	$j = 1;
+
+	switch (Text::toUpperCase($args->get($j)))
+	{
+		case 'GET': case 'PUT': case 'POST': case 'DELETE':
+			Http::$method = Text::toUpperCase($args->get($j++));
+			break;
+	}
+
+	for ($i = $j+1; $i < $args->length; $i++)
+	{
+		$data = $args->get($i);
+
+		if (\Rose\typeOf($data, true) == 'string')
+		{
+			$fields = $data;
+			break;
+		}
+
+		if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
+			continue;
+
+		$fields->merge($data, true);
+	}
+
+	return Http::fetch($args->get($j), $fields);
 });
 
 /* ****************** */
