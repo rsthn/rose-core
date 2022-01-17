@@ -198,7 +198,7 @@ class Http
 	{
 		$c = curl_init();
 
-		$method = Text::toUpperCase($method) == 'PUT' ? 'PUT' : 'POST';
+		$method = Text::toUpperCase($method);
 
 		$headers = new Map();
 		$headers->merge(self::$headers, true);
@@ -307,7 +307,7 @@ class Http
 		$method = self::$method;
 		self::$method = 'GET';
 
-		return ($method == 'POST' || $method == 'PUT') ? self::fetchPost($url, $fields, $method) : self::fetchGet($url, $fields, $method);
+		return ($method == 'POST' || $method == 'PUT' || $method == 'DELETE') ? self::fetchPost($url, $fields, $method) : self::fetchGet($url, $fields, $method);
 	}
 
 	/**
@@ -347,7 +347,7 @@ Expr::register('http::get', function ($args)
 		$fields->merge($data, true);
 	}
 
-	return Http::get($args->get(1), $fields);
+	return Http::get($args->get(1), $fields, null);
 });
 
 /* ****************** */
