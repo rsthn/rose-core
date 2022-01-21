@@ -291,7 +291,7 @@ class Gateway
 			ob_end_flush();
 
 		//set_time_limit(0);
-		//ob_implicit_flush(1);
+		ob_implicit_flush(1);
 		flush();
     }
 
@@ -302,5 +302,13 @@ class Gateway
     {
 		ignore_user_abort(true);
 		set_time_limit(0);
+    }
+
+	/*
+	**	Returns boolean indicating if the client connection was been disconnected.
+	*/
+    public static function connected ()
+    {
+		return !connection_aborted();
     }
 };

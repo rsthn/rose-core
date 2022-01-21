@@ -1012,6 +1012,10 @@ Returns `true` if the object has the specified key, or if the array/list has the
 
 ## `header`
 ## `content-type`
+
+## `evt::init`
+## `evt::send`
+
 ## `stop`
 ## `return`
 ## `_echo`

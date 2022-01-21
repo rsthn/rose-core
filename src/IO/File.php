@@ -59,6 +59,7 @@ class File
 	*/
     public static function mtime (string $filepath, bool $timestamp=false)
     {
+		clearstatcache();
         return $timestamp ? filemtime($filepath) : (string)new DateTime(filemtime($filepath));
     }
 

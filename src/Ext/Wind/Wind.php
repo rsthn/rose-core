@@ -559,11 +559,77 @@ class Wind
 
 		return $response;
 	}
+
+	private static $eventsEnabled = false;
+	private static $lastSent = null;
+
+	public static function enableEvents ()
+	{
+		if (self::$eventsEnabled)
+			return;
+
+		self::$eventsEnabled = true;
+		self::$lastSent = time();
+
+		self::$contentType = 'text/event-stream; charset=utf-8';
+
+		Gateway::header("Content-Type: text/event-stream; charset=utf-8");
+		Gateway::header("Transfer-Encoding: identity");
+		Gateway::header("Content-Encoding: identity");
+		Gateway::header("Cache-Control: no-store");
+		Gateway::header("X-Accel-Buffering: no");
+
+		Gateway::persistent();
+		Gateway::flush();
+	}
+
+	public static function sendEvent ($args, $parts, $data)
+	{
+		if (!self::$eventsEnabled)
+			return;
+
+		$i = 2;
+
+		if ($args->length > 2)
+			$s = "event: ".$args->get(1)."\n";
+		else
+			$i = 1;
+
+		$i = $args->get($i);
+
+		if (\Rose\typeOf($i) == 'Rose\\Arry' || \Rose\typeOf($i) == 'Rose\\Map')
+			$i = (string)$i;
+
+		$s .= "data: " . $i . "\n\n";
+		echo $s;
+
+		self::$lastSent = time();
+	}
+
+	public static function eventsAlive ()
+	{
+		if (!self::$eventsEnabled)
+			return false;
+
+		$now = time();
+		if ($now - self::$lastSent > 60)
+		{
+			echo "data: \n\n";
+			self::$lastSent = time();
+		}
+
+		return Gateway::connected();
+	}
 };
 
 /* ****************************************************************************** */
 Expr::register('header', function(...$args) { return Wind::header(...$args); });
 Expr::register('content-type', function(...$args) { return Wind::contentType(...$args); });
+
+Expr::register('evt::init', function(...$args) { return Wind::enableEvents(); });
+Expr::register('evt::send', function(...$args) { return Wind::sendEvent(...$args); });
+Expr::register('evt::alive', function(...$args) { return Wind::eventsAlive(...$args); });
+
 Expr::register('stop', function(...$args) { return Wind::stop(...$args); });
 Expr::register('return', function(...$args) { return Wind::_return(...$args); });
 Expr::register('_echo', function(...$args) { return Wind::_echo(...$args); });
