@@ -158,6 +158,18 @@ function error_handler ($errno, $error, $file, $line)
 	throw new Error ($error . sprintf (' (%s %u)', $file, $line));
 }
 
+/**
+ * 	Calls ini_set silently such that any errors will be inhibited.
+ */
+function silent_ini_set ($name, $value)
+{
+	try {
+		ini_set($name, $value);
+	}
+	catch (\Exception $e) {
+	}
+}
+
 /*
 **	Fatal error handler.
 */
@@ -291,7 +303,7 @@ class Main
 		// Set global error handlers and disable PHP error output.
 		set_error_handler ('Rose\\error_handler', E_STRICT | E_WARNING | E_USER_ERROR | E_USER_WARNING);
 		register_shutdown_function ('Rose\\fatal_handler');
-		ini_set ('display_errors', '0');
+		silent_ini_set ('display_errors', '0');
 
 		// Set global project core directory (use 'resources' for legacy systems, and 'rcore' for Rose 3.1+ systems).
 		if (self::$CORE_DIR == null)

@@ -283,9 +283,9 @@ class Gateway
 		if (function_exists("apache_setenv"))
 			apache_setenv("no-gzip", 1);
 
-		ini_set("zlib.output_compression", "0");
-		ini_set("output_buffering", "0");
-		ini_set("implicit_flush", "1");
+		\Rose\silent_ini_set("zlib.output_compression", "0");
+		\Rose\silent_ini_set("output_buffering", "0");
+		\Rose\silent_ini_set("implicit_flush", "1");
 
 		for ($i = 0; $i < ob_get_level(); $i++)
 			ob_end_flush();

@@ -2754,6 +2754,20 @@ Expr::register('expand', function ($args, $parts, $data)
 		return Expr::expand (Expr::parseTemplate (Expr::clean($args->get(1)), '{', '}', false, 1, false), $args->length == 3 ? $args->get(2) : $data);
 });
 
+/**
+**	Expands the specified template string (or already parsed template [array]) with the given data. The sym_open and sym_close will be '{' and '}' respectively.
+**	If no data is provided, current data parameter will be used. Returned value will be considered an argument.
+**
+**	eval <template> <data>
+*/
+Expr::register('eval', function ($args, $parts, $data)
+{
+	if (typeOf($args->get(1)) == 'Rose\\Arry')
+		return Expr::expand ($args->get(1), $args->length == 3 ? $args->get(2) : $data, 'arg');
+	else
+		return Expr::expand (Expr::parseTemplate (Expr::clean($args->get(1)), '{', '}', false, 1, false), $args->length == 3 ? $args->get(2) : $data, 'arg');
+});
+
 
 /**
 **	Try-catch block support. The catch block provides `err` and `ex` variables.

@@ -289,6 +289,10 @@ class Http
 
 		$data = curl_exec($c);
 
+		if (self::$debug) {
+			try { \Rose\trace('RESPONSE ' . $data); } catch (\Exception $e) { }
+		}
+
 		$tempFiles->forEach(function($path) { File::remove($path); });
 
 		self::$curl_last_info = curl_getinfo($c);
