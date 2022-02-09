@@ -167,14 +167,14 @@ class Wind
 		Gateway::exit();
 	}
 
-	public static function process ($path, $resetContext)
+	public static function resetContext ()
 	{
-		if ($resetContext)
-		{
-			self::$data = new Map();
-			self::$data->internal_call = 0;
-		}
+		self::$data = new Map();
+		self::$data->internal_call = 0;
+	}
 
+	public static function process ($path)
+	{
 		if ($path[0] == '@')
 			$path = self::$callStack->get(self::$callStack->length-1)[0].$path;
 
@@ -277,7 +277,10 @@ class Wind
 
 				if (++$n > 64) break;
 
-				try {
+				try
+				{
+					self::resetContext();
+
 					$f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $gateway->requestParams->f);
 					if (!$f) {
 						if (!$gateway->requestParams->has('f'))
@@ -286,7 +289,7 @@ class Wind
 							throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $gateway->requestParams->f ]);
 					}
 
-					self::process($f, true);
+					self::process($f);
 				}
 				catch (FalseError $e) {
 				}
@@ -323,7 +326,10 @@ class Wind
 		if ($gateway->relativePath)
 			$params->f = Text::replace('/', '.', Text::trim($gateway->relativePath, '/'));
 
-		try {
+		try
+		{
+			self::resetContext();
+
 			$f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $params->f);
 			if (!$f) {
 				if (!$params->has('f'))
@@ -332,7 +338,7 @@ class Wind
 					throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $params->f ]);
 			}
 
-			self::process($f, true);
+			self::process($f);
 		}
 		catch (FalseError $e) {
 		}
@@ -459,7 +465,7 @@ class Wind
 			$p_args = self::$data->args;
 			self::$data->args = $n_args;
 
-			self::process($name = Expr::expand($parts->get(1), $data), false);
+			self::process($name = Expr::expand($parts->get(1), $data));
 		}
 		catch (SubReturn $e) {
 			$response = self::$response;
@@ -516,7 +522,7 @@ class Wind
 		try {
 			self::$data->internal_call = $p_data->internal_call;
 			self::$data->args = Expr::getNamedValues($parts, $data, 2);
-			self::process($name = Expr::expand($parts->get(1), $data), false);
+			self::process($name = Expr::expand($parts->get(1), $data));
 		}
 		catch (SubReturn $e) {
 			$response = self::$response;

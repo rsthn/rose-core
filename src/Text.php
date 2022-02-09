@@ -51,6 +51,7 @@ class Text
 	*/
     public static function toUpperCase ($text, $encoding=null)
     {
+		if ($text === null) $text = '';
         return !$encoding ? strtoupper($text) : mb_strtoupper($text, $encoding);
     }
 
@@ -59,6 +60,7 @@ class Text
 	*/
     public static function toLowerCase ($text, $encoding=null)
     {
+		if ($text === null) $text = '';
         return !$encoding ? strtolower($text) : mb_strtolower($text, $encoding);
     }
 

@@ -165,7 +165,9 @@ Expr::register('utils::json::prettify', function($args)
 
 Expr::register('utils::json::parse', function($args)
 {
-	$value = $args->get(1);
+	$value = (string)$args->get(1);
+	if (Text::length($value) == 0) return null;
+
 	return $value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true));
 });
 

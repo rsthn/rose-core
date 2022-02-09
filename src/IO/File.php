@@ -90,7 +90,7 @@ class File
 	/*
 	**	Sets the contents of a file.
 	*/
-    public static function setContents (string $filepath, string $contents, $context=null)
+    public static function setContents (string $filepath, ?string $contents, $context=null)
     {
 		if (!Path::exists(Path::dirname($filepath)))
 			Directory::create(Path::dirname($filepath), true);
@@ -101,7 +101,7 @@ class File
 	/*
 	**	Appends the given contents to the file.
 	*/
-    public static function appendContents (string $filepath, string $contents)
+    public static function appendContents (string $filepath, ?string $contents)
     {
 		if (!Path::exists(Path::dirname($filepath)))
 			Directory::create(Path::dirname($filepath), true);

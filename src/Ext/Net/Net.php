@@ -205,12 +205,16 @@ class Http
 		if ($requestHeaders) $headers->merge($requestHeaders, true);
 
 		$fields = new Map();
+		$debugFields = new Map();
 		$tempFiles = new Arry();
+		$useFormData = false;
 
 		if (\Rose\typeOf($data) == 'Rose\Map')
 		{
-			$data->forEach(function($value, $name) use(&$fields, &$tempFiles)
+			$data->forEach(function($value, $name) use(&$fields, &$tempFiles, &$useFormData, &$debugFields)
 			{
+				$value2 = $value;
+
 				if (\Rose\typeOf($value) == 'Rose\Map')
 				{
 					if ($value->has('path'))
@@ -224,6 +228,8 @@ class Http
 							$value = curl_file_create ($path, '', $value->get('name'));
 						else
 							$value = curl_file_create ($path, '', Path::basename($path));
+
+						$useFormData = true;
 					}
 					else if ($value->has('name') && $value->has('data'))
 					{
@@ -232,15 +238,20 @@ class Http
 
 						$value = curl_file_create (Path::resolve($path), '', $value->get('name'));
 						$tempFiles->push($path);
+
+						$useFormData = true;
 					}
 					else
 						return;
 				}
 
+				if (self::$debug)
+					$debugFields->set($name, $value2);
+
 				$fields->set($name, $value);
 			});
 
-			if ($tempFiles->length == 0 && (!$headers->has('content-type') || $headers->get('content-type') == 'content-type: application/x-www-form-urlencoded'))
+			if (!$useFormData && (!$headers->has('content-type') || $headers->get('content-type') == 'content-type: application/x-www-form-urlencoded'))
 			{
 				$temp = $fields->map(function ($value, $name) {
 					return urlencode($name) . '=' . urlencode($value);
@@ -284,7 +295,7 @@ class Http
 		{
 			\Rose\trace($method . ' ' . $url);
 			\Rose\trace('HEADERS ' . $headers->values());
-			\Rose\trace('FIELDS ' . (is_array($fields) ? new Map($fields) : $fields));
+			\Rose\trace('FIELDS ' . (is_array($fields) ? $debugFields : $fields));
 		}
 
 		$data = curl_exec($c);

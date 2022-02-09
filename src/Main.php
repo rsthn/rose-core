@@ -178,6 +178,7 @@ function fatal_handler()
 	global $lastException;
 
     $error = error_get_last();
+	$stackTrace = null;
 
 	if ($error != null && ($error['type'] == E_NOTICE || $error['type'] == E_WARNING))
 		$error = null;
@@ -297,7 +298,7 @@ class Main
 		ignore_user_abort(false);
 		umask(0);
 		error_reporting (E_ALL & ~E_NOTICE & ~E_DEPRECATED);
-		mt_srand (((double)microtime ()) * 10000);
+		mt_srand ((int)(((double)microtime ()) * 10000));
 		set_time_limit (300);
 
 		// Set global error handlers and disable PHP error output.

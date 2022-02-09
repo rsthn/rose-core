@@ -311,7 +311,7 @@ class Arry
 	*/
     public function has ($index)
     {
-		if ($index != null)
+		if ($index != null && is_string($index))
 		{
 			if ($index[0] == '#' || $index == 'length')
 				return true;

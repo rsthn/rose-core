@@ -51,6 +51,7 @@ class Regex
 	*/
     public function matches ($text)
     {
+		if ($text === null) $text = '';
         return preg_match ($this->pattern, $text) == 0 ? false : true;
     }
 
@@ -59,6 +60,7 @@ class Regex
 	*/
     public static function _matches ($pattern, $text)
     {
+		if ($text === null) $text = '';
         return preg_match ($pattern, $text) == 0 ? false : true;
     }
 
@@ -67,6 +69,7 @@ class Regex
 	*/
     public function matchFirst ($text, $flags=0)
     {
+		if ($text === null) $text = '';
         $result = null;
         preg_match ($this->pattern, $text, $result, $flags);
         return new Map ($result);
@@ -77,6 +80,7 @@ class Regex
 	*/
     public static function _matchFirst ($pattern, $text, $flags=0)
     {
+		if ($text === null) $text = '';
         $result = null;
         preg_match ($pattern, $text, $result, $flags);
         return new Map ($result);
@@ -87,6 +91,7 @@ class Regex
 	*/
     public function getString ($text, $captureIndex=0)
     {
+		if ($text === null) $text = '';
         $result = null;
         preg_match ($this->pattern, $text, $result, 0);
         return sizeof($result) == 0 ? null : $result[$captureIndex];
@@ -97,6 +102,7 @@ class Regex
 	*/
     public static function _getString ($pattern, $text, $captureIndex=0)
     {
+		if ($text === null) $text = '';
         $result = null;
         preg_match ($pattern, $text, $result, 0);
         return sizeof($result) == 0 ? null : $result[$captureIndex];
@@ -107,6 +113,7 @@ class Regex
 	*/
     public function matchAll ($text, $captureIndex=0, $flags=Regex::PATTERN_ORDER)
     {
+		if ($text === null) $text = '';
         $result = null;
         preg_match_all ($this->pattern, $text, $result, $flags);
         return new Arry ($captureIndex === true ? $result : $result[$captureIndex]);
@@ -117,6 +124,7 @@ class Regex
 	*/
     public static function _matchAll ($pattern, $text, $captureIndex=0, $flags=Regex::PATTERN_ORDER)
     {
+		if ($text === null) $text = '';
         $result = null;
         preg_match_all ($pattern, $text, $result, $flags);
         return new Arry ($captureIndex === true ? $result : $result[$captureIndex]);
@@ -127,6 +135,7 @@ class Regex
 	*/
     public function split ($text, $flags=0, $limit=-1)
     {
+		if ($text === null) $text = '';
         return new Arry (preg_split($this->pattern, $text, $limit, $flags));
     }
 
@@ -135,6 +144,7 @@ class Regex
 	*/
     public static function _split ($pattern, $text, $flags=0, $limit=-1)
     {
+		if ($text === null) $text = '';
         return new Arry (preg_split($pattern, $text, $limit, $flags));
     }
 
@@ -143,6 +153,7 @@ class Regex
 	*/
     public function replace ($text, $replacement='')
     {
+		if ($text === null) $text = '';
         return preg_replace ($this->pattern, $replacement, $text);
     }
 
@@ -151,6 +162,7 @@ class Regex
 	*/
     public static function _replace ($pattern, $text, $replacement)
     {
+		if ($text === null) $text = '';
         return preg_replace ($pattern, $replacement, $text);
     }
 

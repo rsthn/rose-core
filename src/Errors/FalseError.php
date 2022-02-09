@@ -25,7 +25,7 @@ use Rose\Errors\Error;
 
 class FalseError extends Error
 {
-    public function __construct ($message=null)
+    public function __construct (string $message='')
     {
         parent::__construct ($message);
     }
