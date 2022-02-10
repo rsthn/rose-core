@@ -28,12 +28,23 @@ use Rose\Regex;
 
 class Text
 {
+	/**
+	 * 	Ensures the argument is a string.
+	 */
+	public static function str ($text)
+	{
+		if (!\Rose\isString($text))
+			return '';
+
+		return $text;
+	}
+
 	/*
 	**	Returns a substring of a given string. Negative values in 'start' indicate to start from the end of the string.
 	*/
     public static function substring ($text, $start, $length=null)
     {
-		if (!$text) return '';
+		$text = self::str($text);
 
         if ($start < 0)
             $text = substr ($text, $start);
@@ -53,7 +64,7 @@ class Text
 	*/
     public static function toUpperCase ($text, $encoding=null)
     {
-		if ($text === null) return '';
+		$text = self::str($text);
         return !$encoding ? strtoupper($text) : mb_strtoupper($text, $encoding);
     }
 
@@ -62,7 +73,7 @@ class Text
 	*/
     public static function toLowerCase ($text, $encoding=null)
     {
-		if ($text === null) return '';
+		$text = self::str($text);
         return !$encoding ? strtolower($text) : mb_strtolower($text, $encoding);
     }
 
@@ -71,6 +82,7 @@ class Text
 	*/
     public static function upperCaseFirst ($text)
     {
+		$text = self::str($text);
         return ucfirst ($text);
     }
 
@@ -79,25 +91,33 @@ class Text
 	*/
     public static function upperCaseWords ($text)
     {
+		$text = self::str($text);
         return ucwords ($text);
     }
 
 	/*
 	**	Returns the position of a sub-string in the given text. Returns `false` when not found.
 	*/
-    public static function position ($text, $needle, $offs=0)
+    public static function position ($text, $needle, $offset=0)
     {
-        return strpos($text, $needle, $offs);
+		$text = self::str($text);
+		$n = self::length($text);
+
+        return Math::abs($offset) > $n ? false : strpos($text, $needle, $offset);
     }
 
     public static function indexOf ($text, $value)
     {
+		$text = self::str($text);
         return strpos($text, $value);
     }
 
     public static function revIndexOf ($text, $value, $offset=0)
     {
-        return strrpos($text, $value, $offset);
+		$text = self::str($text);
+		$n = self::length($text);
+
+        return Math::abs($offset) > $n ? false : strrpos($text, $value, $offset);
     }
 
 	/*
@@ -105,6 +125,7 @@ class Text
 	*/
     public static function length ($text, $encoding=null)
     {
+		$text = self::str($text);
         return !$encoding ? strlen($text) : mb_strlen($text, $encoding);
     }
 
@@ -113,6 +134,8 @@ class Text
 	*/
     public static function trim ($text, $chars=null)
     {
+		$text = self::str($text);
+
         if ($chars != null)
             return \trim ($text, $chars);
         else
@@ -140,14 +163,16 @@ class Text
 	*/
     public static function reverse ($text)
     {
+		$text = self::str($text);
         return strrev ($text);
     }
 
 	/*
 	**	Replaces a string (a) for another (b) in the given text.
 	*/
-    public static function replace ($a, $b, $text)
+    public static function replace ($a, $b, ?string $text)
     {
+		$text = self::str($text);
         return str_replace ($a, $b, $text);
     }
 
@@ -156,6 +181,8 @@ class Text
 	*/
     public static function truncate ($value, $maxLength)
     {
+		$value = self::str($value);
+
         if (Text::length($value) > $maxLength)
             return Text::substring ($value, 0, $maxLength-3) . '...';
 
@@ -167,6 +194,8 @@ class Text
 	*/
    	public static function split ($delimiter, $text)
     {
+		$text = self::str($text);
+
         if ($delimiter != '')
             return Arry::fromNativeArray(\explode ($delimiter, $text));
         else

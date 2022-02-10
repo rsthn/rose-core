@@ -27,9 +27,9 @@ class Error extends \Exception
 	/*
 	**	Creates an error object and uses the given parameter and the exception's error message.
 	*/
-    public function __construct ($message='', $code=0)
+    public function __construct (?string $message='', $code=0)
     {
-        parent::__construct ($message, $code);
+        parent::__construct ($message ?? '', $code);
     }
 
 	/*

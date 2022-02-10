@@ -242,7 +242,7 @@ class Session
 	*/
     private static function generateId ($m)
     {
-		$n = (int)(($m*5+7) / 8);
+		$n = (int)(($m*5+7) / 8) + 1;
 
 		$value = 0;
 		$state = 0;

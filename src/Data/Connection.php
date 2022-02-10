@@ -94,7 +94,7 @@ class Connection
 	/*
 	**	Constructs a database connection using the given configuration.
 	*/
-    public function __construct ($server=null, $user=null, $password=null, $database=null, $tracing=false, $prefix=null, $driver)
+    public function __construct ($server=null, $user=null, $password=null, $database=null, $tracing=false, $prefix=null, $driver=null)
     {
         $this->dbServer = $server;
         $this->dbUser = $user;
