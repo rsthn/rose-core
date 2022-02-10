@@ -1,6 +1,7 @@
 --*
 @*
 vendor/
+test/
 .svn/
 .git/
 *.log

@@ -153,6 +153,9 @@ class Context
 	 */
 	public function hasFunction ($name)
 	{
+		if (!isString($name))
+			return false;
+
 		$n = $this->chain->length();
 
 		for ($i = 0; $i < $n; $i++)
@@ -960,6 +963,10 @@ class Expr
 					case 'string':
 					case 'integer':
 					case 'number':
+
+						if ($parts->get($i)->data === true || $parts->get($i)->data === false || $parts->get($i)->data === null)
+							return $parts->get($i)->data;
+
 						$str .= $parts->get($i)->data;
 						$last = null;
 						break;
@@ -1304,7 +1311,7 @@ class Expr
 		if ($ret == 'void') return null;
 
 		// Return as argument ('object' if only one, or `string` if more than one), that is, the first item in the result.
-		if ($ret == 'arg')
+		if ($ret === 'arg')
 		{
 			if (typeOf($s) == 'Rose\\Arry')
 			{
@@ -1323,8 +1330,13 @@ class Expr
 			return $s;
 		}
 
+		if ($ret === 'text' && typeOf($s) === 'Rose\\Arry' && $s->length == 1 && ($s->get(0) === false || $s->get(0) === true))
+		{
+			return $s->get(0) ? '1' : '0';
+		}
+
 		// Text mode causes the final slices to be joined in a single string.
-		if ($ret == 'text' && typeOf($s) == 'Rose\\Arry')
+		if ($ret === 'text' && typeOf($s) === 'Rose\\Arry')
 		{
 			$f = function($e) use(&$f) {
 				return $e != null && \Rose\typeOf($e) == 'Rose\\Arry' ? $e->map($f)->join('') : (string)$e;
@@ -1593,6 +1605,7 @@ Expr::register('_or', function($parts, $data) { for ($i = 1; $i < $parts->length
 Expr::register('_coalesce', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if ($v !== null) return $v; } return null; });
 
 Expr::register('eq', function($args) { return $args->get(1) == $args->get(2); });
+Expr::register('eqq', function($args) { return $args->get(1) === $args->get(2); });
 Expr::register('ne', function($args) { return $args->get(1) != $args->get(2); });
 Expr::register('lt', function($args) { return $args->get(1) < $args->get(2); });
 Expr::register('le', function($args) { return $args->get(1) <= $args->get(2); });
@@ -1605,6 +1618,7 @@ Expr::register('isempty', function($args) { return !$args->get(1); });
 Expr::register('iszero', function($args) { return (float)$args->get(1) == 0; });
 
 Expr::register('eq?', function($args) { return $args->get(1) == $args->get(2); });
+Expr::register('eqq?', function($args) { return $args->get(1) === $args->get(2); });
 Expr::register('ne?', function($args) { return $args->get(1) != $args->get(2); });
 Expr::register('lt?', function($args) { return $args->get(1) < $args->get(2); });
 Expr::register('le?', function($args) { return $args->get(1) <= $args->get(2); });

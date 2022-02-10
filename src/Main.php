@@ -322,7 +322,7 @@ class Main
 	static function cli ()
 	{
 		try {
-			Gateway::getInstance()->init();
+			Gateway::getInstance()->init(true);
 		}
 		catch (\Exception $e)
 		{

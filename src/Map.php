@@ -173,14 +173,14 @@ class Map
 	/*
 	**	Checks if the given key exists in the map.
 	*/
-    public function has ($key)
+    public function has ($key, $direct=false)
     {
-		if ($key != null)
+		if ($key != null && $direct === false)
 		{
-			if ($key[0] == '#' || $key == 'length')
+			if ($key[0] === '#' || $key === 'length')
 				return true;
 
-			if ($key[0] == '@')
+			if ($key[0] === '@')
 				return $this->has(Text::substring($key, 1));
 		}
 
@@ -341,7 +341,7 @@ class Map
 	**	Definition of the global accessor for items, this will be invoked when the map is used with the arrow operator and
 	**	the attribute does not exist in the class definition.
 	**
-	**	If the requested field starts with '#' will be considered to be an 'exists' call, and will return 0 or 1.
+	**	If the requested field starts with '#' will be considered to be an 'exists' call, and will return true or false.
 	**
 	**	If it starts with '@' will be considered a regular 'get' call. This was added because this function also provides
 	**	access to builtin 'length', therefore you wanted to actually access a field named 'length' use '@length' instead.
@@ -355,7 +355,7 @@ class Map
 
             default:
                 if ($name[0] == '#')
-                    return $this->has(Text::substring($name, 1)) ? '1' : '0';
+                    return $this->has(Text::substring($name, 1));
 
                 if ($name[0] == '@')
                     return $this->get(Text::substring($name, 1));

@@ -106,7 +106,7 @@ class DateTime
 	*/
 	public function __construct ($datetime=null, $targetTimezone=null, $fromTimezone=null)
     {
-		if (Text::toUpperCase($targetTimezone) == 'LTZ')
+		if (Text::toUpperCase($targetTimezone) === 'LTZ')
 			$targetTimezone = self::$timezone;
 
 		if (is_numeric($datetime))
@@ -120,7 +120,7 @@ class DateTime
 		}
 		else
 		{
-			if ($datetime && $datetime != 'now')
+			if ($datetime && $datetime !== 'now')
 			{
 				$targetTimezone = $targetTimezone ? $targetTimezone : self::$timezone;
 				$fromTimezone = $fromTimezone ? $fromTimezone : self::$timezone;
@@ -160,13 +160,13 @@ class DateTime
 		$this->timestamp = ($timestamp -= self::timezoneOffset($fromTimezone));
 		$timestamp += self::timezoneOffset($targetTimezone);
 
-		$this->year = strftime('%Y', $timestamp);
-		$this->month = strftime('%m', $timestamp);
-		$this->day = strftime('%d', $timestamp);
+		$this->year = (int)strftime('%Y', $timestamp);
+		$this->month = (int)strftime('%m', $timestamp);
+		$this->day = (int)strftime('%d', $timestamp);
 
-		$this->hour = strftime('%H', $timestamp);
-		$this->minute = strftime('%M', $timestamp);
-		$this->second = strftime('%S', $timestamp);
+		$this->hour = (int)strftime('%H', $timestamp);
+		$this->minute = (int)strftime('%M', $timestamp);
+		$this->second = (int)strftime('%S', $timestamp);
 
 		return $this;
 	}
@@ -218,7 +218,7 @@ class DateTime
 	*/
 	public function sub ($datetime, $unit=DateTime::SECOND)
 	{
-		return floor (($this->timestamp - DateTime::getUnixTimestamp($datetime)) / DateTime::getUnit($unit));
+		return (int)floor(($this->timestamp - DateTime::getUnixTimestamp($datetime)) / DateTime::getUnit($unit));
 	}
 
 	/*

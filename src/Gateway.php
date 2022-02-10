@@ -109,6 +109,16 @@ class Gateway
 	public $secure;
 
 	/*
+	**	Indicates if the Gateway is in CLI mode, when so, certain functions will not be used (i.e. header).
+	*/
+	public static $cli = false;
+
+	/*
+	**	Last value passed to the `header` function. Available only in CLI mode.
+	*/
+	public static $header;
+
+	/*
 	**	Returns the instance of this class.
 	*/
     public static function getInstance ()
@@ -138,8 +148,10 @@ class Gateway
 	/*
 	**	Executed by the framework initializer to initialize the gateway.
 	*/
-	public function init ()
+	public function init ($cli=false)
 	{
+		self::$cli = $cli;
+
 		// Set entry point URL and root.
 		$this->root = Text::substring($this->serverParams->SCRIPT_NAME, 0, -9);
 		$this->secure = Text::toUpperCase($this->serverParams->HTTPS) == 'ON';
@@ -255,6 +267,11 @@ class Gateway
 	*/
     public static function header ($headerItem)
     {
+		if (self::$cli) {
+			self::$header = $headerItem;
+			return;
+		}
+
         \header ($headerItem);
     }
 

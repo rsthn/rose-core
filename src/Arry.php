@@ -286,7 +286,7 @@ class Arry
     {
         if ($index < 0)
         {
-            if (($index += $this->length()) < 0)
+            if (($index += $this->length()+1) < 0)
                 $index = 0;
 		}
 
@@ -478,7 +478,7 @@ class Arry
 
             default:
                 if ($name[0] == '#')
-                    return $this->has(Text::substring($name, 1)) ? '1' : '0';
+                    return $this->has(Text::substring($name, 1));
 
                 if ($name[0] == '@')
                     return $this->get(Text::substring($name, 1));

@@ -90,39 +90,39 @@ class Locale
 	*/
     public function format ($formatType, $value, $format=null)
     {
-		$config = Configuration::getInstance();
+		$config = Configuration::getInstance()->Locale;
 
         switch (Text::toUpperCase($formatType))
         {
             case 'NUMBER':
 				if (!$format) $format = 'numeric';
-				if ($config->Locale->has($format)) $format = $config->Locale->get($format);
+				if ($config && $config->has($format)) $format = $config->get($format);
 
 				return number_format((double)$value, $format[1], $format[0], $format[2]);
 
             case 'INTEGER':
 				if (!$format) $format = 'numeric';
-				if ($config->Locale->has($format)) $format = $config->Locale->get($format);
+				if ($config && $config->has($format)) $format = $config->get($format);
 
 				return number_format((double)$value, 0, 0, $format[2]);
 
 			case 'TIME':
 				if (!$format) $format = 'time';
-				if ($config->Locale->has($format)) $format = $config->Locale->get($format);
+				if ($config && $config->has($format)) $format = $config->get($format);
 
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
 				return $value ? strftime($format, $value + DateTime::$offset) : null;
 
 			case 'DATE':
 				if (!$format) $format = 'date';
-				if ($config->Locale->has($format)) $format = $config->Locale->get($format);
+				if ($config && $config->has($format)) $format = $config->get($format);
 
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
 				return $value ? strftime($format, $value + DateTime::$offset) : null;
 
 			case 'DATETIME':
 				if (!$format) $format = 'datetime';
-				if ($config->Locale->has($format)) $format = $config->Locale->get($format);
+				if ($config && $config->has($format)) $format = $config->get($format);
 
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
 				return $value ? strftime($format, $value + DateTime::$offset) : null;
@@ -151,16 +151,16 @@ class Locale
 				if (Text::toUpperCase(Text::substring ($formatType, 0, 3)) == 'DT_')
 				{
 					$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-					return $value ? strftime($config->Locale->get($formatType), $value + DateTime::$offset) : null;
+					return $value ? strftime($config->get($formatType), $value + DateTime::$offset) : null;
 				}
 
 				if (Text::toUpperCase(Text::substring($formatType,0,7)) == 'NUMERIC')
 				{
-					$tmp = $config->Locale->get($formatType);
+					$tmp = $config->get($formatType);
 					return number_format ((double)$value, $tmp[1], $tmp[0], $tmp[2]);
 				}
 
-				return Text::format($config->Locale->get($formatType), $value);
+				return Text::format($config->get($formatType), $value);
         }
     }
 };

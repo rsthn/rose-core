@@ -81,7 +81,7 @@ class Text
     }
 
 	/*
-	**	Returns the position of a sub-string in the given text.
+	**	Returns the position of a sub-string in the given text. Returns `false` when not found.
 	*/
     public static function position ($text, $needle, $offs=0)
     {

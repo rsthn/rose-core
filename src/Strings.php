@@ -228,7 +228,7 @@ class Strings
 				return $name;
 		}
 
-		if ($this->loadedMaps->has($name))
+		if ($this->loadedMaps->has($name, true))
 			return $this->loadedMaps->get($name);
 
 		// Attempt to load conf or plain from base directory.
@@ -288,7 +288,7 @@ class Strings
 	*/
     public function load ($name, $path, $merge=false)
     {
-        if ($this->loadedMaps->has($name) && !$merge)
+        if ($this->loadedMaps->has($name, true) && !$merge)
             $this->loadedMaps->remove($name);
 
 		if (!Path::exists($path.'.conf'))
@@ -302,7 +302,7 @@ class Strings
 		{
 			if ($merge)
 			{
-				if (!$this->loadedMaps->has($name))
+				if (!$this->loadedMaps->has($name, true))
 					$this->loadedMaps->set ($name, new Map ());
 
 				$this->loadedMaps->get($name)->merge(Configuration::loadFrom($path.'.conf'), true);

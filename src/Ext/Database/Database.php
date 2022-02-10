@@ -178,10 +178,6 @@ Expr::register('db::affectedRows', function ($args)
 	return Resources::getInstance()->Database->getAffectedRows();
 });
 
-
-
-
-
 Expr::register('db::fields:update', function ($args)
 {
 	return Resources::getInstance()->Database->escapeExt ($args->get(1))->join(', ');
