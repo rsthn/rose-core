@@ -33,6 +33,8 @@ class Text
 	*/
     public static function substring ($text, $start, $length=null)
     {
+		if (!$text) return '';
+
         if ($start < 0)
             $text = substr ($text, $start);
         else
@@ -51,7 +53,7 @@ class Text
 	*/
     public static function toUpperCase ($text, $encoding=null)
     {
-		if ($text === null) $text = '';
+		if ($text === null) return '';
         return !$encoding ? strtoupper($text) : mb_strtoupper($text, $encoding);
     }
 
@@ -60,7 +62,7 @@ class Text
 	*/
     public static function toLowerCase ($text, $encoding=null)
     {
-		if ($text === null) $text = '';
+		if ($text === null) return '';
         return !$encoding ? strtolower($text) : mb_strtolower($text, $encoding);
     }
 

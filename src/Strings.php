@@ -109,7 +109,8 @@ class Strings
     private function __construct ()
     {
 		$this->loadedMaps = new Map ();
-        $this->debug = Configuration::getInstance()->Strings->debug;
+        $this->debug = Configuration::getInstance()->Strings;
+		if ($this->debug) $this->debug = $this->debug->debug;
 
 		$this->altLangBase = $this->altBase = $this->langBase = $this->base = Main::$CORE_DIR.'/strings/';
 
@@ -126,14 +127,16 @@ class Strings
 	*/
     public function setLang ($lang=null)
     {
+		$conf = Configuration::getInstance()->Locale;
+
 		if ($lang == null)
 		{
 			$gateway = Gateway::getInstance();
 
 			// Attempt to load language code from configuration.
-			if (Configuration::getInstance()->Locale->lang != null)
+			if ($conf && $conf->lang != null)
 			{
-				$lang = Configuration::getInstance()->Locale->lang;
+				$lang = $conf->lang;
 				$this->langFrom = Strings::FROM_CONFIG;
 			}
 

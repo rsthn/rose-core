@@ -107,6 +107,14 @@ function isString ($object)
 }
 
 /*
+**	Returns true if the value is a numeric value.
+*/
+function isNumeric ($value)
+{
+	return is_numeric ($value);
+}
+
+/*
 **	Returns the boolean value of the given argument.
 */
 function bool ($value)

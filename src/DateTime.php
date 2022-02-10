@@ -111,12 +111,12 @@ class DateTime
 
 		if (is_numeric($datetime))
 		{
-			$datetime = strftime('%Y-%m-%d %H:%M:%S', $datetime);
+			$datetime = DateTime::strftime('%Y-%m-%d %H:%M:%S', $datetime);
 		}
 		else if ($datetime instanceOf DateTime)
 		{
 			if (!$targetTimezone) $targetTimezone = $datetime->targetTimezone;
-			$datetime = strftime('%Y-%m-%d %H:%M:%S', $datetime->getTimestamp());
+			$datetime = DateTime::strftime('%Y-%m-%d %H:%M:%S', $datetime->getTimestamp());
 		}
 		else
 		{
@@ -160,13 +160,13 @@ class DateTime
 		$this->timestamp = ($timestamp -= self::timezoneOffset($fromTimezone));
 		$timestamp += self::timezoneOffset($targetTimezone);
 
-		$this->year = (int)strftime('%Y', $timestamp);
-		$this->month = (int)strftime('%m', $timestamp);
-		$this->day = (int)strftime('%d', $timestamp);
+		$this->year = (int)DateTime::strftime('%Y', $timestamp);
+		$this->month = (int)DateTime::strftime('%m', $timestamp);
+		$this->day = (int)DateTime::strftime('%d', $timestamp);
 
-		$this->hour = (int)strftime('%H', $timestamp);
-		$this->minute = (int)strftime('%M', $timestamp);
-		$this->second = (int)strftime('%S', $timestamp);
+		$this->hour = (int)DateTime::strftime('%H', $timestamp);
+		$this->minute = (int)DateTime::strftime('%M', $timestamp);
+		$this->second = (int)DateTime::strftime('%S', $timestamp);
 
 		return $this;
 	}
@@ -240,7 +240,7 @@ class DateTime
 				return sprintf("%4d-%02d-%02d %02d:%02d:%02d", $this->year, $this->month, $this->day, $this->hour, $this->minute, $this->second);
 
 			case 'UTC':
-				return strftime("%a, %d %b %Y %H:%M:%S GMT", $this->getTimestamp());
+				return DateTime::strftime("%a, %d %b %Y %H:%M:%S GMT", $this->getTimestamp());
 
             case 'TIME':
 				return sprintf("%02d:%02d:%02d", $this->hour, $this->minute, $this->second);
@@ -248,6 +248,57 @@ class DateTime
             case 'DATE':
 				return sprintf("%4d-%02d-%02d", $this->year, $this->month, $this->day);
         }
+    }
+
+	/*
+	**	Formats the date time and returns a string using strftime-like modifiers.
+	*/
+    public static function strftime ($format, $timestamp)
+    {
+		$n = Text::length($format);
+		$str = '';
+
+		for ($i = 0; $i < $n; $i++)
+		{
+			if ($format[$i] != '%')
+			{
+				$str .= $format[$i];
+				continue;
+			}
+
+			switch($format[++$i])
+			{
+				case 'a': $str .= date('D', $timestamp); break;
+				case 'A': $str .= date('l', $timestamp); break;
+				case 'd': $str .= date('d', $timestamp); break;
+				case 'e': $str .= date('j', $timestamp); break;
+				case 'u': $str .= date('N', $timestamp); break;
+				case 'w': $str .= date('w', $timestamp); break;
+				case 'W': $str .= date('W', $timestamp); break;
+				
+				case 'b': $str .= date('M', $timestamp); break;
+				case 'B': $str .= date('F', $timestamp); break;
+				case 'h': $str .= date('M', $timestamp); break;
+				case 'm': $str .= date('m', $timestamp); break;
+					case 'n': $str .= date('n', $timestamp); break;
+
+				case 'y': $str .= date('y', $timestamp); break;
+				case 'Y': $str .= date('Y', $timestamp); break;
+
+				case 'H': $str .= date('H', $timestamp); break;
+				case 'k': $str .= date('G', $timestamp); break;
+				case 'I': $str .= date('h', $timestamp); break;
+				case 'l': $str .= date('g', $timestamp); break;
+				case 'M': $str .= date('i', $timestamp); break;
+				case 'S': $str .= date('s', $timestamp); break;
+				case 'p': $str .= date('A', $timestamp); break;
+				case 'P': $str .= date('a', $timestamp); break;
+				case '': $str .= date('', $timestamp); break;
+				case '': $str .= date('', $timestamp); break;
+			}
+		}
+
+		return $str;
     }
 
 	/*

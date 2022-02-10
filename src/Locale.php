@@ -71,10 +71,10 @@ class Locale
 	*/
     private function initialize ()
     {
-        $this->timezone = Configuration::getInstance()->Locale->timezone;
+		$config = Configuration::getInstance()->Locale;
 
-		if (!$this->timezone)
-			return;
+        $this->timezone = $config ? $config->timezone : null;
+		if (!$this->timezone) return;
 
 		try {
 			new \DateTimeZone ($this->timezone);
@@ -111,21 +111,21 @@ class Locale
 				if ($config && $config->has($format)) $format = $config->get($format);
 
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime($format, $value + DateTime::$offset) : null;
+				return $value ? DateTime::strftime($format, $value + DateTime::$offset) : null;
 
 			case 'DATE':
 				if (!$format) $format = 'date';
 				if ($config && $config->has($format)) $format = $config->get($format);
 
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime($format, $value + DateTime::$offset) : null;
+				return $value ? DateTime::strftime($format, $value + DateTime::$offset) : null;
 
 			case 'DATETIME':
 				if (!$format) $format = 'datetime';
 				if ($config && $config->has($format)) $format = $config->get($format);
 
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime($format, $value + DateTime::$offset) : null;
+				return $value ? DateTime::strftime($format, $value + DateTime::$offset) : null;
 
 			case 'GMT':
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
@@ -137,21 +137,21 @@ class Locale
 
 			case 'ISO_DATE':
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime('%Y-%m-%d', $value + DateTime::$offset) : null;
+				return $value ? DateTime::strftime('%Y-%m-%d', $value + DateTime::$offset) : null;
 
 			case 'ISO_TIME':
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime('%H:%M:%S', $value + DateTime::$offset) : null;
+				return $value ? DateTime::strftime('%H:%M:%S', $value + DateTime::$offset) : null;
 
 			case 'ISO_DATETIME':
 				$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-				return $value ? strftime('%Y-%m-%d %H:%M:%S', $value + DateTime::$offset) : null;
+				return $value ? DateTime::strftime('%Y-%m-%d %H:%M:%S', $value + DateTime::$offset) : null;
 
 			default:
 				if (Text::toUpperCase(Text::substring ($formatType, 0, 3)) == 'DT_')
 				{
 					$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-					return $value ? strftime($config->get($formatType), $value + DateTime::$offset) : null;
+					return $value ? DateTime::strftime($config->get($formatType), $value + DateTime::$offset) : null;
 				}
 
 				if (Text::toUpperCase(Text::substring($formatType,0,7)) == 'NUMERIC')

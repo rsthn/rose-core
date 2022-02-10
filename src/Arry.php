@@ -50,7 +50,7 @@ class Arry
 		{
 			if (is_array($value))
 			{
-				if (count(array_filter(array_keys($value), 'is_string')) != 0)
+				if (count(array_filter(array_keys($value), '\Rose\isString')) != 0)
 					$value = Map::fromNativeArray($value);
 				else
 					$value = Arry::fromNativeArray($value);
@@ -75,7 +75,7 @@ class Arry
             {
                 if (is_array($value))
                 {
-                    if (count(array_filter(array_keys($value), 'is_string')) != 0)
+                    if (count(array_filter(array_keys($value), '\Rose\isString')) != 0)
                         $value = Map::fromNativeArray($value);
                     else
                         $value = Arry::fromNativeArray($value);
@@ -99,6 +99,9 @@ class Arry
 	*/
     public function get ($index)
     {
+		if (!\Rose\isNumeric($index))
+			return null;
+
         if (!Math::inrange ($index, 0, sizeof($this->__nativeArray)-1))
             throw new ArgumentError ('Index Out of Bounds: ' . $index);
 
@@ -141,8 +144,8 @@ class Arry
         return $this;
     }
 
-    public static function __sortl1 ($a, $b) { return strlen($a) - strlen($b); }
-    public static function __sortl2 ($a, $b) { return strlen($b) - strlen($a); }
+    public static function __sortl1 ($a, $b) { return Text::length($a) - Text::length($b); }
+    public static function __sortl2 ($a, $b) { return Text::length($b) - Text::length($a); }
 
 	/*
 	**	Sorts the array using the specified comparator function.
@@ -309,15 +312,15 @@ class Arry
 	/*
 	**	Checks if the given index exists in the array.
 	*/
-    public function has ($index)
+    public function has ($index, $direct=false)
     {
-		if ($index != null && is_string($index))
+		if ($index != null && \Rose\isString($index) && $direct === false)
 		{
 			if ($index[0] == '#' || $index == 'length')
 				return true;
 
 			if ($index[0] == '@')
-				return $this->has(Text::substring($index, 1));
+				return $this->has(Text::substring($index, 1), true);
 		}
 
         return array_key_exists($index, $this->__nativeArray) ? true : false;
@@ -471,19 +474,21 @@ class Arry
 	*/
     public function __get ($name)
     {
-        switch ($name)
-        {
-            case 'length':
-				return sizeof($this->__nativeArray);
+		if (\Rose\isString($name))
+		{
+			switch ($name)
+			{
+				case 'length':
+					return sizeof($this->__nativeArray);
 
-            default:
-                if ($name[0] == '#')
-                    return $this->has(Text::substring($name, 1));
+				default:
+					if ($name[0] == '#')
+						return $this->has(Text::substring($name, 1));
 
-                if ($name[0] == '@')
-                    return $this->get(Text::substring($name, 1));
-
-        }
+					if ($name[0] == '@')
+						return $this->get(Text::substring($name, 1));
+			}
+		}
 
 		//$name = (int)$name;
 

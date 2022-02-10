@@ -367,7 +367,7 @@ class Expr
 
 		$template .= "\0";
 
-		$emit = function ($type, $data) use(&$parts, &$nparts, &$mparts, $sym_open, $sym_close)
+		$emit = function ($type, $data) use(&$parts, &$nparts, &$mparts, $sym_open, $sym_close, &$remove_comments)
 		{
 			if ($type == 'template')
 			{

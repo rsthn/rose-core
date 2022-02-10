@@ -77,7 +77,9 @@ class Session
 		Session::$sessionOpen = false;
 		Session::$validSessionId = false;
 
-		Session::$sessionName = Configuration::getInstance()->Session->name;
+		Session::$sessionName = Configuration::getInstance()->Session;
+		if (Session::$sessionName) Session::$sessionName = Session::$sessionName->name;
+
 		Session::$sessionId = '';
 
 		// Verify if m_<SessionName> was provided over POST or GET to override session id.
@@ -105,7 +107,7 @@ class Session
 		if (Session::$validSessionId == false)
 			return;
 
-		if (Configuration::getInstance()->Session->database == 'true')
+		if (Configuration::getInstance()->Session && Configuration::getInstance()->Session->database == 'true')
 		{
 			Session::dbSessionDelete();
 		}
@@ -137,8 +139,10 @@ class Session
 		if (Session::$sessionOpen == true || !Session::$sessionName)
 			return true;
 
+		$conf = Configuration::getInstance()->Session;
+
 		// Load session data from the database if specified in the configuration field 'Session.database'.
-		if (Configuration::getInstance()->Session->database == 'true')
+		if ($conf && $conf->database == 'true')
 		{
 			try {
 				if (!Session::dbSessionLoad($createSession))
@@ -190,9 +194,9 @@ class Session
 			Session::$sessionId = session_id();
 		}
 
-		Cookies::set(Session::$sessionName, Session::$sessionId, Configuration::getInstance()->Session->expires);
+		Cookies::set(Session::$sessionName, Session::$sessionId, $conf ? $conf->expires : 0);
 
-        $expires = Configuration::getInstance()->Session->expires;
+        $expires = $conf ? $conf->expires : 0;
 		if ($expires > 0)
 		{
 			if (Session::$data->last_activity != null)

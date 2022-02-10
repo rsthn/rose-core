@@ -1,7 +1,7 @@
 {
     "name": "rsthn/rose-core",
     "description": "Rose Framework - Core",
-    "version": "3.2.6",
+    "version": "4.0.0",
     "homepage": "https://github.com/rsthn/rose-core",
     "type": "library",
     "license": "Apache-2.0",
@@ -15,7 +15,7 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "php": ">=7.1.0"
+        "php": ">=8.1.0"
     },
     "autoload": {
         "psr-4": {

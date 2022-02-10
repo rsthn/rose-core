@@ -175,13 +175,13 @@ class Map
 	*/
     public function has ($key, $direct=false)
     {
-		if ($key != null && $direct === false)
+		if ($key != null && \Rose\isString($key) && $direct === false)
 		{
 			if ($key[0] === '#' || $key === 'length')
 				return true;
 
 			if ($key[0] === '@')
-				return $this->has(Text::substring($key, 1));
+				return $this->has(Text::substring($key, 1), true);
 		}
 
         return array_key_exists($key, $this->__nativeArray) ? true : false;
@@ -201,7 +201,7 @@ class Map
 	*/
     public function get ($key)
     {
-		if (!$this->has($key))
+		if (!$this->has($key, true))
 			return null;
 
         return $this->__nativeArray[$key];
