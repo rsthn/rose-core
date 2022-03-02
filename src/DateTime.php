@@ -280,7 +280,7 @@ class DateTime
 				case 'B': $str .= date('F', $timestamp); break;
 				case 'h': $str .= date('M', $timestamp); break;
 				case 'm': $str .= date('m', $timestamp); break;
-					case 'n': $str .= date('n', $timestamp); break;
+				case 'n': $str .= date('n', $timestamp); break;
 
 				case 'y': $str .= date('y', $timestamp); break;
 				case 'Y': $str .= date('Y', $timestamp); break;
@@ -293,8 +293,6 @@ class DateTime
 				case 'S': $str .= date('s', $timestamp); break;
 				case 'p': $str .= date('A', $timestamp); break;
 				case 'P': $str .= date('a', $timestamp); break;
-				case '': $str .= date('', $timestamp); break;
-				case '': $str .= date('', $timestamp); break;
 			}
 		}
 

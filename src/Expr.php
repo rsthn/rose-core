@@ -472,7 +472,7 @@ class Expr
 						$flush = 'string';
 						$nflush = 'template';
 					}
-					else if ($template[$i] == ';' && $remove_comments)
+					else if ($template[$i] == ';' && $remove_comments && Text::trim($str) == '')
 					{
 						$state = 20; $count = 1;
 						$flush = 'string';
@@ -2894,9 +2894,9 @@ Expr::register('_try', function ($parts, $data)
 Expr::register('throw', function ($args, $parts, $data)
 {
 	if ($args->length > 1)
-		throw new \Exception ($args->get(1));
+		throw new \Exception ($args->get(1) ?? '');
 
-	throw new \Exception ($data->get('err'));
+	throw new \Exception ($data->get('err') ?? '');
 });
 
 /**

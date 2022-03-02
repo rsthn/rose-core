@@ -594,6 +594,7 @@ class Wind
 		if (!self::$eventsEnabled)
 			return;
 
+		$s = '';
 		$i = 2;
 
 		if ($args->length > 2)
