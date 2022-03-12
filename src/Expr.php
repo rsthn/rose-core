@@ -298,6 +298,28 @@ class Expr
 		return $value === null || $value === true || $value === false || $value === self::SYM_UNDERSCORE;
 	}
 
+	/**
+	 * 	Attempts to access an index/key of a given data.
+	 */
+	static public function accessGet ($data, $index)
+	{
+		if (is_string($data))
+			return $data[$index];
+
+		return $data->{$index};
+	}
+
+	/**
+	 * 	Attempts to set a value in the specified data given the index/key.
+	 */
+	static public function accessSet (&$data, $index, $value)
+	{
+		if (is_string($data))
+			throw new Error('Writing to strings directly using an index is not allowed.');
+
+		return $data->{$index} = value;
+	}
+
 	/*
 	**	Post-processes a parsed expression. Unescapes the backslash escape sequences.
 	*/
@@ -1029,7 +1051,7 @@ class Expr
 							if ($str != 'this' && $data != null)
 							{
 								$tmp = $data;
-								$data = $data->{$str};
+								$data = self::accessGet($data, $str);
 
 								if ($data === null && $first)
 								{
@@ -1073,10 +1095,14 @@ class Expr
 							$data = null;
 						}
 						else
-							$data = $data->{$str};
+						{
+							$data = self::accessGet($data, $str);
+						}
 					}
 					else
-						$data = $data->{$str};
+					{
+						$data = self::accessGet($data, $str);
+					}
 				}
 				else
 					$failed = true;
@@ -1156,7 +1182,7 @@ class Expr
 							if ($str != 'this' && $data != null)
 							{
 								$tmp = $data;
-								$data = $data->{$str};
+								$data = self::accessGet($data, $str);
 
 								if ($data === null && $first)
 								{
@@ -1687,6 +1713,7 @@ Expr::register('abs', function($args) { return abs($args->get(1)); });
 Expr::register('_and', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!$v) return null; } return $v; });
 Expr::register('_or', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!!$v) return $v; } return null; });
 Expr::register('_coalesce', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if ($v !== null) return $v; } return null; });
+Expr::register('_??', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if ($v !== null) return $v; } return null; });
 
 Expr::register('eq', function($args) { return $args->get(1) == $args->get(2); });
 Expr::register('eqq', function($args) { return $args->get(1) === $args->get(2); });
@@ -1709,8 +1736,10 @@ Expr::register('le?', function($args) { return $args->get(1) <= $args->get(2); }
 Expr::register('gt?', function($args) { return $args->get(1) > $args->get(2); });
 Expr::register('ge?', function($args) { return $args->get(1) >= $args->get(2); });
 Expr::register('notnull?', function($args) { return $args->get(1) !== null; });
+Expr::register('not-null?', function($args) { return $args->get(1) !== null; });
 Expr::register('null?', function($args) { return $args->get(1) === null; });
 Expr::register('notempty?', function($args) { return !!$args->get(1); });
+Expr::register('not-empty?', function($args) { return !!$args->get(1); });
 Expr::register('empty?', function($args) { return !$args->get(1); });
 Expr::register('zero?', function($args) { return (float)$args->get(1) == 0; });
 
@@ -1743,6 +1772,19 @@ Expr::register('pow', function($args) { return Expr::reduce($args->get(1), $args
 
 Expr::register('min', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::min($accum, $value); }); });
 Expr::register('max', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::max($accum, $value); }); });
+
+Expr::register('in?', function ($args)
+{
+	$value = $args->get(1);
+
+	for ($i = 2; $i < $args->length; $i++)
+	{
+		if ($value === $args->get($i))
+			return true;
+	}
+
+	return false;
+});
 
 /**
 **	Executes the block and returns null.
@@ -1806,7 +1848,7 @@ Expr::register('_set', function ($parts, $data)
 				if (!$ref[0])
 					throw new Error('Unable to assign: ' . $parts->get($i)->map(function($i) { return $i->data; })->join('')  );
 
-				$ref[0]->{$ref[1]} = $value;
+				Expr::accessSet($ref[0], $ref[1], $value);
 			}
 		}
 		else
@@ -1833,7 +1875,7 @@ Expr::register('_inc', function ($parts, $data)
 
 	$value = $parts->has(2) ? Expr::value($parts->get(2), $data) : 1;
 
-	return $ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} + $value;
+	Expr::accessSet($ref[0], $ref[1], Expr::accessGet($ref[0], $ref[1]) + $value);
 });
 
 /**
@@ -1851,7 +1893,7 @@ Expr::register('_dec', function ($parts, $data)
 
 	$value = $parts->has(2) ? Expr::value($parts->get(2), $data) : 1;
 
-	return $ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} - $value;
+	Expr::accessSet($ref[0], $ref[1], Expr::accessGet($ref[0], $ref[1]) - $value);
 });
 
 /**
@@ -1868,9 +1910,12 @@ Expr::register('_append', function ($parts, $data)
 		throw new Error('Unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join('')  );
 
 	for ($i = 2; $i < $parts->length; $i++)
-		$ref[0]->{$ref[1]} .= Expr::value($parts->get($i), $data);
+	{
+		$value = Expr::value($parts->get($i), $data);
+		Expr::accessSet($ref[0], $ref[1], Expr::accessGet($ref[0], $ref[1]) . $value);
+	}
 
-	return $ref[0]->{$ref[1]};
+	return Expr::accessGet($ref[0], $ref[1]);
 });
 
 /**
@@ -2248,19 +2293,6 @@ Expr::register('_?', function ($parts, $data)
 		return Expr::expand($parts->get(3), $data, 'arg');
 
 	return '';
-});
-
-/**
-**	Returns `valueA` if it is not `null` or empty string or zero, otherwise returns `valueB`.
-**
-**	?? <valueA> <valueB>
-*/
-Expr::register('_??', function ($parts, $data)
-{
-	$value = Expr::expand($parts->get(1), $data, 'arg');
-	if ($value) return $value;
-
-	return Expr::expand($parts->get(2), $data, 'arg');
 });
 
 /**
@@ -3690,6 +3722,57 @@ Expr::register('_mapify', function ($parts, $data)
 	return $output;
 });
 
+/**
+**	Returns a new map created by grouping all values having the same key-expression. Just as in 'each', the i# and i## variables be available.
+**
+**	groupify [<varname>] <list-expr> <key-expr> [<value-expr>]
+*/
+Expr::register('_groupify', function ($parts, $data)
+{
+	$var_name = 'i';
+	$i = 1;
+
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
+
+	$list = Expr::expand($parts->get($i), $data, 'arg');
+
+	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
+		return $list;
+
+	$output = new Map();
+	$j = 0;
+
+	$key_expr = $parts->get($i+1);
+	$val_expr = $parts->length > 4 ? $parts->get($i+2) : null;
+
+	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$key_expr, &$val_expr)
+	{
+		$data->set($var_name, $item);
+		$data->set($var_name . '##', $j++);
+		$data->set($var_name . '#', $key);
+
+		$key = (string)Expr::expand($key_expr, $data, 'arg');
+		$value = $item;
+
+		if ($val_expr != null)
+			$value = Expr::expand($val_expr, $data, 'arg');
+
+		if (!$output->has($key))
+			$output->set($key, new Arry());
+
+		$output->get($key)->push($value);
+	});
+
+	$data->remove($var_name);
+	$data->remove($var_name . '##');
+	$data->remove($var_name . '#');
+
+	return $output;
+});
+
+/**
+ * 
+ */
 Expr::register('debug::dumpContextChain', function($args)
 {
 	echo "Context " . Expr::$context->getId() . ":\n";

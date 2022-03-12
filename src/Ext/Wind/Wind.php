@@ -99,9 +99,9 @@ class Wind
 		if (is_array($response))
 			$response = new Map ($response);
 
-		if (\Rose\typeOf($response) == 'Rose\Map' || \Rose\typeOf($response) == 'Rose\Arry')
+		if (\Rose\typeOf($response) == 'Rose\\Map' || \Rose\typeOf($response) == 'Rose\\Arry')
 		{
-			if (\Rose\typeOf($response) == 'Rose\Arry')
+			if (\Rose\typeOf($response) == 'Rose\\Arry')
 			{
 				$response = new Map([ 'response' => Wind::R_OK, 'data' => $response ], false);
 			}
@@ -268,7 +268,7 @@ class Wind
 				try {
 					$gateway->requestParams->clear()->merge($originalParams, true);
 					parse_str(base64_decode($i->get(1)), $requestParams);
-					$gateway->requestParams->__nativeArray = array_merge($gateway->requestParams->__nativeArray, $requestParams);
+					$gateway->requestParams->__nativeArray = $gateway->requestParams->__nativeArray + $requestParams;
 				}
 				catch (\Exception $e) {
 					\Rose\trace('Error: '.$e->getMessage());

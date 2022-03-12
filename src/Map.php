@@ -214,11 +214,11 @@ class Map
     {
         if ($mergeInSelf === true)
         {
-            $this->__nativeArray = array_merge ($this->__nativeArray, $map->__nativeArray);
+            $this->__nativeArray = $this->__nativeArray + $map->__nativeArray;
             return $this;
 		}
 
-        return new Map(array_merge($this->__nativeArray, $map->__nativeArray), false);
+        return new Map($this->__nativeArray + $map->__nativeArray, false);
     }
 
 	/*
