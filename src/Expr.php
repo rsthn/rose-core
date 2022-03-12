@@ -1779,7 +1779,7 @@ Expr::register('in?', function ($args)
 
 	for ($i = 2; $i < $args->length; $i++)
 	{
-		if ($value === $args->get($i))
+		if ($value == $args->get($i))
 			return true;
 	}
 
@@ -2347,6 +2347,16 @@ Expr::register('_if', function ($parts, $data)
 	}
 
 	return $mode == 1 ? Expr::blockValue($parts->slice($start, $parts->length-$start), $data) : null;
+});
+
+/**
+**	Returns the value returned by the block.
+**
+**	block <block...>
+*/
+Expr::register('_block', function ($parts, $data)
+{
+	return Expr::blockValue($parts->slice(1), $data);
 });
 
 /**
