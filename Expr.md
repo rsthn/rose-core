@@ -435,7 +435,7 @@ Removes one or more variables from the data context.
 ; Error: Expression function `a` not found.
 ```
 
-## `trim` \<args>
+## `trim` \<kargs>
 Returns the value without white-space on the left or right. The value can be a string or an array.
 ```lisp
 (trim " Hello " " World ")
@@ -444,7 +444,7 @@ Returns the value without white-space on the left or right. The value can be a s
 ; Nice
 ```
 
-## `upper` \<args>
+## `upper` \<kargs>
 Returns the value in uppercase. The value can be a string or an array.
 ```lisp
 (upper "Hello" "World")
@@ -453,7 +453,7 @@ Returns the value in uppercase. The value can be a string or an array.
 ; NICE
 ```
 
-## `lower` \<args>
+## `lower` \<kargs>
 Returns the value in lower. The value can be a string or an array.
 ```lisp
 (lower "Hello" "World")
@@ -476,7 +476,7 @@ Returns a sub-string of the given value.
 ; e
 ```
 
-## `replace` \<search> \<replacement> \<args>
+## `replace` \<search> \<replacement> \<kargs>
 Replaces all occurences of `search` with `replacement` in the given value. The value can be a string, a sequence or a string.
 ```lisp
 (replace "l" "w" "Hello")
@@ -487,7 +487,7 @@ Replaces all occurences of `search` with `replacement` in the given value. The v
 ; ["Hewwo","Worwd"]
 ```
 
-## `nl2br` \<args>
+## `nl2br` \<kargs>
 Converts all new-line chars in the value to `<br/>`, the value can be a string, sequence or array.
 ```lisp
 (nl2br "Hello\nWorld")

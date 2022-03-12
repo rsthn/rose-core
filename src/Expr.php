@@ -71,6 +71,7 @@ class Context
 	public $currentPath;
 	public $currentScope;
 	public $lastFunction;
+	public $defaultValue;
 
 	public static function reset()
 	{
@@ -105,6 +106,7 @@ class Context
 
 		$this->currentNamespace = '';
 		$this->currentScope = 'public';
+		$this->defaultValue = null;
 	}
 
 	/**
@@ -252,6 +254,11 @@ class ExprFn
 
 class Expr
 {
+	/**
+	 * 	Constant symbols.
+	 */
+	public const SYM_UNDERSCORE = '_';
+
 	/*
 	**	Strict mode flag. When set, any undefined expression function will trigger an error.
 	*/
@@ -282,6 +289,14 @@ class Expr
 	**	Context stack.
 	*/
 	static public $contextStack;
+
+	/**
+	 * 	Returns true if the specified value is a special type.
+	 */
+	static public function isSpecialType ($value)
+	{
+		return $value === null || $value === true || $value === false || $value === self::SYM_UNDERSCORE;
+	}
 
 	/*
 	**	Post-processes a parsed expression. Unescapes the backslash escape sequences.
@@ -411,6 +426,7 @@ class Expr
 					case 'null': $data = null; break;
 					case 'true': $data = true; break;
 					case 'false': $data = false; break;
+					case '_': $data = self::SYM_UNDERSCORE; break;
 				}
 			}
 
@@ -960,12 +976,18 @@ class Expr
 				switch ($parts->get($i)->type)
 				{
 					case 'identifier':
+						if (self::isSpecialType($parts->get($i)->data))
+						{
+							if ($parts->get($i)->data !== self::SYM_UNDERSCORE)
+								return $parts->get($i)->data;
+
+							$last = self::$context->defaultValue;
+							break;
+						}
+
 					case 'string':
 					case 'integer':
 					case 'number':
-
-						if ($parts->get($i)->data === true || $parts->get($i)->data === false || $parts->get($i)->data === null)
-							return $parts->get($i)->data;
 
 						$str .= $parts->get($i)->data;
 						$last = null;
@@ -1090,6 +1112,15 @@ class Expr
 				switch ($parts->get($i)->type)
 				{
 					case 'identifier':
+						if (self::isSpecialType($parts->get($i)->data))
+						{
+							if ($parts->get($i)->data === self::SYM_UNDERSCORE)
+							{
+								$last = self::$context->defaultValue;
+								break;
+							}
+						}
+
 					case 'string':
 					case 'integer':
 					case 'number':
@@ -1207,11 +1238,17 @@ class Expr
 					{
 						case 'string':
 						case 'number':
+						case 'integer':
 							return $parts->get(0)->get(0)->data;
 
-						case 'integer':
 						case 'identifier':
 							$name = $parts->get(0)->get(0)->data;
+
+							if (self::isSpecialType($name))
+							{
+								if ($name === self::SYM_UNDERSCORE)
+									return self::$context->defaultValue;
+							}
 
 							if (Expr::hasFunction($name) || Expr::hasFunction('_'.$name))
 								return Expr::expand($parts, $data, $ret, 'fn');
@@ -1220,7 +1257,6 @@ class Expr
 					}
 				}
 
-				// case 'template':
 				return Expr::expand($parts->get(0), $data, $ret, 'var');
 			}
 
@@ -1243,6 +1279,15 @@ class Expr
 								break;
 
 							case 'identifier':
+								if (self::isSpecialType($i->data))
+								{
+									if ($i->data === self::SYM_UNDERSCORE)
+									{
+										$tmp = self::$context->defaultValue;
+										break;
+									}
+								}
+
 							case 'access':
 							case 'string':
 							case 'integer':
@@ -1467,7 +1512,7 @@ class Expr
 	}
 
 	/*
-	**	Applies a function to a given input.
+	**	Applies a function to a given input. The input can be a single-value, a sequence, an array or a map.
 	**
 	**	>> object apply (array list, function fn);
 	*/
@@ -1563,6 +1608,40 @@ class Expr
 
 		return $value;
 	}
+
+	/**
+	 * Attempts to get a pure "identifier" from parts[index], when valid it stores the value in `output` and increases the given index `i`.
+	 * @return boolean
+	 */
+	public static function takeIdentifier ($parts, $data, &$index, &$output)
+	{
+		if ($parts->get($index)->length == 1 && $parts->get($index)->get(0)->type == 'identifier')
+		{
+			$value = $parts->get($index)->get(0)->data;
+
+			if (self::isSpecialType($value))
+				return false;
+
+			$output = Expr::expand($parts->get($index), $data, 'arg');
+			$index++;
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Verifies if the value at parts[index] is an identifier with the given identifcal value.
+	 * @return boolean
+	 */
+	public static function isIdentifier ($parts, $index, $value)
+	{
+		if ($parts->get($index)->length == 1 && $parts->get($index)->get(0)->type == 'identifier')
+			return $parts->get($index)->get(0)->data === $value;
+
+		return false;
+	}
 };
 
 
@@ -1595,6 +1674,11 @@ Expr::register('str', function($args) { $s = ''; for ($i = 1; $i < $args->length
 Expr::register('float', function($args) { return (float)$args->get(1); });
 Expr::register('chr', function($args) { return chr($args->get(1)); });
 Expr::register('ord', function($args) { return ord($args->get(1)); });
+
+Expr::register('bit-not', function($args) { return ~$args->get(1); });
+Expr::register('bit-and', function($args) { return $args->get(1) & $args->get(2); });
+Expr::register('bit-or', function($args) { return $args->get(1) | $args->get(2); });
+Expr::register('bit-xor', function($args) { return $args->get(1) ^ $args->get(2); });
 
 Expr::register('not', function($args) { return !$args->get(1); });
 Expr::register('neg', function($args) { return -$args->get(1); });
@@ -1699,11 +1783,17 @@ Expr::register('dump', function ($args)
 /**
 **	Sets one or more variables in the data context.
 **
-**	set <var-name> <expr> [<var-name> <expr>]*
-**	= <var-name> <expr> [<var-name> <expr>]*
+**	set <varname-expr> <expr> [<varname-expr> <expr>]*
+**	set <expr>
 */
 Expr::register('_set', function ($parts, $data)
 {
+	if ($parts->length == 2)
+	{
+		Expr::$context->defaultValue = Expr::value($parts->get(1), $data);
+		return null;
+	}
+
 	for ($i = 1; $i+1 < $parts->length; $i += 2)
 	{
 		$value = Expr::value($parts->get($i+1), $data);
@@ -1720,7 +1810,9 @@ Expr::register('_set', function ($parts, $data)
 			}
 		}
 		else
-			$data->set(Expr::value($parts->get($i), $data), $value);
+		{
+			$data->set(Expr::value($parts->get($i), $data), Expr::$context->defaultValue = $value);
+		}
 	}
 
 	return null;
@@ -1729,7 +1821,7 @@ Expr::register('_set', function ($parts, $data)
 /**
 **	Increments the value of a variable by the given value (or 1 if none provided).
 **
-**	inc <var-name> [<value>]
+**	inc <varname-expr> [<value>]
 */
 Expr::register('_inc', function ($parts, $data)
 {
@@ -1741,14 +1833,13 @@ Expr::register('_inc', function ($parts, $data)
 
 	$value = $parts->has(2) ? Expr::value($parts->get(2), $data) : 1;
 
-	$ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} + $value;
-	return null;
+	return $ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} + $value;
 });
 
 /**
 **	Decrements the value of a variable by the given value (or 1 if none provided).
 **
-**	dec <var-name> [<value>]
+**	dec <varname-expr> [<value>]
 */
 Expr::register('_dec', function ($parts, $data)
 {
@@ -1760,14 +1851,13 @@ Expr::register('_dec', function ($parts, $data)
 
 	$value = $parts->has(2) ? Expr::value($parts->get(2), $data) : 1;
 
-	$ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} - $value;
-	return null;
+	return $ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} - $value;
 });
 
 /**
 **	Appends the value to a variable.
 **
-**	append <var-name> <value>
+**	append <varname-expr> <value> [<value>...]
 */
 Expr::register('_append', function ($parts, $data)
 {
@@ -1777,14 +1867,16 @@ Expr::register('_append', function ($parts, $data)
 	if (!$ref[0])
 		throw new Error('Unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join('')  );
 
-	$ref[0]->{$ref[1]} = $ref[0]->{$ref[1]} . Expr::value($parts->get(2), $data);
-	return null;
+	for ($i = 2; $i < $parts->length; $i++)
+		$ref[0]->{$ref[1]} .= Expr::value($parts->get($i), $data);
+
+	return $ref[0]->{$ref[1]};
 });
 
 /**
 **	Removes one or more variables from the data context.
 **
-**	unset <var-name> [<var-name>]*
+**	unset <varname-expr> [<varname-expr>]*
 */
 Expr::register('_unset', function ($parts, $data)
 {
@@ -1803,9 +1895,9 @@ Expr::register('_unset', function ($parts, $data)
 });
 
 /**
-**	Returns the expression without white-space on the left or right. The expression can be a string or an array.
+**	Returns the expression without white-space on the left or right.
 **
-**	trim <args>
+**	trim <kargs>
 */
 Expr::register('trim', function ($args)
 {
@@ -1813,9 +1905,9 @@ Expr::register('trim', function ($args)
 });
 
 /**
-**	Returns the expression in uppercase. The expression can be a string or an array.
+**	Returns the expression in uppercase.
 **
-**	upper <args>
+**	upper <kargs>
 */
 Expr::register('upper', function ($args)
 {
@@ -1823,9 +1915,9 @@ Expr::register('upper', function ($args)
 });
 
 /**
-**	Returns the expression in lower. The expression can be a string or an array.
+**	Returns the expression in lower.
 **
-**	lower <args>
+**	lower <kargs>
 */
 Expr::register('lower', function ($args)
 {
@@ -1835,8 +1927,8 @@ Expr::register('lower', function ($args)
 /**
 **	Returns a sub-string of the given string.
 **
-**	substr <start> <count> <string>
-**	substr <start> <string>
+**	substr <start> <count> <value>
+**	substr <start> <value>
 */
 Expr::register('substr', function ($args)
 {
@@ -1866,9 +1958,9 @@ Expr::register('substr', function ($args)
 });
 
 /**
-**	Replaces a matching string with the given replacement string in a given text.
+**	Replaces a matching string with the given replacement string.
 **
-**	replace <search> <replacement> <args>
+**	replace <search> <replacement> <kargs>
 */
 Expr::register('replace', function ($args)
 {
@@ -1881,9 +1973,9 @@ Expr::register('replace', function ($args)
 });
 
 /**
-**	Converts all new-line chars in the expression to <br/>, the expression can be a string, sequence or an array.
+**	Converts all new-line chars in the expression to <br/>.
 **
-**	nl2br <args>
+**	nl2br <kargs>
 */
 Expr::register('nl2br', function ($args)
 {
@@ -1893,7 +1985,7 @@ Expr::register('nl2br', function ($args)
 /**
 **	Returns a string with the value inside an XML tag named `tag-name`, the value can be a string, sequence or an array.
 **
-**	% <tag-name> <arg>
+**	% <tag-name> <value>
 */
 Expr::register('%', function ($args)
 {
@@ -2007,17 +2099,23 @@ Expr::register('values', function ($args)
 });
 
 /**
-**	Constructs an array obtained by expanding the given block for each of the items in the list-expr, the mandatory varname
+**	Constructs an array obtained by expanding the given block for each of the items in the list-expr, the optional varname
 **	parameter (namely 'i') indicates the name of the variable that will contain the data of each item as the list-expr is
-**	traversed. Extra variables i# and i## (suffix '#' and '##') are introduced to denote the index/key and numeric index
+**	traversed.
+**
+**	Extra variables i# and i## (suffix '#' and '##') are introduced to denote the index/key and numeric index
 **	of the current item respectively, note that the later will always have a numeric value.
 **
-**	each <varname> <list-expr> <block>
+**	each [<varname>] <list-expr> <block>
 */
 Expr::register('_each', function ($parts, $data)
 {
-	$var_name = Expr::value($parts->get(1), $data);
-	$list = Expr::value($parts->get(2), $data);
+	$var_name = 'i';
+	$i = 1;
+
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
+
+	$list = Expr::value($parts->get($i), $data);
 
 	$s = new Arry();
 	$j = 0;
@@ -2025,7 +2123,7 @@ Expr::register('_each', function ($parts, $data)
 	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
 		return $s;
 
-	$block = $parts->slice(3);
+	$block = $parts->slice($i+1);
 
 	$list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$data, &$block)
 	{
@@ -2044,26 +2142,32 @@ Expr::register('_each', function ($parts, $data)
 });
 
 /**
-**	Expands the given block for each of the items in the list-expr, the mandatory varname parameter (namely 'i') indicates the name of the variable
-**	that will contain the data of each item as the list-expr is traversed. Extra variables i# and i## (suffix '#' and '##') are introduced to denote
-**	the index/key and numeric index of the current item respectively, note that the later will always have a numeric value.
+**	Expands the given block for each of the items in the list-expr, the optional varname parameter (namely 'i') indicates the name of
+**	the variable that will contain the data of each item as the list-expr is traversed.
+**
+**	Extra variables i# and i## (suffix '#' and '##') are introduced to denote the index/key and numeric index of the current item
+**	respectively, note that the later will always have a numeric value.
 **
 **	Returns the source list.
 **
-**	foreach <varname> <list-expr> <block>
-**	for <varname> <list-expr> <block>
+**	foreach [<varname>] <list-expr> <block>
+**	for [<varname>] <list-expr> <block>
 */
 Expr::register('_foreach', function ($parts, $data)
 {
-	$var_name = Expr::value($parts->get(1), $data);
-	$list = Expr::value($parts->get(2), $data);
+	$var_name = 'i';
+	$i = 1;
+
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
+
+	$list = Expr::value($parts->get($i), $data);
 
 	$j = 0;
 
 	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
 		return $list;
 
-	$block = $parts->slice(3);
+	$block = $parts->slice($i+1);
 
 	foreach ($list->__nativeArray as $key => $item)
 	{
@@ -2091,15 +2195,19 @@ Expr::register('_foreach', function ($parts, $data)
 
 Expr::register('_for', function ($parts, $data)
 {
-	$var_name = Expr::value($parts->get(1), $data);
-	$list = Expr::value($parts->get(2), $data);
+	$var_name = 'i';
+	$i = 1;
+
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
+
+	$list = Expr::value($parts->get($i), $data);
 
 	$j = 0;
 
 	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
 		return $list;
 
-	$block = $parts->slice(3);
+	$block = $parts->slice($i+1);
 
 	foreach ($list->__nativeArray as $key => $item)
 	{
@@ -2600,13 +2708,16 @@ Expr::register('has', function ($args, $parts, $data)
 /**
 **	Returns a new array/map contaning the transformed values of the array/map (evaluating the block). And just as in 'each', the i# and i## variables be available.
 **
-**	map <varname> <list-expr> <block>
+**	map [<varname>] <list-expr> <block>
 */
 Expr::register('_map', function ($parts, $data)
 {
-	$var_name = Expr::expand($parts->get(1), $data, 'arg');
+	$var_name = 'i';
+	$i = 1;
 
-	$list = Expr::expand($parts->get(2), $data, 'arg');
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
+
+	$list = Expr::expand($parts->get($i), $data, 'arg');
 
 	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
 		return $list;
@@ -2615,7 +2726,7 @@ Expr::register('_map', function ($parts, $data)
 	$output = $arrayMode ? new Arry() : new Map();
 	$j = 0;
 
-	$block = $parts->slice(3);
+	$block = $parts->slice($i+1);
 
 	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$block)
 	{
@@ -2639,13 +2750,16 @@ Expr::register('_map', function ($parts, $data)
 /**
 **	Returns a new array/map contaning the elements where the block evaluates to non-zero. Just as in 'each', the i# and i## variables be available.
 **
-**	filter <varname> <list-expr> <block>
+**	filter [<varname>] <list-expr> <block>
 */
 Expr::register('_filter', function ($parts, $data)
 {
-	$var_name = Expr::expand($parts->get(1), $data, 'arg');
+	$var_name = 'i';
+	$i = 1;
 
-	$list = Expr::expand($parts->get(2), $data, 'arg');
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
+
+	$list = Expr::expand($parts->get($i), $data, 'arg');
 
 	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
 		return $list;
@@ -2654,7 +2768,7 @@ Expr::register('_filter', function ($parts, $data)
 	$output = $arrayMode ? new Arry() : new Map();
 	$j = 0;
 
-	$block = $parts->slice(3);
+	$block = $parts->slice($i+1);
 
 	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$block)
 	{
@@ -2681,13 +2795,16 @@ Expr::register('_filter', function ($parts, $data)
 /**
 **	Returns a new array/map contaning the elements where the condition evaluates to non-zero. Just as in 'each', the i# and i## variables be available.
 **
-**	select <varname> <condition> <list-expr>
+**	select [<varname>] <condition> <list-expr>
 */
 Expr::register('_select', function ($parts, $data)
 {
-	$var_name = Expr::expand($parts->get(1), $data, 'arg');
+	$var_name = 'i';
+	$i = 1;
 
-	$list = Expr::expand($parts->get(3), $data, 'arg');
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
+
+	$list = $parts->has($i+1) ? Expr::expand($parts->get($i+1), $data, 'arg') : Expr::$context->defaultValue;
 
 	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
 		return $list;
@@ -2696,7 +2813,7 @@ Expr::register('_select', function ($parts, $data)
 	$output = $arrayMode ? new Arry() : new Map();
 	$j = 0;
 
-	$condition = $parts->get(2);
+	$condition = $parts->get($i);
 
 	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$condition)
 	{
@@ -2721,35 +2838,22 @@ Expr::register('_select', function ($parts, $data)
 });
 
 /**
-**	Pipes one or more expressions such that on each respective result is stored in a variable for the subsequent expression,
-**	the last expression is returned. If no varname is provided "_" will be used.
+**	Executes one or more expressions. Makes the result of each expression available to the next via the defaultValue.
 **
-**	pipe [<varname>] <expression>+
+**	pipe <expression>+
 */
 Expr::register('_pipe', function ($parts, $data)
 {
-	$var_name = '_';
 	$i = 1;
 
-	if ($parts->get(1)->length == 1 && $parts->get(1)->get(0)->type == 'identifier')
-	{
-		$var_name = Expr::expand($parts->get(1), $data, 'arg');
-		$i = 2;
-	}
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
 
-	$_value_has = $data->has($var_name);
-	$_value = $data->get($var_name);
-	$value = null;
+	Expr::$context->defaultValue = null;
 
 	for (; $i < $parts->length; $i++)
 	{
-		$data->set($var_name, $value = Expr::value($parts->get($i), $data));
+		Expr::$context->defaultValue = $value = Expr::value($parts->get($i), $data);
 	}
-
-	if ($_value_has)
-		$data->set($var_name, $_value);
-	else
-		$data->remove($var_name);
 
 	return $value;
 });
@@ -2943,7 +3047,10 @@ Expr::register('exit', function($args) {
 */
 Expr::register('_with', function($parts, $data)
 {
-	$var_name = Expr::expand($parts->get(1), $data, 'arg');
+	$var_name = 'i';
+	$i = 1;
+
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
 
 	$old_value_present = false;
 	$old_value = null;
@@ -2954,9 +3061,9 @@ Expr::register('_with', function($parts, $data)
 		$old_value = $data->{$var_name};
 	}
 
-	$data->{$var_name} = Expr::expand($parts->get(2), $data, 'arg');
+	$data->{$var_name} = Expr::expand($parts->get($i), $data, 'arg');
 
-	$value = Expr::blockValue($parts->slice(3), $data);
+	$value = Expr::blockValue($parts->slice($i+1), $data);
 
 	if ($old_value_present)
 		$data->{$var_name} = $old_value;
@@ -3200,7 +3307,7 @@ Expr::register('_def-fn', function($parts, $data)
 /*
 **	Defines a variable in the current context.
 **
-**	def [public|private] <var-name> <value>
+**	def [public|private] <varname> <value>
 */
 Expr::register('_def', function($parts, $data)
 {
@@ -3541,13 +3648,16 @@ Expr::register('map-get', function($args, $parts, $data)
 /**
 **	Returns a new map created with the specified key-expression and value-expression. Just as in 'each', the i# and i## variables be available.
 **
-**	mapify <varname> <list-expr> <key-expr> [<value-expr>]
+**	mapify [<varname>] <list-expr> <key-expr> [<value-expr>]
 */
 Expr::register('_mapify', function ($parts, $data)
 {
-	$var_name = Expr::expand($parts->get(1), $data, 'arg');
+	$var_name = 'i';
+	$i = 1;
 
-	$list = Expr::expand($parts->get(2), $data, 'arg');
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
+
+	$list = Expr::expand($parts->get($i), $data, 'arg');
 
 	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
 		return $list;
@@ -3555,8 +3665,8 @@ Expr::register('_mapify', function ($parts, $data)
 	$output = new Map();
 	$j = 0;
 
-	$key_expr = $parts->get(3);
-	$val_expr = $parts->length > 4 ? $parts->get(4) : null;
+	$key_expr = $parts->get($i+1);
+	$val_expr = $parts->length > 4 ? $parts->get($i+2) : null;
 
 	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$key_expr, &$val_expr)
 	{

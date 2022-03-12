@@ -513,3 +513,8 @@ Expr::register('re::extract', function($args)
 {
 	return Regex::_extract($args->get(1), $args->get(2));
 });
+
+Expr::register('re::get', function($args)
+{
+	return Regex::_getString($args->get(1), $args->get(2), $args->has(3) ? $args->get(3) : 0);
+});
