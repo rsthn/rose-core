@@ -317,7 +317,7 @@ class Expr
 		if (is_string($data))
 			throw new Error('Writing to strings directly using an index is not allowed.');
 
-		return $data->{$index} = value;
+		return $data->{$index} = $value;
 	}
 
 	/*

@@ -34,7 +34,7 @@ class Cookies
     private static function setCookieHeader ($name, $value, $ttl=null, $domain=null, $path=null)
     {
 		$path = $path == null ? Gateway::getInstance()->root.'/' : $path;
-		$domain = $domain == null ? Configuration::getInstance()->Gateway->server_name : $domain;
+		$domain = $domain == null ? Configuration::getInstance()?->Gateway?->server_name : $domain;
 
 		if ($value === null)
 		{
@@ -52,12 +52,12 @@ class Cookies
 		if ($domain) $header .= '; Domain='.$domain;
 		if ($path) $header .= '; Path='.$path;
 
-		if (Configuration::getInstance()->Gateway->same_site)
+		if (Configuration::getInstance()?->Gateway?->same_site)
 			$sameSite = Configuration::getInstance()->Gateway->same_site;
 		else
 			$sameSite = 'None';
 
-		if (Configuration::getInstance()->Gateway->allow_origin /*&& Gateway::getInstance()->serverParams->has('HTTP_ORIGIN')*/)
+		if (Configuration::getInstance()?->Gateway?->allow_origin /*&& Gateway::getInstance()->serverParams->has('HTTP_ORIGIN')*/)
 			$header .= '; SameSite='.$sameSite;
 
 		if (Text::toLowerCase($sameSite) == 'none' && Gateway::getInstance()->secure)

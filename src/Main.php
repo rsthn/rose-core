@@ -382,7 +382,7 @@ class Main
 
 		$ms_end = mstime();
 
-		if (Configuration::getInstance()->Gateway->access_log == 'true')
+		if (Configuration::getInstance()?->Gateway?->access_log == 'true')
 			trace (sprintf ('%s   %7.2f MB   %6d ms   %s   %s', (string)(new DateTime()), memory_get_peak_usage()/1048576, $ms_end-$ms_start, $_SERVER['REMOTE_ADDR'], $_SERVER['REQUEST_URI']), 'logs/access.log');
 	}
 };

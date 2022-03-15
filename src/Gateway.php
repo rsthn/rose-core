@@ -176,7 +176,7 @@ class Gateway
 		$this->remoteAddress = $this->serverParams->REMOTE_ADDR;
 		$this->remotePort = $this->serverParams->REMOTE_PORT;
 
-		$this->serverName = Configuration::getInstance()->Gateway->server_name ? Configuration::getInstance()->Gateway->server_name : $this->serverParams->SERVER_NAME;
+		$this->serverName = Configuration::getInstance()?->Gateway?->server_name ? Configuration::getInstance()->Gateway->server_name : $this->serverParams->SERVER_NAME;
 		$this->ep = ($this->secure ? 'https://' : 'http://')
 					.$this->serverName
 					.(
@@ -189,7 +189,7 @@ class Gateway
 		$this->url = $this->ep;
 		$this->rep = $this->ep;
 
-		if (Configuration::getInstance()->Gateway->allow_origin && $this->serverParams->has('HTTP_ORIGIN'))
+		if (Configuration::getInstance()?->Gateway?->allow_origin && $this->serverParams->has('HTTP_ORIGIN'))
 		{
 			if (Configuration::getInstance()->Gateway->allow_origin == '*')
 				self::header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
@@ -217,7 +217,7 @@ class Gateway
     public function main ()
     {
 		// If service parameter is set in Gateway configuration, load it as 'srv' to force activation of service.
-		if (Configuration::getInstance()->Gateway->service != null)
+		if (Configuration::getInstance()?->Gateway?->service != null)
 			$this->requestParams->srv = Configuration::getInstance()->Gateway->service;
 
 		// Detect is a service is being requested.

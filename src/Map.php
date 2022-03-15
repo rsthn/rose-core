@@ -214,11 +214,21 @@ class Map
     {
         if ($mergeInSelf === true)
         {
-            $this->__nativeArray = $this->__nativeArray + $map->__nativeArray;
+			foreach ($map->__nativeArray as $key => $value)
+            	$this->__nativeArray[$key] = $value;
+
             return $this;
 		}
 
-        return new Map($this->__nativeArray + $map->__nativeArray, false);
+		$tmp = [];
+
+		foreach ($this->__nativeArray as $key => $value)
+			$tmp[$key] = $value;
+
+		foreach ($map->__nativeArray as $key => $value)
+			$tmp[$key] = $value;
+
+		return new Map($tmp, false);
     }
 
 	/*

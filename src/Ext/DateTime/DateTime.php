@@ -19,6 +19,7 @@ namespace Rose\Ext;
 
 use Rose\DateTime;
 use Rose\Expr;
+use Rose\Text;
 
 /*
 **	datetime::now [target_timezone]
