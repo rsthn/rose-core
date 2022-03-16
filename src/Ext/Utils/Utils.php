@@ -380,6 +380,11 @@ Expr::register('array::append', function($args)
 	return $args->get(1)->append($args->get(2));
 });
 
+Expr::register('array::merge', function($args)
+{
+	return $args->get(1)->merge($args->get(2));
+});
+
 Expr::register('array::unique', function($args)
 {
 	return $args->get(1)->unique();
@@ -500,9 +505,14 @@ Expr::register('map::length', function($args)
 	return $args->get(1)->length();
 });
 
-Expr::register('map::merge', function($args)
+Expr::register('map::assign', function($args)
 {
 	return $args->get(1)->merge($args->get(2), true);
+});
+
+Expr::register('map::merge', function($args)
+{
+	return $args->get(1)->merge($args->get(2));
 });
 
 Expr::register('map::clear', function($args)
