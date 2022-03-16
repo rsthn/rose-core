@@ -1742,6 +1742,8 @@ Expr::register('notempty?', function($args) { return !!$args->get(1); });
 Expr::register('not-empty?', function($args) { return !!$args->get(1); });
 Expr::register('empty?', function($args) { return !$args->get(1); });
 Expr::register('zero?', function($args) { return (float)$args->get(1) == 0; });
+Expr::register('even?', function($args) { return ((int)$args->get(1) & 1) == 0; });
+Expr::register('odd?', function($args) { return ((int)$args->get(1) & 1) == 1; });
 
 Expr::register('int?', function($args) { return typeOf($args->get(1), true) === 'int'; });
 Expr::register('str?', function($args) { return typeOf($args->get(1), true) === 'string'; });
@@ -2824,6 +2826,174 @@ Expr::register('_filter', function ($parts, $data)
 				$output->push($item);
 			else
 				$output->set($key, $item);
+		}
+	});
+
+	$data->remove($var_name);
+	$data->remove($var_name . '##');
+	$data->remove($var_name . '#');
+
+	return $output;
+});
+
+/**
+**	Returns a boolean if every element of the array/map passes the test function. The i# and i## variables be available.
+**
+**	every [<varname>] <list-expr> <block>
+*/
+Expr::register('_every', function ($parts, $data)
+{
+	$var_name = 'i';
+	$i = 1;
+
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
+
+	$list = Expr::expand($parts->get($i), $data, 'arg');
+
+	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
+		return $list;
+
+	$output = true;
+	$j = 0;
+
+	$block = $parts->slice($i+1);
+
+	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$data, &$block)
+	{
+		$data->set($var_name, $item);
+		$data->set($var_name . '##', $j++);
+		$data->set($var_name . '#', $key);
+
+		if (!Expr::blockValue($block, $data))
+		{
+			$output = false;
+			return false;
+		}
+	});
+
+	$data->remove($var_name);
+	$data->remove($var_name . '##');
+	$data->remove($var_name . '#');
+
+	return $output;
+});
+
+/**
+**	Returns a boolean if some element of the array/map passes the test function. The i# and i## variables be available.
+**
+**	some [<varname>] <list-expr> <block>
+*/
+Expr::register('_some', function ($parts, $data)
+{
+	$var_name = 'i';
+	$i = 1;
+
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
+
+	$list = Expr::expand($parts->get($i), $data, 'arg');
+
+	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
+		return $list;
+
+	$output = false;
+	$j = 0;
+
+	$block = $parts->slice($i+1);
+
+	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$data, &$block)
+	{
+		$data->set($var_name, $item);
+		$data->set($var_name . '##', $j++);
+		$data->set($var_name . '#', $key);
+
+		if (!!Expr::blockValue($block, $data))
+		{
+			$output = true;
+			return false;
+		}
+	});
+
+	$data->remove($var_name);
+	$data->remove($var_name . '##');
+	$data->remove($var_name . '#');
+
+	return $output;
+});
+
+/**
+**	Returns the first element passing the test function, or null if not found. The i# and i## variables be available.
+**
+**	find [<varname>] <list-expr> <block>
+*/
+Expr::register('_find', function ($parts, $data)
+{
+	$var_name = 'i';
+	$i = 1;
+
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
+
+	$list = Expr::expand($parts->get($i), $data, 'arg');
+
+	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
+		return $list;
+
+	$output = null;
+	$j = 0;
+
+	$block = $parts->slice($i+1);
+
+	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$data, &$block)
+	{
+		$data->set($var_name, $item);
+		$data->set($var_name . '##', $j++);
+		$data->set($var_name . '#', $key);
+
+		if (!!Expr::blockValue($block, $data))
+		{
+			$output = $item;
+			return false;
+		}
+	});
+
+	$data->remove($var_name);
+	$data->remove($var_name . '##');
+	$data->remove($var_name . '#');
+
+	return $output;
+});
+
+/**
+**	Returns the index/key of the first element passing the test function, or null if not found. The i# and i## variables be available.
+**
+**	findIndex [<varname>] <list-expr> <block>
+*/
+Expr::register('_findIndex', function ($parts, $data)
+{
+	$var_name = 'i';
+	$i = 1;
+
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
+
+	$list = Expr::expand($parts->get($i), $data, 'arg');
+
+	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
+		return $list;
+
+	$output = null;
+	$j = 0;
+
+	$block = $parts->slice($i+1);
+
+	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$data, &$block)
+	{
+		$data->set($var_name, $item);
+		$data->set($var_name . '##', $j++);
+		$data->set($var_name . '#', $key);
+
+		if (!!Expr::blockValue($block, $data))
+		{
+			$output = $key;
+			return false;
 		}
 	});
 

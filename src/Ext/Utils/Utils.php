@@ -355,9 +355,19 @@ Expr::register('array::remove', function($args)
 	return $args->get(1)->remove((int)$args->get(2));
 });
 
-Expr::register('array::indexof', function($args)
+Expr::register('array::indexof', function($args) // violet: deprecate later
 {
 	return $args->get(1)->indexOf($args->get(2));
+});
+
+Expr::register('array::indexOf', function($args)
+{
+	return $args->get(1)->indexOf($args->get(2));
+});
+
+Expr::register('array::lastIndexOf', function($args)
+{
+	return $args->get(1)->lastIndexOf($args->get(2));
 });
 
 Expr::register('array::length', function($args)
@@ -463,7 +473,12 @@ Expr::register('map::remove', function($args)
 	return $args->get(1)->remove((string)$args->get(2));
 });
 
-Expr::register('map::keyof', function($args)
+Expr::register('map::keyof', function($args) //violet: deprecate later
+{
+	return $args->get(1)->keyOf($args->get(2));
+});
+
+Expr::register('map::keyOf', function($args)
 {
 	return $args->get(1)->keyOf($args->get(2));
 });

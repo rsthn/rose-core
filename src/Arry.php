@@ -310,6 +310,30 @@ class Arry
     }
 
 	/*
+	**	Returns the index of the last item whose value matches or null if not found, if the strict parameter is set, it will search for an identical item.
+	*/
+    public function lastIndexOf ($value, $strict=false)
+    {
+		$n = $this->length();
+
+		for ($i = $n-1; $i >= 0; $i--)
+		{
+			if ($strict)
+			{
+				if ($this->__nativeArray[$i] === $value)
+					return $i;
+			}
+			else
+			{
+				if ($this->__nativeArray[$i] == $value)
+					return $i;
+			}
+		}
+
+        return null;
+    }
+
+	/*
 	**	Checks if the given index exists in the array.
 	*/
     public function has ($index, $direct=false)
@@ -448,13 +472,70 @@ class Arry
 	}
 
 	/*
+	**	Tests whether all elements in the array pass the test implemented by the provided function. Returns a boolean value.
+	*/
+    public function every ($filter)
+    {
+		foreach ($this->__nativeArray as $item)
+		{
+			if (!$filter($item))
+				return false;
+		}
+
+        return true;
+	}
+
+	/*
+	**	Tests whether at least one element in the array passes the test implemented by the provided function. Returns boolean.
+	*/
+    public function some ($filter)
+    {
+		foreach ($this->__nativeArray as $item)
+		{
+			if ($filter($item))
+				return true;
+		}
+
+        return false;
+	}
+
+	/*
+	**	Returns the first element that passes the test function or null if not found.
+	*/
+    public function find ($filter)
+    {
+		foreach ($this->__nativeArray as $item)
+		{
+			if ($filter($item))
+				return $item;
+		}
+
+        return null;
+	}
+
+	/*
+	**	Returns the index of the first element that passes the test function or null if not found.
+	*/
+    public function findIndex ($filter)
+    {
+		foreach ($this->__nativeArray as $index => $item)
+		{
+			if ($filter($item))
+				return $index;
+		}
+
+        return null;
+	}
+
+	/*
 	**	For each of the items in the array the specified function is called.
 	*/
     public function forEach ($function)
     {
 		foreach ($this->__nativeArray as $index => &$item)
 		{
-			$function ($item, $index, $this);
+			if ($function ($item, $index, $this) === false)
+				break;
 		}
 
         return $this;

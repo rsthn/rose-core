@@ -263,13 +263,70 @@ class Map
 	}
 
 	/*
+	**	Tests whether all elements in the map pass the test implemented by the provided function. Returns a boolean value.
+	*/
+    public function every ($filter)
+    {
+		foreach ($this->__nativeArray as $name => $item)
+		{
+			if (!$filter($item, $name))
+				return false;
+		}
+
+        return true;
+	}
+
+	/*
+	**	Tests whether at least one element in the map passes the test implemented by the provided function. Returns boolean.
+	*/
+    public function some ($filter)
+    {
+		foreach ($this->__nativeArray as $name => $item)
+		{
+			if ($filter($item, $name))
+				return true;
+		}
+
+        return false;
+	}
+
+	/*
+	**	Returns the first element that passes the test function or null if not found.
+	*/
+    public function find ($filter)
+    {
+		foreach ($this->__nativeArray as $key => $item)
+		{
+			if ($filter($item, $key))
+				return $item;
+		}
+
+        return null;
+	}
+
+	/*
+	**	Returns the key of the first element that passes the test function or null if not found.
+	*/
+    public function findKey ($filter)
+    {
+		foreach ($this->__nativeArray as $key => $item)
+		{
+			if ($filter($item, $key))
+				return $key;
+		}
+
+        return null;
+	}
+
+	/*
 	**	For each of the items in the map the specified function is called.
 	*/
     public function forEach ($function)
     {
 		foreach ($this->__nativeArray as $key => &$item)
 		{
-			$function ($item, $key, $this);
+			if ($function ($item, $key, $this) === false)
+				break;
 		}
 
         return $this;
