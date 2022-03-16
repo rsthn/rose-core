@@ -395,6 +395,18 @@ Expr::register('array::clear', function($args)
 	return $args->get(1)->clear();
 });
 
+/**
+ * 	array::flatten <depth> <array>
+ * 	array::flatten <array>
+ */
+Expr::register('array::flatten', function($args)
+{
+	if ($args->length == 3)
+		return $args->get(2)->flatten($args->get(1));
+	else
+		return $args->get(1)->flatten();
+});
+
 /* ************ */
 Expr::register('map::new', function($args)
 {

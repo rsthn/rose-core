@@ -528,6 +528,28 @@ class Arry
 	}
 
 	/*
+	**	Returns a flattened array up to the specified depth.
+	*/
+    public function flatten ($depth=1, $output=null)
+    {
+		if (!$output)
+			$output = new Arry();
+
+		foreach ($this->__nativeArray as $index => $item)
+		{
+			if (typeOf($item) === 'Rose\\Arry' && $depth > 0)
+			{
+				$item->flatten($depth-1, $output);
+				continue;
+			}
+
+			$output->push($item);
+		}
+
+        return $output;
+	}
+
+	/*
 	**	For each of the items in the array the specified function is called.
 	*/
     public function forEach ($function)
