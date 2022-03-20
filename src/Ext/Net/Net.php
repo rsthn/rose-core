@@ -67,7 +67,8 @@ class Http
 	*/
 	public static function header ($headerLine)
 	{
-		self::$headers->set(Text::split(':', $headerLine)->get(0), $headerLine);
+		$name = Text::toLowerCase(Text::split(':', $headerLine)->get(0));
+		self::$headers->set($name, Text::trim($name) . ': ' . Text::trim(Text::substring ($headerLine, Text::length($name)+1)));
 	}
 
 	/*
@@ -503,6 +504,12 @@ Expr::register('http::auth', function ($args)
 /* ****************** */
 Expr::register('http::code', function ($args)
 {
+	if ($args->length == 2)
+	{
+		http_response_code(~~$args->get(1));
+		return null;
+	}
+
 	return Http::getCode();
 });
 

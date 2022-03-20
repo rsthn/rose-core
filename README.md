@@ -6,7 +6,7 @@
 
 # About Rose
 
-Rose is a framework designed aiming to the highest-level of abstraction possible, this is achieved by using an internal expression language (dialect of Lisp) to code entire web services and systems. This effectively allows the developer to **never write any host language code** when building core logic.
+Rose is a framework designed aiming to the highest-level of abstraction possible, this is achieved by using an internal expression language (dialect of Lisp) to code entire APIs and systems. This effectively allows the developer to **never write any host language code** when building core logic.
 
 The host language is the language on which the `rose-core` was built, for the repository you're viewing right now, that would be PHP.
 
@@ -24,7 +24,7 @@ As any other package of the modern web, this one should be installed using a pac
 
 |Project Type|Package URL|Description|
 |------------|-----------|-----------|
-|Web Service|[https://github.com/rsthn/rose-webservice](https://github.com/rsthn/rose-webservice)|Deploy flexible and secure web services in the blink of an eye with Rose's internal web-service extension, Wind.
+|API|[https://github.com/rsthn/rose-api](https://github.com/rsthn/rose-api)|Deploy flexible and secure APIs in the blink of an eye with Rose's internal API extension, Wind.
 
 <br/>
 
