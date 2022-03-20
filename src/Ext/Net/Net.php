@@ -152,7 +152,7 @@ class Http
 			if (\Rose\typeOf($value) != 'primitive')
 				return;
 
-			$list->push(urlencode($name) . '=' . urlencode($value));
+			$list->push(urlencode($name) . '=' . urlencode($value ?? ''));
 		});
 
 		$ch = Text::substring($url, -1);
@@ -255,7 +255,7 @@ class Http
 			if (!$useFormData && (!$headers->has('content-type') || $headers->get('content-type') == 'content-type: application/x-www-form-urlencoded'))
 			{
 				$temp = $fields->map(function ($value, $name) {
-					return urlencode($name) . '=' . urlencode($value);
+					return urlencode($name) . '=' . urlencode($value ?? '');
 				});
 
 				$temp = $temp->values()->join('&');

@@ -3412,6 +3412,8 @@ Expr::register('_def-fn', function($parts, $data)
 	$context = Expr::$context;
 	$contextData = $context->getId() == 0 && $data !== $context->data ? $data : $context->data;
 
+	$fn = null;
+
 	for (; $i < $parts->length; $i++)
 	{
 		if ($parts->get($i)->get(0)->type != 'identifier')

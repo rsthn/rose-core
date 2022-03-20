@@ -127,8 +127,8 @@ Expr::register('utils::base64::decode', function($args) { return base64_decode (
 Expr::register('utils::hex::encode', function($args) { return bin2hex ($args->get(1)); });
 Expr::register('utils::hex::decode', function($args) { return hex2bin ($args->get(1)); });
 
-Expr::register('utils::url::encode', function($args) { return urlencode ($args->get(1)); });
-Expr::register('utils::url::decode', function($args) { return urldecode ($args->get(1)); });
+Expr::register('utils::url::encode', function($args) { return urlencode ($args->get(1) ?? ''); });
+Expr::register('utils::url::decode', function($args) { return urldecode ($args->get(1) ?? ''); });
 
 Expr::register('utils::serialize', function($args) { return serialize ($args->get(1)); });
 Expr::register('utils::deserialize', function($args) { return unserialize ($args->get(1)); });
