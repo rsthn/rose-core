@@ -26,6 +26,7 @@ use Rose\Session;
 use Rose\Map;
 use Rose\Text;
 use Rose\Regex;
+use Rose\Arry;
 use Rose\Extensions;
 
 /*
@@ -109,6 +110,11 @@ class Gateway
 	public $secure;
 
 	/*
+	**	Object contaning the input data received. Basically what was POSTed to the gateway.
+	*/
+	public $input;
+
+	/*
 	**	Indicates if the Gateway is in CLI mode, when so, certain functions will not be used (i.e. header).
 	*/
 	public static $cli = false;
@@ -143,6 +149,22 @@ class Gateway
 		$this->cookies = new Map ($_COOKIE);
 
 		$this->registeredServices = new Map();
+		$this->input = new Map([ 'contentType' => $this->server->CONTENT_TYPE, 'size' => $this->server->CONTENT_LENGTH, 'path' => 'php://input' ]);
+
+		switch (Text::toLowerCase($this->server->CONTENT_TYPE))
+		{
+			case 'application/x-www-form-urlencoded':
+			case 'multipart/form-data':
+				break;
+
+			case 'application/json':
+				$value = file_get_contents($this->input->path);
+				$this->input->data = $value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true));
+				break;
+
+			default:
+				break;
+		}
 	}
 
 	/*

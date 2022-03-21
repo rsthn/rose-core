@@ -132,7 +132,7 @@ class Http
 	**	@param $requestHeaders Rose\Map
 	**	@param $method string
 	*/
-	public static function get ($url, $fields, $requestHeaders=null, $method='GET')
+	public static function get ($url, $fields=null, $requestHeaders=null, $method='GET')
 	{
 		$c = curl_init();
 
@@ -147,13 +147,19 @@ class Http
 
 		$list = new Arry();
 
-		$fields->forEach(function(&$value, $name) use(&$list)
+		if ($fields)
 		{
-			if (\Rose\typeOf($value) != 'primitive')
-				return;
+			if (\Rose\typeOf($fields) !== 'Rose\\Map')
+				throw new Error('Parameter `fields` for Net::get should be Map.');
 
-			$list->push(urlencode($name) . '=' . urlencode($value ?? ''));
-		});
+			$fields->forEach(function(&$value, $name) use(&$list)
+			{
+				if (\Rose\typeOf($value) !== 'primitive')
+					return;
+
+				$list->push(urlencode($name) . '=' . urlencode($value ?? ''));
+			});
+		}
 
 		$ch = Text::substring($url, -1);
 		if ($ch != '?' && $ch != '&') $url .= '&';
