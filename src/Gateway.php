@@ -162,6 +162,10 @@ class Gateway
 				$this->input->data = $value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true));
 				break;
 
+			case 'text':
+				$this->input->data = file_get_contents($this->input->path);
+				break;
+
 			default:
 				break;
 		}

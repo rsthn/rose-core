@@ -118,6 +118,9 @@ class Path
 	*/
     public static function exists ($path)
     {
+		if ($path === 'php://input')
+			return true;
+
         return file_exists ($path);
 	}
 
