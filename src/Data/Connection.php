@@ -381,7 +381,7 @@ class Connection
         $array = $this->driver->fetchRow($rs, $this->conn);
 		$this->driver->freeResult($rs, $this->conn);
 
-        return $array[0];
+        return $array ? $array[0] : null;
     }
 
 	/*

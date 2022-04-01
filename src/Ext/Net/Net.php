@@ -119,6 +119,10 @@ class Http
 			case 'bearer':
 				self::$headers->set('Authorization', 'Authorization: Bearer ' . $username);
 				break;
+
+			default:
+				self::$headers->set('Authorization', 'Authorization: ' . $username);
+				break;
 		}
 
 		return null;
@@ -493,13 +497,20 @@ Expr::register('http::debug', function ($args)
 /* http::auth basic <username> <password> */
 /* http::auth basic <username> */
 /* http::auth bearer <token> */
+/* http::auth <token> */
 /* http::auth false */
 
 Expr::register('http::auth', function ($args)
 {
-	if ($args->length == 2 && (!$args->get(1) || $args->get(1) == 'false'))
+	if ($args->length == 2)
 	{
-		Http::auth (false);
+		if (!$args->get(1) || $args->get(1) === 'false')
+		{
+			Http::auth (false);
+			return null;
+		}
+
+		Http::auth ('value', $args->get(1));
 		return null;
 	}
 

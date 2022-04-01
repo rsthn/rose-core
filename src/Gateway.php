@@ -159,7 +159,7 @@ class Gateway
 
 			case 'application/json':
 				$value = file_get_contents($this->input->path);
-				$this->input->data = $value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true));
+				$this->input->data = !$value ? new Map() : ($value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true)));
 				break;
 
 			case 'text':
