@@ -170,7 +170,7 @@ class Connection
         try {
             $this->conn = $this->driver->open ($this->dbServer, $this->dbUser, $this->dbPassword, $this->dbName);
         }
-		catch (\Exception $e) {
+		catch (\Throwable $e) {
 			throw new Error ('Unable to open connection to '.$this->dbUser.'@'.$this->dbServer.': '.$e->getMessage());
 		}
 
@@ -304,7 +304,7 @@ class Connection
 
 		$rs = null;
         try { $rs = $this->driver->query ($queryString, $this->conn); }
-		catch (\Exception $e) { }
+		catch (\Throwable $e) { }
 
         if ($rs === false || $rs === null)
             throw new Error ($this->driver->getLastError($this->conn));
@@ -343,7 +343,7 @@ class Connection
 
 		$rs = null;
         try { $rs = $this->driver->reader ($queryString, $this->conn); }
-		catch (\Exception $e) { }
+		catch (\Throwable $e) { }
 
         if ($rs === false || $rs === null)
             throw new Error ($this->driver->getLastError($this->conn));
@@ -370,7 +370,7 @@ class Connection
 
 		$rs = null;
         try { $rs = $this->driver->query ($queryString, $this->conn); }
-		catch (\Exception $e) { }
+		catch (\Throwable $e) { }
 
         if ($rs === false || $rs === null)
 			throw new Error ($this->driver->getLastError($this->conn));
@@ -400,7 +400,7 @@ class Connection
 
 		$rs = null;
         try { $rs = $this->driver->query ($queryString, $this->conn); }
-		catch (\Exception $e) { }
+		catch (\Throwable $e) { }
 
         if ($rs === false || $rs === null)
             throw new Error ($this->driver->getLastError($this->conn));
@@ -439,7 +439,7 @@ class Connection
 
 		$rs = null;
         try { $rs = $this->driver->query ($queryString, $this->conn); }
-        catch (\Exception $e) { }
+        catch (\Throwable $e) { }
 
         if ($rs === false || $rs === null)
 			throw new Error ($this->driver->getLastError($this->conn));

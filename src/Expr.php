@@ -395,7 +395,7 @@ class Expr
 
 		if ($is_tpl === true)
 		{
-			$template = trim($template);
+			$template = Text::trim($template);
 			$nflush = 'identifier';
 			$state = 10;
 
@@ -423,7 +423,7 @@ class Expr
 			}
 			else if ($type == 'parse-trim-merge')
 			{
-				$data = Expr::parseTemplate (Text::split ("\n", trim($data))->map(function($i) { return Text::trim($i); })->join("\n"), $sym_open, $sym_close, false, 0, $remove_comments);
+				$data = Expr::parseTemplate (Text::split ("\n", Text::trim($data))->map(function($i) { return Text::trim($i); })->join("\n"), $sym_open, $sym_close, false, 0, $remove_comments);
 			}
 			else if ($type == 'parse-merge')
 			{
@@ -1948,7 +1948,7 @@ Expr::register('_unset', function ($parts, $data)
 */
 Expr::register('trim', function ($args)
 {
-	return Expr::apply($args->slice(1), function($value) { return trim($value); });
+	return Expr::apply($args->slice(1), function($value) { return Text::trim($value); });
 });
 
 /**
@@ -2225,7 +2225,7 @@ Expr::register('_foreach', function ($parts, $data)
 		try {
 			Expr::blockValue($block, $data);
 		}
-		catch (\Exception $e) {
+		catch (\Throwable $e) {
 			$name = $e->getMessage();
 			if ($name == 'EXC_BREAK') break;
 			if ($name == 'EXC_CONTINUE') continue;
@@ -2265,7 +2265,7 @@ Expr::register('_for', function ($parts, $data)
 		try {
 			Expr::blockValue($block, $data);
 		}
-		catch (\Exception $e) {
+		catch (\Throwable $e) {
 			$name = $e->getMessage();
 			if ($name == 'EXC_BREAK') break;
 			if ($name == 'EXC_CONTINUE') continue;
@@ -2495,7 +2495,7 @@ Expr::register('_repeat', function ($parts, $data)
 					$data->set($var_name, $i);
 					$arr->push(Expr::value($tpl, $data));
 				}
-				catch (\Exception $e) {
+				catch (\Throwable $e) {
 					$name = $e->getMessage();
 					if ($name == 'EXC_BREAK') break;
 					if ($name == 'EXC_CONTINUE') continue;
@@ -2511,7 +2511,7 @@ Expr::register('_repeat', function ($parts, $data)
 					$data->set($var_name, $i);
 					$arr->push(Expr::value($tpl, $data));
 				}
-				catch (\Exception $e) {
+				catch (\Throwable $e) {
 					$name = $e->getMessage();
 					if ($name == 'EXC_BREAK') break;
 					if ($name == 'EXC_CONTINUE') continue;
@@ -2531,7 +2531,7 @@ Expr::register('_repeat', function ($parts, $data)
 				$data->set($var_name, $i);
 				$arr->push(Expr::value($tpl, $data));
 			}
-			catch (\Exception $e) {
+			catch (\Throwable $e) {
 				$name = $e->getMessage();
 				if ($name == 'EXC_BREAK') break;
 				if ($name == 'EXC_CONTINUE') continue;
@@ -2550,7 +2550,7 @@ Expr::register('_repeat', function ($parts, $data)
 				$data->set($var_name, $i);
 				$arr->push(Expr::value($tpl, $data));
 			}
-			catch (\Exception $e) {
+			catch (\Throwable $e) {
 				$name = $e->getMessage();
 				if ($name == 'EXC_BREAK') break;
 				if ($name == 'EXC_CONTINUE') continue;
@@ -2580,7 +2580,7 @@ Expr::register('_loop', function ($parts, $data)
 		try {
 			Expr::blockValue($block, $data);
 		}
-		catch (\Exception $e) {
+		catch (\Throwable $e) {
 			$name = $e->getMessage();
 			if ($name == 'EXC_BREAK') break;
 			if ($name == 'EXC_CONTINUE') continue;
@@ -2609,7 +2609,7 @@ Expr::register('_while', function ($parts, $data)
 		try {
 			Expr::blockValue($block, $data);
 		}
-		catch (\Exception $e) {
+		catch (\Throwable $e) {
 			$name = $e->getMessage();
 			if ($name == 'EXC_BREAK') break;
 			if ($name == 'EXC_CONTINUE') continue;
@@ -3175,7 +3175,7 @@ Expr::register('_try', function ($parts, $data)
 				break;
 		}
 	}
-	catch (\Exception $e)
+	catch (\Throwable $e)
 	{
 		switch ($e->getMessage())
 		{

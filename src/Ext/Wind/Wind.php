@@ -211,6 +211,9 @@ class Wind
 			self::reply ($response);
 	}
 
+	/**
+	 * Runs a violet expression script in CLI-mode.
+	 */
 	public static function run ($path, $data=null)
 	{
 		self::$data = $data ? $data : new Map();
@@ -270,7 +273,7 @@ class Wind
 					parse_str(base64_decode($i->get(1)), $requestParams);
 					$gateway->requestParams->__nativeArray = $gateway->requestParams->__nativeArray + $requestParams;
 				}
-				catch (\Exception $e) {
+				catch (\Throwable $e) {
 					\Rose\trace('Error: '.$e->getMessage());
 					continue;
 				}
@@ -312,7 +315,7 @@ class Wind
 							throw $e;
 					}
 				}
-				catch (\Exception $e) {
+				catch (\Throwable $e) {
 					self::$response = new Map([ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
 				}
 
@@ -358,7 +361,7 @@ class Wind
 					throw $e;
 			}
 		}
-		catch (\Exception $e)
+		catch (\Throwable $e)
 		{
 			if (self::requiresJsonReply())
 				self::reply ([ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
@@ -425,7 +428,7 @@ class Wind
 		{
 			try {
 				Gateway::header(self::$contentType ? self::$contentType : 'Content-Type: text/plain; charset=utf-8'); }
-			catch (\Exception $e) {
+			catch (\Throwable $e) {
 			}
 
 			self::$contentFlushed = true;
@@ -492,7 +495,7 @@ class Wind
 					throw $e;
 			}
 		}
-		catch (\Exception $e)
+		catch (\Throwable $e)
 		{
 			self::$data->internal_call = self::$data->internal_call - 1;
 			self::$data->args = $p_args;
@@ -549,7 +552,7 @@ class Wind
 					throw $e;
 			}
 		}
-		catch (\Exception $e)
+		catch (\Throwable $e)
 		{
 			self::$data = $p_data;
 			self::$data->internal_call = self::$data->internal_call - 1;

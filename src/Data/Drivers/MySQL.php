@@ -47,7 +47,7 @@ class MySQL extends Driver
 
 			mysql_query ('SET collation_connection = \'utf8mb4_unicode_ci\'', $conn);
 		}
-		catch (\Exception $e)
+		catch (\Throwable $e)
 		{
 			mysql_set_charset ('UTF8', $conn);
 			mysql_query ('SET collation_connection = \'utf8_unicode_ci\'', $conn);

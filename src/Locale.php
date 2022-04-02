@@ -79,7 +79,7 @@ class Locale
 		try {
 			new \DateTimeZone ($this->timezone);
 		}
-		catch (\Exception $e) {
+		catch (\Throwable $e) {
 			trace ('Locale: Invalid or unknown timezone: ' . $this->timezone);
 			$this->timezone = '+00:00';
 		}

@@ -26,7 +26,12 @@ use Rose\Gateway;
 /* ****************** */
 Expr::register('path::fsroot', function ($args)
 {
-	return Gateway::getInstance()->localroot;
+	return Path::fsroot();
+});
+
+Expr::register('path::cwd', function ($args)
+{
+	return Path::cwd();
 });
 
 Expr::register('path::basename', function ($args)
@@ -89,6 +94,11 @@ Expr::register('path::exists', function ($args)
 Expr::register('path::chmod', function ($args)
 {
 	return Path::chmod ($args->get(1), octdec($args->get(2)));
+});
+
+Expr::register('path::chdir', function ($args)
+{
+	return Path::chdir ($args->get(1));
 });
 
 Expr::register('path::rename', function ($args)

@@ -174,7 +174,7 @@ function silent_ini_set ($name, $value)
 	try {
 		ini_set($name, $value);
 	}
-	catch (\Exception $e) {
+	catch (\Throwable $e) {
 	}
 }
 
@@ -273,7 +273,7 @@ function fatal_handler()
 	}
 
 	echo '<div style="color: #bbb; margin-top: 24px;">';
-	echo '@rsthn/rose ' . json_decode(file_get_contents(dirname(__FILE__).'/../composer.json'))->version . ' &middot; PHP ' . phpversion();
+	echo '@rsthn/rose ' . Main::version() . ' &middot; PHP ' . phpversion();
 	echo '</div>';
 
 	echo '</pre>';
@@ -296,10 +296,18 @@ class Main
 	*/
 	public static $loaded = true;
 
+	/**
+	 * Returns the version of the framework.
+	 */
+	static function version ()
+	{
+		return json_decode(file_get_contents(dirname(__FILE__).'/../composer.json'))->version;
+	}
+
 	/*
-	**	Sets the global definitions and PHP configuration. Automatically called when loading this class.
+	**	Sets the global definitions and PHP configuration. Called by `cli` or `initialize`.
 	*/
-	static function defs ()
+	static function defs ($cliMode=false)
 	{
 		// Configure PHP environment.
 		gc_disable();
@@ -307,11 +315,14 @@ class Main
 		umask(0);
 		error_reporting (E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 		mt_srand ((int)(((double)microtime ()) * 10000));
-		set_time_limit (300);
+		set_time_limit ($cliMode ? 0 : 300);
 
 		// Set global error handlers and disable PHP error output.
-		set_error_handler ('Rose\\error_handler', E_STRICT | E_WARNING | E_USER_ERROR | E_USER_WARNING);
-		register_shutdown_function ('Rose\\fatal_handler');
+		if (!$cliMode) {
+			set_error_handler ('Rose\\error_handler', E_STRICT | E_USER_ERROR | E_WARNING | E_USER_WARNING);
+			register_shutdown_function ('Rose\\fatal_handler');
+		}
+
 		silent_ini_set ('display_errors', '0');
 
 		// Set global project core directory (use 'resources' for legacy systems, and 'rcore' for Rose 3.1+ systems).
@@ -327,12 +338,14 @@ class Main
 	/*
 	**	Initializes the primary framework classes for CLI operation.
 	*/
-	static function cli ()
+	static function cli ($fsroot, $keepSafes=false)
 	{
+		Main::defs(!$keepSafes);
+
 		try {
-			Gateway::getInstance()->init(true);
+			Gateway::getInstance()->init(true, $fsroot);
 		}
-		catch (\Exception $e)
+		catch (\Throwable $e)
 		{
 			$lastException = $e;
 		}
@@ -346,8 +359,10 @@ class Main
 	**	Initializes the primary framework classes and passes control to the Gateway. If $callback is not null, it will be executed
 	**	after Gateway's main().
 	*/
-	static function initialize ($callback=null)
+	static function initialize ($fsroot, $callback)
 	{
+		Main::defs();
+
 		// Load specially encoded request if "req64" parameter is set.
 		if (isset($_REQUEST['req64']))
 		{
@@ -362,7 +377,7 @@ class Main
 
 		try
 		{
-			Gateway::getInstance()->init();
+			Gateway::getInstance()->init(false, $fsroot);
 	
 			try {
 				Gateway::getInstance()->main();
@@ -375,7 +390,7 @@ class Main
 
 			Gateway::getInstance()->close();
 		}
-		catch (\Exception $e)
+		catch (\Throwable $e)
 		{
 			$lastException = $e;
 		}
@@ -386,5 +401,3 @@ class Main
 			trace (sprintf ('%s   %7.2f MB   %6d ms   %s   %s', (string)(new DateTime()), memory_get_peak_usage()/1048576, $ms_end-$ms_start, $_SERVER['REMOTE_ADDR'], $_SERVER['REQUEST_URI']), 'logs/access.log');
 	}
 };
-
-Main::defs();

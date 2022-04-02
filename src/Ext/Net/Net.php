@@ -312,7 +312,7 @@ class Http
 		$data = curl_exec($c);
 
 		if (self::$debug) {
-			try { \Rose\trace('RESPONSE ' . $data); } catch (\Exception $e) { }
+			try { \Rose\trace('RESPONSE ' . $data); } catch (\Throwable $e) { }
 		}
 
 		$tempFiles->forEach(function($path) { File::remove($path); });

@@ -51,7 +51,7 @@ class MySQLi extends Driver
 
 			mysqli_query ($conn, 'SET collation_connection = \'utf8mb4_unicode_ci\'');
 		}
-		catch (\Exception $e)
+		catch (\Throwable $e)
 		{
 			mysqli_set_charset ($conn, 'UTF8');
 			mysqli_query ($conn, 'SET collation_connection = \'utf8_unicode_ci\'');

@@ -147,7 +147,7 @@ class File
             unlink ($filepath);
             return true;
         }
-        catch (\Exception $e) {
+        catch (\Throwable $e) {
             return false;
         }
     }

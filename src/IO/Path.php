@@ -17,6 +17,7 @@
 
 namespace Rose\IO;
 
+use Rose\Gateway;
 use Rose\Text;
 use Rose\Regex;
 
@@ -133,10 +134,39 @@ class Path
 	}
 
 	/*
+	**	Changes the current directory.
+	*/
+	public static function chdir ($path)
+    {
+        return \chdir ($path);
+	}
+
+	/*
 	**	Renames a path.
 	*/
     public static function rename ($source, $target)
     {
         return \rename ($source, $target) ? true : false;
+    }
+
+	/*
+	**	Returns the current working directory.
+	*/
+    public static function cwd ()
+    {
+        $value = \getcwd();
+
+        while (Text::endsWith($value, '/'))
+			$value = Text::substring($value, 0, -1);
+
+		return $value;
+    }
+
+	/*
+	**	Returns the fsroot (where the script is executed from).
+	*/
+    public static function fsroot ()
+    {
+		return Gateway::getInstance()->fsroot;
     }
 };

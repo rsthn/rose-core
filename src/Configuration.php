@@ -68,7 +68,7 @@ class Configuration extends Map
 		try {
 			Configuration::loadFrom (Main::$CORE_DIR.'/system.conf', $this, true);
 		}
-		catch (\Exception $e) { }
+		catch (\Throwable $e) { }
 
 		// Also an environment-dependent file based on the 'rose-env' file contents.
 		if (Path::exists('rose-env'))
@@ -80,7 +80,7 @@ class Configuration extends Map
 				try {
 					Configuration::loadFrom (Main::$CORE_DIR.'/'.$env.'.conf', $this, true);
 				}
-				catch (\Exception $e) {
+				catch (\Throwable $e) {
 				}
 			}
 		}
@@ -94,7 +94,7 @@ class Configuration extends Map
         if (Text::position($source, '//') !== false)
             throw new Error ('Blocked attempt to load configuration from a remote address: ' . $source);
 
-        return Configuration::loadFromBuffer (File::getContents($source), $target, $merge);
+        return Configuration::loadFromBuffer (Path::exists($source) ? File::getContents($source) : '', $target, $merge);
     }
 
 	/*

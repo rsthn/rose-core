@@ -139,7 +139,7 @@ class Text
         if ($chars != null)
             return \trim ($text, $chars);
         else
-            return \trim ($text);
+			return \trim ($text, " \n\r\f\t\v\x00");
     }
 
 	/*

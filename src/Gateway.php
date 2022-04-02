@@ -25,6 +25,7 @@ use Rose\Strings;
 use Rose\Session;
 use Rose\Map;
 use Rose\Text;
+use Rose\IO\Path;
 use Rose\Regex;
 use Rose\Arry;
 use Rose\Extensions;
@@ -102,7 +103,7 @@ class Gateway
 	/*
 	**	Local file system root where the index is found.
 	*/
-    public $localroot;
+    public $fsroot;
 
 	/*
 	**	Indicates if we're on a secure context (HTTPS).
@@ -174,7 +175,7 @@ class Gateway
 	/*
 	**	Executed by the framework initializer to initialize the gateway.
 	*/
-	public function init ($cli=false)
+	public function init ($cli, $fsroot)
 	{
 		self::$cli = $cli;
 
@@ -225,10 +226,7 @@ class Gateway
 			self::header('Access-Control-Allow-Credentials: true');
 		}
 
-		$this->localroot = getcwd();
-
-        while (Text::endsWith($this->localroot, '/'))
-			$this->localroot = Text::substring($this->localroot, 0, -1);
+		$this->fsroot = Path::append($fsroot);
 
 		// Initialize system classes.
 		Session::init();

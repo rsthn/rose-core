@@ -148,7 +148,7 @@ class Session
 				if (!Session::dbSessionLoad($createSession))
 					return false;
 			}
-			catch (\Exception $e) {
+			catch (\Throwable $e) {
 				throw new Error ('Fatal: Unable to connect to database for session initialization.');
 			}
 		}
@@ -349,7 +349,7 @@ class Session
                     if (!Session::$data || \Rose\typeOf(Session::$data) != 'Rose\\Map')
                         Session::$data = new Map();
                 }
-                catch (\Exception $e)
+                catch (\Throwable $e)
                 {
                     Session::$data = new Map();
                     \Rose\trace ('(Error: Session): ' . $e->getMessage());

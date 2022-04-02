@@ -345,7 +345,7 @@ class Strings
 			try {
 				$tmp = $tmp->{$i};
 			}
-			catch (\Exception $e) {
+			catch (\Throwable $e) {
 				$tmp = null;
 			}
 
