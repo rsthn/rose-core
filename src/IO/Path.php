@@ -62,7 +62,7 @@ class Path
     public static function normalize ($path)
     {
 		$path = Path::SEPARATOR != '/' ? Text::replace(Path::SEPARATOR, '/', $path) : $path;
-		
+
 		while (Text::substring($path, -1) == '/')
 			$path = Text::substring($path, 0, -1);
 

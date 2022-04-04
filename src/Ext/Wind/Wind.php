@@ -232,8 +232,10 @@ class Wind
 			if ($response != null)
 				self::reply ($response);
 		}
-		catch (SubReturn $e) {
-			echo self::$response;
+		catch (SubReturn $e)
+		{
+			if (!self::$contentFlushed)
+				echo self::$response;
 		}
 		catch (FalseError $e) {
 		}

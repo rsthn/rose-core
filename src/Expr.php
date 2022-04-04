@@ -372,6 +372,7 @@ class Expr
 					case ")": $r = ")"; break;
 					case "{": $r = "{"; break;
 					case "}": $r = "}"; break;
+					case "\\": $r = "\\"; break;
 					case 'x': $r = chr(hexdec(Text::substring($value, $i+2, 2))); $n = 4; break;
 					default: continue 2;
 				}

@@ -29,7 +29,6 @@ use Rose\Expr;
 use Rose\Map;
 use Rose\Arry;
 
-Expr::register('configuration', function ($args) { return Configuration::getInstance(); });
 Expr::register('config', function ($args) { return Configuration::getInstance(); });
 Expr::register('c', function ($args) { return Configuration::getInstance(); });
 
@@ -240,6 +239,7 @@ Expr::register('utils::html', function($args)
 	return $data;
 });
 
+/* ************************** */
 Expr::register('utils::shell', function($args)
 {
 	return shell_exec ($args->get(1));
