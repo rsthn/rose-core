@@ -3719,7 +3719,7 @@ Expr::register('import', function($args, $parts, $data)
 		$path = Path::resolve($_path = $path);
 		$path_cache = null;
 
-		if (Text::startsWith($path, Expr::$importPath))
+		if (Expr::$cachePath && Text::startsWith($path, Expr::$importPath))
 			$path_cache = Path::append(Expr::$cachePath, Text::replace('/', '-', Text::substring($path, 1+Text::length(Expr::$importPath))));
 
 		if (!Path::exists($path))

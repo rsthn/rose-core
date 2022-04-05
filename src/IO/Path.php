@@ -115,6 +115,14 @@ class Path
     }
 
 	/*
+	**	Returns true if the path points to a symbolic link.
+	*/
+    public static function is_link ($path)
+    {
+        return \is_link ($path);
+    }
+
+	/*
 	**	Returns true if the path exists.
 	*/
     public static function exists ($path)
@@ -147,6 +155,22 @@ class Path
     public static function rename ($source, $target)
     {
         return \rename ($source, $target) ? true : false;
+    }
+
+	/*
+	**	Creates a symbolic link.
+	*/
+    public static function symlink ($link, $target)
+    {
+        return \symlink (Path::resolve($target), $link) ? true : false;
+    }
+
+	/*
+	**	Creates a hard link.
+	*/
+    public static function link ($link, $target)
+    {
+        return \link (Path::resolve($target), $link) ? true : false;
     }
 
 	/*

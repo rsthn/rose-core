@@ -417,14 +417,15 @@ class Wind
 	/**
 	**	echo <message> [<message>...]
 	*/
-	public static function _echo ($parts, $data)
+	public static function _echo ($parts, $data, $addNewLine)
 	{
 		$s = '';
 
 		for ($i = 1; $i < $parts->length(); $i++)
-			$s .= Expr::expand($parts->get($i), $data, 'arg') . ' ';
+			$s .= Expr::expand($parts->get($i), $data, 'arg') . ($i != $parts->length() - 1 ? ' ' : '');
 
-		$s .= "\n";
+		if ($addNewLine)
+			$s .= "\n";
 
 		if (!self::$contentFlushed)
 		{
@@ -644,7 +645,8 @@ Expr::register('evt::alive', function(...$args) { return Wind::eventsAlive(...$a
 
 Expr::register('stop', function(...$args) { return Wind::stop(...$args); });
 Expr::register('return', function(...$args) { return Wind::_return(...$args); });
-Expr::register('_echo', function(...$args) { return Wind::_echo(...$args); });
+Expr::register('_echo', function($parts, $data) { return Wind::_echo($parts, $data, true); });
+Expr::register('_print', function($parts, $data) { return Wind::_echo($parts, $data, false); });
 Expr::register('_trace', function(...$args) { return Wind::_trace(...$args); });
 Expr::register('_call', function(...$args) { return Wind::_call(...$args); });
 Expr::register('_icall', function(...$args) { return Wind::_icall(...$args); });

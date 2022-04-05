@@ -144,7 +144,21 @@ class File
 			return true;
 
         try {
-            unlink ($filepath);
+            \unlink ($filepath);
+            return true;
+        }
+        catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+	/*
+	**	Removes a file. Does not check anything.
+	*/
+    public static function unlink (string $filepath)
+    {
+        try {
+            \unlink ($filepath);
             return true;
         }
         catch (\Throwable $e) {

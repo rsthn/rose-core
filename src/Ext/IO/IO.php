@@ -86,6 +86,11 @@ Expr::register('path::is_dir', function ($args)
 	return Path::is_dir ($args->get(1));
 });
 
+Expr::register('path::is_link', function ($args)
+{
+	return Path::is_link ($args->get(1));
+});
+
 Expr::register('path::exists', function ($args)
 {
 	return Path::exists ($args->get(1));
@@ -104,6 +109,16 @@ Expr::register('path::chdir', function ($args)
 Expr::register('path::rename', function ($args)
 {
 	return Path::rename ($args->get(1), $args->get(2));
+});
+
+Expr::register('path::symlink', function ($args)
+{
+	return Path::symlink ($args->get(1), $args->get(2));
+});
+
+Expr::register('path::link', function ($args)
+{
+	return Path::link ($args->get(1), $args->get(2));
 });
 
 
@@ -154,6 +169,12 @@ Expr::register('file::append', function ($args)
 Expr::register('file::remove', function ($args)
 {
 	File::remove($args->get(1));
+	return null;
+});
+
+Expr::register('file::unlink', function ($args)
+{
+	File::unlink($args->get(1));
 	return null;
 });
 
@@ -208,5 +229,17 @@ Expr::register('dir::entries:recursive', function ($args)
 Expr::register('dir::remove', function ($args)
 {
 	Directory::remove($args->get(1), \Rose\bool($args->{2}));
+	return null;
+});
+
+Expr::register('dir::remove:recursive', function ($args)
+{
+	Directory::remove($args->get(1), true);
+	return null;
+});
+
+Expr::register('dir::rmdir', function ($args)
+{
+	Directory::rmdir($args->get(1));
 	return null;
 });

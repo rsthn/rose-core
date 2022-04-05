@@ -165,9 +165,26 @@ class Directory
 		}
 
         try {
-			rmdir ($path);
+			\rmdir ($path);
         }
-        catch (Error $e) {
+        catch (\Throwable $e) {
+            return false;
+		}
+
+		return true;
+    }
+
+	/*
+	**	Removes a directory, does not check anything.
+	*/
+    public static function rmdir (string $path)
+    {
+		$path = Path::normalize($path);
+
+        try {
+			\rmdir ($path);
+        }
+        catch (\Throwable $e) {
             return false;
 		}
 
@@ -185,7 +202,7 @@ class Directory
         try {
             return mkdir ($path, 0755, $recursive);
         }
-        catch (Error $e) {
+        catch (\Throwable $e) {
             return false;
         }
     }

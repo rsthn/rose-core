@@ -22,6 +22,7 @@ use Rose\Errors\FalseError;
 
 use Rose\Configuration;
 use Rose\Map;
+use Rose\Expr;
 use Rose\DateTime;
 use Rose\Gateway;
 use Rose\Text;
@@ -341,6 +342,8 @@ class Main
 	static function cli ($fsroot, $keepSafes=false)
 	{
 		Main::defs(!$keepSafes);
+
+		Expr::$cachePath = null;
 
 		try {
 			Gateway::getInstance()->init(true, $fsroot);
