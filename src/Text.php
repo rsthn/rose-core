@@ -201,4 +201,41 @@ class Text
         else
             return Arry::fromNativeArray(str_split($text));
     }
+
+	/**
+	 * Pads a value by adding a character to the left until it reaches the desired length.
+	 */
+	public static function lpad ($value, $len, $char=' ')
+	{
+		return \str_pad($value, $len, $char, STR_PAD_LEFT);
+/*
+		$char = ((string)($char))[0];
+		$value = (string)$value;
+		$len = (int)$len;
+
+		while (strlen($value) < $len)
+			$value = $char.$value;
+
+		return $value;
+*/
+	}
+
+	/**
+	 * Pads a value by adding a character to the right until it reaches the desired length.
+	 */
+	public static function rpad ($value, $len, $char=' ')
+	{
+		return \str_pad($value, $len, $char, STR_PAD_RIGHT);
+/*
+		$char = ((string)($char))[0];
+		$value = (string)$value;
+		$len = (int)$len;
+
+		while (strlen($value) < $len)
+			$value = $value.$char;
+
+		return $value;
+*/
+	}
+
 };

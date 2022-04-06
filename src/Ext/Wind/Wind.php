@@ -422,7 +422,7 @@ class Wind
 		$s = '';
 
 		for ($i = 1; $i < $parts->length(); $i++)
-			$s .= Expr::expand($parts->get($i), $data, 'arg') . ($i != $parts->length() - 1 ? ' ' : '');
+			$s .= Expr::expand($parts->get($i), $data, 'arg');
 
 		if ($addNewLine)
 			$s .= "\n";

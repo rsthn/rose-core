@@ -86,4 +86,52 @@ abstract class Math
     {
         return ($value < $a) ? $a : (($value > $b) ? $b : $value);
     }
+
+	/*
+	**	Converts a number to hexadecimal.
+	*/
+    public static function toHex ($value)
+    {
+        return dechex($value);
+    }
+
+	/*
+	**	Converts a number to binary.
+	*/
+    public static function toBin ($value)
+    {
+        return decbin($value);
+    }
+
+	/*
+	**	Converts a number to octal.
+	*/
+    public static function toOct ($value)
+    {
+        return decoct($value);
+    }
+
+	/*
+	**	Converts a number from hexadecimal.
+	*/
+    public static function fromHex ($value)
+    {
+        return hexdec($value);
+    }
+
+	/*
+	**	Converts a number from binary.
+	*/
+    public static function fromBin ($value)
+    {
+        return bindec($value);
+    }
+
+	/*
+	**	Converts a number from octal.
+	*/
+    public static function fromOct ($value)
+    {
+        return octdec($value);
+    }
 };

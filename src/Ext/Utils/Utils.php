@@ -64,6 +64,13 @@ Expr::register('gateway::redirect', function ($args) { return Gateway::redirect(
 Expr::register('gateway::flush', function ($args) { return Gateway::flush(); });
 Expr::register('gateway::persistent', function ($args) { return Gateway::persistent(); });
 
+Expr::register('math::toHex', function ($args) { return Math::toHex($args->get(1)); });
+Expr::register('math::toBin', function ($args) { return Math::toBin($args->get(1)); });
+Expr::register('math::toOct', function ($args) { return Math::toOct($args->get(1)); });
+Expr::register('math::fromHex', function ($args) { return Math::fromHex($args->get(1)); });
+Expr::register('math::fromBin', function ($args) { return Math::fromBin($args->get(1)); });
+Expr::register('math::fromOct', function ($args) { return Math::fromOct($args->get(1)); });
+
 Expr::register('utils::rand', function() { return Math::rand(); });
 Expr::register('utils::randstr', function($args) { return bin2hex(random_bytes((int)$args->get(1))); });
 Expr::register('utils::randstr:base64', function($args) { return base64_encode(random_bytes((int)$args->get(1))); });
@@ -138,6 +145,30 @@ Expr::register('utils::urlSearchParams', function($args) {
 
 Expr::register('utils::html::encode', function($args) { return htmlspecialchars ($args->get(1)); });
 Expr::register('utils::html::decode', function($args) { return htmlspecialchars_decode ($args->get(1)); });
+
+Expr::register('utils::gz::compress', function($args) { return gzcompress ($args->get(1)); });
+Expr::register('utils::gz::uncompress', function($args) { return gzuncompress ($args->get(1)); });
+Expr::register('utils::gz::deflate', function($args) { return gzdeflate ($args->get(1)); });
+Expr::register('utils::gz::inflate', function($args) { return gzinflate ($args->get(1)); });
+
+Expr::register('utils::lpad', function($args)
+{
+	if ($args->length > 3)
+		return Text::lpad($args->get(3), $args->get(1), $args->get(2));
+	else
+		return Text::lpad($args->get(2), $args->get(1));
+});
+
+Expr::register('utils::rpad', function($args)
+{
+	if ($args->length > 3)
+		return Text::rpad($args->get(3), $args->get(1), $args->get(2));
+	else
+		return Text::rpad($args->get(2), $args->get(1));
+});
+
+Expr::register('utils::lpad+0', function($args) { return Text::lpad($args->get(2), $args->get(1), '0'); });
+Expr::register('utils::rpad+0', function($args) { return Text::rpad($args->get(2), $args->get(1), '0'); });
 
 Expr::register('utils::json::stringify', function($args)
 {
@@ -398,6 +429,11 @@ Expr::register('array::reverse', function($args)
 Expr::register('array::clear', function($args)
 {
 	return $args->get(1)->clear();
+});
+
+Expr::register('array::clone', function($args)
+{
+	return $args->get(1)->replicate($args->{2} ?? false);
 });
 
 /**
