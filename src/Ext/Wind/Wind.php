@@ -59,12 +59,12 @@ class Wind
 {
 	private static $base;
 	private static $cache;
-	private static $data;
+	public static $data;
 
-	private static $multiResponseMode;
-	private static $contentFlushed;
-	private static $contentType;
-	private static $response;
+	public static $multiResponseMode;
+	public static $contentFlushed;
+	public static $contentType;
+	public static $response;
 
 	private static $callStack;
 
