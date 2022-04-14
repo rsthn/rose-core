@@ -26,17 +26,19 @@ use Rose\Expr;
 use Rose\DateTime;
 use Rose\Gateway;
 use Rose\Text;
-use Rose\IO\Path;
 use Rose\IO\Directory;
+use Rose\IO\Path;
 
 /*
-**	Prints a tracing message into the log file.
+**	Prints a tracing message to the log file.
 */
-function trace ($string, $out=null)
+function trace ($string, $out='@system.log')
 {
 	static $paths = null;
 
-	if (!$out) $out = 'logs/system.log';
+	if ($out[0] == '@') {
+		$out = Main::$CORE_DIR != './' ? Path::append(Main::$CORE_DIR, '../logs/'.Text::substring($out, 1)) : ('./' . Text::substring($out, 1));
+	}
 
 	if (!$paths)
 		$paths = new Map();
@@ -331,8 +333,10 @@ class Main
 		{
 			if (file_exists('resources/'))
 				self::$CORE_DIR = 'resources';
-			else
+			else if (file_exists('rcore/'))
 				self::$CORE_DIR = 'rcore';
+			else
+				self::$CORE_DIR = './';
 		}
 	}
 
@@ -401,6 +405,6 @@ class Main
 		$ms_end = mstime();
 
 		if (Configuration::getInstance()?->Gateway?->access_log == 'true')
-			trace (sprintf ('%s   %7.2f MB   %6d ms   %s   %s', (string)(new DateTime()), memory_get_peak_usage()/1048576, $ms_end-$ms_start, $_SERVER['REMOTE_ADDR'], $_SERVER['REQUEST_URI']), 'logs/access.log');
+			trace (sprintf ('%s   %7.2f MB   %6d ms   %s   %s', (string)(new DateTime()), memory_get_peak_usage()/1048576, $ms_end-$ms_start, $_SERVER['REMOTE_ADDR'], $_SERVER['REQUEST_URI']), '@access.log');
 	}
 };
