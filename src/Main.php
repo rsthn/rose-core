@@ -349,6 +349,9 @@ class Main
 
 		Expr::$cachePath = null;
 
+		ignore_user_abort(true);
+		set_time_limit(0);
+
 		try {
 			Gateway::getInstance()->init(true, $fsroot);
 		}

@@ -1751,6 +1751,9 @@ Expr::register('str?', function($args) { return typeOf($args->get(1), true) === 
 Expr::register('bool?', function($args) { return typeOf($args->get(1), true) === 'bool'; });
 Expr::register('float?', function($args) { return typeOf($args->get(1), true) === 'number'; });
 
+Expr::register('starts-with', function($args) { return Text::startsWith($args->get(2), $args->get(1)); });
+Expr::register('ends-with', function($args) { return Text::endsWith($args->get(2), $args->get(1)); });
+
 Expr::register('typeof', function($args)
 {
 	$type = typeOf($args->get(1), true);

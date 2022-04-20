@@ -567,6 +567,11 @@ Expr::register('re::matchFirst', function($args)
 	return Regex::_matchFirst($args->get(1), $args->get(2));
 });
 
+Expr::register('re::match', function($args)
+{
+	return Regex::_matchFirst($args->get(1), $args->get(2));
+});
+
 Expr::register('re::matchAll', function($args)
 {
 	return Regex::_matchAll($args->get(1), $args->get(2));

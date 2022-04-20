@@ -170,6 +170,9 @@ class Http
 
 		$url .= $list->join('&');
 
+		$ch = Text::substring($url, -1);
+		if ($ch == '?' || $ch == '&') $url = Text::substring($url, 0, -1);
+
 		curl_setopt ($c, CURLOPT_URL, $url);
 		curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
 		curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
