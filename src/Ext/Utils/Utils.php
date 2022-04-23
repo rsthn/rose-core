@@ -276,6 +276,13 @@ Expr::register('utils::shell', function($args)
 	return shell_exec ($args->get(1));
 });
 
+Expr::register('utils::exec', function($args)
+{
+	$result = 0;
+	passthru ($args->get(1), $result);
+	return $result;
+});
+
 /* ************************** */
 Expr::register('utils::hashes', function($args)
 {

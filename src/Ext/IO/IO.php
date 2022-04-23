@@ -243,3 +243,9 @@ Expr::register('dir::rmdir', function ($args)
 	Directory::rmdir($args->get(1));
 	return null;
 });
+
+Expr::register('dir::copy', function ($args)
+{
+	Directory::copy ($args->get(1), $args->get(2), true, true);
+	return null;
+});

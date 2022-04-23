@@ -143,8 +143,14 @@ class File
 		if (!Path::exists($filepath))
 			return true;
 
+		try {
+			\chmod ($filepath, 0755);
+		}
+		catch (\Throwable $e) {
+		}
+	
         try {
-            \unlink ($filepath);
+			\unlink ($filepath);
             return true;
         }
         catch (\Throwable $e) {

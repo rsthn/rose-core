@@ -62,7 +62,13 @@ class Extensions
 		if (self::isLoaded($identifier))
 			return;
 
-		require_once(Path::append($path, $identifier, $identifier.'.php'));
+		try {
+			require_once(Path::append($path, $identifier, $identifier.'.php'));
+		}
+		catch (\Throwable $e) {
+			trace('[ERROR] Unable to load: ' . $identifier);
+			trace($e);
+		}
 
 		self::$loaded->set($identifier, true);
 	}

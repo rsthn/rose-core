@@ -2394,22 +2394,70 @@ Expr::register('_when-not', function ($parts, $data)
 /**
 **	Loads the expression value and attempts to match one case.
 **
-**	case <expr> <case1> <value1> ... <caseN> <valueN> default <defvalue> 
+**	switch <expr> case <case1> <value1> ... case <caseN> <valueN> default <defvalue> 
 */
 Expr::register('_switch', function ($parts, $data)
 {
 	$value = (string)Expr::expand($parts->get(1), $data, 'arg');
+	$name = '';
+	$state = 0;
+	$case_value = '';
+	$j = -1;
 
-	for ($i = 2; $i < $parts->length(); $i += 2)
+	for ($i = 2; $i < $parts->length() && $state != 2; )
 	{
-		$case_value = (string)Expr::expand($parts->get($i), $data, 'arg');
-		if ($case_value == $value || $case_value == 'default')
-			return Expr::expand($parts->get($i+1), $data, 'arg');
+		switch ($state)
+		{
+			case 0:
+				if (!Expr::takeIdentifier($parts, $data, $i, $name))
+				{
+					$i++;
+					break;
+				}
+
+				if ($name === 'case')
+				{
+					$case_value = (string)Expr::expand($parts->get($i), $data, 'arg');
+					if ($case_value == $value)
+					{
+						$state = 1;
+						$j = ($i++);
+					}
+				}
+				elseif ($name === 'default')
+				{
+					$state = 1;
+					$j = ($i++);
+				}
+				break;
+
+			case 1:
+
+				if (Expr::takeIdentifier($parts, $data, $i, $name))
+				{
+					if ($name === 'case' || $name === 'default')
+					{
+						$state = 2;
+						break;
+					}
+				}
+
+				$i++;
+				break;
+		}
 	}
 
-	return '';
+	if ($j != -1)
+		return Expr::blockValue($parts->slice($j, $i-$j), $data);
+
+	return null;
 });
 
+/**
+**	Loads the expression value and attempts to match one case.
+**
+**	case <expr> <case1> <value1> ... <caseN> <valueN> default <defvalue> 
+*/
 Expr::register('_case', function ($parts, $data)
 {
 	$value = (string)Expr::expand($parts->get(1), $data, 'arg');
