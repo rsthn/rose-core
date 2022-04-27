@@ -3240,14 +3240,14 @@ Expr::register('_try', function ($parts, $data)
 		$data->ex = $e;
 
 		if ($catch !== null)
-			Expr::blockValue($catch, $data);
+			$value = Expr::blockValue($catch, $data);
 	}
 	finally
 	{
 		MetaError::decBaseLevel();
 
 		if ($finally !== null)
-			Expr::blockValue($finally, $data);
+			$value = Expr::blockValue($finally, $data);
 	}
 
 	return $value;
