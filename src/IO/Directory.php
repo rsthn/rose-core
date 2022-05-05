@@ -241,7 +241,7 @@ class Directory
 			if (!$recursive && Path::is_dir($source.'/'.$entry))
 				continue;
 
-			if (!Directory::copy ($source.'/'.$entry, $dest.'/'.$entry))
+			if (!Directory::copy ($source.'/'.$entry, $dest.'/'.$entry, $recursive, $overwrite, $pattern))
 				return false;
 		}
 
