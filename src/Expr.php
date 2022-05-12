@@ -2421,28 +2421,29 @@ Expr::register('_switch', function ($parts, $data)
 					if ($case_value == $value)
 					{
 						$state = 1;
-						$j = ($i++);
+						$j = ++$i;
 					}
 				}
 				elseif ($name === 'default')
 				{
 					$state = 1;
-					$j = ($i++);
+					$j = $i;
 				}
 				break;
 
 			case 1:
-
 				if (Expr::takeIdentifier($parts, $data, $i, $name))
 				{
 					if ($name === 'case' || $name === 'default')
 					{
+						$i--;
 						$state = 2;
 						break;
 					}
 				}
+				else
+					$i++;
 
-				$i++;
 				break;
 		}
 	}

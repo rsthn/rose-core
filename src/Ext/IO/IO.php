@@ -22,6 +22,7 @@ use Rose\IO\File;
 use Rose\IO\Directory;
 use Rose\IO\Path;
 use Rose\Gateway;
+use Rose\Arry;
 
 /* ****************** */
 Expr::register('path::fsroot', function ($args)
@@ -198,12 +199,12 @@ Expr::register('dir::create', function ($args)
 
 Expr::register('dir::files', function ($args)
 {
-	return Directory::readFiles ($args->get(1), false, $args->{2} ? $args->{2} : '/.+/')->files;
+	return Directory::readFiles ($args->get(1), false, $args->{2} ? $args->{2} : '/.+/')?->files ?? new Arry();
 });
 
 Expr::register('dir::dirs', function ($args)
 {
-	return Directory::readDirs ($args->get(1), false, $args->{2} ? $args->{2} : '/.+/')->dirs;
+	return Directory::readDirs ($args->get(1), false, $args->{2} ? $args->{2} : '/.+/')?->dirs ?? new Arry();
 });
 
 Expr::register('dir::entries', function ($args)
@@ -213,12 +214,12 @@ Expr::register('dir::entries', function ($args)
 
 Expr::register('dir::files:recursive', function ($args)
 {
-	return Directory::readFiles ($args->get(1), true, $args->{2} ? $args->{2} : '/.+/')->files;
+	return Directory::readFiles ($args->get(1), true, $args->{2} ? $args->{2} : '/.+/')?->files ?? new Arry();
 });
 
 Expr::register('dir::dirs:recursive', function ($args)
 {
-	return Directory::readDirs ($args->get(1), true, $args->{2} ? $args->{2} : '/.+/')->dirs;
+	return Directory::readDirs ($args->get(1), true, $args->{2} ? $args->{2} : '/.+/')?->dirs ?? new Arry();
 });
 
 Expr::register('dir::entries:recursive', function ($args)
