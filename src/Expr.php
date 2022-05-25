@@ -3461,6 +3461,8 @@ Expr::register('_def-fn', function($parts, $data)
 
 	$name = Expr::value($parts->get($i++), $data);
 	$params = new Arry();
+	$minParams = 0;
+	$defValues = new Map();
 
 	$context = Expr::$context;
 	$contextData = $context->getId() == 0 && $data !== $context->data ? $data : $context->data;
@@ -3473,19 +3475,29 @@ Expr::register('_def-fn', function($parts, $data)
 		{
 			$block = $parts->slice($i);
 
-			$fn = function ($args, $parts, $data) use (&$params, &$block, &$name, &$context, &$contextData)
+			$fn = function ($args, $parts, $data) use (&$params, &$block, &$name, &$context, &$contextData, &$minParams, &$defValues)
 			{
 				global $_glb_object;
 
-				if ($args->length-1 < $params->length)
-					throw new Error ("Invalid number of parameters in call of `".$name."`, expected ".($params->length)." got ".($args->length-1).".");
+				if ($args->length-1 < $minParams)
+					throw new Error ("Function `".$name."` expects ".($params->length)." parameters got ".($args->length-1).".");
 
 				$newData = new Map();
 				$newData->set('local', $contextData);
 				$newData->set('global', $_glb_object);
 
-				$params->forEach(function ($param, $index) use (&$newData, &$args) {
-					$newData->set($param, $args->get($index+1));
+				$params->forEach(function ($param, $index) use (&$newData, &$args, &$data, &$defValues)
+				{
+					if ($index+1 >= $args->length())
+					{
+						$tmp = $defValues->get($param);
+						if ($tmp->get(0) == 0)
+							$newData->set($param, Expr::value($tmp->get(1), $data));
+						else
+							$newData->set($param, $tmp->get(1));
+					}
+					else
+						$newData->set($param, $args->get($index+1));
 				});
 
 				Expr::$contextStack->push(Expr::$context);
@@ -3528,7 +3540,44 @@ Expr::register('_def-fn', function($parts, $data)
 			break;
 		}
 
-		$params->push(Expr::value($parts->get($i), $data));
+		$val = $parts->get($i)->get(0)->data;
+		if (Text::indexOf($val, '=') !== false)
+		{
+			if (Text::endsWith($val, '='))
+			{
+				$tmp = $parts->get($i)->length() > 1 ? $parts->get($i)->slice(1) : $parts->get(++$i);
+				$val = Text::substring($val, 0, -1);
+				$defValues->set($val, new Arry([ 0, $tmp ]));
+			}
+			else
+			{
+				$val = Text::split('=', $val);
+				$tmp = $val->get(1);
+				$val = $val->get(0);
+
+				if ($tmp === 'null')
+					$tmp = null;
+				else if ($tmp === 'true')
+					$tmp = true;
+				else if ($tmp === 'false')
+					$tmp = false;
+				else if (Text::indexOf($tmp, '.'))
+					$tmp = (int)$tmp;
+				else
+					$tmp = (float)$tmp;
+
+				$defValues->set($val, new Arry([ 1, $tmp ]));
+			}
+		}
+		else
+		{
+			if ($defValues->length() != 0)
+				throw new Error('def-fn ' . $name . ': Parameter `' . $val . '` must have a default value.');
+
+			$minParams++;
+		}
+
+		$params->push($val);
 	}
 
 	$ns = Expr::$context->currentNamespace;
