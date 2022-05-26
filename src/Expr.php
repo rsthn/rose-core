@@ -1750,6 +1750,8 @@ Expr::register('int?', function($args) { return typeOf($args->get(1), true) === 
 Expr::register('str?', function($args) { return typeOf($args->get(1), true) === 'string'; });
 Expr::register('bool?', function($args) { return typeOf($args->get(1), true) === 'bool'; });
 Expr::register('float?', function($args) { return typeOf($args->get(1), true) === 'number'; });
+Expr::register('array?', function($args) { return typeOf($args->get(1), true) === 'Rose\\Arry'; });
+Expr::register('map?', function($args) { return typeOf($args->get(1), true) === 'Rose\\Map'; });
 
 Expr::register('starts-with', function($args) { return Text::startsWith($args->get(2), $args->get(1)); });
 Expr::register('ends-with', function($args) { return Text::endsWith($args->get(2), $args->get(1)); });
