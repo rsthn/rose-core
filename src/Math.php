@@ -64,6 +64,22 @@ abstract class Math
     }
 
 	/*
+	**	Returns the ceil value of the given value.
+	*/
+    public static function ceil ($value)
+    {
+        return \ceil($value);
+    }
+
+	/*
+	**	Returns the floor value of the given value.
+	*/
+    public static function floor ($value)
+    {
+        return \floor($value);
+    }
+
+	/*
 	**	Returns the minimum value of the given numbers.
 	*/
     public static function min ($a, $b)

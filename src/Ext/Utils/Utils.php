@@ -550,12 +550,22 @@ Expr::register('map::length', function($args)
 
 Expr::register('map::assign', function($args)
 {
-	return $args->get(1)->merge($args->get(2), true);
+	$m = $args->get(1);
+
+	for ($i = 2; $i < $args->length(); $i++)
+		$m = $m->merge($args->get($i), true);
+
+	return $m;
 });
 
 Expr::register('map::merge', function($args)
 {
-	return $args->get(1)->merge($args->get(2));
+	$m = $args->get(1);
+
+	for ($i = 2; $i < $args->length(); $i++)
+		$m = $m->merge($args->get($i));
+
+	return $m;
 });
 
 Expr::register('map::clear', function($args)

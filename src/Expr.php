@@ -1709,7 +1709,6 @@ Expr::register('bit-xor', function($args) { return $args->get(1) ^ $args->get(2)
 
 Expr::register('not', function($args) { return !$args->get(1); });
 Expr::register('neg', function($args) { return -$args->get(1); });
-Expr::register('abs', function($args) { return abs($args->get(1)); });
 
 Expr::register('_and', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!$v) return null; } return $v; });
 Expr::register('_or', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!!$v) return $v; } return null; });
@@ -1780,6 +1779,10 @@ Expr::register('pow', function($args) { return Expr::reduce($args->get(1), $args
 
 Expr::register('min', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::min($accum, $value); }); });
 Expr::register('max', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::max($accum, $value); }); });
+Expr::register('abs', function($args) { return Math::abs($args->get(1)); });
+Expr::register('round', function($args) { return Math::round($args->get(1)); });
+Expr::register('ceil', function($args) { return Math::ceil($args->get(1)); });
+Expr::register('floor', function($args) { return Math::floor($args->get(1)); });
 
 Expr::register('in?', function ($args)
 {
