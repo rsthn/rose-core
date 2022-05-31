@@ -464,6 +464,9 @@ class Wind
 	public static function _call ($parts, $data)
 	{
 		self::$data->internal_call = 1 + self::$data->internal_call;
+		$response = null;
+		$n_args = null;
+		$p_args = null;
 
 		try {
 			$n_args = Expr::getNamedValues($parts, $data, 2);
@@ -522,6 +525,7 @@ class Wind
 	{
 		self::$data->internal_call = 1 + self::$data->internal_call;
 
+		$response = null;
 		$p_data = self::$data;
 		self::$data = new Map();
 
