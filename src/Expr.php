@@ -3987,7 +3987,7 @@ Expr::register('_mapify', function ($parts, $data)
 	$j = 0;
 
 	$key_expr = $parts->get($i+1);
-	$val_expr = $parts->length > 4 ? $parts->get($i+2) : null;
+	$val_expr = $parts->has($i+2) ? $parts->get($i+2) : null;
 
 	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$key_expr, &$val_expr)
 	{
@@ -4032,7 +4032,7 @@ Expr::register('_groupify', function ($parts, $data)
 	$j = 0;
 
 	$key_expr = $parts->get($i+1);
-	$val_expr = $parts->length > 4 ? $parts->get($i+2) : null;
+	$val_expr = $parts->has($i+2) ? $parts->get($i+2) : null;
 
 	$list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$key_expr, &$val_expr)
 	{
