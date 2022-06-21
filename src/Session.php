@@ -405,7 +405,7 @@ class Session
 	DROP TABLE IF EXISTS sessions;
 	CREATE TABLE sessions
 	(
-		session_id varchar(48) primary key unique not null,
+		session_id varchar(48) primary key not null,
 
 		created datetime default null,
 		last_activity datetime default null,
