@@ -291,6 +291,7 @@ class DateTime
 				case 'l': $str .= date('g', $timestamp); break;
 				case 'M': $str .= date('i', $timestamp); break;
 				case 'S': $str .= date('s', $timestamp); break;
+				case 's': $str .= date('S', $timestamp); break;
 				case 'p': $str .= date('A', $timestamp); break;
 				case 'P': $str .= date('a', $timestamp); break;
 			}
