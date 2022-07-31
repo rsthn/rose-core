@@ -268,32 +268,32 @@ class DateTime
 
 			switch($format[++$i])
 			{
-				case 'a': $str .= date('D', $timestamp); break;
-				case 'A': $str .= date('l', $timestamp); break;
-				case 'd': $str .= date('d', $timestamp); break;
-				case 'e': $str .= date('j', $timestamp); break;
-				case 'u': $str .= date('N', $timestamp); break;
-				case 'w': $str .= date('w', $timestamp); break;
-				case 'W': $str .= date('W', $timestamp); break;
+				case 'a': $str .= date('D', $timestamp); break; // A textual representation of a day, three letters - Mon through Sun.
+				case 'A': $str .= date('l', $timestamp); break; // A full textual representation of the day of the week - Sunday through Saturday.
+				case 'd': $str .= date('d', $timestamp); break; // Day of the month, 2 digits with leading zeros - 01 to 31.
+				case 'e': $str .= date('j', $timestamp); break; // Day of the month without leading zeros - 1 to 31.
+				case 'u': $str .= date('N', $timestamp); break; // ISO 8601 numeric representation of the day of the week - 1 (for Monday) through 7 (for Sunday).
+				case 'w': $str .= date('w', $timestamp); break; // Numeric representation of the day of the week - 0 (for Sunday) through 6 (for Saturday).
+				case 'W': $str .= date('W', $timestamp); break; // ISO 8601 week number of year, weeks starting on Monday - Example: 42 (the 42nd week in the year).
 				
-				case 'b': $str .= date('M', $timestamp); break;
-				case 'B': $str .= date('F', $timestamp); break;
-				case 'h': $str .= date('M', $timestamp); break;
-				case 'm': $str .= date('m', $timestamp); break;
-				case 'n': $str .= date('n', $timestamp); break;
+				case 'b': $str .= date('M', $timestamp); break; // A short textual representation of a month, three letters - Jan through Dec.
+				case 'B': $str .= date('F', $timestamp); break; // A full textual representation of a month, such as January or March - January through December.
+				case 'h': $str .= date('M', $timestamp); break; // A short textual representation of a month, three letters - Jan through Dec.
+				case 'm': $str .= date('m', $timestamp); break; // Numeric representation of a month, with leading zeros - 01 through 12.
+				case 'n': $str .= date('n', $timestamp); break; // Numeric representation of a month, without leading zeros - 1 through 12.
 
-				case 'y': $str .= date('y', $timestamp); break;
-				case 'Y': $str .= date('Y', $timestamp); break;
+				case 'y': $str .= date('y', $timestamp); break; // A two digit representation of a year - Examples: 99 or 03.
+				case 'Y': $str .= date('Y', $timestamp); break; // A full numeric representation of a year, at least 4 digits, with - for years BCE. Examples: -0055, 0787, 1999, 2003.
 
-				case 'H': $str .= date('H', $timestamp); break;
-				case 'k': $str .= date('G', $timestamp); break;
-				case 'I': $str .= date('h', $timestamp); break;
-				case 'l': $str .= date('g', $timestamp); break;
-				case 'M': $str .= date('i', $timestamp); break;
-				case 'S': $str .= date('s', $timestamp); break;
-				case 's': $str .= date('S', $timestamp); break;
-				case 'p': $str .= date('A', $timestamp); break;
-				case 'P': $str .= date('a', $timestamp); break;
+				case 'H': $str .= date('H', $timestamp); break; // 24-hour format of an hour with leading zeros - 00 through 23.
+				case 'k': $str .= date('G', $timestamp); break; // 24-hour format of an hour without leading zeros - 0 through 23.
+				case 'I': $str .= date('h', $timestamp); break; // 12-hour format of an hour with leading zeros - 01 through 12.
+				case 'l': $str .= date('g', $timestamp); break; // 12-hour format of an hour without leading zeros - 1 through 12.
+				case 'M': $str .= date('i', $timestamp); break; // Minutes with leading zeros - 00 to 59.
+				case 'S': $str .= date('s', $timestamp); break; // Seconds with leading zeros - 00 through 59.
+				case 's': $str .= date('S', $timestamp); break; // English ordinal suffix for the day of the month, 2 characters - st, nd, rd or th. Works well with j.
+				case 'p': $str .= date('A', $timestamp); break; // Uppercase Ante meridiem and Post meridiem - AM or PM.
+				case 'P': $str .= date('a', $timestamp); break; // Lowercase Ante meridiem and Post meridiem - am or pm.
 			}
 		}
 

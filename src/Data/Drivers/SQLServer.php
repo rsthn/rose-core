@@ -25,6 +25,10 @@ use Rose\Data\Connection;
 class SQLServer extends Driver
 {
 	private $affected_rows = 0;
+	private $num_rows = 0;
+	private $field_metadata = null;
+	private $last_error = null;
+	private $data = null;
 
 	public static function register ()
 	{
@@ -47,12 +51,7 @@ class SQLServer extends Driver
 
     public function getLastError ($conn)
     {
-		$s = '';
-
-		foreach(sqlsrv_errors() as $a)
-			$s .= $a['message'].'<br/>';
-
-		return $s;
+		return $this->last_error;
     }
 
     public function getLastInsertId ($conn)
@@ -70,56 +69,100 @@ class SQLServer extends Driver
 		return true;
     }
 
+	private function cleanup_message ($s)
+	{
+		return preg_replace('|\[[^\]]+\]|', '', $s);
+	}
+
+	private function loadLastError ()
+	{
+		$s = '';
+
+		foreach(sqlsrv_errors() as $a)
+			$s .= $this->cleanup_message($a['code'] . ': ' . $a['message'])."\n";
+
+		$this->last_error = $s;
+		return null;
+	}
+
     public function query ($query, $conn)
 	{
 		$this->affected_rows = 0;
+		$this->num_rows = 0;
+		$this->field_metadata = null;
+		$this->last_error = null;
+		$this->data = null;
 
-		$rs = sqlsrv_query ($conn, $query, null, $this->options);
-		if (!$rs) return null;
+		$rs = sqlsrv_query ($conn, $query, null, null);
+		if (!$rs) return $this->loadLastError();
 
-		if (!sqlsrv_field_metadata($rs))
+		$return = $rs;
+
+		while (true)
 		{
-			$this->affected_rows = sqlsrv_rows_affected($rs);
-			return true;
+			$this->field_metadata = sqlsrv_field_metadata($rs);
+			if (!$this->field_metadata)
+			{
+				$this->affected_rows = sqlsrv_rows_affected($rs);
+				$result = true;
+			}
+			else
+			{
+				$this->num_rows = sqlsrv_num_rows($rs);
+				$this->num_fields = sqlsrv_num_fields($rs);
+
+				$this->data = [];
+
+				while(true)
+				{
+					$tmp = sqlsrv_fetch_object($rs);
+					if ($tmp === null || $tmp === false) break;
+
+					$this->data[] = $tmp;
+				}
+
+				$return = $rs;
+			}
+
+			$result = sqlsrv_next_result($rs);
+			if ($result === false)
+				return $this->loadLastError();
+
+			if (!$result) break;
 		}
 
-		return $rs;
+		return $return;
     }
 
 	public function getNumRows ($rs, $conn)
 	{
-		return sqlsrv_num_rows ($rs);
+		return $this->num_rows;
 	}
 
 	public function getNumFields ($rs, $conn)
 	{
-		return sqlsrv_num_fields($rs);
+		return $this->num_fields;
 	}
 
 	public function getFieldName ($rs, $i, $conn)
 	{
-		$rs = sqlsrv_field_metadata($rs);
-		return $rs[$i]['Name'];
+		return $this->field_metadata[$i]['Name'];
 	}
 
 	public function fetchAssoc ($rs, $conn)
 	{
-		$tmp = sqlsrv_fetch_object($rs);
+		if (count($this->data) == 0)
+			return null;
 
-		if ($tmp === false || $tmp == null)
-			$tmp = null;
-
-		return (array)$tmp;
+		return array_shift($this->data);
 	}
 
 	public function fetchRow ($rs, $conn)
 	{
-		$tmp = sqlsrv_fetch_array($rs, SQLSRV_FETCH_NUMERIC);
+		if (count($this->data) == 0)
+			return null;
 
-		if ($tmp === false || $tmp == null)
-			$tmp = null;
-
-		return $tmp;
+		return array_shift($this->data);
 	}
 
 	public function freeResult ($rs, $conn)

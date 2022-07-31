@@ -147,7 +147,7 @@ Expr::register('file::atime', function ($args)
 
 Expr::register('file::touch', function ($args)
 {
-	return File::touch($args->get(1));
+	return File::touch($args->get(1), $args->has(2) ? $args->get(2) : null);
 });
 
 Expr::register('file::read', function ($args)
