@@ -2454,7 +2454,15 @@ Expr::register('_switch', function ($parts, $data)
 	}
 
 	if ($j != -1)
-		return Expr::blockValue($parts->slice($j, $i-$j), $data);
+	{
+		try {
+			return Expr::blockValue($parts->slice($j, $i-$j), $data);
+		}
+		catch (\Throwable $e) {
+			$name = $e->getMessage();
+			if ($name != 'EXC_BREAK') throw $e;
+		}
+	}
 
 	return null;
 });

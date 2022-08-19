@@ -645,7 +645,7 @@ Expr::register('content-type', function(...$args) { return Wind::contentType(...
 
 Expr::register('evt::init', function(...$args) { return Wind::enableEvents(); });
 Expr::register('evt::send', function(...$args) { return Wind::sendEvent(...$args); });
-Expr::register('evt::alive', function(...$args) { return Wind::eventsAlive(...$args); });
+Expr::register('evt::alive', function(...$args) { return Wind::eventsAlive(); });
 
 Expr::register('stop', function(...$args) { return Wind::stop(...$args); });
 Expr::register('return', function(...$args) { return Wind::_return(...$args); });
