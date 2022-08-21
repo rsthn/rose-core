@@ -113,9 +113,9 @@ class SQLServer extends Driver
 
 				$this->data = [];
 
-				while(true)
+				while (true)
 				{
-					$tmp = sqlsrv_fetch_object($rs);
+					$tmp = sqlsrv_fetch_array($rs, SQLSRV_FETCH_ASSOC);
 					if ($tmp === null || $tmp === false) break;
 
 					$this->data[] = $tmp;
@@ -162,7 +162,7 @@ class SQLServer extends Driver
 		if (count($this->data) == 0)
 			return null;
 
-		return array_shift($this->data);
+		return array_values(array_shift($this->data));
 	}
 
 	public function freeResult ($rs, $conn)
