@@ -20,13 +20,13 @@ Responses are always in JSON format (unless otherwise explicitly specified) with
 
 |Response Code|Short Name|Details|
 |-------------|----------|-----------|
-|200|R_OK|Everything was completed without errors.
-|400|R_FUNCTION_NOT_FOUND|The respective file for the function name in parameter `f` was not found.
-|403|R_PRIVILEGE_REQUIRED|Function requires the invoker to have certain privilege (i.e. `admin`).
-|404|R_NOT_FOUND|A requested resource could not be found.
-|407|R_VALIDATION_ERROR|One or more request fields did not pass validation checks. A field named `fields` will be found in the response, this is an object with the offending request parameter name(s) and their respective error message.
-|408|R_NOT_AUTHENTICATED|Function requires the invoker to be an authenticated user.
-|409|R_CUSTOM_ERROR|A field named `error` in the response will have the complete error message.
+|200|OK|Request completed without errors.
+|400|FUNCTION_NOT_FOUND|The respective file for the function name in parameter `f` was not found.
+|403|PRIVILEGE_REQUIRED|Function requires the invoker to have certain privilege (i.e. `admin`).
+|404|NOT_FOUND|A requested resource could not be found.
+|407|VALIDATION_ERROR|One or more request fields did not pass validation checks. A field named `fields` will be found in the response, this is an object with the offending request parameter name(s) and their respective error message.
+|408|NOT_AUTHENTICATED|Function requires the invoker to be an authenticated user.
+|409|CUSTOM_ERROR|A field named `error` in the response will have the complete error message.
 
 <br/>
 
