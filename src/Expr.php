@@ -366,6 +366,7 @@ class Expr
 					case 'f': $r = "\f"; break;
 					case 'v': $r = "\v"; break;
 					case 't': $r = "\t"; break;
+					case 'e': $r = "\x1B"; break;
 					case '"': $r = "\""; break;
 					case "'": $r = "\'"; break;
 					case "(": $r = "("; break;
