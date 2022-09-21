@@ -56,7 +56,13 @@ class SQLServer extends Driver
 
     public function getLastInsertId ($conn)
     {
-		return $conn->execScalar('SELECT SCOPE_IDENTITY()');
+		$rs = $this->query ('SELECT SCOPE_IDENTITY()', $conn);
+		if ($rs === false || $rs === true || $rs === null) return 0;
+
+		$ret = $this->fetchRow($rs, $conn);
+		$this->freeResult($rs, $conn);
+
+		return $ret[0];
     }
 
     public function getAffectedRows ($conn)
@@ -104,7 +110,7 @@ class SQLServer extends Driver
 			if (!$this->field_metadata)
 			{
 				$this->affected_rows = sqlsrv_rows_affected($rs);
-				$result = true;
+				$return = true;
 			}
 			else
 			{

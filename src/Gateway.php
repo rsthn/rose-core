@@ -150,9 +150,9 @@ class Gateway
 		$this->cookies = new Map ($_COOKIE);
 
 		$this->registeredServices = new Map();
-		$this->input = new Map([ 'contentType' => $this->server->CONTENT_TYPE, 'size' => $this->server->CONTENT_LENGTH, 'path' => 'php://input' ]);
+		$this->input = new Map([ 'contentType' => Text::toLowerCase(Text::trim(Text::split(";", $this->server->CONTENT_TYPE)->get(0))), 'size' => $this->server->CONTENT_LENGTH, 'path' => 'php://input' ]);
 
-		switch (Text::toLowerCase($this->server->CONTENT_TYPE))
+		switch ($this->input->contentType)
 		{
 			case 'application/x-www-form-urlencoded':
 			case 'multipart/form-data':
