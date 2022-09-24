@@ -67,8 +67,9 @@ class Http
 	*/
 	public static function header ($headerLine)
 	{
-		$name = Text::toLowerCase(Text::split(':', $headerLine)->get(0));
-		self::$headers->set($name, Text::trim($name) . ': ' . Text::trim(Text::substring ($headerLine, Text::length($name)+1)));
+		$name = Text::split(':', $headerLine)->get(0);
+		$val = Text::trim(Text::substring ($headerLine, Text::length($name)+1));
+		self::$headers->set($name, $val ? Text::trim($name) . ': ' . $val : Text::trim($name) . ';' );
 	}
 
 	/*
@@ -178,14 +179,15 @@ class Http
 		curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt ($c, CURLOPT_CUSTOMREQUEST, $method);
 		curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
+		curl_setopt ($c, CURLINFO_HEADER_OUT, true);
+
+		$data = curl_exec($c);
 
 		if (self::$debug)
 		{
-			\Rose\trace($method.' ' . $url);
-			\Rose\trace('HEADERS ' . $headers->values());
+			\Rose\trace($method . ' ' . $url);
+			\Rose\trace(Text::split("\n", curl_getinfo($c, CURLINFO_HEADER_OUT))->forEach(function(&$value) { $value = '> ' . Text::trim($value); })->removeAll("/^> $/")->slice(1)->join("\n"));
 		}
-
-		$data = curl_exec($c);
 
 		self::$curl_last_info = curl_getinfo($c);
 		self::$curl_last_data = $data;
@@ -303,19 +305,17 @@ class Http
 		curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt ($c, CURLOPT_CUSTOMREQUEST, $method);
 		curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
+		curl_setopt ($c, CURLINFO_HEADER_OUT, true);
 		curl_setopt ($c, CURLOPT_POSTFIELDS, $fields);
+
+		$data = curl_exec($c);
 
 		if (self::$debug)
 		{
 			\Rose\trace($method . ' ' . $url);
-			\Rose\trace('HEADERS ' . $headers->values());
-			\Rose\trace('FIELDS ' . (is_array($fields) ? $debugFields : $fields));
-		}
-
-		$data = curl_exec($c);
-
-		if (self::$debug) {
-			try { \Rose\trace('RESPONSE ' . $data); } catch (\Throwable $e) { }
+			\Rose\trace(Text::split("\n", curl_getinfo($c, CURLINFO_HEADER_OUT))->forEach(function(&$value) { $value = '> ' . Text::trim($value); })->removeAll("/^> $/")->slice(1)->join("\n"));
+			\Rose\trace("DATA\n" . (is_array($fields) ? $debugFields : $fields));
+			try { \Rose\trace("RESPONSE\n" . $data); } catch (\Throwable $e) { }
 		}
 
 		$tempFiles->forEach(function($path) { File::remove($path); });
