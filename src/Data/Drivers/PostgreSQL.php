@@ -49,7 +49,13 @@ class PostgreSQL extends Driver
 
     public function getLastInsertId ($conn)
     {
-		return $conn->execScalar('SELECT LASTVAL()');
+		$rs = $this->query ('SELECT LASTVAL()', $conn);
+		if ($rs === false || $rs === true || $rs === null) return 0;
+
+		$ret = $this->fetchRow($rs, $conn);
+		$this->freeResult($rs, $conn);
+
+		return $ret[0];
     }
 
     public function getAffectedRows ($conn)
