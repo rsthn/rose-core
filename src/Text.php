@@ -238,4 +238,18 @@ class Text
 */
 	}
 
+	/**
+	 * Converts the specified value to a string representation.
+	 */
+	public static function toString ($value)
+	{
+		if (\Rose\isString($value))
+			return $value;
+
+		if ($value === null) return '';
+		if ($value === false) return 'false';
+		if ($value === true) return 'true';
+
+		return (string)$value;
+	}
 };

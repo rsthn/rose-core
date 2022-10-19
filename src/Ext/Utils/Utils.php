@@ -455,6 +455,18 @@ Expr::register('array::flatten', function($args)
 		return $args->get(1)->flatten();
 });
 
+/**
+ * 	array::slice <start> <length> <array>
+ * 	array::slice <start> <array>
+ */
+Expr::register('array::slice', function($args)
+{
+	if ($args->length == 4)
+		return $args->get(3)->slice($args->get(1), $args->get(2));
+	else
+		return $args->get(2)->slice($args->get(1));
+});
+
 /* ************ */
 Expr::register('map::new', function($args)
 {
