@@ -118,6 +118,30 @@ function isNumeric ($value)
 }
 
 /*
+**	Returns true if the value is an integer value.
+*/
+function isInteger ($value)
+{
+	return is_integer ($value);
+}
+
+/*
+**	Returns true if the value is a number.
+*/
+function isNumber ($value)
+{
+	return is_double ($value);
+}
+
+/*
+**	Returns true if the value is a boolean value.
+*/
+function isBool ($value)
+{
+	return is_bool ($value);
+}
+
+/*
 **	Returns the boolean value of the given argument.
 */
 function bool ($value)
