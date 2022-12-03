@@ -433,6 +433,33 @@ Expr::register('http::put', function ($args)
 
 
 /* ****************** */
+/* http::delete <url> [<fields>*] */
+
+Expr::register('http::delete', function ($args)
+{
+	$fields = new Map();
+
+	for ($i = 2; $i < $args->length; $i++)
+	{
+		$data = $args->get($i);
+
+		if (\Rose\typeOf($data, true) == 'string')
+		{
+			$fields = $data;
+			break;
+		}
+
+		if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
+			continue;
+
+		$fields->merge($data, true);
+	}
+
+	return Http::post($args->get(1), $fields, null, 'DELETE');
+});
+
+
+/* ****************** */
 /* http::fetch [<method>] <url> [<fields>] */
 
 Expr::register('http::fetch', function ($args)

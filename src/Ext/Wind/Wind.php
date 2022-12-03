@@ -289,7 +289,7 @@ class Wind
 					$f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $gateway->requestParams->f);
 					if (!$f) {
 						if (!$gateway->requestParams->has('f'))
-							throw new WindError ([ 'response' => self::R_OK, 'message' => Strings::get('@messages.service_operational') ]);
+							throw new WindError ([ 'response' => self::R_OK, 'message' => Strings::get('@messages.operational') ]);
 						else
 							throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $gateway->requestParams->f ]);
 					}
@@ -338,7 +338,7 @@ class Wind
 			$f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $params->f);
 			if (!$f) {
 				if (!$params->has('f'))
-					throw new WindError ([ 'response' => self::R_OK, 'message' => Strings::get('@messages.service_operational') ]);
+					throw new WindError ([ 'response' => self::R_OK, 'message' => Strings::get('@messages.operational') ]);
 				else
 					throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $params->f ]);
 			}
