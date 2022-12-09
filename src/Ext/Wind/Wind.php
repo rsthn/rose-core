@@ -251,6 +251,11 @@ class Wind
 		$gateway = Gateway::getInstance();
 		$params = $gateway->requestParams;
 
+		// Handle OPTIONS request.
+		if ($gateway->method === 'OPTIONS')
+			return;
+
+		// Handle regular requests.
 		if ($params->rpkg != null || $params->mreq != null)
 		{
 			$requests = Text::split (';', $params->rpkg != null ? $params->rpkg : $params->mreq);

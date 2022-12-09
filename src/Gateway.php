@@ -218,12 +218,14 @@ class Gateway
 
 		if (Configuration::getInstance()?->Gateway?->allow_origin && $this->serverParams->has('HTTP_ORIGIN'))
 		{
+			self::header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization');
+			self::header('Access-Control-Allow-Methods: POST, GET, PUT, DELETE, PATCH, OPTIONS');
+			self::header('Access-Control-Allow-Credentials: true');
+
 			if (Configuration::getInstance()->Gateway->allow_origin == '*')
 				self::header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
 			else
 				self::header('Access-Control-Allow-Origin: '.Configuration::getInstance()->Gateway->allow_origin);
-
-			self::header('Access-Control-Allow-Credentials: true');
 		}
 
 		$this->fsroot = Path::append($fsroot);
