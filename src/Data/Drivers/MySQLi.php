@@ -144,4 +144,9 @@ class MySQLi extends Driver
 	{
 		return Connection::escape($value, '`', '`', null, null, null, null);
 	}
+
+	public function escapeValue ($value)
+	{
+		return Connection::escape($value);
+	}
 };

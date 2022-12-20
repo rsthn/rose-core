@@ -245,6 +245,14 @@ class Connection
 	}
 
 	/*
+	**	Escapes a value using the driver's escapeValue method.
+	*/
+	public function escapeValue ($value)
+	{
+		return $this->driver->escapeValue($value);
+	}
+
+	/*
 	**	Escapes the given value to be used in a query. Uses the type of the value to determine the appropriate format and
 	**	if escape is required. Also uses the driver's escapeName method to escape column names.
 	*/
@@ -277,11 +285,11 @@ class Connection
 				break;
 	
 			case 'string':
-				$value = Connection::escape($value);
+				$value = $this->escapeValue($value);
 				break;
 
 			default:
-				$value = Connection::escape((string)$value);
+				$value = $this->escapeValue((string)$value);
 				break;
 		}
 	

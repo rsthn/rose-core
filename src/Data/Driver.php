@@ -41,4 +41,5 @@ abstract class Driver
 	public abstract function freeResult ($result, $conn);
 
 	public abstract function escapeName ($value);
+	public abstract function escapeValue ($value);
 };

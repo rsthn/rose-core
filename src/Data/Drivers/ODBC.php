@@ -119,4 +119,9 @@ class ODBC extends Driver
 	{
 		return Connection::escape($value);
 	}
+
+	public function escapeValue ($value)
+	{
+		return Connection::escape($value);
+	}
 };

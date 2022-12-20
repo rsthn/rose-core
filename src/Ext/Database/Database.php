@@ -23,6 +23,8 @@ use Rose\Resources;
 use Rose\Configuration;
 use Rose\Expr;
 
+$defConnection = null;
+
 /*
 **	Create global resource 'Database' which maps to a Connection created using the `Database` configuration section.
 */
@@ -36,6 +38,25 @@ Resources::getInstance()->registerConstructor ('Database', function() {
 Expr::register('escape', function ($args)
 {
 	return Connection::escape($args->get(1));
+});
+
+/**
+ * Sets the current conection. If no parameter specified the default connection will be used.
+ */
+Expr::register('db::conn', function ($args)
+{
+	global $defConnection;
+
+	if ($args->length == 1) {
+		Resources::getInstance()->Database = $defConnection;
+		return null;
+	}
+
+	if (!$defConnection)
+		$defConnection = Resources::getInstance()->Database;
+
+	Resources::getInstance()->Database = $args->get(1);
+	return null;
 });
 
 /*
@@ -186,4 +207,26 @@ Expr::register('db::fields:update', function ($args)
 Expr::register('db::fields:insert', function ($args)
 {
 	return Resources::getInstance()->Database->escapeExt ($args->get(1)->values())->join(', ');
+});
+
+/**
+ * Opens a new connection and returns the database handle.
+ */
+Expr::register('db::open', function ($args)
+{
+	return Connection::fromConfig ($args->get(1));
+});
+
+/**
+ * Closes the specified connection, if it is the active connection then the default one will be set again.
+ */
+Expr::register('db::close', function ($args)
+{
+	global $defConnection;
+
+	if ($args->get(1) === Resources::getInstance()->Database)
+		Resources::getInstance()->Database = $defConnection;
+
+	$args->get(1)->close();
+	return null;
 });

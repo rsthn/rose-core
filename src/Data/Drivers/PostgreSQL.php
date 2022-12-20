@@ -125,4 +125,9 @@ class PostgreSQL extends Driver
 	{
 		return Connection::escape($value, '"', '"', null, null, null, null);
 	}
+
+	public function escapeValue ($value)
+	{
+		return 'E' . Connection::escape($value);
+	}
 };
