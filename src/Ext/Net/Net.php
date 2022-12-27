@@ -303,11 +303,30 @@ class Http
 		curl_setopt ($c, CURLOPT_URL, $url);
 		curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
 		curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt ($c, CURLOPT_CUSTOMREQUEST, $method);
+
+		if ($method == 'POST')
+			curl_setopt ($c, CURLOPT_POST, true);
+		else
+			curl_setopt ($c, CURLOPT_CUSTOMREQUEST, $method);
+
 		curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
 		curl_setopt ($c, CURLINFO_HEADER_OUT, true);
 		curl_setopt ($c, CURLOPT_POSTFIELDS, $fields);
 
+/* 		curl_setopt($c, CURLOPT_HEADERFUNCTION,
+		function($curl, $header)
+		{
+		  $len = strlen($header);
+		  $header = explode(':', $header, 2);
+		  if (count($header) < 2) // ignore invalid headers
+			return $len;
+	  
+\Rose\trace(strtolower(trim($header[0])) . ' => ' . trim($header[1]));
+
+		  return $len;
+		}
+	  );
+ */
 		$data = curl_exec($c);
 
 		if (self::$debug)

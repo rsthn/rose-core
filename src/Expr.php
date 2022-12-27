@@ -1696,6 +1696,7 @@ $_glb_object = new Map();
 Expr::register('global', function($args) { global $_glb_object; return $_glb_object; });
 
 Expr::register('len', function($args) { $s = $args->get(1); return \Rose\typeOf($s) == 'primitive' ? Text::length((string)$s) : $s->length; });
+Expr::register('strlen', function($args) { return Text::length((string)$args->get(1), 'utf8'); });
 Expr::register('int', function($args) { return (int)$args->get(1); });
 Expr::register('bool', function($args) { return \Rose\bool($args->get(1)); });
 Expr::register('str', function($args) { $s = ''; for ($i = 1; $i < $args->length; $i++) $s .= (string)$args->get($i); return $s; });
@@ -1968,7 +1969,7 @@ Expr::register('trim', function ($args)
 */
 Expr::register('upper', function ($args)
 {
-	return Expr::apply($args->slice(1), function($value) { return Text::toUpperCase($value); });
+	return Expr::apply($args->slice(1), function($value) { return Text::toUpperCase($value, 'utf8'); });
 });
 
 /**
@@ -1978,7 +1979,7 @@ Expr::register('upper', function ($args)
 */
 Expr::register('lower', function ($args)
 {
-	return Expr::apply($args->slice(1), function($value) { return Text::toLowerCase($value); });
+	return Expr::apply($args->slice(1), function($value) { return Text::toLowerCase($value, 'utf8'); });
 });
 
 /**
