@@ -184,13 +184,20 @@ Expr::register('utils::json::prettify', function($args)
 {
 	$value = $args->get(1);
 
-	if (\Rose\typeOf($value) == 'Rose\\Arry' || \Rose\typeOf($value) == 'Rose\\Map')
-		$value = (string)$value;
+	if (\Rose\typeOf($value) === 'primitive')
+		return json_encode($value);
 
-	if (\Rose\typeOf($value) == 'primitive')
-		$value = json_decode($value, true);
+	return json_encode(json_decode((string)$value, true), JSON_PRETTY_PRINT);
+});
 
-	return json_encode($value, JSON_PRETTY_PRINT);
+Expr::register('dump+fmt', function($args)
+{
+	$value = $args->get(1);
+
+	if (\Rose\typeOf($value) === 'primitive')
+		return json_encode($value);
+
+	return json_encode(json_decode((string)$value, true), JSON_PRETTY_PRINT);
 });
 
 Expr::register('utils::json::parse', function($args)
