@@ -115,6 +115,14 @@ Expr::register('db::table', function ($args)
 	return Resources::getInstance()->Database->execQuery ($args->get(1));
 });
 
+/**
+ * Executes a query and returns the header, that is the number of rows the query would produce and the field names.
+ */
+Expr::register('db::header', function ($args)
+{
+	return Resources::getInstance()->Database->execHeader ($args->get(1));
+});
+
 /*
 **	Executes a query and returns an array with rows as Arry.
 */

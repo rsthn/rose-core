@@ -201,6 +201,76 @@ Expr::register('utils::json::parse', function($args)
 	return $value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true));
 });
 
+function xmlToMap($xml)
+{
+    $namespaces = $xml->getDocNamespaces();
+    $namespaces[''] = null;
+ 
+    $attributes = new Map();
+    foreach ($namespaces as $prefix => $namespace)
+	foreach ($xml->attributes($namespace) as $attrName => $value)
+		$attributes->set(($prefix ? $prefix . ':' : '') . $attrName, (string)$value);
+ 
+    $children = new Arry();
+    foreach ($namespaces as $prefix => $namespace)
+	foreach ($xml->children($namespace) as $childXml)
+	{
+		$children->push(xmlToMap($childXml));
+	}
+ 
+    return new Map([
+        'tagName' => $xml->getName(), 
+		'attributes' => $attributes,
+		'children' => $children,
+		'textContent' => trim((string)$xml)
+    ]);
+}
+
+function xmlSimplify ($xml)
+{
+	if ($xml->children->length() == 0)
+		return $xml->textContent;
+
+	$r = new Map();
+	$k = new Map();
+	$r->set($xml->tagName, $k);
+
+	if ($xml->attributes->length() != 0)
+		$r->set('$', $xml->attributes);
+
+	$xml->children->forEach(function($value) use (&$k)
+	{
+		if (!$k->has($value->tagName))
+			$k->set($value->tagName, new Arry());
+
+		$k->get($value->tagName)->push(xmlSimplify($value));
+	});
+
+	return $r;
+}
+
+Expr::register('utils::xml::parse', function($args)
+{
+	$value = (string)$args->get(1);
+	if (Text::length($value) == 0) return null;
+
+	$value = simplexml_load_string($value);
+	$result = xmlToMap($value);
+
+	$value = $value->getNamespaces();
+	$value = sizeof($value) != 0 ? array_keys($value)[0] : null;
+
+	if ($value)
+		$result->tagName = $value . ':' . $result->tagName;
+
+	return $result;
+});
+
+Expr::register('utils::xml::simplify', function($args)
+{
+	return $args->get(1) ? xmlSimplify($args->get(1)) : new Map();
+});
+
 Expr::register('utils::html', function($args)
 {
 	$data = $args->get(1);

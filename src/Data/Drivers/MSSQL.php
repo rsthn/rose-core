@@ -67,7 +67,7 @@ class MSSQL extends Driver
 
     public function query ($query, $conn)
 	{
-		return mssql_query($query, $conn);
+		return mssql_query ($query, $conn);
     }
 
 	public function getNumRows ($rs, $conn)
@@ -77,12 +77,12 @@ class MSSQL extends Driver
 
 	public function getNumFields ($rs, $conn)
 	{
-		return mssql_num_fields($rs);
+		return mssql_num_fields ($rs);
 	}
 
 	public function getFieldName ($rs, $i, $conn)
 	{
-		return mssql_field_name($rs, $i);
+		return mssql_field_name ($rs, $i);
 	}
 
 	public function fetchAssoc ($rs, $conn)

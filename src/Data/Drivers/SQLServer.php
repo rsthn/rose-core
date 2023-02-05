@@ -18,6 +18,7 @@
 namespace Rose\Data\Drivers;
 
 use Rose\Errors\Error;
+use Rose\Text;
 
 use Rose\Data\Driver;
 use Rose\Data\Connection;
@@ -29,6 +30,8 @@ class SQLServer extends Driver
 	private $field_metadata = null;
 	private $last_error = null;
 	private $data = null;
+
+	private $options = array('Scrollable' => SQLSRV_CURSOR_STATIC);
 
 	public static function register ()
 	{
@@ -99,7 +102,7 @@ class SQLServer extends Driver
 		$this->last_error = null;
 		$this->data = null;
 
-		$rs = sqlsrv_query ($conn, $query, null, null);
+		$rs = sqlsrv_query ($conn, $query, null, $this->options);
 		if (!$rs) return $this->loadLastError();
 
 		$return = $rs;
@@ -183,6 +186,7 @@ class SQLServer extends Driver
 
 	public function escapeValue ($value)
 	{
-		return Connection::escape($value);
+		$value = Text::replace ("'", "''", $value);
+		return "'" . addcslashes ($value, "\t\n\v\f\r") . "'";
 	}
 };

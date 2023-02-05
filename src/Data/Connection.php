@@ -350,7 +350,7 @@ class Connection
             $this->open();
 
 		$rs = null;
-        try { $rs = $this->driver->reader ($queryString, $this->conn); }
+        try { $rs = $this->driver->query ($queryString, $this->conn); }
 		catch (\Throwable $e) { }
 
         if ($rs === false || $rs === null)
@@ -360,6 +360,43 @@ class Connection
             throw new Error ('Result is not a data set.');
 
 		return new Reader ($this->driver, $this->conn, $rs);
+    }
+
+	/**
+	 * Executes a query and returns the header, that is the number of rows the query would produce and the field names.
+	 */
+    public function execHeader ($queryString)
+    {
+        if ($this->conn == null)
+            throw new Error ('Connection: Database connection is not open.');
+
+        $queryString = $this->filterQuery($queryString);
+        if ($this->dbTracing) \Rose\trace($queryString);
+
+        if (!$this->driver->isAlive ($this->conn))
+            $this->open();
+
+		$rs = null;
+        try { $rs = $this->driver->query ($queryString, $this->conn); }
+		catch (\Throwable $e) { }
+
+        if ($rs === false || $rs === null)
+			throw new Error ($this->driver->getLastError($this->conn));
+
+        if ($rs === true)
+            throw new Error ('Result is not a data set.');
+
+		$info = new Map();
+
+		$info->count = $this->driver->getNumRows ($rs, $this->conn);
+		$info->fields = new Arry();
+
+		$n = $this->driver->getNumFields($rs, $this->conn);
+		for ($i = 0; $i < $n; $i++)
+			$info->fields->push($this->driver->getFieldName ($rs, $i, $this->conn));
+
+		$this->driver->freeResult($rs, $this->conn);
+        return $info;
     }
 
 	/*

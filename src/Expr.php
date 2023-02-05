@@ -1829,10 +1829,10 @@ Expr::register('dump', function ($args)
 {
 	$value = $args->get(1);
 
-	if (typeOf($value) == 'Rose\\Arry' || typeOf($value) == 'Rose\\Map')
-		return (string)$value;
+	if (\Rose\typeOf($value) === 'primitive')
+		return json_encode($value);
 
-	return json_encode($value);
+	return (string)$value;
 });
 
 /**
@@ -2028,6 +2028,28 @@ Expr::register('replace', function ($args)
 	return Expr::apply($args->slice(3), function($value) use(&$search, &$replacement) {
 		return Text::replace($search, $replacement, $value);
 	});
+});
+
+/**
+**	Returns the index of a sub-string in the given text. Returns -1 when not found.
+**
+**	str::indexOf <search> <value>
+*/
+Expr::register('str::indexOf', function ($args)
+{
+	$i = Text::indexOf($args->get(2), $args->get(1));
+	return $i === false ? -1 : $i;
+});
+
+/**
+**	Returns the last index of a sub-string in the given text. Returns -1 when not found.
+**
+**	str::lastIndexOf <search> <value>
+*/
+Expr::register('str::lastIndexOf', function ($args)
+{
+	$i = Text::revIndexOf($args->get(2), $args->get(1));
+	return $i === false ? -1 : $i;
 });
 
 /**
@@ -3263,7 +3285,7 @@ Expr::register('_try', function ($parts, $data)
 		MetaError::decBaseLevel();
 
 		if ($finally !== null)
-			$value = Expr::blockValue($finally, $data);
+			Expr::blockValue($finally, $data);
 	}
 
 	return $value;
@@ -3495,7 +3517,7 @@ Expr::register('_def-fn', function($parts, $data)
 				global $_glb_object;
 
 				if ($args->length-1 < $minParams)
-					throw new Error ("Function `".$name."` expects ".($params->length)." parameters got ".($args->length-1).".");
+					throw new Error ("Function `".$name."` expects ".($minParams)." parameters got ".($args->length-1).".");
 
 				$newData = new Map();
 				$newData->set('local', $contextData);
@@ -3576,10 +3598,10 @@ Expr::register('_def-fn', function($parts, $data)
 					$tmp = true;
 				else if ($tmp === 'false')
 					$tmp = false;
-				else if (Text::indexOf($tmp, '.'))
-					$tmp = (int)$tmp;
-				else
+				else if (Text::indexOf($tmp, '.') !== false)
 					$tmp = (float)$tmp;
+				else
+					$tmp = (int)$tmp;
 
 				$defValues->set($val, new Arry([ 1, $tmp ]));
 			}
@@ -3611,7 +3633,7 @@ Expr::register('_def-fn', function($parts, $data)
 		$name = Text::substring($name, 2);
 		Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
 	}
-	else if (Text::indexOf($name, '::') && !$flag)
+	else if (Text::indexOf($name, '::') !== false && !$flag)
 	{
 		if ($isPrivate)
 			Expr::$context->registerFunction($name, new ExprFn ($name, $fn, Expr::$context), true);
@@ -3688,7 +3710,7 @@ Expr::register('_def', function($parts, $data)
 		$name = Text::substring($name, 2);
 		Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
 	}
-	else if (Text::indexOf($name, '::') && !$flag)
+	else if (Text::indexOf($name, '::') !== false && !$flag)
 	{
 		if ($isPrivate)
 			Expr::$context->registerFunction($name, new ExprFn ($name, $fn, Expr::$context), true);
@@ -4139,4 +4161,30 @@ Expr::register('debug::dumpContextChain', function($args)
 			echo "    private " . $fn->name . "\n";
 		});
 	});
+});
+
+/**
+ * Returns all functions in the root context. Optionally with some prefix.
+ * (debug::fn [prefix])
+ */
+Expr::register('debug::fn', function($args)
+{
+	$context = Context::getContext(0);
+	$list = new Arry();
+
+	$prefix = $args->has(1) ? $args->get(1) : null;
+
+	$context->publicFunctions->forEach(function($fn) use(&$list, &$prefix) {
+		$name = Text::startsWith($fn->name, "_") ? Text::substring($fn->name, 1) : $fn->name;
+		if ($prefix && !Text::startsWith($name, $prefix)) return;
+		$list->push($name);
+	});
+
+	$context->exportedFunctions->forEach(function($fn) use(&$list, &$prefix) {
+		$name = Text::startsWith($fn->name, "_") ? Text::substring($fn->name, 1) : $fn->name;
+		if ($prefix && !Text::startsWith($name, $prefix)) return;
+		$list->push($name);
+	});
+
+	return $list;
 });

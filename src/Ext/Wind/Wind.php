@@ -464,6 +464,22 @@ class Wind
 	}
 
 	/**
+	**	trace::alt <output> <message> [<message>...]
+	*/
+	public static function _trace_alt ($parts, $data)
+	{
+		$s = '';
+
+		for ($i = 2; $i < $parts->length(); $i++)
+			$s .= ' ' . Expr::expand($parts->get($i), $data, 'arg');
+
+		if ($s != '')
+			\Rose\trace(Text::substring($s, 1), '@'.Expr::expand($parts->get(1), $data, 'arg').'.log');
+
+		return null;
+	}
+
+	/**
 	**	call <fnname> [:<name> <expr>...]
 	*/
 	public static function _call ($parts, $data)
@@ -657,6 +673,7 @@ Expr::register('return', function(...$args) { return Wind::_return(...$args); })
 Expr::register('_echo', function($parts, $data) { return Wind::_echo($parts, $data, true); });
 Expr::register('_print', function($parts, $data) { return Wind::_echo($parts, $data, false); });
 Expr::register('_trace', function(...$args) { return Wind::_trace(...$args); });
+Expr::register('_trace::alt', function(...$args) { return Wind::_trace_alt(...$args); });
 Expr::register('_call', function(...$args) { return Wind::_call(...$args); });
 Expr::register('_icall', function(...$args) { return Wind::_icall(...$args); });
 
