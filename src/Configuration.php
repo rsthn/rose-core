@@ -1,19 +1,4 @@
 <?php
-/*
-**	Rose\Configuration
-**
-**	Copyright (c) 2018-2020, RedStar Technologies, All rights reserved.
-**	https://rsthn.com/
-**
-**	THIS LIBRARY IS PROVIDED BY REDSTAR TECHNOLOGIES "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-**	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
-**	PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL REDSTAR TECHNOLOGIES BE LIABLE FOR ANY
-**	DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
-**	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
-**	OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
-**	STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-**	USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 
 namespace Rose;
 
@@ -40,16 +25,16 @@ class Configuration extends Map
 	/*
 	**	Initializes the instance of the Configuration class and loads the configuration files.
 	*/
-    public function __construct ()
+    public function __construct()
     {
-        parent::__construct ();
+        parent::__construct();
         $this->reload();
     }
 
 	/*
 	**	Returns the instance of this class.
 	*/
-    public static function getInstance ()
+    public static function getInstance()
     {
         if ((Configuration::$objectInstance == null))
             Configuration::$objectInstance = new Configuration();
@@ -60,17 +45,17 @@ class Configuration extends Map
 	/*
 	**	Reloads the configuration files.
 	*/
-    public function reload ()
+    public function reload()
     {
 		$this->clear();
 
-		// Load default configuration file.
+		// Load default configuration file...
 		try {
 			Configuration::loadFrom (Main::$CORE_DIR.'/system.conf', $this, true);
 		}
 		catch (\Throwable $e) { }
 
-		// Also an environment-dependent file based on the 'rose-env' file contents.
+		// ...And an environment dependent file based on the 'rose-env' file contents.
 		if (Path::exists('rose-env'))
 		{
 			$env = Text::trim(File::getContents('rose-env'));

@@ -1,19 +1,4 @@
 <?php
-/*
-**	Rose\Ext\Misc
-**
-**	Copyright (c) 2019-2020, RedStar Technologies, All rights reserved.
-**	https://rsthn.com/
-**
-**	THIS LIBRARY IS PROVIDED BY REDSTAR TECHNOLOGIES "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-**	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
-**	PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL REDSTAR TECHNOLOGIES BE LIABLE FOR ANY
-**	DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
-**	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
-**	OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
-**	STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-**	USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 
 namespace Rose\Ext;
 
@@ -31,6 +16,14 @@ use Rose\Arry;
 
 Expr::register('config', function ($args) { return Configuration::getInstance(); });
 Expr::register('c', function ($args) { return Configuration::getInstance(); });
+
+Expr::register('config::parse', function ($args) {
+	return Configuration::loadFromBuffer($args->get(1));
+});
+
+Expr::register('config::stringify', function ($args) {
+	return Configuration::saveToBuffer($args->get(1));
+});
 
 Expr::register('strings', function ($args)
 {

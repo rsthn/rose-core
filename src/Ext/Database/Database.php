@@ -53,7 +53,7 @@ Expr::register('db::conn', function ($args)
 	}
 
 	if (!$defConnection)
-		$defConnection = Resources::getInstance()->Database;
+		$defConnection = Resources::getInstance()->exists('Database', true) ? Resources::getInstance()->Database : null;
 
 	Resources::getInstance()->Database = $args->get(1);
 	return null;
@@ -232,7 +232,7 @@ Expr::register('db::close', function ($args)
 {
 	global $defConnection;
 
-	if ($args->get(1) === Resources::getInstance()->Database)
+	if ((Resources::getInstance()->exists('Database', true) ? Resources::getInstance()->Database : null) === $args->get(1))
 		Resources::getInstance()->Database = $defConnection;
 
 	$args->get(1)->close();
