@@ -75,6 +75,19 @@ class ODBC extends Driver
 		return $rs;
 	}
 
+    public function reader ($query, $conn)
+	{
+		$this->affected_rows = 0;
+
+		$rs = odbc_exec($conn, $query);
+		if ($rs === false) return false;
+
+		$this->affected_rows = odbc_num_rows($rs);
+		if (odbc_num_fields($rs) == 0) return true;
+
+		return $rs;
+	}
+
 	public function getNumRows ($rs, $conn)
 	{
 		return odbc_num_rows ($rs);

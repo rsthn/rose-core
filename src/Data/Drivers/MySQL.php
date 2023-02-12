@@ -86,6 +86,11 @@ class MySQL extends Driver
         return mysql_query ($query, $conn);
     }
 
+    public function reader ($query, $conn)
+	{
+        return mysql_query ($query, $conn);
+    }
+
     public function getNumRows ($rs, $conn)
     {
 		return mysql_num_rows ($rs);

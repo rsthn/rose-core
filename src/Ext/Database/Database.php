@@ -41,13 +41,16 @@ Expr::register('escape', function ($args)
 });
 
 /**
- * Sets the current conection. If no parameter specified the default connection will be used.
+ * Sets the current conection. If null is specified the default connection will be used.
  */
 Expr::register('db::conn', function ($args)
 {
 	global $defConnection;
 
-	if ($args->length == 1) {
+	if ($args->length == 1)
+		return Resources::getInstance()->Database;
+
+	if ($args->get(1) === null) {
 		Resources::getInstance()->Database = $defConnection;
 		return null;
 	}
@@ -153,7 +156,7 @@ Expr::register('db::exec', function ($args)
 /*
 **	Executes a row update operation.
 **
-**	db::update <table-name> <condition> <fields>
+**	db::update <table-name> <condition|fields> <fields>
 */
 Expr::register('db::update', function ($args)
 {
@@ -166,10 +169,15 @@ Expr::register('db::update', function ($args)
 	if ($data->length == 0)
 		return true;
 
-	$s = 'UPDATE ' . $table . ' SET ';
-	$s .= $conn->escapeExt($data)->join(', ');
-	$s .= ' WHERE ' . $condition;
-
+	if (\Rose\typeOf($condition, true) !== 'string')
+	{
+		$cond = $condition->map(function($value, $name) use(&$conn) { return $conn->escapeName($name).'='.$conn->escapeValue($value); })->values()->join(' AND ');
+		if ($cond) $cond = ' WHERE ' . $cond;
+	}
+	else
+		$cond = $condition ? ' WHERE ' . $condition : '';
+	
+	$s = 'UPDATE ' . $table . ' SET ' . $conn->escapeExt($data)->join(', ') . $cond;
 	return $conn->execQuery($s);
 });
 
@@ -188,6 +196,53 @@ Expr::register('db::insert', function ($args)
 	$s = 'INSERT INTO ' . $table . ' ('. $data->keys()->map(function($i) use(&$conn) { return $conn->escapeName($i); })->join(', ') .')';
 	$s .= ' VALUES (' . $conn->escapeExt ($data->values())->join(', ') . ')';
 
+	return $conn->execQuery($s);
+});
+
+/*
+**	Returns a single row matching the specified fields.
+**	db::get <table-name> <string|fields>
+*/
+Expr::register('db::get', function ($args)
+{
+	$conn = Resources::getInstance()->Database;
+
+	$table = $args->get(1);
+	$condition = $args->get(2);
+
+	if (\Rose\typeOf($condition, true) !== 'string')
+	{
+		$cond = $condition->map(function($value, $name) use(&$conn) { return $conn->escapeName($name).'='.$conn->escapeValue($value); })->values()->join(' AND ');
+		if ($cond) $cond = ' WHERE ' . $cond;
+	}
+	else
+		$cond = $condition ? ' WHERE ' . $condition : '';
+
+	$s = 'SELECT * FROM ' . $table . $cond;
+	return $conn->execAssoc($s);
+});
+
+/*
+**	Deletes one or more rows from a table.
+**
+**	db::delete <table-name> <string|fields>
+*/
+Expr::register('db::delete', function ($args)
+{
+	$conn = Resources::getInstance()->Database;
+
+	$table = $args->get(1);
+	$condition = $args->get(2);
+
+	if (\Rose\typeOf($condition, true) !== 'string')
+	{
+		$cond = $condition->map(function($value, $name) use(&$conn) { return $conn->escapeName($name).'='.$conn->escapeValue($value); })->values()->join(' AND ');
+		if ($cond) $cond = ' WHERE ' . $cond;
+	}
+	else
+		$cond = $condition ? ' WHERE ' . $condition : '';
+
+	$s = 'DELETE FROM ' . $table . $cond;
 	return $conn->execQuery($s);
 });
 

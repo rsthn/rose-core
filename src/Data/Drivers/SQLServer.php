@@ -29,6 +29,7 @@ class SQLServer extends Driver
 	private $num_rows = 0;
 	private $field_metadata = null;
 	private $last_error = null;
+	private $data_rs = null;
 	private $data = null;
 
 	private $options = array('Scrollable' => SQLSRV_CURSOR_STATIC);
@@ -130,7 +131,47 @@ class SQLServer extends Driver
 					$this->data[] = $tmp;
 				}
 
+				$this->data_rs = $rs;
 				$return = $rs;
+			}
+
+			$result = sqlsrv_next_result($rs);
+			if ($result === false)
+				return $this->loadLastError();
+
+			if (!$result) break;
+		}
+
+		return $return;
+    }
+
+    public function reader ($query, $conn)
+	{
+		$this->affected_rows = 0;
+		$this->num_rows = 0;
+		$this->field_metadata = null;
+		$this->last_error = null;
+
+		$rs = sqlsrv_query ($conn, $query, null, $this->options);
+		if (!$rs) return $this->loadLastError();
+
+		$return = $rs;
+
+		while (true)
+		{
+			$this->field_metadata = sqlsrv_field_metadata($rs);
+			if (!$this->field_metadata)
+			{
+				$this->affected_rows = sqlsrv_rows_affected($rs);
+				$return = true;
+			}
+			else
+			{
+				$this->num_rows = sqlsrv_num_rows($rs);
+				$this->num_fields = sqlsrv_num_fields($rs);
+
+				$return = $rs;
+				break;
 			}
 
 			$result = sqlsrv_next_result($rs);
@@ -160,6 +201,9 @@ class SQLServer extends Driver
 
 	public function fetchAssoc ($rs, $conn)
 	{
+		if ($rs !== $this->data_rs)
+			return sqlsrv_fetch_array($rs, SQLSRV_FETCH_ASSOC);
+
 		if (count($this->data) == 0)
 			return null;
 
@@ -168,6 +212,9 @@ class SQLServer extends Driver
 
 	public function fetchRow ($rs, $conn)
 	{
+		if ($rs !== $this->data_rs)
+			return array_values(sqlsrv_fetch_array($rs, SQLSRV_FETCH_ASSOC));
+
 		if (count($this->data) == 0)
 			return null;
 
@@ -187,6 +234,11 @@ class SQLServer extends Driver
 	public function escapeValue ($value)
 	{
 		$value = Text::replace ("'", "''", $value);
-		return "'" . addcslashes ($value, "\t\n\v\f\r") . "'";
+
+		$value = Text::split("\t", $value)->join("'+CHAR(9)+'");
+		$value = Text::split("\r", $value)->join("'+CHAR(13)+'");
+		$value = Text::split("\n", $value)->join("'+CHAR(10)+'");
+
+		return "'" . $value . "'";
 	}
 };

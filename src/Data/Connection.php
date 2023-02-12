@@ -350,7 +350,7 @@ class Connection
             $this->open();
 
 		$rs = null;
-        try { $rs = $this->driver->query ($queryString, $this->conn); }
+        try { $rs = $this->driver->reader ($queryString, $this->conn); }
 		catch (\Throwable $e) { }
 
         if ($rs === false || $rs === null)
@@ -377,7 +377,7 @@ class Connection
             $this->open();
 
 		$rs = null;
-        try { $rs = $this->driver->query ($queryString, $this->conn); }
+        try { $rs = $this->driver->reader ($queryString, $this->conn); }
 		catch (\Throwable $e) { }
 
         if ($rs === false || $rs === null)

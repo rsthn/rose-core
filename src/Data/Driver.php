@@ -31,6 +31,7 @@ abstract class Driver
 	public abstract function getAffectedRows ($conn);
 	public abstract function isAlive ($conn);
 	public abstract function query ($query, $conn);
+	public abstract function reader ($query, $conn);
 
 	public abstract function getNumRows ($result, $conn);
 	public abstract function getNumFields ($result, $conn);

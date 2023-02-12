@@ -81,6 +81,19 @@ class PostgreSQL extends Driver
 		return $rs;
     }
 
+    public function reader ($query, $conn)
+	{
+		$this->affected_rows = 0;
+
+		$rs = pg_query ($conn, $query);
+		if ($rs === false) return false;
+
+		$this->affected_rows = pg_affected_rows($rs);
+		if (pg_num_fields($rs) == 0) return true;
+
+		return $rs;
+    }
+
 	public function getNumRows ($rs, $conn)
 	{
 		return pg_num_rows ($rs);

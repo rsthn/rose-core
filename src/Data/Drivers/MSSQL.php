@@ -70,6 +70,11 @@ class MSSQL extends Driver
 		return mssql_query ($query, $conn);
     }
 
+    public function reader ($query, $conn)
+	{
+		return mssql_query ($query, $conn);
+    }
+
 	public function getNumRows ($rs, $conn)
 	{
 		return mssql_num_rows ($rs);
