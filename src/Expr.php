@@ -4186,5 +4186,20 @@ Expr::register('debug::fn', function($args)
 		$list->push($name);
 	});
 
+	Expr::$context->chain->forEach(function($linked) use (&$list, &$prefix)
+	{
+		$linked->context->publicFunctions->forEach(function($fn) use(&$list, &$prefix) {
+			$name = Text::startsWith($fn->name, "_") ? Text::substring($fn->name, 1) : $fn->name;
+			if ($prefix && !Text::startsWith($name, $prefix)) return;
+			$list->push($name);
+		});
+
+		$linked->context->exportedFunctions->forEach(function($fn) use(&$list, &$prefix) {
+			$name = Text::startsWith($fn->name, "_") ? Text::substring($fn->name, 1) : $fn->name;
+			if ($prefix && !Text::startsWith($name, $prefix)) return;
+			$list->push($name);
+		});
+	});
+
 	return $list;
 });

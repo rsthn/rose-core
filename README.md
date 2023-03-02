@@ -8,7 +8,7 @@
 
 Rose is a framework designed aiming to the highest-level of abstraction possible, this is achieved by using an internal expression language (dialect of Lisp) to code entire APIs and systems. This effectively allows the developer to **never write any host language code** when building core logic.
 
-The host language is the language on which the `rose-core` was built, for the repository you're viewing right now, that would be PHP.
+The host language is the language in which the `rose-core` was built, for the repository you're viewing right now, that would be PHP.
 
 In the future we're planning to build ports of Rose and its extensions for other host languages such as Python, NodeJS or whatever hot crazy lang may be available in the future. And when that happens, all of your current code written for Rose will **continue to work seamlessly** in the new host language (given that all required extensions are _of course_ ported to the new host language as well).
 
