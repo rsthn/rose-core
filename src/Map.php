@@ -45,9 +45,9 @@ class Map
 
 		foreach ($this->__nativeArray as &$value)
 		{
-			if (is_array($value))
+			if (\Rose\isArray($value))
 			{
-				if (count(array_filter(array_keys($value), 'is_string')) != 0)
+				if (count(array_filter(array_keys($value), '\Rose\isString')) != 0)
 					$value = Map::fromNativeArray($value);
 				else
 					$value = Arry::fromNativeArray($value);
@@ -70,9 +70,9 @@ class Map
         {
             foreach ($newMap->__nativeArray as &$value)
             {
-                if (is_array($value))
+                if (\Rose\isArray($value))
                 {
-                    if (count(array_filter(array_keys($value), 'is_string')) != 0)
+                    if (count(array_filter(array_keys($value), '\Rose\isString')) != 0)
                         $value = Map::fromNativeArray($value);
                     else
                         $value = Arry::fromNativeArray($value);
@@ -88,7 +88,7 @@ class Map
 	*/
     public static function fromCombination ($keys, $values)
     {
-		return new Map (array_combine(is_array($keys) ? $keys : $keys->__nativeArray, is_array($values) ? $values : $values->__nativeArray), false);
+		return new Map (array_combine(\Rose\isArray($keys) ? $keys : $keys->__nativeArray, \Rose\isArray($values) ? $values : $values->__nativeArray), false);
     }
 
 	/*

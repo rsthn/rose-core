@@ -303,7 +303,7 @@ class Expr
 	 */
 	static public function accessGet ($data, $index)
 	{
-		if (is_string($data))
+		if (\Rose\isString($data))
 			return $data[$index];
 
 		return $data->{$index};
@@ -314,7 +314,7 @@ class Expr
 	 */
 	static public function accessSet (&$data, $index, $value)
 	{
-		if (is_string($data))
+		if (\Rose\isString($data))
 			throw new Error('Writing to strings directly using an index is not allowed.');
 
 		return $data->{$index} = $value;

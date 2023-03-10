@@ -64,17 +64,17 @@ Expr::register('path::join', function ($args)
 
 Expr::register('path::is_file', function ($args)
 {
-	return Path::is_file ($args->get(1));
+	return Path::isFile ($args->get(1));
 });
 
 Expr::register('path::is_dir', function ($args)
 {
-	return Path::is_dir ($args->get(1));
+	return Path::isDir ($args->get(1));
 });
 
 Expr::register('path::is_link', function ($args)
 {
-	return Path::is_link ($args->get(1));
+	return Path::isLink ($args->get(1));
 });
 
 Expr::register('path::exists', function ($args)

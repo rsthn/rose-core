@@ -103,6 +103,6 @@ Expr::register('datetime::time', function ($args) {
 */
 Expr::register('datetime::format', function ($args) {
 	$value = $args->get(1);
-	$value = $value === null ? null : (is_int($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
+	$value = $value === null ? null : (\Rose\isInteger($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
 	return $value ? DateTime::strftime($args->get(2), $value + DateTime::$offset) : null;
 });

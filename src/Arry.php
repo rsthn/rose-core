@@ -48,7 +48,7 @@ class Arry
 
 		foreach ($this->__nativeArray as &$value)
 		{
-			if (is_array($value))
+			if (\Rose\isArray($value))
 			{
 				if (count(array_filter(array_keys($value), '\Rose\isString')) != 0)
 					$value = Map::fromNativeArray($value);
@@ -73,7 +73,7 @@ class Arry
         {
             foreach ($newArray->__nativeArray as &$value)
             {
-                if (is_array($value))
+                if (\Rose\isArray($value))
                 {
                     if (count(array_filter(array_keys($value), '\Rose\isString')) != 0)
                         $value = Map::fromNativeArray($value);
@@ -102,7 +102,7 @@ class Arry
 		if (!\Rose\isNumeric($index))
 			return null;
 
-        if (!Math::inrange ($index, 0, sizeof($this->__nativeArray)-1))
+        if (!Math::inrange ((int)$index, 0, sizeof($this->__nativeArray)-1))
             throw new ArgumentError ('Index Out of Bounds: ' . $index);
 
         return $this->__nativeArray[$index];

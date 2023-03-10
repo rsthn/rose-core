@@ -68,7 +68,7 @@ class File
 	*/
     public static function touch (string $filepath, $time=null)
     {
-        return \touch ($filepath, $time === null ? DateTime::getUnixTimestamp(true) : (is_object($time) ? $time->getTimestamp() : (is_int($time) ? (int)$time : DateTime::getUnixTimestamp($time))));
+        return \touch ($filepath, $time === null ? DateTime::getUnixTimestamp(true) : (\Rose\isObject($time) ? $time->getTimestamp() : (\Rose\isInteger($time) ? (int)$time : DateTime::getUnixTimestamp($time))));
     }
 
 	/*
@@ -169,7 +169,7 @@ class File
 	*/
     public static function copy (string $source, string $target)
     {
-		if (Path::is_dir($target))
+		if (Path::isDir($target))
 			return \copy ($source, Path::append($target, Path::basename($source))) ? true : false;
 		else
         	return \copy ($source, $target) ? true : false;

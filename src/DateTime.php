@@ -109,9 +109,9 @@ class DateTime
 		if (Text::toUpperCase($targetTimezone) === 'LTZ')
 			$targetTimezone = self::$timezone;
 
-		if (is_numeric($datetime))
+		if (\Rose\isNumeric($datetime))
 		{
-			$datetime = DateTime::strftime('%Y-%m-%d %H:%M:%S', $datetime);
+			$datetime = DateTime::strftime('%Y-%m-%d %H:%M:%S', (int)$datetime);
 		}
 		else if ($datetime instanceOf DateTime)
 		{
@@ -183,8 +183,8 @@ class DateTime
 		if ($value === true)
 			return time();
 
-		if (is_numeric($value))
-			return $value;
+		if (\Rose\isNumeric($value))
+			return (int)$value;
 
 		if ($value instanceof \DateTime || $value instanceof DateTime)
 			return $value->timestamp;
@@ -197,8 +197,8 @@ class DateTime
 	*/
 	public static function getUnit ($name)
 	{
-		if (is_numeric($name))
-			return $name;
+		if (\Rose\isNumeric($name))
+			return (int)$name;
 
 		switch (Text::toUpperCase($name))
 		{

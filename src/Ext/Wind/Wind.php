@@ -96,7 +96,7 @@ class Wind
 
 	public static function prepare ($response)
 	{
-		if (is_array($response))
+		if (\Rose\isArray($response))
 			$response = new Map ($response);
 
 		if (\Rose\typeOf($response) == 'Rose\\Map' || \Rose\typeOf($response) == 'Rose\\Arry')
@@ -115,7 +115,7 @@ class Wind
 				}
 			}
 		}
-		else if (is_string($response))
+		else if (\Rose\isString($response))
 		{
 		}
 		else
@@ -144,7 +144,7 @@ class Wind
 			if (self::$contentType == null)
 				self::$contentType = 'Content-Type: application/json; charset=utf-8';
 		}
-		else if (is_string($response) && strlen($response) != 0)
+		else if (\Rose\isString($response) && strlen($response) != 0)
 		{
 			if (self::$contentType == null)
 				self::$contentType = 'Content-Type: text/plain; charset=utf-8';

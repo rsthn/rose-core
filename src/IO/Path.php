@@ -101,7 +101,7 @@ class Path
 	/*
 	**	Returns true if the path points to a file.
 	*/
-    public static function is_file ($path)
+    public static function isFile ($path)
     {
         return \is_file ($path);
     }
@@ -109,7 +109,7 @@ class Path
 	/*
 	**	Returns true if the path points to a directory.
 	*/
-    public static function is_dir ($path)
+    public static function isDir ($path)
     {
         return \is_dir ($path);
     }
@@ -117,7 +117,7 @@ class Path
 	/*
 	**	Returns true if the path points to a symbolic link.
 	*/
-    public static function is_link ($path)
+    public static function isLink ($path)
     {
         return \is_link ($path);
     }

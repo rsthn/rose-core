@@ -102,11 +102,27 @@ function typeOf ($object, $detailed=false)
 }
 
 /*
-**	Returns true if the object is an string.
+**	Returns true if the value is an array.
 */
-function isString ($object)
+function isArray ($value)
 {
-	return is_string ($object);
+	return is_array ($value);
+}
+
+/*
+**	Returns true if the value is an object.
+*/
+function isObject ($value)
+{
+	return is_object ($value);
+}
+
+/*
+**	Returns true if the value is an string.
+*/
+function isString ($value)
+{
+	return is_string ($value);
 }
 
 /*
@@ -122,11 +138,12 @@ function isNumeric ($value)
 */
 function isInteger ($value)
 {
-	return is_integer ($value);
+	return is_int ($value);
 }
 
 /*
-**	Returns true if the value is a number.
+**	Returns true if the value represents a number, ensure to use a `float` or `double` cast when actually
+**	using the value, since it may contain extra characters after the number.
 */
 function isNumber ($value)
 {

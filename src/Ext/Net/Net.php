@@ -333,7 +333,7 @@ class Http
 		{
 			\Rose\trace($method . ' ' . $url);
 			\Rose\trace(Text::split("\n", curl_getinfo($c, CURLINFO_HEADER_OUT))->forEach(function(&$value) { $value = '> ' . Text::trim($value); })->removeAll("/^> $/")->slice(1)->join("\n"));
-			\Rose\trace("DATA\n" . (is_array($fields) ? $debugFields : $fields));
+			\Rose\trace("DATA\n" . (\Rose\isArray($fields) ? $debugFields : $fields));
 			try { \Rose\trace("RESPONSE\n" . $data); } catch (\Throwable $e) { }
 		}
 

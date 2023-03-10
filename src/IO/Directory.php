@@ -52,7 +52,7 @@ class Directory
 
 		$path = Path::normalize($path);
 
-		if (!Path::is_dir($path))
+		if (!Path::isDir($path))
 			return null;
 
 		$path .= '/';
@@ -69,7 +69,7 @@ class Directory
         else
             $result = $output;
 
-        if (Path::is_dir($path) && ($hdl = opendir($path)) != null)
+        if (Path::isDir($path) && ($hdl = opendir($path)) != null)
         {
             while (($item = readdir($hdl)) !== false)
             {
@@ -78,7 +78,7 @@ class Directory
                 if ($item == '.' || $item == '..')
 					continue;
 
-                if (Path::is_dir($fpath))
+                if (Path::isDir($fpath))
                 {
                     if ($recursive)
                     {
@@ -149,7 +149,7 @@ class Directory
 		if (!Path::exists($path))
 			return true;
 
-        if (!Path::is_dir($path))
+        if (!Path::isDir($path))
             return File::remove($path);
 
         if ($recursive)
@@ -196,7 +196,7 @@ class Directory
 	*/
     public static function create (string $path, bool $recursive=false)
     {
-		if (Path::exists($path) && Path::is_dir($path))
+		if (Path::exists($path) && Path::isDir($path))
 			return true;
 
         try {
@@ -219,7 +219,7 @@ class Directory
 		$source = Path::normalize($source);
 		$dest = Path::normalize($dest);
 
-		if (!Path::is_dir($source))
+		if (!Path::isDir($source))
 		{
 			if (Path::exists($dest) && !$overwrite)
 				return true;
@@ -238,7 +238,7 @@ class Directory
 			if ($pattern != null && !Regex::_matches($pattern, $entry))
 				continue;
 
-			if (!$recursive && Path::is_dir($source.'/'.$entry))
+			if (!$recursive && Path::isDir($source.'/'.$entry))
 				continue;
 
 			if (!Directory::copy ($source.'/'.$entry, $dest.'/'.$entry, $recursive, $overwrite, $pattern))
