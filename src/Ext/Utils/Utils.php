@@ -65,6 +65,8 @@ Expr::register('math::fromBin', function ($args) { return Math::fromBin($args->g
 Expr::register('math::fromOct', function ($args) { return Math::fromOct($args->get(1)); });
 
 Expr::register('utils::gc', function() { gc_collect_cycles(); });
+Expr::register('utils::getenv', function($args) { return $args->has(1) ? getenv($args->get(1)) : getenv(); });
+Expr::register('utils::putenv', function($args) { putenv($args->slice(1)->join('')); return null; });
 
 Expr::register('utils::rand', function() { return Math::rand(); });
 Expr::register('utils::randstr', function($args) { return bin2hex(random_bytes((int)$args->get(1))); });

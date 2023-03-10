@@ -31,14 +31,6 @@ use Rose\DateTime;
 class File
 {
 	/*
-	**	Generates and returns a temporal file path with the specified prefix.
-	*/
-    public static function temp (string $prefix='')
-    {
-        return tempnam(sys_get_temp_dir(), $prefix);
-    }
-
-	/*
 	**	Returns the size of the file.
 	*/
     public static function size (string $filepath)

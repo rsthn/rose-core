@@ -3315,7 +3315,7 @@ Expr::register('_assert', function ($parts, $data)
 	if (Expr::expand($parts->get(1), $data, 'arg'))
 		return null;
 
-	throw new \Exception (Expr::expand($parts->get(2), $data));
+	throw new \Exception ($parts->has(2) ? Expr::expand($parts->get(2), $data) : 'Assertion failed');
 });
 
 /**

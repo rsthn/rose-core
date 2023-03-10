@@ -193,4 +193,20 @@ class Path
     {
 		return Gateway::getInstance()->fsroot;
     }
+
+	/*
+	**	Generates and returns a temporal file path with the specified prefix.
+	*/
+    public static function tempnam (string $prefix='')
+    {
+        return \tempnam(sys_get_temp_dir(), $prefix);
+    }
+
+	/*
+	**	Returns the path to the system's temporal folder.
+	*/
+    public static function temp ()
+    {
+        return sys_get_temp_dir();
+    }
 };
