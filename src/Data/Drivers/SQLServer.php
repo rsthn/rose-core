@@ -1,19 +1,4 @@
 <?php
-/*
-**	Rose\Data\Drivers\SQLServer
-**
-**	Copyright (c) 2018-2020, RedStar Technologies, All rights reserved.
-**	https://rsthn.com/
-**
-**	THIS LIBRARY IS PROVIDED BY REDSTAR TECHNOLOGIES "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-**	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
-**	PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL REDSTAR TECHNOLOGIES BE LIABLE FOR ANY
-**	DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
-**	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
-**	OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
-**	STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-**	USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 
 namespace Rose\Data\Drivers;
 
@@ -26,6 +11,7 @@ use Rose\Data\Connection;
 class SQLServer extends Driver
 {
 	private $affected_rows = 0;
+	private $last_id = null;
 	private $num_rows = 0;
 	private $field_metadata = null;
 	private $last_error = null;
@@ -44,6 +30,8 @@ class SQLServer extends Driver
 		$conn = sqlsrv_connect ($server, array('Database' => $database, 'UID' => $user, 'PWD' => $password, 'ReturnDatesAsStrings' => true, 'CharacterSet' => 'UTF-8'));
 		if ($conn == null) return null;
 
+		//$this->query('SET NOCOUNT OFF', $conn);
+
 		sqlsrv_configure ('WarningsReturnAsErrors', 0);
         return $conn;
     }
@@ -60,13 +48,7 @@ class SQLServer extends Driver
 
     public function getLastInsertId ($conn)
     {
-		$rs = $this->query ('SELECT SCOPE_IDENTITY()', $conn);
-		if ($rs === false || $rs === true || $rs === null) return 0;
-
-		$ret = $this->fetchRow($rs, $conn);
-		$this->freeResult($rs, $conn);
-
-		return $ret[0];
+		return $this->last_id;
     }
 
     public function getAffectedRows ($conn)
@@ -101,7 +83,17 @@ class SQLServer extends Driver
 		$this->num_rows = 0;
 		$this->field_metadata = null;
 		$this->last_error = null;
+		$this->last_id = null;
 		$this->data = null;
+		$this->data_rs = null;
+
+		$fetch_last_id = false;
+
+		if (Text::startsWith(Text::toUpperCase(Text::trim($query)), 'INSERT INTO') !== false)
+		{
+			$query .= '; SELECT SCOPE_IDENTITY();';
+			$fetch_last_id = true;
+		}
 
 		$rs = sqlsrv_query ($conn, $query, null, $this->options);
 		if (!$rs) return $this->loadLastError();
@@ -120,7 +112,6 @@ class SQLServer extends Driver
 			{
 				$this->num_rows = sqlsrv_num_rows($rs);
 				$this->num_fields = sqlsrv_num_fields($rs);
-
 				$this->data = [];
 
 				while (true)
@@ -129,6 +120,12 @@ class SQLServer extends Driver
 					if ($tmp === null || $tmp === false) break;
 
 					$this->data[] = $tmp;
+
+					if ($fetch_last_id)
+					{
+						$this->last_id = array_values($tmp)[0];
+						$fetch_last_id = false;
+					}
 				}
 
 				$this->data_rs = $rs;

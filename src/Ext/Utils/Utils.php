@@ -335,7 +335,7 @@ Expr::register('utils::html', function($args)
 
 		$data->forEach(function ($value, $key) use (&$s)
 		{
-			$s .= '<tr>'.nl2br("<th>$key</th>td>$value</td>").'</tr>';
+			$s .= '<tr>'.nl2br("<th>$key</th><td>$value</td>").'</tr>';
 		});
 
 		return "<table style='font-family: monospace;' border='1'>$s</table>";
