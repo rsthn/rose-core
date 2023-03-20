@@ -82,7 +82,7 @@ class Path
 	*/
     public static function resolve ($path)
     {
-		return Path::normalize(\realpath($path));
+		return $path ? Path::normalize(\realpath($path)) : null;
     }
 
 	/*
@@ -127,6 +127,8 @@ class Path
 	*/
     public static function exists ($path)
     {
+		if (!$path) return false;
+
 		if ($path === 'php://input')
 			return true;
 

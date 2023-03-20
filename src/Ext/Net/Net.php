@@ -240,6 +240,9 @@ class Http
 						if (!Path::exists($path))
 							throw new Error ('File for field \''.$name.'\' not found.');
 
+						if (!Path::isFile($path))
+							throw new Error ('Path specified for field \''.$name.'\' is not a file.');
+
 						if ($value->has('name'))
 							$value = curl_file_create ($path, '', $value->get('name'));
 						else
