@@ -277,7 +277,7 @@ class Connection
 				break;
 	
 			case 'bool':
-				$value = $item ? '1' : '0';
+				$value = $value ? '1' : '0';
 				break;
 	
 			case 'int':

@@ -18,7 +18,7 @@ class SQLServer extends Driver
 	private $data_rs = null;
 	private $data = null;
 
-	private $options = array('Scrollable' => SQLSRV_CURSOR_STATIC);
+	private $options = null;
 
 	public static function register ()
 	{
@@ -30,6 +30,7 @@ class SQLServer extends Driver
 		$conn = sqlsrv_connect ($server, array('Database' => $database, 'UID' => $user, 'PWD' => $password, 'ReturnDatesAsStrings' => true, 'CharacterSet' => 'UTF-8'));
 		if ($conn == null) return null;
 
+		$this->options = array('Scrollable' => SQLSRV_CURSOR_STATIC);
 		//$this->query('SET NOCOUNT OFF', $conn);
 
 		sqlsrv_configure ('WarningsReturnAsErrors', 0);
