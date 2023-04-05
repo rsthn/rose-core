@@ -15,7 +15,6 @@ use Rose\Map;
 use Rose\Arry;
 
 Expr::register('config', function ($args) { return Configuration::getInstance(); });
-Expr::register('c', function ($args) { return Configuration::getInstance(); });
 
 Expr::register('config::parse', function ($args) {
 	return Configuration::loadFromBuffer($args->get(1));

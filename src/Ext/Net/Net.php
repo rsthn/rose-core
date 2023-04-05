@@ -46,6 +46,11 @@ class Http
 	private static $headers = null;
 
 	/**
+	 * 	HTTP response headers.
+	 */
+	public static $responseHeaders = null;
+
+	/**
 	 * 	Current request method for `fetch` function.
 	 */
 	public static $method = 'GET';
@@ -55,7 +60,16 @@ class Http
 	*/
 	public static function init ()
 	{
+		self::clear();
+	}
+
+	/**
+	**	Clears the Http class state.
+	*/
+	public static function clear ()
+	{
 		self::$headers = new Map();
+		self::$responseHeaders = new Map();
 
 		self::header ('Accept: text/html,application/json,application/xhtml+xml,application/xml, */*');
 	}
@@ -65,11 +79,20 @@ class Http
 	**
 	**	@param $headerLine string
 	*/
-	public static function header ($headerLine)
+	public static function header ($headerLine, $responseHeader=false)
 	{
-		$name = Text::split(':', $headerLine)->get(0);
-		$val = Text::trim(Text::substring ($headerLine, Text::length($name)+1));
-		self::$headers->set($name, $val ? Text::trim($name) . ': ' . $val : Text::trim($name) . ';' );
+		$i = Text::indexOf($headerLine, ':');
+		if ($i === false) return;
+
+		$name = Text::trim(Text::substring($headerLine, 0, $i));
+		if (!$name) return;
+
+		$val = Text::trim(Text::substring($headerLine, $i+1));
+
+		if ($responseHeader)
+			self::$responseHeaders->set(Text::toLowerCase($name), $val);
+		else
+			self::$headers->set($name, $val ? Text::trim($name) . ': ' . $val : Text::trim($name) . ';' );
 	}
 
 	/*
@@ -220,6 +243,8 @@ class Http
 		$headers->merge(self::$headers, true);
 		if ($requestHeaders) $headers->merge($requestHeaders, true);
 
+		$responseHeaders = new Map();
+
 		$fields = new Map();
 		$debugFields = new Map();
 		$tempFiles = new Arry();
@@ -316,20 +341,11 @@ class Http
 		curl_setopt ($c, CURLINFO_HEADER_OUT, true);
 		curl_setopt ($c, CURLOPT_POSTFIELDS, $fields);
 
-/* 		curl_setopt($c, CURLOPT_HEADERFUNCTION,
-		function($curl, $header)
-		{
-		  $len = strlen($header);
-		  $header = explode(':', $header, 2);
-		  if (count($header) < 2) // ignore invalid headers
-			return $len;
-	  
-\Rose\trace(strtolower(trim($header[0])) . ' => ' . trim($header[1]));
+ 		curl_setopt($c, CURLOPT_HEADERFUNCTION, function($curl, $header) {
+			self::header ($header, true);
+		  	return Text::length($header);
+		});
 
-		  return $len;
-		}
-	  );
- */
 		$data = curl_exec($c);
 
 		if (self::$debug)
@@ -380,6 +396,15 @@ class Http
 };
 
 Http::init();
+
+/* ****************** */
+/* http::init */
+
+Expr::register('http::clear', function ($args)
+{
+	Http::clear();
+	return null;
+});
 
 /* ****************** */
 /* http::get <url> [<fields>*] */
@@ -517,11 +542,33 @@ Expr::register('http::fetch', function ($args)
 });
 
 /* ****************** */
-/* http::header header-line */
+/* http::header [header-line] */
 
 Expr::register('http::header', function ($args)
 {
 	Http::header($args->get(1));
+	return null;
+});
+
+/* ****************** */
+/* http::headers [array|map] */
+
+Expr::register('http::headers', function ($args)
+{
+	if ($args->length == 1)
+		return Http::$responseHeaders;
+
+	if (\Rose\typeOf($args->get(1)) === 'Rose\Map') {
+		$args->get(1)->forEach(function ($value, $key) {
+			Http::header($key.':'.$value);
+		});
+	}
+	else {
+		$args->get(1)->forEach(function ($value) {
+			Http::header($value);
+		});
+	}
+
 	return null;
 });
 
