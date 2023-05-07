@@ -1771,6 +1771,9 @@ Expr::register('round', function($args) { return Math::round($args->get(1)); });
 Expr::register('ceil', function($args) { return Math::ceil($args->get(1)); });
 Expr::register('floor', function($args) { return Math::floor($args->get(1)); });
 
+/**
+ * in <subject> val1 val2 val3
+ */
 Expr::register('in?', function ($args)
 {
 	$value = $args->get(1);

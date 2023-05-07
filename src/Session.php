@@ -213,9 +213,7 @@ class Session
 		}
 		else
 		{
-			if (!$shallow)
-				$_SESSION['session'] = serialize (Session::$data);
-
+			$_SESSION['session'] = serialize (Session::$data);
 			session_write_close();
 		}
 
