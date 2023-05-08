@@ -233,9 +233,9 @@ class SQLServer extends Driver
 	{
 		$value = Text::replace ("'", "''", $value);
 
-		$value = Text::split("\t", $value)->join("'+CHAR(9)+'");
-		$value = Text::split("\r", $value)->join("'+CHAR(13)+'");
-		$value = Text::split("\n", $value)->join("'+CHAR(10)+'");
+		//$value = Text::split("\t", $value)->join("'+CHAR(9)+'");
+		//$value = Text::split("\r", $value)->join("'+CHAR(13)+'");
+		//$value = Text::split("\n", $value)->join("'+CHAR(10)+'");
 
 		return "'" . $value . "'";
 	}

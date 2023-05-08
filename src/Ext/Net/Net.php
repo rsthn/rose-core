@@ -41,6 +41,11 @@ class Http
 	public static $debug = false;
 
 	/**
+	 * 	Indicates if SSL verification should be performed.
+	 */
+	public static $verify_ssl = true;
+
+	/**
 	 * 	HTTP request headers.
 	 */
 	private static $headers = null;
@@ -204,6 +209,11 @@ class Http
 		curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
 		curl_setopt ($c, CURLINFO_HEADER_OUT, true);
 
+		if (!self::$verify_ssl) {
+			curl_setopt ($c, CURLOPT_SSL_VERIFYHOST, 0);
+			curl_setopt ($c, CURLOPT_SSL_VERIFYPEER, 0);
+		}
+
 		$data = curl_exec($c);
 
 		if (self::$debug)
@@ -345,6 +355,11 @@ class Http
 			self::header ($header, true);
 		  	return Text::length($header);
 		});
+
+		if (!self::$verify_ssl) {
+			curl_setopt ($c, CURLOPT_SSL_VERIFYHOST, 0);
+			curl_setopt ($c, CURLOPT_SSL_VERIFYPEER, 0);
+		}
 
 		$data = curl_exec($c);
 
@@ -588,6 +603,15 @@ Expr::register('http::method', function ($args)
 Expr::register('http::debug', function ($args)
 {
 	Http::$debug = \Rose\bool($args->get(1));
+	return null;
+});
+
+/* ****************** */
+/* http::verify value */
+
+Expr::register('http::verify', function ($args)
+{
+	Http::$verify_ssl = \Rose\bool($args->get(1));
 	return null;
 });
 
