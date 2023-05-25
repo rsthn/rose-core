@@ -28,6 +28,7 @@ use Rose\Gateway;
 use Rose\Text;
 use Rose\IO\Directory;
 use Rose\IO\Path;
+use Rose\Ext\Wind;
 
 /*
 **	Prints a tracing message to the log file.
@@ -37,7 +38,7 @@ function trace ($string, $out='@system.log')
 	static $paths = null;
 
 	if ($out[0] == '@') {
-		$out = Main::$CORE_DIR != './' ? Path::append(Main::$CORE_DIR, '../logs/'.Text::substring($out, 1)) : ('./' . Text::substring($out, 1));
+		$out = Main::$CWD . '/' . (Main::$CORE_DIR != './' ? Path::append(Main::$CORE_DIR, '../logs/'.Text::substring($out, 1)) : ('./' . Text::substring($out, 1)));
 	}
 
 	if (!$paths)
@@ -240,6 +241,73 @@ function fatal_handler()
 
 	ob_end_clean();
 
+	if (Configuration::getInstance()?->Gateway?->display_errors == 'false')
+	{
+		$err_id = (string)time();
+		$err_id = substr($err_id, 0, 3) . '-' . substr($err_id, 3, 3) . '-' . substr($err_id, 6);
+		$s = '[' . date('Y-m-d h:i') . '] ' . $err_id . ': ';
+		$tab = '  ';
+
+		if ($error != null)
+		{
+			$s .= 'Fatal Error ' . $error['type'] . ' in ' . basename($error['file']) . ':' . $error['line'] . "\n";
+
+			$msg = trim(Regex::_getString('/.*?:(.+) in/', $error['message'], 1));
+			if ($msg)
+			{
+			}
+			else
+				$s .= $tab . '*** ' . $error['message'] . " ***\n";
+		}
+
+		if ($lastException != null)
+		{
+			$s .= typeOf($lastException) . ' in ' . basename($lastException->getFile()) . ':' . $lastException->getLine() . "\n";
+			$s .= $tab . '*** ' . $lastException->getMessage() . " ***\n";
+			$stackTrace = $lastException->getTrace();
+		}
+
+		if (Wind::$callStack->length > 0)
+			$s .= $tab . 'Wind: ' . Wind::$callStack->map(function($i) { return $i[2]; })->join(", ") . "\n";
+
+		if ($stackTrace != null)
+		{
+			foreach ($stackTrace as $err)
+			{
+				if (isset($err['class']))
+					$s .= $tab . $err['class'] . ' :: ' . $err['function'];
+				else
+					$s .= $tab . $err['function'];
+
+				$s .= ' (';
+				if (isset($err['args']))
+				{
+					for ($i = 0; $i < count($err['args']); $i++)
+					{
+						$s .= typeOf($err['args'][$i], true);
+	
+						if ($i != count($err['args']) - 1)
+							$s .= ', ';
+					}
+				}
+				$s .= ')';
+	
+				if (isset($err['file']))
+					$s .= ' ' . basename($err['file']) . ':' . $err['line'];
+
+				$s .= "\n";
+			}
+		}
+
+		\Rose\trace($s, '@errors.log');
+
+		if (!headers_sent())
+			header('content-type: application/json');
+
+		echo (new Map([ 'response' => 409, 'error' => 'An unexpected error occurred ('.$err_id.').' ]));
+		exit;
+	}
+
 	echo '<html>';
 	echo '<body style="background: #0f0a0f; padding: 24px;">';
 	echo '<pre style="font-size: 12px; line-height: 1em; color: #fff; padding: 32px 24px;">';
@@ -335,6 +403,11 @@ class Main
 	*/
 	public static $CORE_DIR = null;
 
+	/**
+	 * Original current working directory.
+	 */
+	public static $CWD = null;
+
 	/*
 	**	Constant that indicates if the framework has been loaded and initialized. Used as a dummy var to force autoload of the Main class by using `Main::$loaded`.
 	*/
@@ -379,6 +452,8 @@ class Main
 			else
 				self::$CORE_DIR = './';
 		}
+
+		self::$CWD = str_replace('\\', '/', getcwd());
 	}
 
 	/*
@@ -429,7 +504,7 @@ class Main
 		try
 		{
 			Gateway::getInstance()->init(false, $fsroot);
-	
+
 			try {
 				Gateway::getInstance()->main();
 			}

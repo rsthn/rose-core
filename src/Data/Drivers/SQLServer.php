@@ -27,7 +27,14 @@ class SQLServer extends Driver
 
     public function open ($server, $user, $password, $database)
     {
-		$conn = sqlsrv_connect ($server, array('Database' => $database, 'UID' => $user, 'PWD' => $password, 'ReturnDatesAsStrings' => true, 'CharacterSet' => 'UTF-8'));
+		$conn = sqlsrv_connect ($server, array(
+			'Database' => $database, 
+			'UID' => $user, 
+			'PWD' => $password, 
+			'ReturnDatesAsStrings' => true, 
+			'CharacterSet' => 'UTF-8',
+			'TrustServerCertificate' => true
+		));
 		if ($conn == null) return null;
 
 		$this->options = array('Scrollable' => SQLSRV_CURSOR_STATIC);

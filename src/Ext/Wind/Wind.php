@@ -66,7 +66,7 @@ class Wind
 	public static $contentType;
 	public static $response;
 
-	private static $callStack;
+	public static $callStack;
 
 	public const R_OK 						= 200;
 	public const R_FUNCTION_NOT_FOUND 		= 400;
@@ -201,7 +201,7 @@ class Wind
 		$tmp->pop();
 		$tmp = $tmp->join('.').'.';
 
-		self::$callStack->push([ $tmp, $path ]);
+		self::$callStack->push([ $tmp, $path, $path1 ]);
 
 		$response = Expr::expand($expr, self::$data, 'last');
 
