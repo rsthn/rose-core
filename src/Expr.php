@@ -1697,7 +1697,7 @@ Expr::register('bit-xor', function($args) { return $args->get(1) ^ $args->get(2)
 Expr::register('not', function($args) { return !$args->get(1); });
 Expr::register('neg', function($args) { return -$args->get(1); });
 
-Expr::register('_and', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!$v) return null; } return $v; });
+Expr::register('_and', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!$v) return $v; } return $v; });
 Expr::register('_or', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!!$v) return $v; } return $v; });
 Expr::register('_coalesce', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if ($v !== null) return $v; } return null; });
 Expr::register('_??', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if ($v !== null) return $v; } return null; });
