@@ -53,13 +53,20 @@ function trace ($string, $out='@system.log')
 		$paths->set($path, true);
 	}
 
-	$fp = @fopen ($out, 'a+t');
-	if (!$fp) return;
+	try {
+		$fp = @fopen ($out, 'a+t');
+		if (!$fp) return;
 
-	fwrite ($fp, $string);
-	fwrite ($fp, "\n");
+		fwrite ($fp, $string);
+		fwrite ($fp, "\n");
 
-	fclose ($fp);
+		fclose ($fp);
+	}
+	catch (\Exception $e)
+	{
+		if (!Text::endsWith($out, 'errors.log'))
+			\Rose\trace($e->getMessage(), '@errors.log');
+	}
 }
 
 /*
