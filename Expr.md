@@ -907,14 +907,14 @@ Compares the result of the given expression against one of the case values (loos
 ```lisp
 (set day 3)
 (switch (day)
-	case 1 "Monday"
-	case 2 "Tuesday"
-	case 3 "Wednesday"
-	case 4 "Thursday"
-	case 5 "Friday"
-	case 6 "Saturday"
-	case 7 "Sunday"
-	default "Unknown"
+    case 1 "Monday"
+    case 2 "Tuesday"
+    case 3 "Wednesday"
+    case 4 "Thursday"
+    case 5 "Friday"
+    case 6 "Saturday"
+    case 7 "Sunday"
+    default "Unknown"
 )
 ; Wednesday
 ```
@@ -926,9 +926,9 @@ Note: This is meant for values, not blocks.
 ```lisp
 (set day 8)
 (case (day)
-	1 "Monday" 		2 "Tuesday"		3 "Wednesday"	4 "Thursday"	
-	5 "Friday"		6 "Saturday"	7 "Sunday"
-	"Unknown"
+    1 "Monday" 		2 "Tuesday"		3 "Wednesday"	4 "Thursday"	
+    5 "Friday"		6 "Saturday"	7 "Sunday"
+    "Unknown"
 )
 ; Unknown
 ```
@@ -937,8 +937,8 @@ Note: This is meant for values, not blocks.
 Exits the current inner most loop.
 ```lisp
 (for i (# 1 2 3 4 5 6 7 8 9 10)
-	(echo (i))
-	(break)
+    (echo (i))
+    (break)
 )
 ; 1
 ```
@@ -947,9 +947,9 @@ Exits the current inner most loop.
 Skips execution and continues the next iteration of the current inner most loop.
 ```lisp
 (for i (# 1 2 3 4 5 6 7 8 9 10)
-	(when (odd? (i))
-		(continue))
-	(echo (i))
+    (when (odd? (i))
+        (continue))
+    (echo (i))
 )
 ; 2 4 6 8 10
 ```
@@ -964,7 +964,7 @@ Constructs an array with the results of repeating the specified block for a numb
 ; [1,3,5,7,9,11,13,15,17,19]
 
 (repeat x from 4 to 6
-	(pow 2 (x))
+    (pow 2 (x))
 )
 ; [16,32,64]
 ```
@@ -973,8 +973,8 @@ Constructs an array with the results of repeating the specified block for a numb
 Repeats the specified block **infinitely** until a `break` is found.
 ```lisp
 (loop
-	(echo "Hello")
-	(break)
+    (echo "Hello")
+    (break)
 )
 ; Hello
 ```
@@ -984,11 +984,11 @@ Repeats the specified block until the condition is falsey or a `break` is found.
 ```lisp
 (set i 0)
 (while (lt (i) 10)
-	(when-not (zero? (i))
-		(print ":"))
+    (when-not (zero? (i))
+        (print ":"))
 
-	(print (i))
-	(inc i)
+    (print (i))
+    (inc i)
 )
 ; 0:1:2:3:4:5:6:7:8:9
 ```
@@ -999,7 +999,7 @@ Returns `true` if the specified object contains **all** the specified keys. If i
 (set a (& name "John"))
 
 (if (not (contains (a) name last))
-	(throw "Missing field: (err)"))
+    (throw "Missing field: (err)"))
 
 ; Missing field: last
 ```
@@ -1023,9 +1023,9 @@ Returns the value returned by the block. Mainly used to write cleaner code.
 
 ```lisp
 (block
-	(set a 12)
-	(set b 13)
-	(+ (a) (b))
+    (set a 12)
+    (set b 13)
+    (+ (a) (b))
 )
 ; 25
 ```
@@ -1126,9 +1126,9 @@ Executes one or more expressions. Makes the result of each expression available 
 
 ```lisp
 (pipe
-	10
-	(+ 2 _)
-	(pow _ 2)
+    10
+    (+ 2 _)
+    (pow _ 2)
 )
 ; 144
 ```
@@ -1151,11 +1151,11 @@ Executes the specified block and returns its result. If an error occurs, the `ca
 
 ```lisp
 (try
-	(throw "Something happened")
+    (throw "Something happened")
 catch
-	(echo "Error: " (err))
+    (echo "Error: " (err))
 finally
-	(echo "Done")
+    (echo "Done")
 )
 ; Error: Something happened
 ; Done
@@ -1166,17 +1166,17 @@ Throws an error. The value to throw can be anything, but note that it will be co
 
 ```lisp
 (try
-	(throw (& message "Something happened" ))
+    (throw (& message "Something happened" ))
 catch
-	(echo "Error: " (err))
+    (echo "Error: " (err))
 )
 ; Error: {"message":"Something happened"}
 
 (try
-	(set err "Hello!")
-	(throw)
+    (set err "Hello!")
+    (throw)
 catch
-	(echo "Error: " (err))
+    (echo "Error: " (err))
 )
 ; Error: Hello!
 ```
@@ -1200,21 +1200,21 @@ Yields a value to an inner block at a desired level to force the result to be th
 
 ```lisp
 (echo
-	(block ;@3
-		(echo "@3-start")
-		(block ;@2
-			(echo "@2-start")
-			(block ;@1
-				(echo "@1-start")
-				(yield 3 "Value-3")
-				(echo "@1-end")
-			)
-			(echo "@2-end")
-			"Value-2"
-		)
-		(echo "@3-end")
-		"Value-1"
-	)
+    (block ;@3
+        (echo "@3-start")
+        (block ;@2
+            (echo "@2-start")
+            (block ;@1
+                (echo "@1-start")
+                (yield 3 "Value-3")
+                (echo "@1-end")
+            )
+            (echo "@2-end")
+            "Value-2"
+        )
+        (echo "@3-end")
+        "Value-1"
+    )
 )
 ; @3-start
 ; @2-start
@@ -1229,16 +1229,16 @@ Yields a `null` value to an inner block at a desired level, efectively exiting a
 
 ```lisp
 (echo (dump
-	(block ;@3
-		(echo "@3-start")
-		(block ;@2
-			(echo "@2-start")
-			(exit 2)
-			(echo "@2-end")
-		)
-		(echo "@3-end")
-		"Value-1"
-	)
+    (block ;@3
+        (echo "@3-start")
+        (block ;@2
+            (echo "@2-start")
+            (exit 2)
+            (echo "@2-end")
+        )
+        (echo "@3-end")
+        "Value-1"
+    )
 ))
 ; @3-start
 ; @2-start
@@ -1250,7 +1250,7 @@ Introduces a new temporal variable with the specified value to be used in the bl
 
 ```lisp
 (with a 12
-	(echo (a))
+    (echo (a))
 )
 (echo (a))
 ; 12
@@ -1262,7 +1262,7 @@ Creates a function with the specified parameters and function body block. Return
 
 ```lisp
 (set X (fn a b
-	(+ (a) (b))
+    (+ (a) (b))
 ))
 
 ((X) 5 7)
@@ -1278,10 +1278,10 @@ Functions are isolated and do not have access to any of the outer scopes (except
 (set a 12)
 
 (def-fn add_value x
-	(+ (x) (a)))
+    (+ (x) (a)))
 
 (def-fn add_value_2 x
-	(+ (x) (local.a)))
+    (+ (x) (local.a)))
 
 (add_value 10)
 ; Error: Function `a` not found.
@@ -1295,7 +1295,7 @@ Returns from a function with the specified value (or `null` if none specified).
 
 ```lisp
 (def-fn getval
-	(ret 3)
+    (ret 3)
 )
 (getval)
 ; 3
@@ -1307,7 +1307,7 @@ Defines a constant variable in the current scope. The variable can only be chang
 (def a "Hello")
 
 (def-fn x
-	(str (a) " World"))
+    (str (a) " World"))
 
 (x)
 ; Hello World
