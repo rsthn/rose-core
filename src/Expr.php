@@ -1711,8 +1711,8 @@ Expr::register('gt', function($args) { return $args->get(1) > $args->get(2); });
 Expr::register('ge', function($args) { return $args->get(1) >= $args->get(2); });
 Expr::register('isnotnull', function($args) { return $args->get(1) !== null; });
 Expr::register('isnull', function($args) { return $args->get(1) === null; });
-Expr::register('isnotempty', function($args) { return !!$args->get(1); });
-Expr::register('isempty', function($args) { return !$args->get(1); });
+Expr::register('isnotempty', function($args) { return !!$args->get(1); });// DEPRECATE
+Expr::register('isempty', function($args) { return !$args->get(1); });// DEPRECATE
 Expr::register('iszero', function($args) { return (float)$args->get(1) == 0; });
 
 Expr::register('eq?', function($args) { return $args->get(1) == $args->get(2); });
@@ -1722,12 +1722,12 @@ Expr::register('lt?', function($args) { return $args->get(1) < $args->get(2); })
 Expr::register('le?', function($args) { return $args->get(1) <= $args->get(2); });
 Expr::register('gt?', function($args) { return $args->get(1) > $args->get(2); });
 Expr::register('ge?', function($args) { return $args->get(1) >= $args->get(2); });
-Expr::register('notnull?', function($args) { return $args->get(1) !== null; });
+Expr::register('notnull?', function($args) { return $args->get(1) !== null; });  // DEPRECATE
 Expr::register('not-null?', function($args) { return $args->get(1) !== null; });
 Expr::register('null?', function($args) { return $args->get(1) === null; });
-Expr::register('notempty?', function($args) { return !!$args->get(1); });
-Expr::register('not-empty?', function($args) { return !!$args->get(1); });
-Expr::register('empty?', function($args) { return !$args->get(1); });
+Expr::register('notempty?', function($args) { return !!$args->get(1); });  // DEPRECATE
+Expr::register('not-empty?', function($args) { return !!$args->get(1); }); // DEPRECATE
+Expr::register('empty?', function($args) { return !$args->get(1); }); // DEPRECATE
 Expr::register('zero?', function($args) { return (float)$args->get(1) == 0; });
 Expr::register('even?', function($args) { return ((int)$args->get(1) & 1) == 0; });
 Expr::register('odd?', function($args) { return ((int)$args->get(1) & 1) == 1; });
@@ -1737,7 +1737,9 @@ Expr::register('str?', function($args) { return typeOf($args->get(1), true) === 
 Expr::register('bool?', function($args) { return typeOf($args->get(1), true) === 'bool'; });
 Expr::register('float?', function($args) { return typeOf($args->get(1), true) === 'number'; });
 Expr::register('array?', function($args) { return typeOf($args->get(1), true) === 'Rose\\Arry'; });
+Expr::register('object?', function($args) { return typeOf($args->get(1), true) === 'Rose\\Map'; });
 Expr::register('map?', function($args) { return typeOf($args->get(1), true) === 'Rose\\Map'; });
+Expr::register('fn?', function($args) { return typeOf($args->get(1), true) === 'function'; });
 
 Expr::register('starts-with', function($args) { return Text::startsWith($args->get(2), $args->get(1)); });
 Expr::register('ends-with', function($args) { return Text::endsWith($args->get(2), $args->get(1)); });
@@ -1772,7 +1774,8 @@ Expr::register('ceil', function($args) { return Math::ceil($args->get(1)); });
 Expr::register('floor', function($args) { return Math::floor($args->get(1)); });
 
 /**
- * in <subject> val1 val2 val3
+ * Check if the specified subject matches any of the given values.
+ * in <subject> <values...>
  */
 Expr::register('in?', function ($args)
 {
@@ -2109,8 +2112,8 @@ Expr::register('%%', function ($args)
 /**
 **	Joins the array into a string. If glue is provided, it will be used as separator.
 **
-**	join <glue> <list-expr>
-**	join <list-expr>
+**	join <glue> <array-expr>
+**	join <array-expr>
 */
 Expr::register('join', function ($args)
 {
@@ -2167,14 +2170,7 @@ Expr::register('values', function ($args)
 });
 
 /**
-**	Constructs an array obtained by expanding the given block for each of the items in the list-expr, the optional varname
-**	parameter (namely 'i') indicates the name of the variable that will contain the data of each item as the list-expr is
-**	traversed.
-**
-**	Extra variables i# and i## (suffix '#' and '##') are introduced to denote the index/key and numeric index
-**	of the current item respectively, note that the later will always have a numeric value.
-**
-**	each [<varname>] <list-expr> <block>
+**	each [<varname>] <array-expr> <block>
 */
 Expr::register('_each', function ($parts, $data)
 {
@@ -2210,16 +2206,8 @@ Expr::register('_each', function ($parts, $data)
 });
 
 /**
-**	Expands the given block for each of the items in the list-expr, the optional varname parameter (namely 'i') indicates the name of
-**	the variable that will contain the data of each item as the list-expr is traversed.
-**
-**	Extra variables i# and i## (suffix '#' and '##') are introduced to denote the index/key and numeric index of the current item
-**	respectively, note that the later will always have a numeric value.
-**
-**	Returns the source list.
-**
-**	foreach [<varname>] <list-expr> <block>
-**	for [<varname>] <list-expr> <block>
+**	foreach [<varname>] <array-expr> <block> (DEPRECATED)
+**	for [<varname>] <array-expr> <block>
 */
 Expr::register('_foreach', function ($parts, $data)
 {
@@ -2373,8 +2361,6 @@ Expr::register('_if', function ($parts, $data)
 });
 
 /**
-**	Returns the value returned by the block.
-**
 **	block <block...>
 */
 Expr::register('_block', function ($parts, $data)
@@ -2383,9 +2369,7 @@ Expr::register('_block', function ($parts, $data)
 });
 
 /**
-**	Returns the value returned by the block if the expression is true.
-**
-**	when <expr> <block>
+**	when <condition> <block>
 */
 Expr::register('_when', function ($parts, $data)
 {
@@ -2396,9 +2380,7 @@ Expr::register('_when', function ($parts, $data)
 });
 
 /**
-**	Returns the value returned by the block if the expression is false.
-**
-**	when-not <expr> <block>
+**	when-not <condition> <block>
 */
 Expr::register('_when-not', function ($parts, $data)
 {
@@ -2409,8 +2391,6 @@ Expr::register('_when-not', function ($parts, $data)
 });
 
 /**
-**	Loads the expression value and attempts to match one case.
-**
 **	switch <expr> case <case1> <value1> ... case <caseN> <valueN> default <defvalue> 
 */
 Expr::register('_switch', function ($parts, $data)
@@ -2426,33 +2406,27 @@ Expr::register('_switch', function ($parts, $data)
 		switch ($state)
 		{
 			case 0:
-				if (!Expr::takeIdentifier($parts, $data, $i, $name))
-				{
+				if (!Expr::takeIdentifier($parts, $data, $i, $name)) {
 					$i++;
 					break;
 				}
 
-				if ($name === 'case')
-				{
+				if ($name === 'case') {
 					$case_value = (string)Expr::expand($parts->get($i), $data, 'arg');
-					if ($case_value == $value)
-					{
+					if ($case_value == $value) {
 						$state = 1;
 						$j = ++$i;
 					}
 				}
-				elseif ($name === 'default')
-				{
+				elseif ($name === 'default') {
 					$state = 1;
 					$j = $i;
 				}
 				break;
 
 			case 1:
-				if (Expr::takeIdentifier($parts, $data, $i, $name))
-				{
-					if ($name === 'case' || $name === 'default')
-					{
+				if (Expr::takeIdentifier($parts, $data, $i, $name)) {
+					if ($name === 'case' || $name === 'default') {
 						$i--;
 						$state = 2;
 						break;
@@ -2480,17 +2454,18 @@ Expr::register('_switch', function ($parts, $data)
 });
 
 /**
-**	Loads the expression value and attempts to match one case.
-**
 **	case <expr> <case1> <value1> ... <caseN> <valueN> default <defvalue> 
 */
 Expr::register('_case', function ($parts, $data)
 {
 	$value = (string)Expr::expand($parts->get(1), $data, 'arg');
+	$n = $parts->length();
 
-	for ($i = 2; $i < $parts->length(); $i += 2)
+	for ($i = 2; $i < $n; $i += 2)
 	{
 		$case_value = (string)Expr::expand($parts->get($i), $data, 'arg');
+		if ($i == $n-1 && ($n&1)) return $case_value;
+
 		if ($case_value == $value || $case_value == 'default')
 			return Expr::expand($parts->get($i+1), $data, 'arg');
 	}
@@ -2499,8 +2474,6 @@ Expr::register('_case', function ($parts, $data)
 });
 
 /**
-**	Exits the current inner most loop.
-**
 **	break
 */
 Expr::register('_break', function ($parts, $data)
@@ -2509,8 +2482,6 @@ Expr::register('_break', function ($parts, $data)
 });
 
 /**
-**	Skips execution and continues the next cycle of the current inner most loop.
-**
 **	continue
 */
 Expr::register('_continue', function ($parts, $data)
@@ -2519,24 +2490,26 @@ Expr::register('_continue', function ($parts, $data)
 });
 
 /**
-**	Constructs an array with the results of repeating the specified template for a number of times.
-**
-**	repeat <varname:i> [from <number>] [to <number>] [count <number>] [step <number>] <template>
+**	repeat [<varname>] [from <number>] [to <number>] [times <number>] [step <number>] <block>
 */
 Expr::register('_repeat', function ($parts, $data)
 {
-	if ($parts->length < 3 || ($parts->length & 1) != 1)
-		return '(`repeat`: Wrong number of parameters)';
-
 	$var_name = Expr::value($parts->get(1), $data);
+	$i = 2;
+
+	if ($var_name == 'from' || $var_name == 'to' || $var_name == 'times' || $var_name == 'step') {
+		$var_name = 'i';
+		$i = 1;
+	}
+
 	$count = null;
-	$from = 0; $to = null;
+	$from = 0;
+	$to = null;
 	$step = null;
 
-	for ($i = 2; $i < $parts->length-1; $i+=2)
+	for (; $i < $parts->length-1; $i+=2)
 	{
 		$value = Expr::value($parts->get($i), $data);
-
 		switch (Text::toLowerCase($value))
 		{
 			case 'from':
@@ -2547,7 +2520,7 @@ Expr::register('_repeat', function ($parts, $data)
 				$to = (float)Expr::value($parts->get($i+1), $data);
 				break;
 
-			case 'count':
+			case 'times':
 				$count = (float)Expr::value($parts->get($i+1), $data);
 				break;
 
@@ -2703,6 +2676,7 @@ Expr::register('_while', function ($parts, $data)
 **
 **	expr_debug <expr>
 */
+// DEPRECATE
 Expr::register('_expr_debug', function ($parts, $data)
 {
 	echo $parts->get(1);
@@ -2812,7 +2786,7 @@ Expr::register('contains', function ($args, $parts, $data)
 **	Returns true if a map has some key, or if a list has some value. Returns boolean.
 **
 **	has <name> <map-expr>
-**	has <value> <list-expr>
+**	has <value> <array-expr>
 */
 Expr::register('has', function ($args, $parts, $data)
 {
@@ -2828,9 +2802,7 @@ Expr::register('has', function ($args, $parts, $data)
 });
 
 /**
-**	Returns a new array/map contaning the transformed values of the array/map (evaluating the block). And just as in 'each', the i# and i## variables be available.
-**
-**	map [<varname>] <list-expr> <block>
+**	map [<varname>] <array-expr> <block>
 */
 Expr::register('_map', function ($parts, $data)
 {
@@ -2870,9 +2842,7 @@ Expr::register('_map', function ($parts, $data)
 });
 
 /**
-**	Returns a new array/map contaning the elements where the block evaluates to non-zero. Just as in 'each', the i# and i## variables be available.
-**
-**	filter [<varname>] <list-expr> <block>
+**	filter [<varname>] <array-expr> <block>
 */
 Expr::register('_filter', function ($parts, $data)
 {
@@ -2915,9 +2885,7 @@ Expr::register('_filter', function ($parts, $data)
 });
 
 /**
-**	Returns a boolean if every element of the array/map passes the test function. The i# and i## variables be available.
-**
-**	every [<varname>] <list-expr> <block>
+**	every [<varname>] <array-expr> <block>
 */
 Expr::register('_every', function ($parts, $data)
 {
@@ -2957,9 +2925,7 @@ Expr::register('_every', function ($parts, $data)
 });
 
 /**
-**	Returns a boolean if some element of the array/map passes the test function. The i# and i## variables be available.
-**
-**	some [<varname>] <list-expr> <block>
+**	some [<varname>] <array-expr> <block>
 */
 Expr::register('_some', function ($parts, $data)
 {
@@ -2999,9 +2965,7 @@ Expr::register('_some', function ($parts, $data)
 });
 
 /**
-**	Returns the first element passing the test function, or null if not found. The i# and i## variables be available.
-**
-**	find [<varname>] <list-expr> <block>
+**	find [<varname>] <array-expr> <block>
 */
 Expr::register('_find', function ($parts, $data)
 {
@@ -3041,9 +3005,7 @@ Expr::register('_find', function ($parts, $data)
 });
 
 /**
-**	Returns the index/key of the first element passing the test function, or null if not found. The i# and i## variables be available.
-**
-**	findIndex [<varname>] <list-expr> <block>
+**	findIndex [<varname>] <array-expr> <block>
 */
 Expr::register('_findIndex', function ($parts, $data)
 {
@@ -3083,9 +3045,7 @@ Expr::register('_findIndex', function ($parts, $data)
 });
 
 /**
-**	Returns a new array/map contaning the elements where the condition evaluates to non-zero. Just as in 'each', the i# and i## variables be available.
-**
-**	select [<varname>] <condition> <list-expr>
+**	select [<varname>] <condition> <array-expr>
 */
 Expr::register('_select', function ($parts, $data)
 {
@@ -3128,8 +3088,6 @@ Expr::register('_select', function ($parts, $data)
 });
 
 /**
-**	Executes one or more expressions. Makes the result of each expression available to the next via the defaultValue.
-**
 **	pipe <expression>+
 */
 Expr::register('_pipe', function ($parts, $data)
@@ -3149,9 +3107,6 @@ Expr::register('_pipe', function ($parts, $data)
 });
 
 /**
-**	Expands the specified template string (or already parsed template [array]) with the given data. The sym_open and sym_close will be '{' and '}' respectively.
-**	If no data is provided, current data parameter will be used.
-**
 **	expand <template> <data>
 */
 Expr::register('expand', function ($args, $parts, $data)
@@ -3163,9 +3118,6 @@ Expr::register('expand', function ($args, $parts, $data)
 });
 
 /**
-**	Expands the specified template string (or already parsed template [array]) with the given data. The sym_open and sym_close will be '{' and '}' respectively.
-**	If no data is provided, current data parameter will be used. Returned value will be considered an argument.
-**
 **	eval <template> <data>
 */
 Expr::register('eval', function ($args, $parts, $data)
@@ -3178,8 +3130,6 @@ Expr::register('eval', function ($args, $parts, $data)
 
 
 /**
-**	Try-catch block support. The catch block provides `err` and `ex` variables.
-**
 **	try <block> [catch <block>] [finally <block>]
 */
 Expr::register('_try', function ($parts, $data)
@@ -3280,8 +3230,6 @@ Expr::register('_try', function ($parts, $data)
 });
 
 /**
-**	Throws an error exception. If no parameter is specified, the internal variable 'err' will be used as message.
-**
 **	throw <expr>
 **	throw
 */
@@ -3294,9 +3242,7 @@ Expr::register('throw', function ($args, $parts, $data)
 });
 
 /**
-**	Throws an error if the specified condition is not true.
-**
-**	assert <condition> <message>
+**	assert <condition> [<message>]
 */
 Expr::register('_assert', function ($parts, $data)
 {
@@ -3307,8 +3253,6 @@ Expr::register('_assert', function ($parts, $data)
 });
 
 /**
-**	Yields a value to the inner-most expression evaluation loop to force result to be the specified value.
-**
 **	yield <level> <value>
 **	yield [<value>]
 */
@@ -3321,8 +3265,6 @@ Expr::register('yield', function($args) {
 });
 
 /**
-**	Yields a null value to the inner-most expression evaluation loop to force result to be the specified value.
-**
 **	exit <level>
 */
 Expr::register('exit', function($args) {
@@ -3331,8 +3273,6 @@ Expr::register('exit', function($args) {
 });
 
 /**
-**	Introduces a new temporal variable with the specified value. Returns the value returned by the block.
-**
 **	with <varname> <value> <block>
 */
 Expr::register('_with', function($parts, $data)
@@ -3364,8 +3304,6 @@ Expr::register('_with', function($parts, $data)
 });
 
 /**
-**	Returns from a function with the specified value.
-**
 **	ret [<value>]
 */
 Expr::register('ret', function($args) {
@@ -3373,8 +3311,6 @@ Expr::register('ret', function($args) {
 });
 
 /*
-**	Creates a function and returns it.
-**
 **	fn <param-name>* <block>
 */
 Expr::register('_fn', function($parts, $data)
@@ -3451,9 +3387,6 @@ Expr::register('_fn', function($parts, $data)
 
 
 /*
-**	Defines a function. Note that functions are isolated and do not have access to the outer scopes, however this
-**	action defines local variables named `local` and `global` which can be used.
-**
 **	def-fn [private|public] <fn-name> <param-name>* <block>
 */
 Expr::register('_def-fn', function($parts, $data)
@@ -3646,8 +3579,6 @@ Expr::register('_def-fn', function($parts, $data)
 
 
 /*
-**	Defines a variable in the current context.
-**
 **	def [public|private] <varname> <value>
 */
 Expr::register('_def', function($parts, $data)
@@ -3658,15 +3589,13 @@ Expr::register('_def', function($parts, $data)
 
 	while (true)
 	{
-		if ($parts->get($i)->get(0)->data === 'private')
-		{
+		if ($parts->get($i)->get(0)->data === 'private') {
 			$scope = 'private';
 			$i++;
 			continue;
 		}
 	
-		if ($parts->get($i)->get(0)->data === 'public')
-		{
+		if ($parts->get($i)->get(0)->data === 'public') {
 			$scope = 'public';
 			$i++;
 			continue;
@@ -3723,8 +3652,6 @@ Expr::register('_def', function($parts, $data)
 
 
 /*
-**	Sets the active namespace for any def-* statements.
-**
 **	ns [public|private] [<str-expr>]
 */
 Expr::register('ns', function($args, $parts, $data)
@@ -3751,8 +3678,6 @@ Expr::register('ns', function($args, $parts, $data)
 });
 
 /*
-**	Includes a source file and evaluates it, as if it was written in the current source file.
-**
 **	include <source-path>+
 */
 Expr::register('include', function($args, $parts, $data)
@@ -3816,8 +3741,6 @@ Expr::register('include', function($args, $parts, $data)
 
 
 /*
-**	Imports definitions from a source file into a namespace.
-**
 **	import (<source-path> [as <namespace-name>])+
 */
 Expr::register('import', function($args, $parts, $data)
@@ -3924,10 +3847,8 @@ Expr::register('import', function($args, $parts, $data)
 });
 
 /*
-**	Creates a new map by zipping the respective keys and values together.
-**
-**	zipmap key-name+ <arr-expr>
-**	zipmap <arr-expr> <arr-expr>
+**	zipmap <key-name...> <array-expr>
+**	zipmap <array-expr> <array-expr>
 */
 Expr::register('zipmap', function($args, $parts, $data)
 {
@@ -3957,9 +3878,7 @@ Expr::register('zipmap', function($args, $parts, $data)
 });
 
 /*
-**	Extracts the specified keys from a given map and returns a new map.
-**
-**	map-get <key-name>+ <map-expr>
+**	map-get <key-name...> <map-expr>
 **	map-get <arr-expr> <map-expr>
 */
 Expr::register('map-get', function($args, $parts, $data)
@@ -3987,9 +3906,7 @@ Expr::register('map-get', function($args, $parts, $data)
 });
 
 /**
-**	Returns a new map created with the specified key-expression and value-expression. Just as in 'each', the i# and i## variables be available.
-**
-**	mapify [<varname>] <list-expr> <key-expr> [<value-expr>]
+**	mapify [<varname>] <array-expr> <key-expr> [<value-expr>]
 */
 Expr::register('_mapify', function ($parts, $data)
 {
@@ -4032,9 +3949,7 @@ Expr::register('_mapify', function ($parts, $data)
 });
 
 /**
-**	Returns a new map created by grouping all values having the same key-expression. Just as in 'each', the i# and i## variables be available.
-**
-**	groupify [<varname>] <list-expr> <key-expr> [<value-expr>]
+**	groupify [<varname>] <array-expr> <key-expr> [<value-expr>]
 */
 Expr::register('_groupify', function ($parts, $data)
 {

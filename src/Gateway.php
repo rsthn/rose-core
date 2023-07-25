@@ -166,7 +166,13 @@ class Gateway
 
 		// Set entry point URL and root.
 		$this->root = Text::substring($this->serverParams->SCRIPT_NAME, 0, -9);
+
 		$this->secure = Text::toUpperCase($this->serverParams->HTTPS) == 'ON';
+		if (!$this->secure && Text::toUpperCase($this->serverParams->HTTP_X_FORWARDED_PROTO) == 'HTTPS')
+		{
+			$this->serverParams->SERVER_PORT = 443;
+			$this->secure = true;
+		}
 
 		while (Text::endsWith($this->root, '/'))
 			$this->root = Text::substring($this->root, 0, -1);

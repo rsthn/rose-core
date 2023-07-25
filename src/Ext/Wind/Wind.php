@@ -407,7 +407,7 @@ class Wind
 	}
 
 	/**
-	**	stop
+	**	stop [<object-expr>]
 	*/
 	public static function stop ($args, $parts, $data)
 	{
