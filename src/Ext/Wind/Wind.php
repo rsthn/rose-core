@@ -399,7 +399,7 @@ class Wind
 	}
 
 	/**
-	**	return <data>
+	**	return [<data>]
 	*/
 	public static function _return ($args, $parts, $data)
 	{
@@ -600,6 +600,9 @@ class Wind
 	private static $eventsEnabled = false;
 	private static $lastSent = null;
 
+	/**
+	 * evt::init
+	 */
 	public static function enableEvents ()
 	{
 		if (self::$eventsEnabled)
@@ -620,10 +623,13 @@ class Wind
 		Gateway::flush();
 	}
 
+	/**
+	 * evt::send [<event-name>] <data>
+	 */
 	public static function sendEvent ($args, $parts, $data)
 	{
 		if (!self::$eventsEnabled)
-			return;
+			return false;
 
 		$s = '';
 		$i = 2;
@@ -642,17 +648,20 @@ class Wind
 		echo $s;
 
 		self::$lastSent = time();
+		return true;
 	}
 
+	/**
+	 * evt::alive
+	 */
 	public static function eventsAlive ()
 	{
 		if (!self::$eventsEnabled)
 			return false;
 
 		$now = time();
-		if ($now - self::$lastSent > 60)
-		{
-			echo "data: \n\n";
+		if ($now - self::$lastSent >= 30) {
+			echo ": alive\n\n";
 			self::$lastSent = time();
 		}
 

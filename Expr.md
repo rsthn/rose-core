@@ -28,7 +28,7 @@
 
 # Core
 
-## `echo` \<value>+
+## `echo` \<value...>
 Writes the specified values to standard output and adds a new-line at the end.
 ```lisp
 (echo "Hello" " " "World")
@@ -37,7 +37,7 @@ Writes the specified values to standard output and adds a new-line at the end.
 ; !
 ```
 
-## `print` \<value>+
+## `print` \<value...>
 Writes the specified values to standard output.
 ```lisp
 (print "Hello" "World" "!")
@@ -45,7 +45,7 @@ Writes the specified values to standard output.
 ; HelloWorld!!
 ```
 
-## `#` \<value>+
+## `#` \<value...>
 Constructs an array.
 ```lisp
 (# 1 2 3)
@@ -108,7 +108,7 @@ Converts the given value to pure boolean.
 ; false
 ```
 
-## `str` \<value>+
+## `str` \<value...>
 Converts all specified values to string and concatenates them.
 ```lisp
 (str "Today is " 18 "th")
@@ -196,7 +196,7 @@ Returns the value rounded down to the nearest integer.
 ; 3
 ```
 
-## `and` \<value>+
+## `and` \<value...>
 Checks each value and returns the first **falsey** one found, or returns the last one in the sequence.
 ```lisp
 (and 1 2 3)
@@ -212,7 +212,7 @@ Checks each value and returns the first **falsey** one found, or returns the las
 ; false
 ```
 
-## `or` \<value>+
+## `or` \<value...>
 Checks each value and returns the first **truthy** one found, or returns the last one in the sequence.
 ```lisp
 (or 1 2 3)
@@ -250,8 +250,8 @@ Returns the result of an XOR (bitwise) operation between `valueA` and `valueB`.
 ; 26
 ```
 
-## `coalesce` \<value>+
-## `??` \<value>+
+## `coalesce` \<value...>
+## `??` \<value...>
 Checks each value and returns the first non-null found, or `null` if none found.
 ```lisp
 (coalesce false 0 12)
@@ -571,70 +571,70 @@ Returns a string with the type-name of the value. Possible values are: `null`, `
 ; function
 ```
 
-## `*` \<value>+
+## `*` \<value...>
 Multiplies the values and returns the result (number).
 ```lisp
 (* 2 -1.5 3.25)
 ; -9.75
 ```
 
-## `mul` \<value>+
+## `mul` \<value...>
 Multiplies the values and returns the result (integer).
 ```lisp
 (mul 2 -1.5 3.25)
 ; -9
 ```
 
-## `/` \<value>+
+## `/` \<value...>
 Returns (number) the result of dividing each value by the next one.
 ```lisp
 (/ 100 10 3)
 ; 3.333333333
 ```
 
-## `div` \<value>+
+## `div` \<value...>
 Returns (integer) the result of dividing each value by the next one.
 ```lisp
 (/ 100 10 3)
 ; 3
 ```
 
-## `+` \<value>+
+## `+` \<value...>
 Returns the sum of all values.
 ```lisp
 (+ 1 2 3)
 ; 6
 ```
 
-## `-` \<value>+
+## `-` \<value...>
 Returns the result of subtracting each value by the next one.
 ```lisp
 (- 10 5 -2)
 ; 7
 ```
 
-## `mod` \<value>+
+## `mod` \<value...>
 Returns the remainder of dividing each value by the next one.
 ```lisp
 (mod 131 31 5)
 ; 2
 ```
 
-## `pow` \<value>+
+## `pow` \<value...>
 Returns the result of raising each number to the next one.
 ```lisp
 (pow 3 2 4)
 ; 6561
 ```
 
-## `min` \<value>+
+## `min` \<value...>
 Returns the minimum value in the sequence.
 ```lisp
 (min 10 4 2 12)
 ; 2
 ```
 
-## `max` \<value>+
+## `max` \<value...>
 Returns the maximum value in the sequence.
 ```lisp
 (max 10 4 2 12)
@@ -648,8 +648,8 @@ Executes the block and returns `null`.
 ; null
 ```
 
-## `nop` \<block>+
-Prevents execution of any of the blocks and returns `null`.
+## `nop` \<block>
+Prevents execution of the block and returns `null`.
 ```lisp
 (nop (+ 1 2 3) (echo "Good day"))
 ; null
@@ -701,7 +701,7 @@ Appends the value to a variable.
 ; HelloWorld
 ```
 
-## `unset` \<var-name>+
+## `unset` \<var-name...>
 Removes one or more variables from the context.
 ```lisp
 (set a 12)
@@ -713,8 +713,8 @@ Removes one or more variables from the context.
 ; Error: Function `a` not found.
 ```
 
-## `trim` \<kargs>
-Returns the value without white-space on the left or right. The value can be a string or an array.
+## `trim` \<value...>
+Returns the value without white-space on the left or right. The value can be a string, sequence or an array.
 ```lisp
 (trim " Hello " " World ")
 ; ["Hello","World"]
@@ -723,8 +723,8 @@ Returns the value without white-space on the left or right. The value can be a s
 ; Nice
 ```
 
-## `upper` \<kargs>
-Returns the value in uppercase. The value can be a string or an array.
+## `upper` \<value...>
+Returns the value in uppercase. The value can be a string, sequence or an array.
 ```lisp
 (upper "Hello" "World")
 ; ["HELLO","WORLD"]
@@ -733,8 +733,8 @@ Returns the value in uppercase. The value can be a string or an array.
 ; NICE
 ```
 
-## `lower` \<kargs>
-Returns the value in lower. The value can be a string or an array.
+## `lower` \<value...>
+Returns the value in lower. The value can be a string, sequence or an array.
 ```lisp
 (lower "Hello" "World")
 ; ["hello","world"]
@@ -760,8 +760,8 @@ Returns a sub-string of the given value.
 ; e
 ```
 
-## `replace` \<search> \<replacement> \<kargs>
-Replaces all occurences of `search` with `replacement` in the given value. The value can be a string, a sequence or a string.
+## `replace` \<search> \<replacement> \<value...>
+Replaces all occurences of `search` with `replacement` in the given value. The value can be a string, sequence or an array.
 ```lisp
 (replace "l" "w" "Hello")
 ; Hewwo
@@ -799,8 +799,8 @@ Returns the last index of a sub-string in the given text. Returns -1 when not fo
 ; -1
 ```
 
-## `nl2br` \<kargs>
-Converts all new-line chars in the value to `<br/>`, the value can be a string, sequence or array.
+## `nl2br` \<value...>
+Converts all new-line chars in the value to `<br/>`, the value can be a string, sequence or an array.
 ```lisp
 (nl2br "Hello\nWorld")
 ; Hello<br/>World
@@ -993,7 +993,7 @@ Repeats the specified block until the condition is falsey or a `break` is found.
 ; 0:1:2:3:4:5:6:7:8:9
 ```
 
-## `contains` \<expr> \<name>+
+## `contains` \<expr> \<name...>
 Returns `true` if the specified object contains **all** the specified keys. If it fails the global variable `err` will contain an error message.
 ```lisp
 (set a (& name "John"))
@@ -1004,7 +1004,7 @@ Returns `true` if the specified object contains **all** the specified keys. If i
 ; Missing field: last
 ```
 
-## `has` \<key> \<map-expr>
+## `has` \<key> \<object-expr>
 ## `has` \<value> \<array-expr>
 Returns `true` if the object has the specified key, or if the array has the specified value.
 ```lisp
@@ -1353,8 +1353,8 @@ Creates a new map by zipping the respective keys and values together.
 ; {"a":10,"b":20,"c":30}
 ```
 
-## `map-get` \<key-name...> \<map-expr>
-## `map-get` <\array-expr> \<map-expr>
+## `map-get` \<key-name...> \<object-expr>
+## `map-get` <\array-expr> \<object-expr>
 Extracts the specified keys from a given map and returns a new map.
 
 ```lisp
@@ -1680,21 +1680,120 @@ Evaluates the specified template string (or already parsed template array) using
 
 # Wind
 
-## `header`
-## `content-type`
+## `trace` \<message...>
+Writes the specified message(s) separated by space to the log file.
 
-## `evt::init`
-## `evt::send`
+```lisp
+(trace "Hello" "World")
+; String "Hello World" will be in the `system.log` file in the logs folder.
+```
 
-## `stop` [\<object-expr>]
-Stops execution of the current request and returns the specified object. If none specified, nothing will be returned.
+## `trace::alt` \<name> \<message...>
+Writes the specified message(s) separated by space to the specified file name in the logs folder. No need to add path nor extension.
+
+```lisp
+(trace::alt "mylog" "Hello" "World")
+; String "Hello World" will be in the `mylog.log` file in the logs folder.
+```
+
+## `header` \<header-line>
+Sets a header of the current HTTP response.
+
+```lisp
+(header "Content-Type: application/json")
+; Header will be set in HTTP response.
+```
+
+## `content-type` \<mime-type>
+Sets the content type of the current HTTP response. This is a useful shortcut for `(header "Content-Type: <mime-type>")`.
+
+```lisp
+(content-type "text/html")
+; Header "Content-Type: text/html" will be set in HTTP response.
+```
+
+## `call` \<name> [\<varName> \<varValue>...]
+Calls the specified API function with the given parameters which will be available as globals to the target. Returns the response object.
+
+The context of the target will be set to the current context, so any global variables will be available to the target function.
+
+```lisp
+(call "users.list" count 1 offset 10)
+; Executes file `rcore/users/list.fn` in the current context.
+```
+
+## `icall` \<name> [\<varName> \<varValue>...]
+Performs an **isolated call** to the specified API function with the given parameters which will be available as globals to the target. Returns the response object.
+
+The context of the target will be set to a new context, so any global variables will **not be** available to the target function (except the pure `global` object).
+
+```lisp
+(icall "users.get" id 12)
+; Executes file `rcore/users/get.fn` in a new context.
+```
+
+## `return` [\<data>]
+Returns the specified data (or an empty object if none specified) to the current invoker (not the same as a function caller). The invoker is most of time the browser, except when using `call` or `icall`.
+
+The response for the browser is always formatted for consistency:
+- If `data` is an object and doesn't have the `response` field it will be added with the value `200` (OK).
+- If `data` is an array, it will be placed in a field named `data` of the response object, with `response` code 200.
+
+```lisp
+(return (&))
+; {"response":200}
+
+(return (# 1 2 3))
+; {"response":200,"data":[1,2,3]}
+```
+
+## `stop` [\<data>]
+Stops execution of the current request and returns the specified data to the browser. If none specified, nothing will be returned.
+
+Response is formatted following the same rules as `return`.
 
 ```lisp
 (stop)
 ; (empty-string)
 ```
 
-## `return`
-## `_trace`
-## `_call`
-## `_icall`
+## `evt::init`
+
+Initializes server-sent events by setting several HTTP headers in the response and configuring the Gateway to persist and disable any kind of output buffering.
+
+The following headers are set:
+- Content-Type: text/event-stream; charset=utf-8
+- Transfer-Encoding: identity
+- Content-Encoding: identity
+- Cache-Control: no-store
+- X-Accel-Buffering: no
+
+```lisp
+(evt::init)
+; Headers will be set and Gateway ready for SSE.
+```
+
+## `evt::send` [\<event-name>] \<data>
+
+Sends the specified data to the browser as a server-sent event. If no event name is specified, the default event name `message` will be used.
+
+```lisp
+(evt::send "Hello World")
+; event: message
+; data: Hello World
+
+(evt::send "info" (& list (# 1 2 3)))
+; event: info
+; data: {"list":[1,2,3]}
+```
+
+## `evt::alive`
+
+Sends a comment line `:alive` to the browser to keep the connection alive if the last message sent was more than 30 seconds ago. Returns `false` if the connection was already closed by the browser.
+
+```lisp
+(when (evt::alive)
+	; Do something ...
+	(utils::sleep 1)
+)
+```
