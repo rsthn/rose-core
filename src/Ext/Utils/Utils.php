@@ -678,7 +678,7 @@ Expr::register('re::match', function($args)
 
 Expr::register('re::matchAll', function($args)
 {
-	return Regex::_matchAll($args->get(1), $args->get(2));
+	return Regex::_matchAll($args->get(1), $args->get(2), $args->{3} ?? 0);
 });
 
 Expr::register('re::split', function($args)

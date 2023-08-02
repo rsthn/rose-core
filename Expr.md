@@ -1685,15 +1685,15 @@ Writes the specified message(s) separated by space to the log file.
 
 ```lisp
 (trace "Hello" "World")
-; String "Hello World" will be in the `system.log` file in the logs folder.
+; String "Hello World" will be in the `system.log` file in the `logs` folder.
 ```
 
 ## `trace::alt` \<name> \<message...>
-Writes the specified message(s) separated by space to the specified file name in the logs folder. No need to add path nor extension.
+Writes the specified message(s) separated by space to the specified log file in the `logs` folder. No need to add path nor extension.
 
 ```lisp
 (trace::alt "mylog" "Hello" "World")
-; String "Hello World" will be in the `mylog.log` file in the logs folder.
+; String "Hello World" will be in the `mylog.log` file in the `logs` folder.
 ```
 
 ## `header` \<header-line>
@@ -1793,7 +1793,7 @@ Sends a comment line `:alive` to the browser to keep the connection alive if the
 
 ```lisp
 (when (evt::alive)
-	; Do something ...
-	(utils::sleep 1)
+    ; Do something ...
+    (utils::sleep 1)
 )
 ```
