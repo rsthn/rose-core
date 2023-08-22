@@ -147,9 +147,13 @@ class Directory
 		$path = Path::normalize($path);
 
 		if (!Path::exists($path))
+        {
+            try { \rmdir ($path); }
+            catch (\Throwable $e) { return false; }
 			return true;
+        }
 
-        if (!Path::isDir($path))
+        if (!Path::isDir($path) || Path::isLink($path))
             return File::remove($path);
 
         if ($recursive)

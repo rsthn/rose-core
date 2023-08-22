@@ -328,7 +328,7 @@ class Image
 
 		imagealphablending ($image, false);
         imagesavealpha ($image, true);
-		imagecopyresampled ($image, $this->image, $tx, $ty, $sx, $sy, $w, $h, $w, $h);
+		imagecopyresampled ($image, $this->image, intval($tx), intval($ty), intval($sx), intval($sy), intval($w), intval($h), intval($w), intval($h));
 
         return Image::fromRes($image);
     }
@@ -360,7 +360,7 @@ class Image
 
 		imagealphablending ($image, false);
         imagesavealpha ($image, true);
-		imagecopyresampled ($image, $this->image, $tx, $ty, $sx, $sy, $w, $h, $w, $h);
+		imagecopyresampled ($image, $this->image, intval($tx), intval($ty), intval($sx), intval($sy), intval($w), intval($h), intval($w), intval($h));
 
         return $this->setRes($image);
     }
@@ -406,7 +406,7 @@ class Image
 
         imagealphablending ($image, false);
         imagesavealpha ($image, true);
-		imagecopyresampled ($image, $this->image, 0, 0, $sx, $sy, $w, $h, $dw, $dh);
+		imagecopyresampled ($image, $this->image, 0, 0, intval($sx), intval($sy), intval($w), intval($h), intval($dw), intval($dh));
 
         return $rewrite ? $this->setRes($image) : Image::fromRes($image);
 	}
