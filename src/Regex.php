@@ -145,7 +145,7 @@ class Regex
 	/*
 	**	Replaces all the strings that match the pattern by the given replacement.
 	*/
-    public static function _replace ($pattern, $text, $replacement)
+    public static function _replace ($pattern, $replacement, $text)
     {
 		$text = Text::toString($text);
         return preg_replace ($pattern, $replacement, $text);

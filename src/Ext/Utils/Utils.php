@@ -7,6 +7,8 @@ use Rose\Strings;
 use Rose\Configuration;
 use Rose\Gateway;
 
+use Rose\Errors\ArgumentError;
+use Rose\Ext\Wind;
 use Rose\Text;
 use Rose\Math;
 use Rose\Regex;
@@ -90,7 +92,15 @@ Expr::register('utils::uuid', function() {
     return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 });
 
-Expr::register('utils::unique', function($args) {
+Expr::register('utils::unique', function($args)
+{
+    $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._';
+
+    if ($args->has(2)) {
+        $chars = $args->get(2);
+        if (Text::length($chars) != 64)
+            throw new ArgumentError('Code charset string should be 64 characters long.');
+    }
 
 	$tmp = explode(' ', microtime());
 	$tmp[0] = ((int)($tmp[0] * 0x1000000)) & 0xFFFFFF;
@@ -108,13 +118,10 @@ Expr::register('utils::unique', function($args) {
 	];
 
 	$n = $args->length > 1 ? (int)$args->get(1) : 0;
-
 	while ($n-- > 8)
 		$data[] = ord(random_bytes(1)) & 0x3F;
 
 	$tmp = '';
-	$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._';
-
 	for ($i = 0; $i < count($data); $i++)
 		$tmp .= $chars[ $data[$i] ^ (ord(random_bytes(1)) & 0x3F) ];
 
@@ -277,6 +284,8 @@ Expr::register('utils::xml::simplify', function($args)
 Expr::register('utils::html', function($args)
 {
 	$data = $args->get(1);
+
+    Wind::contentType(new Arry(['text/html']));
 
 	if (\Rose\typeOf($data) == 'Rose\Data\Reader')
 	{
@@ -686,6 +695,9 @@ Expr::register('re::split', function($args)
 	return Regex::_split($args->get(1), $args->get(2));
 });
 
+/**
+ * (re::replace <pattern> <replacement> <subject>)
+ */
 Expr::register('re::replace', function($args)
 {
 	return Regex::_replace($args->get(1), $args->get(2), $args->get(3));

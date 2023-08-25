@@ -944,7 +944,7 @@ class Expr
 		if (\Rose\typeOf($parts) == 'primitive')
 		{
 			$data = (string)$parts;
-			$data = Regex::_replace ('|/\*(.*?)\*/|s', $data, '');
+			$data = Regex::_replace ('|/\*(.*?)\*/|s', '', $data);
 			return $data;
 		}
 
@@ -2050,7 +2050,7 @@ Expr::register('str::lastIndexOf', function ($args)
 */
 Expr::register('nl2br', function ($args)
 {
-	return Expr::apply($args->slice(1), function($value) { return str_replace("\n", '<br/>', $value); });
+	return Expr::apply($args->slice(1), function($value) { return Text::replace("\n", '<br/>', $value); });
 });
 
 /**
@@ -3045,6 +3045,45 @@ Expr::register('_findIndex', function ($parts, $data)
 });
 
 /**
+**	reduce [<iter-var>] [<init-var>] <initial> <array-expr> <block>
+*/
+Expr::register('_reduce', function ($parts, $data)
+{
+	$var_name = 'a';
+	$initial_name = 'b';
+	$i = 1;
+
+	Expr::takeIdentifier($parts, $data, $i, $var_name);
+	Expr::takeIdentifier($parts, $data, $i, $initial_name);
+
+	$initial = Expr::expand($parts->get($i++), $data, 'arg');
+	$list = Expr::expand($parts->get($i++), $data, 'arg');
+	if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
+		return $list;
+
+    $block = $parts->slice($i);
+	$j = 0;
+
+	$list->forEach(function($item, $key) use(&$var_name, &$initial_name, &$initial, &$j, &$data, &$block)
+	{
+        echo $initial_name.' '.$var_name.' '.$item.' '.$key."\n";
+		$data->set($initial_name, $initial);
+		$data->set($var_name, $item);
+		$data->set($var_name . '##', $j++);
+		$data->set($var_name . '#', $key);
+
+		$initial = Expr::blockValue($block, $data);
+	});
+
+	$data->remove($initial_name);
+	$data->remove($var_name);
+	$data->remove($var_name . '##');
+	$data->remove($var_name . '#');
+
+	return $initial;
+});
+
+/**
 **	select [<varname>] <condition> <array-expr>
 */
 Expr::register('_select', function ($parts, $data)
@@ -3698,7 +3737,7 @@ Expr::register('include', function($args, $parts, $data)
 		if (!Path::exists($path))
 			throw new Error ("Source does not exist: " . $_path);
 
-		$expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path), ''));
+		$expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', '', File::getContents($path)));
 
 		for ($j = 0; $j < $expr->length; $j++)
 		{
@@ -3788,7 +3827,7 @@ Expr::register('import', function($args, $parts, $data)
 		}
 		else
 		{
-			$expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', File::getContents($path), ''));
+			$expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', '', File::getContents($path)));
 
 			for ($j = 0; $j < $expr->length; $j++)
 			{

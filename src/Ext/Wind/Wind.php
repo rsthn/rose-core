@@ -1,19 +1,4 @@
 <?php
-/*
-**	Rose\Ext\Wind
-**
-**	Copyright (c) 2019-2021, RedStar Technologies, All rights reserved.
-**	https://rsthn.com/
-**
-**	THIS LIBRARY IS PROVIDED BY REDSTAR TECHNOLOGIES "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-**	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
-**	PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL REDSTAR TECHNOLOGIES BE LIABLE FOR ANY
-**	DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
-**	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
-**	OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
-**	STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-**	USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 
 namespace Rose\Ext;
 
@@ -380,7 +365,7 @@ class Wind
 	/**
 	**	header <header-line>
 	*/
-	public static function header ($args, $parts, $data)
+	public static function header ($args)
 	{
 		if (Text::toUpperCase(Text::substring($args->get(1), 0, 12)) == 'CONTENT-TYPE')
 			self::$contentType = $args->get(1);
@@ -392,7 +377,7 @@ class Wind
 	/**
 	**	contentType <mime>
 	*/
-	public static function contentType ($args, $parts, $data)
+	public static function contentType ($args)
 	{
 		self::$contentType = 'Content-Type: ' . $args->get(1);
 		return null;

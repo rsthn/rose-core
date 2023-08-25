@@ -11,3 +11,4 @@ composer.lock
 deploy.js
 TODO.md
 test.php
+scripts/

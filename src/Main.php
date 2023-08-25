@@ -248,12 +248,13 @@ function fatal_handler()
 
 	ob_end_clean();
 
-	if (Configuration::getInstance()?->Gateway?->display_errors == 'false')
+	if (Configuration::getInstance()?->Gateway?->display_errors !== 'true')
 	{
 		$err_id = (string)time();
-		$err_id = substr($err_id, 0, 3) . '-' . substr($err_id, 3, 3) . '-' . substr($err_id, 6);
+		$err_id = substr($err_id, 0, 4) . chr(rand(65,90)) . substr($err_id, 3, 3) . chr(rand(65,90)) . substr($err_id, 6);
 		$s = '[' . date('Y-m-d h:i') . '] ' . $err_id . ': ';
 		$tab = '  ';
+        $msg = '';
 
 		if ($error != null)
 		{
@@ -264,13 +265,17 @@ function fatal_handler()
 			{
 			}
 			else
-				$s .= $tab . '*** ' . $error['message'] . " ***\n";
+            {
+                $msg = $error['message'];
+				$s .= $tab . '*** ' . $msg . " ***\n";
+            }
 		}
 
 		if ($lastException != null)
 		{
+            $msg = $lastException->getMessage();
 			$s .= typeOf($lastException) . ' in ' . basename($lastException->getFile()) . ':' . $lastException->getLine() . "\n";
-			$s .= $tab . '*** ' . $lastException->getMessage() . " ***\n";
+			$s .= $tab . '*** ' . $msg . " ***\n";
 			$stackTrace = $lastException->getTrace();
 		}
 
@@ -311,7 +316,11 @@ function fatal_handler()
 		if (!headers_sent())
 			header('content-type: application/json');
 
-		echo (new Map([ 'response' => 409, 'error' => 'An unexpected error occurred ('.$err_id.').' ]));
+        if (Configuration::getInstance()?->Gateway?->display_errors !== 'false')
+            echo (new Map([ 'response' => 409, 'error' => $msg ]));
+        else
+		    echo (new Map([ 'response' => 409, 'error' => 'Unhandled error occurred: '.$err_id ]));
+
 		exit;
 	}
 

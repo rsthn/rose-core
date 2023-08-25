@@ -4,6 +4,7 @@ namespace Rose\Data\Drivers;
 
 use Rose\Errors\Error;
 use Rose\Text;
+use Rose\Regex;
 
 use Rose\Data\Driver;
 use Rose\Data\Connection;
@@ -71,7 +72,7 @@ class SQLServer extends Driver
 
 	private function cleanup_message ($s)
 	{
-		return preg_replace('|\[[^\]]+\]|', '', $s);
+		return Regex::_replace('|\[[^\]]+\]|', '', $s);
 	}
 
 	private function loadLastError ()
