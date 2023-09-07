@@ -285,7 +285,7 @@ Expr::register('utils::html', function($args)
 {
 	$data = $args->get(1);
 
-    Wind::contentType(new Arry(['text/html']));
+    Wind::contentType(new Arry([null, 'text/html']));
 
 	if (\Rose\typeOf($data) == 'Rose\Data\Reader')
 	{

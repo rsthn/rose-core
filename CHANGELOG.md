@@ -1,3 +1,10 @@
+# v4.0.69 - Sep 07 2023
+
+#### General
+- Fixed minor bug causing warning when calling `utils::html`.
+
+<br/>
+
 # v4.0.68 - Aug 25 2023
 
 #### General
