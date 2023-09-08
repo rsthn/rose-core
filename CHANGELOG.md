@@ -1,3 +1,11 @@
+# v4.0.70 - Sep 07 2023
+
+#### SQLServer
+- Fixed bug caused by dynamic property `num_fields`.
+- Method `getLastError` will now attempt to load one if the current `last_error` is null.
+
+<br/>
+
 # v4.0.69 - Sep 07 2023
 
 #### General

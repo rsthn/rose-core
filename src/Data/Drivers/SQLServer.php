@@ -14,6 +14,7 @@ class SQLServer extends Driver
 	private $affected_rows = 0;
 	private $last_id = null;
 	private $num_rows = 0;
+    private $num_fields = 0;
 	private $field_metadata = null;
 	private $last_error = null;
 	private $data_rs = null;
@@ -52,6 +53,8 @@ class SQLServer extends Driver
 
     public function getLastError ($conn)
     {
+        if ($this->last_error === null)
+            $this->loadLastError();
 		return $this->last_error;
     }
 
