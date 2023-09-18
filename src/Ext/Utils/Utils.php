@@ -71,7 +71,7 @@ Expr::register('utils::putenv', function($args) { putenv($args->slice(1)->join('
 
 Expr::register('utils::rand', function() { return Math::rand(); });
 Expr::register('utils::randstr', function($args) { return bin2hex(random_bytes((int)$args->get(1))); });
-Expr::register('utils::randstr:base64', function($args) { return base64_encode(random_bytes((int)$args->get(1))); });
+Expr::register('utils::randstr-base64', function($args) { return base64_encode(random_bytes((int)$args->get(1))); });
 Expr::register('utils::uuid', function() {
 	$data = random_bytes(16);
 
