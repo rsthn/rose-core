@@ -236,27 +236,37 @@ function xmlToMap($xml)
     ]);
 }
 
-function xmlSimplify ($xml)
+function xmlSimplify ($xml, $parent)
 {
-	if ($xml->children->length() == 0)
-		return $xml->textContent;
+	if ($xml->children->length() === 0 && $xml->attributes->length() === 0)
+    {
+        if (\Rose\typeOf($parent) === 'Rose\\Map')
+            $parent->set($xml->tagName, $xml->textContent);
+        else
+            $parent->push($xml->textContent);
 
-	$r = new Map();
-	$k = new Map();
-	$r->set($xml->tagName, $k);
+		return $parent;
+    }
+
+    $k = new Map();
+
+    if (\Rose\typeOf($parent) === 'Rose\\Map')
+	    $parent->set($xml->tagName, $k);
+    else
+	    $parent->push($k);
 
 	if ($xml->attributes->length() != 0)
-		$r->set('$', $xml->attributes);
+		$k->set('$', $xml->attributes);
 
 	$xml->children->forEach(function($value) use (&$k)
 	{
 		if (!$k->has($value->tagName))
 			$k->set($value->tagName, new Arry());
 
-		$k->get($value->tagName)->push(xmlSimplify($value));
+		xmlSimplify($value, $k->get($value->tagName));
 	});
 
-	return $r;
+	return $parent;
 }
 
 Expr::register('utils::xml::parse', function($args)
@@ -278,7 +288,8 @@ Expr::register('utils::xml::parse', function($args)
 
 Expr::register('utils::xml::simplify', function($args)
 {
-	return $args->get(1) ? xmlSimplify($args->get(1)) : new Map();
+    $m = new Map();
+	return $args->get(1) ? xmlSimplify($args->get(1), $m) : $m;
 });
 
 Expr::register('utils::html', function($args)
@@ -376,18 +387,23 @@ Expr::register('utils::hash', function($args)
 	return hash($args->get(1), $args->get(2));
 });
 
-Expr::register('utils::hash:binary', function($args)
-{
+Expr::register('utils::hash-binary', function($args) {
 	return hash($args->get(1), $args->get(2), true);
 });
 
-Expr::register('utils::hmac', function($args)
-{
+/**
+ * Returns the HMAC of a string (hexadecimal).
+ * @code (utils::hmac <algorithm> <secret-key> <data>)
+ */
+Expr::register('utils::hmac', function($args) {
 	return hash_hmac($args->get(1), $args->get(3), $args->get(2));
 });
 
-Expr::register('utils::hmac:binary', function($args)
-{
+/**
+ * Returns the HMAC of a string (binary).
+ * @code (utils::hmac-binary <algorithm> <secret-key> <data>)
+ */
+Expr::register('utils::hmac-binary', function($args) {
 	return hash_hmac($args->get(1), $args->get(3), $args->get(2), true);
 });
 

@@ -3066,7 +3066,6 @@ Expr::register('_reduce', function ($parts, $data)
 
 	$list->forEach(function($item, $key) use(&$var_name, &$initial_name, &$initial, &$j, &$data, &$block)
 	{
-        echo $initial_name.' '.$var_name.' '.$item.' '.$key."\n";
 		$data->set($initial_name, $initial);
 		$data->set($var_name, $item);
 		$data->set($var_name . '##', $j++);
