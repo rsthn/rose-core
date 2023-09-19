@@ -1,3 +1,23 @@
+# v4.0.71 - Sep 18 2023
+
+#### Driver
+- Updated signature for `query` and `reader` to include new `params` parameter used with prepared statements.
+
+#### General
+- Updated all database drivers to comply with latest changes to Driver.
+- Removed deprecated MySQL driver, using now only MySQLi. Driver names `mysql` and `mysqli` are now mapped to MySQLi.
+
+#### Connection
+- Updated comments to include more descriptive messages and example of expressions.
+- Updated functions to allow now parameter `params` for prepared statements.
+
+#### Utils
+- Renamed `utils::randstr:base64` to `utils::randstr-base64`
+- Improved `utils::xml::simplify` to remove redundant objects.
+- Renamed `utils::hash:binary` and `utils::hmac:binary` to `utils::hash-binary` and `utils::hmac-binary`.
+
+<br/>
+
 # v4.0.70 - Sep 07 2023
 
 #### SQLServer
