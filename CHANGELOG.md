@@ -1,3 +1,14 @@
+# v4.0.72 - Sep 20 2023
+
+#### Utils
+- Renamed `array::sort:asc`, `array::sort:desc`, `array::sortl:asc`, and `array::sortl:desc` to `array::sort-asc`, `array::sort-desc`, `array::sortl-asc`, and `array::sortl-desc` respectively.
+- Renamed `map::sort:asc`, `map::sort:desc`, `map::sortk:asc`, and `map::sortk:desc` to `map::sort-asc`, `map::sort-desc`, `map::sortk-asc`, and `map::sortk-desc` respectively.
+
+#### MySQLi
+- Driver names `mysql` and `mysqli` both are now mapping to the same MySQLi driver.
+
+<br/>
+
 # v4.0.71 - Sep 18 2023
 
 #### Driver

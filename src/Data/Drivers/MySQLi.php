@@ -11,6 +11,7 @@ class MySQLi extends Driver
 {
 	public static function register() {
 		Connection::registerDriver('mysql', new MySQLi());
+		Connection::registerDriver('mysqli', new MySQLi());
 	}
 
     public function open ($server, $user, $password, $database)

@@ -418,28 +418,28 @@ Expr::register('array::new', function($args)
 	return $array;
 });
 
-Expr::register('array::sort:asc', function($args)
+Expr::register('array::sort-asc', function($args)
 {
 	$array = $args->get(1);
 	$array->sort('ASC');
 	return $array;
 });
 
-Expr::register('array::sort:desc', function($args)
+Expr::register('array::sort-desc', function($args)
 {
 	$array = $args->get(1);
 	$array->sort('DESC');
 	return $array;
 });
 
-Expr::register('array::sortl:asc', function($args)
+Expr::register('array::sortl-asc', function($args)
 {
 	$array = $args->get(1);
 	$array->sortl('ASC');
 	return $array;
 });
 
-Expr::register('array::sortl:desc', function($args)
+Expr::register('array::sortl-desc', function($args)
 {
 	$array = $args->get(1);
 	$array->sortl('DESC');
@@ -578,28 +578,28 @@ Expr::register('map::new', function($args)
 	return $map;
 });
 
-Expr::register('map::sort:asc', function($args)
+Expr::register('map::sort-asc', function($args)
 {
 	$map = $args->get(1);
 	$map->sort('ASC');
 	return $map;
 });
 
-Expr::register('map::sort:desc', function($args)
+Expr::register('map::sort-desc', function($args)
 {
 	$map = $args->get(1);
 	$map->sort('DESC');
 	return $map;
 });
 
-Expr::register('map::sortk:asc', function($args)
+Expr::register('map::sortk-asc', function($args)
 {
 	$map = $args->get(1);
 	$map->sortk('ASC');
 	return $map;
 });
 
-Expr::register('map::sortk:desc', function($args)
+Expr::register('map::sortk-desc', function($args)
 {
 	$map = $args->get(1);
 	$map->sortk('DESC');
