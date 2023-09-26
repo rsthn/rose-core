@@ -112,40 +112,35 @@ function typeOf ($object, $detailed=false)
 /*
 **	Returns true if the value is an array.
 */
-function isArray ($value)
-{
+function isArray ($value) {
 	return is_array ($value);
 }
 
 /*
 **	Returns true if the value is an object.
 */
-function isObject ($value)
-{
+function isObject ($value) {
 	return is_object ($value);
 }
 
 /*
 **	Returns true if the value is an string.
 */
-function isString ($value)
-{
+function isString ($value) {
 	return is_string ($value);
 }
 
 /*
 **	Returns true if the value is a numeric value.
 */
-function isNumeric ($value)
-{
+function isNumeric ($value) {
 	return is_numeric ($value);
 }
 
 /*
 **	Returns true if the value is an integer value.
 */
-function isInteger ($value)
-{
+function isInteger ($value) {
 	return is_int ($value);
 }
 
@@ -153,24 +148,21 @@ function isInteger ($value)
 **	Returns true if the value represents a number, ensure to use a `float` or `double` cast when actually
 **	using the value, since it may contain extra characters after the number.
 */
-function isNumber ($value)
-{
+function isNumber ($value) {
 	return is_double ($value);
 }
 
 /*
 **	Returns true if the value is a boolean value.
 */
-function isBool ($value)
-{
+function isBool ($value) {
 	return is_bool ($value);
 }
 
 /*
 **	Returns the boolean value of the given argument.
 */
-function bool ($value)
-{
+function bool ($value) {
 	if ($value === true || $value === false)
 		return $value;
 
@@ -180,32 +172,28 @@ function bool ($value)
 /*
 **	Raises a warning.
 */
-function raiseWarning ($message)
-{
+function raiseWarning ($message) {
 	trigger_error ($message, E_USER_WARNING);
 }
 
 /*
 **	Raises an error.
 */
-function raiseError ($message)
-{
+function raiseError ($message) {
 	trigger_error ($message, E_USER_ERROR);
 }
 
 /*
 **	Returns true if the object is an instance of the given class.
 */
-function isSubTypeOf ($object, $className)
-{
+function isSubTypeOf ($object, $className) {
 	return $object instanceof $className;
 }
 
 /*
 **	Returns the current time in milliseconds.
 */
-function mstime ()
-{
+function mstime() {
 	$t = explode (' ', microtime ());
 	return (int) (($t[0] + $t[1]) * 1000);
 }

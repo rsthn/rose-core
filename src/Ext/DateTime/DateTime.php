@@ -11,7 +11,7 @@ use Rose\Text;
  * @code (datetime::now [targetTimezone])
  */
 Expr::register('datetime::now', function ($args) {
-	return new DateTime('now', $args->length == 2 ? $args->get(1) : null);
+    return new DateTime('now', $args->length == 2 ? $args->get(1) : null);
 });
 
 /**
@@ -19,7 +19,7 @@ Expr::register('datetime::now', function ($args) {
  * @code (datetime::now-int [targetTimezone])
  */
 Expr::register('datetime::now-int', function ($args) {
-	return (new DateTime('now', $args->length == 2 ? $args->get(1) : null))->getTimestamp();
+    return (new DateTime('now', $args->length == 2 ? $args->get(1) : null))->getTimestamp();
 });
 
 /**
@@ -27,7 +27,7 @@ Expr::register('datetime::now-int', function ($args) {
  * @code (datetime::parse <string> [targetTimezone] [sourceTimezone])
  */
 Expr::register('datetime::parse', function ($args) {
-	return new DateTime($args->get(1), $args->length >= 3 ? $args->get(2) : null, $args->length >= 4 ? $args->get(3) : null);
+    return new DateTime($args->get(1), $args->length >= 3 ? $args->get(2) : null, $args->length >= 4 ? $args->get(3) : null);
 });
 
 /**
@@ -35,7 +35,7 @@ Expr::register('datetime::parse', function ($args) {
  * @code (datetime::int <datetime>)
  */
 Expr::register('datetime::int', function ($args) {
-	return DateTime::getUnixTimestamp($args->get(1));
+    return DateTime::getUnixTimestamp($args->get(1));
 });
 
 /**
@@ -43,10 +43,10 @@ Expr::register('datetime::int', function ($args) {
  * @code (datetime::sub <datetime> <datetime> [SECOND|MINUTE|HOUR|DAY|WEEK|YEAR])
  */
 Expr::register('datetime::sub', function ($args) {
-	$a = new DateTime ($args->get(1));
-	$b = new DateTime ($args->get(2));
-	$unit = $args->length == 4 ? $args->get(3) : 'SECOND';
-	return $a->sub($b, $unit);
+    $a = new DateTime ($args->get(1));
+    $b = new DateTime ($args->get(2));
+    $unit = $args->length == 4 ? $args->get(3) : 'SECOND';
+    return $a->sub($b, $unit);
 });
 
 /**
@@ -54,10 +54,10 @@ Expr::register('datetime::sub', function ($args) {
  * @code (datetime::diff <datetime> <datetime> [SECOND|MINUTE|HOUR|DAY|WEEK|YEAR])
  */
 Expr::register('datetime::diff', function ($args) {
-	$a = new DateTime ($args->get(1));
-	$b = new DateTime ($args->get(2));
-	$unit = $args->length == 4 ? $args->get(3) : 'SECOND';
-	return $a->sub($b, $unit);
+    $a = new DateTime ($args->get(1));
+    $b = new DateTime ($args->get(2));
+    $unit = $args->length == 4 ? $args->get(3) : 'SECOND';
+    return $a->sub($b, $unit);
 });
 
 /**
@@ -65,11 +65,11 @@ Expr::register('datetime::diff', function ($args) {
  * @code (datetime::add <datetime> <value> [SECOND|MINUTE|HOUR|DAY|WEEK|YEAR])
  */
 Expr::register('datetime::add', function ($args) {
-	$a = new DateTime ($args->get(1));
-	$b = $args->get(2);
+    $a = new DateTime ($args->get(1));
+    $b = $args->get(2);
 
-	$unit = $args->length == 4 ? $args->get(3) : 'SECOND';
-	return $a->add($b, $unit);
+    $unit = $args->length == 4 ? $args->get(3) : 'SECOND';
+    return $a->add($b, $unit);
 });
 
 /**
@@ -77,8 +77,8 @@ Expr::register('datetime::add', function ($args) {
  * @code (datetime::date <datetime>)
  */
 Expr::register('datetime::date', function ($args) {
-	$a = (string)(new DateTime ($args->get(1)));
-	return Text::substring($a, 0, 10);
+    $a = (string)(new DateTime ($args->get(1)));
+    return Text::substring($a, 0, 10);
 });
 
 /**
@@ -86,8 +86,8 @@ Expr::register('datetime::date', function ($args) {
  * @code (datetime::time <datetime>)
  */
 Expr::register('datetime::time', function ($args) {
-	$a = (string)(new DateTime ($args->get(1)));
-	return Text::substring($a, 11, 5);
+    $a = (string)(new DateTime ($args->get(1)));
+    return Text::substring($a, 11, 5);
 });
 
 /**
@@ -95,7 +95,15 @@ Expr::register('datetime::time', function ($args) {
  * @code (datetime::format <datetime> <string>)
  */
 Expr::register('datetime::format', function ($args) {
-	$value = $args->get(1);
-	$value = $value === null ? null : (\Rose\isInteger($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
-	return $value ? DateTime::strftime($args->get(2), $value + DateTime::$offset) : null;
+    $value = $args->get(1);
+    $value = $value === null ? null : (\Rose\isInteger($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
+    return $value ? DateTime::strftime($args->get(2), $value + DateTime::$offset) : null;
+});
+
+/**
+ * Returns the current date and time as a Unix timestamp in milliseconds.
+ * @code (datetime::millis)
+ */
+Expr::register('datetime::millis', function ($args) {
+    return \Rose\mstime();
 });

@@ -394,15 +394,14 @@ class Session
 		last_activity datetime default null,
 
 		device_id varchar(48) default null,
+        index idx_device_id (device_id),
 
 		user_id int unsigned default null,
-		constraint foreign key (user_id) references users (user_id) on delete cascade,
+		foreign key (user_id) references users (user_id),
 
 		data varchar(8192) default null
 	)
 	ENGINE=InnoDB CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
-	ALTER TABLE sessions ADD INDEX n_device_id (device_id);
 
 
 	DROP PROCEDURE IF EXISTS session_cleanup;

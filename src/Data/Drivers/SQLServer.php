@@ -37,13 +37,16 @@ class SQLServer extends Driver
             'Database' => $database, 
             'UID' => $user, 
             'PWD' => $password, 
-            'ReturnDatesAsStrings' => true, 
+            'ReturnDatesAsStrings' => true,
             'CharacterSet' => 'UTF-8',
-            'TrustServerCertificate' => true
+            'TrustServerCertificate' => true,
+            'MultipleActiveResultSets' => false,
+            'ConnectionPooling' => true,
+            'TraceOn' => false
         ));
         if ($conn == null) return null;
 
-        $this->options = array('Scrollable' => SQLSRV_CURSOR_STATIC);
+        $this->options = array('Scrollable' => SQLSRV_CURSOR_CLIENT_BUFFERED);
         //$this->query('SET NOCOUNT OFF', $conn);
 
         sqlsrv_configure ('WarningsReturnAsErrors', 0);
@@ -96,13 +99,18 @@ class SQLServer extends Driver
         $this->data_rs = null;
 
         $fetch_last_id = false;
+        $options = $this->options;
 
         if (Text::startsWith(Text::toUpperCase(Text::trim($query)), 'INSERT INTO') !== false) {
             $query .= '; SELECT SCOPE_IDENTITY();';
             $fetch_last_id = true;
         }
+        else if (Text::startsWith(Text::toUpperCase(Text::trim($query)), 'UPDATE ') !== false) {
+            $query .= '; SELECT SCOPE_IDENTITY();';
+            $options = null;
+        }
 
-        $rs = sqlsrv_query ($conn, $query, null, $this->options);
+        $rs = sqlsrv_query ($conn, $query, null, $options);
         if (!$rs) return $this->loadLastError();
 
         $return = $rs;
@@ -114,8 +122,7 @@ class SQLServer extends Driver
                 $this->affected_rows = sqlsrv_rows_affected($rs);
                 $return = true;
             }
-            else
-            {
+            else {
                 $this->num_rows = sqlsrv_num_rows($rs);
                 $this->num_fields = sqlsrv_num_fields($rs);
                 $this->data = [];
