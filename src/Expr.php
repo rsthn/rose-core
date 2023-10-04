@@ -2769,7 +2769,7 @@ Expr::register('contains', function ($args, $parts, $data)
 
 	for ($i = 2; $i < $args->length; $i++)
 	{
-		if (!$value->has($args->get($i)))
+		if (!$value->has($args->get($i), true))
 			$s .= ', '.$args->get($i);
 	}
 
@@ -2793,7 +2793,7 @@ Expr::register('has', function ($args, $parts, $data)
 	$value = $args->get(2);
 
 	if (typeOf($value) == 'Rose\\Map')
-		return $value->has($args->get(1));
+		return $value->has($args->get(1), true);
 
 	if (typeOf($value) == 'Rose\\Arry')
 		return $value->indexOf($args->get(1)) !== null;

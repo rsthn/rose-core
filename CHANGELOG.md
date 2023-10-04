@@ -1,3 +1,16 @@
+# v4.0.73 - Oct 04 2023
+
+#### SQLServer
+- Using now `SQLSRV_CURSOR_CLIENT_BUFFERED` to speed up queries with client side buffering.
+
+#### DateTime
+- Added `datetime::millis` to get the current unix timestamp in milliseconds.
+
+#### Expr
+- Fixed bug when calling `has` or `contains` with a key starting with at (@).
+
+<br/>
+
 # v4.0.72 - Sep 20 2023
 
 #### Utils
