@@ -17,23 +17,28 @@ use Rose\Text;
 
 class Configuration extends Map
 {
-	/*
-	**	Primary and only instance of this class.
-	*/
+	/**
+     * Primary and only instance of this class.
+     */
     private static $objectInstance;
 
-	/*
-	**	Initializes the instance of the Configuration class and loads the configuration files.
-	*/
+    /**
+     * Indicates what configuration environment was used.
+     */
+    public $env;
+
+	/**
+     * Initializes the instance of the Configuration class and loads the configuration files.
+     */
     public function __construct()
     {
         parent::__construct();
         $this->reload();
     }
 
-	/*
-	**	Returns the instance of this class.
-	*/
+	/**
+     * Returns the instance of this class.
+     */
     public static function getInstance()
     {
         if ((Configuration::$objectInstance == null))
@@ -42,9 +47,9 @@ class Configuration extends Map
         return Configuration::$objectInstance;
     }
 
-	/*
-	**	Reloads the configuration files.
-	*/
+	/**
+     * Reloads the configuration files.
+     */
     public function reload()
     {
 		$this->clear();
@@ -55,15 +60,14 @@ class Configuration extends Map
 		}
 		catch (\Throwable $e) { }
 
-		// ...And an environment dependent file based on the 'rose-env' file contents.
+		// ... And an environment dependent file based on the 'rose-env' file contents.
+        $this->env = 'def';
 		if (Path::exists('rose-env'))
 		{
-			$env = Text::trim(File::getContents('rose-env'));
-
-			if (Path::exists(Main::$CORE_DIR.'/'.$env.'.conf'))
-			{
+			$this->env = Text::trim(File::getContents('rose-env'));
+			if (Path::exists(Main::$CORE_DIR.'/'.$this->env.'.conf')) {
 				try {
-					Configuration::loadFrom (Main::$CORE_DIR.'/'.$env.'.conf', $this, true);
+					Configuration::loadFrom (Main::$CORE_DIR.'/'.$this->env.'.conf', $this, true);
 				}
 				catch (\Throwable $e) {
 				}
@@ -71,9 +75,9 @@ class Configuration extends Map
 		}
     }
 
-	/*
-	**	Parses the given configuration file and stores it on the given map, if no map is provided a new one will be created. The map is returned.
-	*/
+	/**
+     * Parses the given configuration file and stores it on the given map, if no map is provided a new one will be created. The map is returned.
+     */
     public static function loadFrom ($source, $target=null, $merge=false)
     {
         if (Text::position($source, '//') !== false)
@@ -130,7 +134,6 @@ class Configuration extends Map
             if ($line[0] == '[')
             {
 				$line = Text::trim(Text::substring($line, 1, -1));
-
                 if (!$target->has($line) || $merge==false)
                     $target->set($line, new Map());
 
@@ -147,8 +150,7 @@ class Configuration extends Map
 			if ($name == '')
                 continue;
 
-			if ($value == '`')
-			{
+			if ($value == '`') {
 				$tmp1 = '';
 				$tmp2 = $name;
 				$state = 1;
@@ -180,20 +182,17 @@ class Configuration extends Map
             if (typeOf($value) == 'Rose\\Map')
                 continue;
 
-            if (Regex::_matches("/[\r\n\t]/", $value))
-            {
+            if (Regex::_matches("/[\r\n\t]/", $value)) {
                 $buff .= $key."=`\n";
                 $buff .= $value;
                 $buff .= "\n`\n";
             }
-            else
-            {
+            else {
                 $buff .= $key.'='.$value."\n";
             }
 		}
 
-        if (Text::substring($buff,-2) != "\n\n")
-        {
+        if (Text::substring($buff,-2) != "\n\n") {
             $buff .= "\n";
 		}
 
@@ -209,14 +208,12 @@ class Configuration extends Map
                 if (typeOf($value) == 'Rose\\Map')
                     continue;
 
-                if (Regex::_matches("/[\r\n\t]/", $value))
-                {
+                if (Regex::_matches("/[\r\n\t]/", $value)) {
                     $buff .= $key."=`\n";
                     $buff .= $value;
                     $buff .= "\n`\n";
                 }
-                else
-                {
+                else {
                     $buff .= $key.'='.$value."\n";
                 }
             }

@@ -44,10 +44,19 @@ class PostgreSQL extends Driver
         return pg_ping ($conn);
     }
 
-    public function query ($query, $conn, $params) {
+    public function query ($query, $conn, $params)
+    {
         $this->affected_rows = 0;
 
-        $rs = pg_query ($conn, $query);
+        if ($params === null) {
+            $rs = pg_query ($conn, $query);
+            if ($rs === false) return false;
+            $this->affected_rows = pg_affected_rows($rs);
+            if (pg_num_fields($rs) == 0) return true;
+            return $rs;
+        }
+
+        $rs = pg_query_params($conn, $query, $params->__nativeArray);
         if ($rs === false) return false;
 
         $this->affected_rows = pg_affected_rows($rs);
@@ -55,10 +64,19 @@ class PostgreSQL extends Driver
         return $rs;
     }
 
-    public function reader ($query, $conn, $params) {
+    public function reader ($query, $conn, $params)
+    {
         $this->affected_rows = 0;
 
-        $rs = pg_query ($conn, $query);
+        if ($params === null) {
+            $rs = pg_query ($conn, $query);
+            if ($rs === false) return false;
+            $this->affected_rows = pg_affected_rows($rs);
+            if (pg_num_fields($rs) == 0) return true;
+            return $rs;
+        }
+
+        $rs = pg_query_params($conn, $query, $params->__nativeArray);
         if ($rs === false) return false;
 
         $this->affected_rows = pg_affected_rows($rs);

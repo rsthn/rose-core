@@ -1,3 +1,19 @@
+# v4.0.74 - Nov 09 2023
+
+#### Net
+- Added support for `head` method using the new `http::head` expression.
+
+#### Configuration
+- Active `env` is now available using (config.env) variable.
+
+#### PostgreSQL
+- Added support for prepared statements (using native $1, $2, etc).
+
+#### Session
+- Method `destroy` now opens the session (shallow) first to ensure it is deleted.
+
+<br/>
+
 # v4.0.73 - Oct 04 2023
 
 #### SQLServer

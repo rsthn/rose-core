@@ -246,7 +246,6 @@ class Http
 	public static function post ($url, $data, $requestHeaders=null, $method='POST')
 	{
 		$c = curl_init();
-
 		$method = Text::toUpperCase($method);
 
 		$headers = new Map();
@@ -332,7 +331,7 @@ class Http
 		}
 		else
 		{
-			if (!$headers->has('content-type'))
+			if (!$headers->has('content-type') && $data !== '')
 				$headers->set('content-type', 'content-type: ' . ($data[0] == '<' ? 'text/xml' : ($data[0] == '[' || $data[0] == '{' ? 'application/json' : 'application/octet-stream')));
 
 			$fields = $data;
@@ -342,6 +341,9 @@ class Http
 		curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
 		curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
 
+        if ($method == 'HEAD')
+            curl_setopt ($c, CURLOPT_NOBODY, true);
+
 		if ($method == 'POST')
 			curl_setopt ($c, CURLOPT_POST, true);
 		else
@@ -349,7 +351,7 @@ class Http
 
 		curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
 		curl_setopt ($c, CURLINFO_HEADER_OUT, true);
-		curl_setopt ($c, CURLOPT_POSTFIELDS, $fields);
+		curl_setopt ($c, CURLOPT_POSTFIELDS, $fields ? $fields : '');
 
  		curl_setopt($c, CURLOPT_HEADERFUNCTION, function($curl, $header) {
 			self::header ($header, true);
@@ -389,7 +391,7 @@ class Http
 		$method = self::$method;
 		self::$method = 'GET';
 
-		return ($method == 'POST' || $method == 'PUT' || $method == 'DELETE') ? self::fetchPost($url, $fields, $method) : self::fetchGet($url, $fields, $method);
+		return ($method == 'POST' || $method == 'PUT' || $method == 'DELETE' || $method == 'HEAD') ? self::fetchPost($url, $fields, $method) : self::fetchGet($url, $fields, $method);
 	}
 
 	/**
@@ -438,7 +440,27 @@ Expr::register('http::get', function ($args)
 		$fields->merge($data, true);
 	}
 
-	return Http::get($args->get(1), $fields, null);
+	return Http::get($args->get(1), $args->length == 2 ? '' : $fields, null);
+});
+
+/* ****************** */
+/* http::head <url> [<fields>*] */
+
+Expr::register('http::head', function ($args)
+{
+	$fields = new Map();
+
+	for ($i = 2; $i < $args->length; $i++)
+	{
+		$data = $args->get($i);
+
+		if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
+			continue;
+
+		$fields->merge($data, true);
+	}
+
+	return Http::post($args->get(1), $args->length == 2 ? '' : $fields, null, 'HEAD');
 });
 
 /* ****************** */
@@ -464,7 +486,7 @@ Expr::register('http::post', function ($args)
 		$fields->merge($data, true);
 	}
 
-	return Http::post($args->get(1), $fields);
+	return Http::post($args->get(1), $args->length == 2 ? '' : $fields);
 });
 
 /* ****************** */
@@ -490,7 +512,7 @@ Expr::register('http::put', function ($args)
 		$fields->merge($data, true);
 	}
 
-	return Http::post($args->get(1), $fields, null, 'PUT');
+	return Http::post($args->get(1), $args->length == 2 ? '' : $fields, null, 'PUT');
 });
 
 
@@ -517,7 +539,7 @@ Expr::register('http::delete', function ($args)
 		$fields->merge($data, true);
 	}
 
-	return Http::post($args->get(1), $fields, null, 'DELETE');
+	return Http::post($args->get(1), $args->length == 2 ? '' : $fields, null, 'DELETE');
 });
 
 
@@ -532,7 +554,7 @@ Expr::register('http::fetch', function ($args)
 
 	switch (Text::toUpperCase($args->get($j)))
 	{
-		case 'GET': case 'PUT': case 'POST': case 'DELETE':
+		case 'GET': case 'PUT': case 'POST': case 'DELETE': case 'HEAD':
 			Http::$method = Text::toUpperCase($args->get($j++));
 			break;
 	}

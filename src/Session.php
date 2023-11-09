@@ -89,15 +89,16 @@ class Session
     {
 		Session::$data = new Map();
 
-		if (Session::$validSessionId == false)
-			return;
+		if (!Session::$validSessionId) {
+            Session::open(false);
+            if (!Session::$validSessionId)
+			    return;
+        }
 
-		if (Configuration::getInstance()->Session && Configuration::getInstance()->Session->database == 'true')
-		{
+		if (Configuration::getInstance()->Session && Configuration::getInstance()->Session->database == 'true') {
 			Session::dbSessionDelete();
 		}
-		else
-		{
+		else {
 			session_destroy();
 		}
 
