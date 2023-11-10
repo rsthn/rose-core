@@ -1,3 +1,11 @@
+# v4.0.75 - Nov 10 2023
+
+#### Expr
+- Added `std::compare` to compare strings in a C-like fashion.
+- Added `array::sort` to compare arrays providing a custom comparison block.
+
+<br/>
+
 # v4.0.74 - Nov 09 2023
 
 #### Net
