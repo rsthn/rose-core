@@ -2039,6 +2039,16 @@ Expr::register('str::lastIndexOf', function ($args)
 });
 
 /**
+ * Compares two strings and returns 0 if they are equal, -1 if the first is smaller than the second and 1 if
+ * the first is greater than the second.
+ *
+ * str::compare <a> <b>
+ */
+Expr::register('str::compare', function ($args) {
+	return Text::compare($args->get(1), $args->get(2));
+});
+
+/**
 **	Converts all new-line chars in the expression to <br/>.
 **
 **	nl2br <kargs>

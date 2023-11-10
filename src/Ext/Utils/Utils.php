@@ -418,6 +418,51 @@ Expr::register('array::new', function($args)
 	return $array;
 });
 
+/**
+ * array::sort [<a-var>] [<b-var>] <array-expr> <block>
+ */
+Expr::register('_array::sort', function($parts, $data)
+{
+    $a_name = 'a';
+    $b_name = 'b';
+    $i = 1;
+
+    Expr::takeIdentifier($parts, $data, $i, $a_name);
+    Expr::takeIdentifier($parts, $data, $i, $b_name);
+
+    $list = Expr::expand($parts->get($i++), $data, 'arg');
+    if (!$list || \Rose\typeOf($list) != 'Rose\Arry')
+        throw new \Rose\Errors\Error('(array::sort) invalid array expression');
+
+    $block = $parts->slice($i);
+
+    $a_present = false; $a_value = null;
+    if ($data->has($a_name)) {
+        $a_present = true;
+        $a_value = $data->get($a_name);
+    }
+
+    $b_present = false; $b_value = null;
+    if ($data->has($b_name)) {
+        $b_present = true;
+        $b_value = $data->get($b_name);
+    }
+
+    $list->sortx(function($a, $b) use(&$a_name, &$b_name, &$data, &$block) {
+        $data->set($a_name, $a);
+        $data->set($b_name, $b);
+        return Expr::blockValue($block, $data);
+    });
+
+    if ($a_present) $data->set($a_name, $a_value);
+    else $data->remove($a_name);
+
+    if ($b_present) $data->set($b_name, $b_value);
+    else $data->remove($b_name);
+
+    return $list;
+});
+
 Expr::register('array::sort-asc', function($args)
 {
 	$array = $args->get(1);

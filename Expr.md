@@ -1628,6 +1628,7 @@ Evaluates the specified template string (or already parsed template array) using
 # Array
 
 ## `array::new`
+## `array::sort`
 ## `array::sort:asc`
 ## `array::sort:desc`
 ## `array::sortl:asc`

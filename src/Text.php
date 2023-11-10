@@ -237,4 +237,12 @@ class Text
 
 		return (string)$value;
 	}
+
+    /**
+     * Compares two strings and returns a value indicating if they are equal.
+     */
+    public static function compare ($a, $b)
+    {
+        return strcmp ($a, $b);
+    }
 };
