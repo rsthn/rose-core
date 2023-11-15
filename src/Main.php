@@ -35,38 +35,38 @@ use Rose\Ext\Wind;
 */
 function trace ($string, $out='@system.log')
 {
-	static $paths = null;
+    static $paths = null;
 
-	if ($out[0] == '@') {
-		$out = Main::$CWD . '/' . (Main::$CORE_DIR != './' ? Path::append(Main::$CORE_DIR, '../logs/'.Text::substring($out, 1)) : ('./' . Text::substring($out, 1)));
-	}
+    if ($out[0] == '@') {
+        $out = Main::$CWD . '/' . (Main::$CORE_DIR !== '.' ? Path::append(Main::$CORE_DIR, '../logs/'.Text::substring($out, 1)) : ('./logs/' . Text::substring($out, 1)));
+    }
 
-	if (!$paths)
-		$paths = new Map();
+    if (!$paths)
+        $paths = new Map();
 
-	$path = Path::dirname($out);
-	if (!$paths->has($path))
-	{
-		if (!Path::exists($path))
-			Directory::create($path, true);
+    $path = Path::dirname($out);
+    if (!$paths->has($path))
+    {
+        if (!Path::exists($path))
+            Directory::create($path, true);
 
-		$paths->set($path, true);
-	}
+        $paths->set($path, true);
+    }
 
-	try {
-		$fp = @fopen ($out, 'a+t');
-		if (!$fp) return;
+    try {
+        $fp = @fopen ($out, 'a+t');
+        if (!$fp) return;
 
-		fwrite ($fp, $string);
-		fwrite ($fp, "\n");
+        fwrite ($fp, $string);
+        fwrite ($fp, "\n");
 
-		fclose ($fp);
-	}
-	catch (\Exception $e)
-	{
-		if (!Text::endsWith($out, 'errors.log'))
-			\Rose\trace($e->getMessage(), '@errors.log');
-	}
+        fclose ($fp);
+    }
+    catch (\Exception $e)
+    {
+        if (!Text::endsWith($out, 'errors.log'))
+            \Rose\trace($e->getMessage(), '@errors.log');
+    }
 }
 
 /*
@@ -74,74 +74,74 @@ function trace ($string, $out='@system.log')
 */
 function typeOf ($object, $detailed=false)
 {
-	if (is_object ($object))
-	{
-		if ($object instanceof \Closure)
-			return 'function';
+    if (is_object ($object))
+    {
+        if ($object instanceof \Closure)
+            return 'function';
 
-		return get_class($object);
-	}
+        return get_class($object);
+    }
 
-	if ($detailed)
-	{
-		if (is_null($object))
-			return 'null';
+    if ($detailed)
+    {
+        if (is_null($object))
+            return 'null';
 
-		if (is_string($object))
-			return 'string';
+        if (is_string($object))
+            return 'string';
 
-		if (is_bool($object))
-			return 'bool';
+        if (is_bool($object))
+            return 'bool';
 
-		if (is_array($object))
-			return 'array';
+        if (is_array($object))
+            return 'array';
 
-		if (is_int($object))
-			return 'int';
+        if (is_int($object))
+            return 'int';
 
-		if (is_numeric($object))
-			return 'number';
+        if (is_numeric($object))
+            return 'number';
 
-		if (is_callable($object))
-			return 'function';
-	}
+        if (is_callable($object))
+            return 'function';
+    }
 
-	return 'primitive';
+    return 'primitive';
 }
 
 /*
 **	Returns true if the value is an array.
 */
 function isArray ($value) {
-	return is_array ($value);
+    return is_array ($value);
 }
 
 /*
 **	Returns true if the value is an object.
 */
 function isObject ($value) {
-	return is_object ($value);
+    return is_object ($value);
 }
 
 /*
 **	Returns true if the value is an string.
 */
 function isString ($value) {
-	return is_string ($value);
+    return is_string ($value);
 }
 
 /*
 **	Returns true if the value is a numeric value.
 */
 function isNumeric ($value) {
-	return is_numeric ($value);
+    return is_numeric ($value);
 }
 
 /*
 **	Returns true if the value is an integer value.
 */
 function isInteger ($value) {
-	return is_int ($value);
+    return is_int ($value);
 }
 
 /*
@@ -149,53 +149,53 @@ function isInteger ($value) {
 **	using the value, since it may contain extra characters after the number.
 */
 function isNumber ($value) {
-	return is_double ($value);
+    return is_double ($value);
 }
 
 /*
 **	Returns true if the value is a boolean value.
 */
 function isBool ($value) {
-	return is_bool ($value);
+    return is_bool ($value);
 }
 
 /*
 **	Returns the boolean value of the given argument.
 */
 function bool ($value) {
-	if ($value === true || $value === false)
-		return $value;
+    if ($value === true || $value === false)
+        return $value;
 
-	return $value === 'true' || ($value !== 'false' && !!$value);
+    return $value === 'true' || ($value !== 'false' && !!$value);
 }
 
 /*
 **	Raises a warning.
 */
 function raiseWarning ($message) {
-	trigger_error ($message, E_USER_WARNING);
+    trigger_error ($message, E_USER_WARNING);
 }
 
 /*
 **	Raises an error.
 */
 function raiseError ($message) {
-	trigger_error ($message, E_USER_ERROR);
+    trigger_error ($message, E_USER_ERROR);
 }
 
 /*
 **	Returns true if the object is an instance of the given class.
 */
 function isSubTypeOf ($object, $className) {
-	return $object instanceof $className;
+    return $object instanceof $className;
 }
 
 /*
 **	Returns the current time in milliseconds.
 */
 function mstime() {
-	$t = explode (' ', microtime ());
-	return (int) (($t[0] + $t[1]) * 1000);
+    $t = explode (' ', microtime ());
+    return (int) (($t[0] + $t[1]) * 1000);
 }
 
 /*
@@ -203,7 +203,7 @@ function mstime() {
 */
 function error_handler ($errno, $error, $file, $line)
 {
-	throw new Error ($error . sprintf (' (%s %u)', $file, $line));
+    throw new Error ($error . sprintf (' (%s %u)', $file, $line));
 }
 
 /**
@@ -211,11 +211,11 @@ function error_handler ($errno, $error, $file, $line)
  */
 function silent_ini_set ($name, $value)
 {
-	try {
-		ini_set($name, $value);
-	}
-	catch (\Throwable $e) {
-	}
+    try {
+        ini_set($name, $value);
+    }
+    catch (\Throwable $e) {
+    }
 }
 
 /*
@@ -223,178 +223,178 @@ function silent_ini_set ($name, $value)
 */
 function fatal_handler()
 {
-	global $lastException;
+    global $lastException;
 
     $error = error_get_last();
-	$stackTrace = null;
+    $stackTrace = null;
 
-	if ($error != null && ($error['type'] == E_NOTICE || $error['type'] == E_WARNING))
-		$error = null;
+    if ($error != null && ($error['type'] == E_NOTICE || $error['type'] == E_WARNING))
+        $error = null;
 
-	if ($error == null && $lastException == null)
-		return;
+    if ($error == null && $lastException == null)
+        return;
 
-	ob_end_clean();
+    ob_end_clean();
 
-	if (Configuration::getInstance()?->Gateway?->display_errors !== 'true')
-	{
-		$err_id = (string)time();
-		$err_id = substr($err_id, 0, 4) . chr(rand(65,90)) . substr($err_id, 3, 3) . chr(rand(65,90)) . substr($err_id, 6);
-		$s = '[' . date('Y-m-d h:i') . '] ' . $err_id . ': ';
-		$tab = '  ';
+    if (Configuration::getInstance()?->Gateway?->display_errors !== 'true')
+    {
+        $err_id = (string)time();
+        $err_id = substr($err_id, 0, 4) . chr(rand(65,90)) . substr($err_id, 3, 3) . chr(rand(65,90)) . substr($err_id, 6);
+        $s = '[' . date('Y-m-d h:i') . '] ' . $err_id . ': ';
+        $tab = '  ';
         $msg = '';
 
-		if ($error != null)
-		{
-			$s .= 'Fatal Error ' . $error['type'] . ' in ' . basename($error['file']) . ':' . $error['line'] . "\n";
+        if ($error != null)
+        {
+            $s .= 'Fatal Error ' . $error['type'] . ' in ' . basename($error['file']) . ':' . $error['line'] . "\n";
 
-			$msg = trim(Regex::_getString('/.*?:(.+) in/', $error['message'], 1));
-			if ($msg)
-			{
-			}
-			else
+            $msg = trim(Regex::_getString('/.*?:(.+) in/', $error['message'], 1));
+            if ($msg)
+            {
+            }
+            else
             {
                 $msg = $error['message'];
-				$s .= $tab . '*** ' . $msg . " ***\n";
+                $s .= $tab . '*** ' . $msg . " ***\n";
             }
-		}
+        }
 
-		if ($lastException != null)
-		{
+        if ($lastException != null)
+        {
             $msg = $lastException->getMessage();
-			$s .= typeOf($lastException) . ' in ' . basename($lastException->getFile()) . ':' . $lastException->getLine() . "\n";
-			$s .= $tab . '*** ' . $msg . " ***\n";
-			$stackTrace = $lastException->getTrace();
-		}
+            $s .= typeOf($lastException) . ' in ' . basename($lastException->getFile()) . ':' . $lastException->getLine() . "\n";
+            $s .= $tab . '*** ' . $msg . " ***\n";
+            $stackTrace = $lastException->getTrace();
+        }
 
-		if (Wind::$callStack->length > 0)
-			$s .= $tab . 'Wind: ' . Wind::$callStack->map(function($i) { return $i[2]; })->join(", ") . "\n";
+        if (Wind::$callStack->length > 0)
+            $s .= $tab . 'Wind: ' . Wind::$callStack->map(function($i) { return $i[2]; })->join(", ") . "\n";
 
-		if ($stackTrace != null)
-		{
-			foreach ($stackTrace as $err)
-			{
-				if (isset($err['class']))
-					$s .= $tab . $err['class'] . ' :: ' . $err['function'];
-				else
-					$s .= $tab . $err['function'];
+        if ($stackTrace != null)
+        {
+            foreach ($stackTrace as $err)
+            {
+                if (isset($err['class']))
+                    $s .= $tab . $err['class'] . ' :: ' . $err['function'];
+                else
+                    $s .= $tab . $err['function'];
 
-				$s .= ' (';
-				if (isset($err['args']))
-				{
-					for ($i = 0; $i < count($err['args']); $i++)
-					{
-						$s .= typeOf($err['args'][$i], true);
-	
-						if ($i != count($err['args']) - 1)
-							$s .= ', ';
-					}
-				}
-				$s .= ')';
-	
-				if (isset($err['file']))
-					$s .= ' ' . basename($err['file']) . ':' . $err['line'];
+                $s .= ' (';
+                if (isset($err['args']))
+                {
+                    for ($i = 0; $i < count($err['args']); $i++)
+                    {
+                        $s .= typeOf($err['args'][$i], true);
+    
+                        if ($i != count($err['args']) - 1)
+                            $s .= ', ';
+                    }
+                }
+                $s .= ')';
+    
+                if (isset($err['file']))
+                    $s .= ' ' . basename($err['file']) . ':' . $err['line'];
 
-				$s .= "\n";
-			}
-		}
+                $s .= "\n";
+            }
+        }
 
-		\Rose\trace($s, '@errors.log');
+        \Rose\trace($s, '@errors.log');
 
-		if (!headers_sent())
-			header('content-type: application/json');
+        if (!headers_sent())
+            header('content-type: application/json');
 
         if (Configuration::getInstance()?->Gateway?->display_errors !== 'false')
             echo (new Map([ 'response' => 409, 'error' => $msg ]));
         else
-		    echo (new Map([ 'response' => 409, 'error' => 'Unhandled error occurred: '.$err_id ]));
+            echo (new Map([ 'response' => 409, 'error' => 'Unhandled error occurred: '.$err_id ]));
 
-		exit;
-	}
+        exit;
+    }
 
-	echo '<html>';
-	echo '<body style="background: #0f0a0f; padding: 24px;">';
-	echo '<pre style="font-size: 12px; line-height: 1em; color: #fff; padding: 32px 24px;">';
+    echo '<html>';
+    echo '<body style="background: #0f0a0f; padding: 24px;">';
+    echo '<pre style="font-size: 12px; line-height: 1em; color: #fff; padding: 32px 24px;">';
 
-	if ($error != null)
-	{
-		echo '<div style="padding: 2px; color: #fff; font-size: 1.3em;">' . sprintf('Fatal Error %04u', $error['type']) . '</div>';
-		echo '<div style="padding: 2px; color: #888;">' . basename($error['file']) . ':' . $error['line'] . '</div>';
+    if ($error != null)
+    {
+        echo '<div style="padding: 2px; color: #fff; font-size: 1.3em;">' . sprintf('Fatal Error %04u', $error['type']) . '</div>';
+        echo '<div style="padding: 2px; color: #888;">' . basename($error['file']) . ':' . $error['line'] . '</div>';
 
-		$msg = trim(Regex::_getString('/.*?:(.+) in/', $error['message'], 1));
-		if ($msg)
-		{
-			echo '<div style="color: #0ff; margin-top: 16px; margin-bottom: 16px; padding: 8px 0; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $msg . '</div>';
+        $msg = trim(Regex::_getString('/.*?:(.+) in/', $error['message'], 1));
+        if ($msg)
+        {
+            echo '<div style="color: #0ff; margin-top: 16px; margin-bottom: 16px; padding: 8px 0; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $msg . '</div>';
 
-			$a = Regex::_matchAll('/#.+? (.+?)\(([0-9]+)\): ([^:(-]+)(->|::)?(.*)\(/', $msg, true);
-			$n = $a->shift()->length;
+            $a = Regex::_matchAll('/#.+? (.+?)\(([0-9]+)\): ([^:(-]+)(->|::)?(.*)\(/', $msg, true);
+            $n = $a->shift()->length;
 
-			$stackTrace = array();
+            $stackTrace = array();
 
-			for ($i = 0; $i < $n; $i++)
-			{
-				if ($a->get(3)->get($i) == '')
-					$stackTrace[] = ['file' => $a->get(0)->get($i), 'line' => $a->get(1)->get($i), 'function' => $a->get(2)->get($i)];
-				else
-					$stackTrace[] = ['file' => $a->get(0)->get($i), 'line' => $a->get(1)->get($i), 'class' => $a->get(2)->get($i), 'function' => $a->get(4)->get($i)];
-			}
-		}
-		else
-			echo '<div style="color: #0ff; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $error['message'] . '</div>';
-	}
+            for ($i = 0; $i < $n; $i++)
+            {
+                if ($a->get(3)->get($i) == '')
+                    $stackTrace[] = ['file' => $a->get(0)->get($i), 'line' => $a->get(1)->get($i), 'function' => $a->get(2)->get($i)];
+                else
+                    $stackTrace[] = ['file' => $a->get(0)->get($i), 'line' => $a->get(1)->get($i), 'class' => $a->get(2)->get($i), 'function' => $a->get(4)->get($i)];
+            }
+        }
+        else
+            echo '<div style="color: #0ff; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $error['message'] . '</div>';
+    }
 
-	if ($lastException != null)
-	{
-		echo '<div style="padding: 2px; color: #fff; font-size: 1.3em;">' . typeOf($lastException) . '</div>';
-		echo '<div style="padding: 2px; color: #888;">' . basename($lastException->getFile()) . ':' . $lastException->getLine() . '</div>';
+    if ($lastException != null)
+    {
+        echo '<div style="padding: 2px; color: #fff; font-size: 1.3em;">' . typeOf($lastException) . '</div>';
+        echo '<div style="padding: 2px; color: #888;">' . basename($lastException->getFile()) . ':' . $lastException->getLine() . '</div>';
 
-		echo '<div style="padding: 8px 0; color: #0ff; margin-top: 16px; margin-bottom: 16px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $lastException->getMessage() . '</div>';
+        echo '<div style="padding: 8px 0; color: #0ff; margin-top: 16px; margin-bottom: 16px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $lastException->getMessage() . '</div>';
 
-		$stackTrace = $lastException->getTrace();
-	}
+        $stackTrace = $lastException->getTrace();
+    }
 
-	if ($stackTrace != null)
-	{
-		foreach ($stackTrace as $err)
-		{
-			echo '<div style="margin-top: 4px; padding: 2px 0; color: #ddd;">';
+    if ($stackTrace != null)
+    {
+        foreach ($stackTrace as $err)
+        {
+            echo '<div style="margin-top: 4px; padding: 2px 0; color: #ddd;">';
 
-			if (isset($err['class']))
-				echo '<span style="color: #3f7;">(' . $err['class'] . ') </span>';
+            if (isset($err['class']))
+                echo '<span style="color: #3f7;">(' . $err['class'] . ') </span>';
 
-			echo '<b>'.$err['function'].'</b>';
+            echo '<b>'.$err['function'].'</b>';
 
-			echo ' (';
-			if (isset($err['args']))
-			{
-				for ($i = 0; $i < count($err['args']); $i++)
-				{
-					echo typeOf($err['args'][$i], true);
+            echo ' (';
+            if (isset($err['args']))
+            {
+                for ($i = 0; $i < count($err['args']); $i++)
+                {
+                    echo typeOf($err['args'][$i], true);
 
-					if ($i != count($err['args']) - 1)
-						echo ', ';
-				}
-			}
-			echo ')';
+                    if ($i != count($err['args']) - 1)
+                        echo ', ';
+                }
+            }
+            echo ')';
 
-			if (isset($err['file']))
-			{
-				echo '<span style="color: #f3c;">';
-				echo ' ' . basename($err['file']) . ':' . $err['line'] . ' ';
-				echo '</span>';
-			}
+            if (isset($err['file']))
+            {
+                echo '<span style="color: #f3c;">';
+                echo ' ' . basename($err['file']) . ':' . $err['line'] . ' ';
+                echo '</span>';
+            }
 
-			echo '</div>';
-		}
-	}
+            echo '</div>';
+        }
+    }
 
-	echo '<div style="color: #bbb; margin-top: 24px;">';
-	echo '@rsthn/rose ' . Main::version() . ' &middot; PHP ' . phpversion();
-	echo '</div>';
+    echo '<div style="color: #bbb; margin-top: 24px;">';
+    echo '@rsthn/rose ' . Main::version() . ' &middot; PHP ' . phpversion();
+    echo '</div>';
 
-	echo '</pre>';
-	echo '</body>';
-	echo '</html>';
+    echo '</pre>';
+    echo '</body>';
+    echo '</html>';
 }
 
 /*
@@ -402,132 +402,132 @@ function fatal_handler()
 */
 class Main
 {
-	/*
-	**	Project's core directory.
-	*/
-	public static $CORE_DIR = null;
+    /*
+    **	Project's core directory.
+    */
+    public static $CORE_DIR = null;
 
-	/**
-	 * Original current working directory.
-	 */
-	public static $CWD = null;
+    /**
+     * Original current working directory.
+     */
+    public static $CWD = null;
 
-	/*
-	**	Constant that indicates if the framework has been loaded and initialized. Used as a dummy var to force autoload of the Main class by using `Main::$loaded`.
-	*/
-	public static $loaded = true;
+    /*
+    **	Constant that indicates if the framework has been loaded and initialized. Used as a dummy var to force autoload of the Main class by using `Main::$loaded`.
+    */
+    public static $loaded = true;
 
-	/**
-	 * Returns the version of the framework.
-	 */
-	static function version ()
-	{
-		return json_decode(file_get_contents(dirname(__FILE__).'/../composer.json'))->version;
-	}
+    /**
+     * Returns the version of the framework.
+     */
+    static function version ()
+    {
+        return json_decode(file_get_contents(dirname(__FILE__).'/../composer.json'))->version;
+    }
 
-	/*
-	**	Sets the global definitions and PHP configuration. Called by `cli` or `initialize`.
-	*/
-	static function defs ($cliMode=false)
-	{
-		// Configure PHP environment.
-		gc_disable();
-		ignore_user_abort(false);
-		umask(0);
-		error_reporting (E_ALL & ~E_NOTICE & ~E_DEPRECATED);
-		mt_srand ((int)(((double)microtime ()) * 10000));
-		set_time_limit ($cliMode ? 0 : 300);
+    /*
+    **	Sets the global definitions and PHP configuration. Called by `cli` or `initialize`.
+    */
+    static function defs ($cliMode=false)
+    {
+        // Configure PHP environment.
+        gc_disable();
+        ignore_user_abort(false);
+        umask(0);
+        error_reporting (E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+        mt_srand ((int)(((double)microtime ()) * 10000));
+        set_time_limit ($cliMode ? 0 : 300);
 
-		// Set global error handlers and disable PHP error output.
-		if (!$cliMode) {
-			set_error_handler ('Rose\\error_handler', E_STRICT | E_USER_ERROR | E_WARNING | E_USER_WARNING);
-			register_shutdown_function ('Rose\\fatal_handler');
-		}
+        // Set global error handlers and disable PHP error output.
+        if (!$cliMode) {
+            set_error_handler ('Rose\\error_handler', E_STRICT | E_USER_ERROR | E_WARNING | E_USER_WARNING);
+            register_shutdown_function ('Rose\\fatal_handler');
+        }
 
-		silent_ini_set ('display_errors', '0');
+        silent_ini_set ('display_errors', '0');
 
-		// Set global project core directory (use 'resources' for legacy systems, and 'rcore' for Rose 3.1+ systems).
-		if (self::$CORE_DIR == null)
-		{
-			if (file_exists('resources/'))
-				self::$CORE_DIR = 'resources';
-			else if (file_exists('rcore/'))
-				self::$CORE_DIR = 'rcore';
-			else
-				self::$CORE_DIR = './';
-		}
+        // Set global project core directory (use 'resources' for legacy systems, 'rcore' for Rose 3.1+ and '.' for 4.1+).
+        if (self::$CORE_DIR == null)
+        {
+            if (file_exists('resources/'))
+                self::$CORE_DIR = 'resources';
+            else if (file_exists('rcore/'))
+                self::$CORE_DIR = 'rcore';
+            else
+                self::$CORE_DIR = '.';
+        }
 
-		self::$CWD = str_replace('\\', '/', getcwd());
-	}
+        self::$CWD = str_replace('\\', '/', getcwd());
+    }
 
-	/*
-	**	Initializes the primary framework classes for CLI operation.
-	*/
-	static function cli ($fsroot, $keepSafes=false)
-	{
-		Main::defs(!$keepSafes);
+    /*
+    **	Initializes the primary framework classes for CLI operation.
+    */
+    static function cli ($fsroot, $keepSafes=false)
+    {
+        Main::defs(!$keepSafes);
 
-		Expr::$cachePath = null;
+        Expr::$cachePath = null;
 
-		ignore_user_abort(true);
-		set_time_limit(0);
+        ignore_user_abort(true);
+        set_time_limit(0);
 
-		try {
-			Gateway::getInstance()->init(true, $fsroot);
-		}
-		catch (\Throwable $e)
-		{
-			$lastException = $e;
-		}
+        try {
+            Gateway::getInstance()->init(true, $fsroot);
+        }
+        catch (\Throwable $e)
+        {
+            $lastException = $e;
+        }
 
-		register_shutdown_function (function() {
-			Gateway::getInstance()->close();
-		});
-	}
+        register_shutdown_function (function() {
+            Gateway::getInstance()->close();
+        });
+    }
 
-	/*
-	**	Initializes the primary framework classes and passes control to the Gateway. If $callback is not null, it will be executed
-	**	after Gateway's main().
-	*/
-	static function initialize ($fsroot, $callback)
-	{
-		Main::defs();
+    /*
+    **	Initializes the primary framework classes and passes control to the Gateway. If $callback is not null, it will be executed
+    **	after Gateway's main().
+    */
+    static function initialize ($fsroot, $callback)
+    {
+        Main::defs();
 
-		// Load specially encoded request if "req64" parameter is set.
-		if (isset($_REQUEST['req64']))
-		{
-			parse_str (base64_decode ($_REQUEST['req64']), $tmp);
-			$_REQUEST = array_merge($_REQUEST, $tmp);
-		}
+        // Load specially encoded request if "req64" parameter is set.
+        if (isset($_REQUEST['req64']))
+        {
+            parse_str (base64_decode ($_REQUEST['req64']), $tmp);
+            $_REQUEST = array_merge($_REQUEST, $tmp);
+        }
 
-		$ms_start = mstime ();
+        $ms_start = mstime ();
 
-		global $lastException;
-		$lastException = null;
+        global $lastException;
+        $lastException = null;
 
-		try
-		{
-			Gateway::getInstance()->init(false, $fsroot);
+        try
+        {
+            Gateway::getInstance()->init(false, $fsroot);
 
-			try {
-				Gateway::getInstance()->main();
-			}
-			catch (FalseError $e) {
-			}
+            try {
+                Gateway::getInstance()->main();
+            }
+            catch (FalseError $e) {
+            }
 
-			if ($callback != null)
-				$callback();
+            if ($callback != null)
+                $callback();
 
-			Gateway::getInstance()->close();
-		}
-		catch (\Throwable $e)
-		{
-			$lastException = $e;
-		}
+            Gateway::getInstance()->close();
+        }
+        catch (\Throwable $e)
+        {
+            $lastException = $e;
+        }
 
-		$ms_end = mstime();
+        $ms_end = mstime();
 
-		if (Configuration::getInstance()?->Gateway?->access_log == 'true')
-			trace (sprintf ('%s   %7.2f MB   %6d ms   %s   %s', (string)(new DateTime()), memory_get_peak_usage()/1048576, $ms_end-$ms_start, $_SERVER['REMOTE_ADDR'], $_SERVER['REQUEST_URI']), '@access.log');
-	}
+        if (Configuration::getInstance()?->Gateway?->access_log == 'true')
+            trace (sprintf ('%s   %7.2f MB   %6d ms   %s   %s', (string)(new DateTime()), memory_get_peak_usage()/1048576, $ms_end-$ms_start, $_SERVER['REMOTE_ADDR'], $_SERVER['REQUEST_URI']), '@access.log');
+    }
 };

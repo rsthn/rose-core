@@ -71,17 +71,21 @@ class MySQLi extends Driver
             if ($value === null) { $types .= 's'; continue; }
             if ($value === true || $value === false) {  $types .= 'i'; continue; }
             if (\Rose\isInteger($value)) { $types .= 'i'; continue; }
-            if (\Rose\isNumeric($value)) { $types .= 'd'; continue; }
+            if (\Rose\isNumber($value)) { $types .= 'd'; continue; }
             if (Text::length($value) > 1024) $types .= 'b'; else $types .= 's';
         }
 
         $stmt = $conn->prepare($query);
         $stmt->bind_param($types, ...$params->__nativeArray);
 
-        $stmt->execute();
+        $success = $stmt->execute();
+        if (!$success) {
+            $stmt->close();
+            return false;
+        }
         $result = $stmt->get_result();
         $stmt->close();
-        return $result;
+        return $result === false ? true : $result;
     }
 
     public function reader ($query, $conn, $params) {
@@ -93,17 +97,21 @@ class MySQLi extends Driver
             if ($value === null) { $types .= 's'; continue; }
             if ($value === true || $value === false) {  $types .= 'i'; continue; }
             if (\Rose\isInteger($value)) { $types .= 'i'; continue; }
-            if (\Rose\isNumeric($value)) { $types .= 'd'; continue; }
+            if (\Rose\isNumber($value)) { $types .= 'd'; continue; }
             if (Text::length($value) > 1024) $types .= 'b'; else $types .= 's';
         }
 
         $stmt = $conn->prepare($query);
         $stmt->bind_param($types, ...$params->__nativeArray);
 
-        $stmt->execute();
+        $success = $stmt->execute();
+        if (!$success) {
+            $stmt->close();
+            return false;
+        }
         $result = $stmt->get_result();
         $stmt->close();
-        return $result;
+        return $result === false ? true : $result;
     }
 
     public function getNumRows ($rs, $conn) {

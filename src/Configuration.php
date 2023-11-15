@@ -54,20 +54,21 @@ class Configuration extends Map
     {
 		$this->clear();
 
-		// Load default configuration file...
+        // Load default configuration file...
+        $basePath = Main::$CORE_DIR == '.' ? './conf/' : Main::$CORE_DIR.'/conf/';
 		try {
-			Configuration::loadFrom (Main::$CORE_DIR.'/system.conf', $this, true);
+			Configuration::loadFrom ($basePath.'system.conf', $this, true);
 		}
 		catch (\Throwable $e) { }
 
-		// ... And an environment dependent file based on the 'rose-env' file contents.
+		// ... And a custom file based on the 'rose-env' file contents.
         $this->env = 'def';
 		if (Path::exists('rose-env'))
 		{
 			$this->env = Text::trim(File::getContents('rose-env'));
-			if (Path::exists(Main::$CORE_DIR.'/'.$this->env.'.conf')) {
+			if (Path::exists($basePath.$this->env.'.conf')) {
 				try {
-					Configuration::loadFrom (Main::$CORE_DIR.'/'.$this->env.'.conf', $this, true);
+					Configuration::loadFrom ($basePath.$this->env.'.conf', $this, true);
 				}
 				catch (\Throwable $e) {
 				}
