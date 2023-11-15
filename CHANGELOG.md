@@ -1,3 +1,25 @@
+# v4.1.0 - Nov 15 2023
+
+#### General
+- Folder `rcore` has been deprecated, contents can be put in the root folder, and configuration files go now in the 'conf' folder.
+
+#### Expr
+- Improved error messages to be more consistent.
+- Support added to `fn` to allow default parameters.
+- Fixed bug causing function returning just a native keyword type to throw an error such as `(fn true)`
+- Added support to allow a rest parameter (in `fn` and `def-fn`), should be prefixed with ampersand: `(fn a b &rest)`
+- Variable `self` available in `fn` to access the function definer data scope.
+- Fixed bug that allowed function names to start with underscore, that is now not supported to prevent issues with internal functions.
+- Added `(debug::contextId)` returns the current execution context ID.
+- Added `(get-fn function-name)` returns the reference to the specified function.
+- Added `(set-fn function-name [function-reference|null])` sets or removes the reference of a function in the root context.
+
+#### MySQLi
+- Fixed bug causing strings such as '003' to be considered a number when it should be a string (prepared statements).
+- Fixed bug causing prepared statement to return false when the execution was actually successful.
+
+<br/>
+
 # v4.0.75 - Nov 10 2023
 
 #### Expr
