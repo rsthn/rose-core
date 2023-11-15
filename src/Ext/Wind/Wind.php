@@ -667,7 +667,7 @@ Expr::register('return', function(...$args) { return Wind::_return(...$args); })
 Expr::register('_echo', function($parts, $data) { return Wind::_echo($parts, $data, true); });
 Expr::register('_print', function($parts, $data) { return Wind::_echo($parts, $data, false); });
 Expr::register('_trace', function(...$args) { return Wind::_trace(...$args); });
-Expr::register('_trace::alt', function(...$args) { return Wind::_trace_alt(...$args); });
+Expr::register('_trace-alt', function(...$args) { return Wind::_trace_alt(...$args); });
 Expr::register('_call', function(...$args) { return Wind::_call(...$args); });
 Expr::register('_icall', function(...$args) { return Wind::_icall(...$args); });
 

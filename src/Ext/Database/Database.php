@@ -17,17 +17,6 @@ Resources::getInstance()->registerConstructor ('Database', function() {
 });
 
 /**
- * Escapes a value to be used in SQL queries. Does not take driver into account.
- * Marked as deprecated and will surely disappear in a future version. Use `db::escape` instead.
- * @deprecated
- * @code (escape <value>)
- * @example (escape "Jack O'Neill")
- */
-Expr::register('escape', function ($args) {
-	return Connection::escape($args->get(1));
-});
-
-/**
  * Sets the current conection. If `null` is specified the default connection will be used.
  * @code (db::conn <connection|null>)
  */

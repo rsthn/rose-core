@@ -208,17 +208,17 @@ Expr::register('dir::entries', function ($args)
 	return Directory::read ($args->get(1), false, $args->{2} ? $args->{2} : '/.+/', 0, Directory::READ_FILES | Directory::READ_DIRS);
 });
 
-Expr::register('dir::files:recursive', function ($args)
+Expr::register('dir::files-recursive', function ($args)
 {
 	return Directory::readFiles ($args->get(1), true, $args->{2} ? $args->{2} : '/.+/')?->files ?? new Arry();
 });
 
-Expr::register('dir::dirs:recursive', function ($args)
+Expr::register('dir::dirs-recursive', function ($args)
 {
 	return Directory::readDirs ($args->get(1), true, $args->{2} ? $args->{2} : '/.+/')?->dirs ?? new Arry();
 });
 
-Expr::register('dir::entries:recursive', function ($args)
+Expr::register('dir::entries-recursive', function ($args)
 {
 	return Directory::read ($args->get(1), true, $args->{2} ? $args->{2} : '/.+/', 0, Directory::READ_FILES | Directory::READ_DIRS);
 });
@@ -229,7 +229,7 @@ Expr::register('dir::remove', function ($args)
 	return null;
 });
 
-Expr::register('dir::remove:recursive', function ($args)
+Expr::register('dir::remove-recursive', function ($args)
 {
 	Directory::remove($args->get(1), true);
 	return null;

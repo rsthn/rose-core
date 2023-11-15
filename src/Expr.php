@@ -1716,8 +1716,6 @@ Expr::register('gt', function($args) { return $args->get(1) > $args->get(2); });
 Expr::register('ge', function($args) { return $args->get(1) >= $args->get(2); });
 Expr::register('isnotnull', function($args) { return $args->get(1) !== null; });
 Expr::register('isnull', function($args) { return $args->get(1) === null; });
-Expr::register('isnotempty', function($args) { return !!$args->get(1); });// DEPRECATE
-Expr::register('isempty', function($args) { return !$args->get(1); });// DEPRECATE
 Expr::register('iszero', function($args) { return (float)$args->get(1) == 0; });
 
 Expr::register('eq?', function($args) { return $args->get(1) == $args->get(2); });
@@ -1727,12 +1725,8 @@ Expr::register('lt?', function($args) { return $args->get(1) < $args->get(2); })
 Expr::register('le?', function($args) { return $args->get(1) <= $args->get(2); });
 Expr::register('gt?', function($args) { return $args->get(1) > $args->get(2); });
 Expr::register('ge?', function($args) { return $args->get(1) >= $args->get(2); });
-Expr::register('notnull?', function($args) { return $args->get(1) !== null; });  // DEPRECATE
 Expr::register('not-null?', function($args) { return $args->get(1) !== null; });
 Expr::register('null?', function($args) { return $args->get(1) === null; });
-Expr::register('notempty?', function($args) { return !!$args->get(1); });  // DEPRECATE
-Expr::register('not-empty?', function($args) { return !!$args->get(1); }); // DEPRECATE
-Expr::register('empty?', function($args) { return !$args->get(1); }); // DEPRECATE
 Expr::register('zero?', function($args) { return (float)$args->get(1) == 0; });
 Expr::register('even?', function($args) { return ((int)$args->get(1) & 1) == 0; });
 Expr::register('odd?', function($args) { return ((int)$args->get(1) & 1) == 1; });
@@ -2214,49 +2208,8 @@ Expr::register('_each', function ($parts, $data)
 });
 
 /**
-**	foreach [<varname>] <array-expr> <block> (DEPRECATED)
 **	for [<varname>] <array-expr> <block>
 */
-Expr::register('_foreach', function ($parts, $data)
-{
-    $var_name = 'i';
-    $i = 1;
-
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
-
-    $list = Expr::value($parts->get($i), $data);
-
-    $j = 0;
-
-    if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
-        return $list;
-
-    $block = $parts->slice($i+1);
-
-    foreach ($list->__nativeArray as $key => $item)
-    {
-        $data->set($var_name, $item);
-        $data->set($var_name . '##', $j++);
-        $data->set($var_name . '#', $key);
-
-        try {
-            Expr::blockValue($block, $data);
-        }
-        catch (\Throwable $e) {
-            $name = $e->getMessage();
-            if ($name == 'EXC_BREAK') break;
-            if ($name == 'EXC_CONTINUE') continue;
-            throw $e;
-        }
-    }
-
-    $data->remove($var_name);
-    $data->remove($var_name . '##');
-    $data->remove($var_name . '#');
-
-    return $list;
-});
-
 Expr::register('_for', function ($parts, $data)
 {
     $var_name = 'i';
@@ -2676,18 +2629,6 @@ Expr::register('_while', function ($parts, $data)
         }
     }
 
-    return null;
-});
-
-/**
-**	Writes the raw expression data to standard output. Used to debug expressions.
-**
-**	expr_debug <expr>
-*/
-// DEPRECATE
-Expr::register('_expr_debug', function ($parts, $data)
-{
-    echo $parts->get(1);
     return null;
 });
 

@@ -1,3 +1,31 @@
+# v4.1.1 - Nov 15 2023
+
+- 📝 Renamed the following expressions:
+  | Old Name | New Name |
+  | -------- | -------- |
+  | trace::alt | trace-alt |
+  | dir::files:recursive | dir::files-recursive |
+  | dir::dirs:recursive | dir::dirs-recursive |
+  | dir::entries:recursive | dir::entries-recursive |
+  | dir::remove:recursive | dir::remove-recursive |
+
+- 🔻 Removed the following deprecated expressions:
+  | Expression | Direct Replacement | Alternative |
+  | ---------- | ------------------ | ----------- |
+  | array::indexof | array::indexOf |
+  | map::keyof | map::keyOf |
+  | escape | db::escape |
+  | isnotempty | - | isnotnull
+  | isempty | - | isnull
+  | notnull? | not-null? |
+  | notempty? | - | not-null?
+  | not-empty? | - | not-null?
+  | empty? | - | null?
+  | foreach | - | for
+  | expr_debug | - | -
+
+<br/>
+
 # v4.1.0 - Nov 15 2023
 
 #### General

@@ -536,11 +536,6 @@ Expr::register('array::remove', function($args)
 	return $args->get(1)->remove((int)$args->get(2));
 });
 
-Expr::register('array::indexof', function($args) // violet: deprecate later
-{
-	return $args->get(1)->indexOf($args->get(2));
-});
-
 Expr::register('array::indexOf', function($args)
 {
 	return $args->get(1)->indexOf($args->get(2));
@@ -688,11 +683,6 @@ Expr::register('map::has', function($args)
 Expr::register('map::remove', function($args)
 {
 	return $args->get(1)->remove((string)$args->get(2));
-});
-
-Expr::register('map::keyof', function($args) //violet: deprecate later
-{
-	return $args->get(1)->keyOf($args->get(2));
 });
 
 Expr::register('map::keyOf', function($args)
