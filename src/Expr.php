@@ -1789,6 +1789,7 @@ Expr::register('in?', function ($args)
     return false;
 });
 
+// VIOLET: DEPRECATE
 /**
 **	Executes the block and returns null.
 **
@@ -2197,7 +2198,15 @@ Expr::register('_each', function ($parts, $data)
         $data->set($var_name . '##', $j++);
         $data->set($var_name . '#', $key);
 
-        $s->push(Expr::blockValue($block, $data));
+        try {
+            $s->push(Expr::blockValue($block, $data));
+        }
+        catch (\Throwable $e) {
+            $name = $e->getMessage();
+            if ($name == 'EXC_BREAK') return false;
+            if ($name == 'EXC_CONTINUE') return;
+            throw $e;
+        }
     });
 
     $data->remove($var_name);

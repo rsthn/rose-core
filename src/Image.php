@@ -223,7 +223,7 @@ class Image
             if ($holdAspect)
                 $h = ($h / $this->width()) * $width;
 
-            $this->resize ($width, $h);
+            $this->resize ($width, intval($h));
         }
         else
             return imagesx ($this->image);
@@ -241,7 +241,7 @@ class Image
             if ($holdAspect)
 				$w = ($w / $this->height()) * $height;
 
-            $this->resize ($w, $height);
+            $this->resize (intval($w), $height);
         }
         else
             return imagesy ($this->image);
@@ -267,7 +267,7 @@ class Image
     public function scale (float $wf, float $hf=null, $rewrite=true)
     {
 		if ($hf === null) $hf = $wf;
-        return $this->resize ($this->width()*$wf, $this->height()*$hf, $rewrite);
+        return $this->resize (intval($this->width()*$wf), intval($this->height()*$hf), $rewrite);
     }
 
 	/*

@@ -342,7 +342,7 @@ class Session
 		}
 
         if ($create == true)
-            $conn->execQuery("INSERT INTO ##sessions SET created='".(string)(new DateTime())."', session_id=".Connection::escape(Session::$sessionId).", data=''");
+            $conn->execQuery("INSERT INTO ##sessions (created_at, session_id, data) VALUES ('".(string)(new DateTime())."', ".Connection::escape(Session::$sessionId).", '')");
 
 		return true;
     }
@@ -356,16 +356,13 @@ class Session
 		$device_id = Session::$data->has('device_id') ? Connection::escape(Session::$data->device_id) : 'NULL';
 		$last_activity = Session::$data->has('last_activity') ? Connection::escape(Session::$data->last_activity) : 'NULL';
 
-		if (!$shallow)
-		{
+		if (!$shallow) {
 			$data = Connection::escape(base64_encode((string)(Session::$data)));
-
 			Resources::getInstance()->Database->execQuery(
 				"UPDATE ##sessions SET last_activity=".$last_activity.", user_id=".$user_id.", device_id=".$device_id.", data=".$data." WHERE session_id=".Connection::escape(Session::$sessionId)
 			);
 		}
-		else
-		{
+		else {
 			Resources::getInstance()->Database->execQuery(
 				"UPDATE ##sessions SET last_activity=".$last_activity." WHERE session_id=".Connection::escape(Session::$sessionId)
 			);
@@ -384,25 +381,21 @@ class Session
 };
 
 /*
-	**NOTE** : utf8mb4_bin collation is required to make lowercase and uppercase distinction.
-
 	DROP TABLE IF EXISTS sessions;
 	CREATE TABLE sessions
 	(
 		session_id varchar(48) primary key not null,
 
-		created datetime default null,
+		created_at datetime default null,
 		last_activity datetime default null,
 
 		device_id varchar(48) default null,
-        index idx_device_id (device_id),
+        INDEX (device_id),
 
-		user_id int unsigned default null,
-		foreign key (user_id) references users (user_id),
-
+		user_id int unsigned default null foreign key references users (user_id),
 		data varchar(8192) default null
 	)
-	ENGINE=InnoDB CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+	ENGINE=InnoDB CHARSET=utf8mb4 COLLATE=utf8_unicode_ci;
 
 
 	DROP PROCEDURE IF EXISTS session_cleanup;

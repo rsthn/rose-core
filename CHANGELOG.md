@@ -1,3 +1,19 @@
+# v4.1.2 - Nov 20 2023
+
+#### General
+- Updated documentation.
+
+#### Expr
+- Added support for 'break' and 'continue' to 'each' blocks.
+
+#### Image
+- Fixed some bugs related to warnings of precision loss when converting float to int.
+
+#### Session
+- Updated definition of database table.
+
+<br/>
+
 # v4.1.1 - Nov 15 2023
 
 - 📝 Renamed the following expressions:

@@ -676,20 +676,24 @@ Sets the value of one or more variables in the context.
 ; 12
 ```
 
-## `inc` \<var-name>
-Increments the value of a variable.
+## `inc` \<var-name> [\<value>]
+Increases the value of a variable, default value is 1.
 ```lisp
 (set a 0)
 (inc a)
 ; 1
+(inc a 10)
+; 11
 ```
 
-## `dec` \<var-name>
-Decrements the value of a variable.
+## `dec` \<var-name> [\<value>]
+Decreases the value of a variable, default value is 1.
 ```lisp
-(set a 0)
+(set a 5)
 (dec a)
-; -1
+; 4
+(dec a 2)
+; 2
 ```
 
 ## `append` \<var-name> \<value>
