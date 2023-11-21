@@ -1860,7 +1860,7 @@ Expr::register('_set', function ($parts, $data)
 });
 
 /**
-**	Increments the value of a variable by the given value (or 1 if none provided).
+**	Increases the value of a variable by the given value (or 1 if none provided).
 **
 **	inc <varname-expr> [<value>]
 */
@@ -1877,7 +1877,7 @@ Expr::register('_inc', function ($parts, $data)
 });
 
 /**
-**	Decrements the value of a variable by the given value (or 1 if none provided).
+**	Decreases the value of a variable by the given value (or 1 if none provided).
 **
 **	dec <varname-expr> [<value>]
 */
@@ -2061,7 +2061,7 @@ Expr::register('nl2br', function ($args)
 **
 **	% <tag-name> <value>
 */
-Expr::register('%', function ($args)
+Expr::register('%', function ($args) // VIOLET: DEPRECATE
 {
     $args->shift();
     $name = $args->shift();
@@ -2092,7 +2092,7 @@ Expr::register('%', function ($args)
 **
 **	%% <tag-name> [<attr> <value>]* [<value>]
 */
-Expr::register('%%', function ($args)
+Expr::register('%%', function ($args) // VIOLET: DEPRECATE
 {
     $args->shift();
     $name = $args->shift();
@@ -2147,10 +2147,9 @@ Expr::register('split', function ($args)
 });
 
 /**
-**	Returns an array with the keys of the object.
-**
-**	keys <object-expr>
-*/
+ * Returns an array with the keys of the object.
+ * keys <object-expr>
+ */
 Expr::register('keys', function ($args)
 {
     if ($args->get(1) && typeOf($args->get(1)) == 'Rose\\Map')
@@ -2160,10 +2159,9 @@ Expr::register('keys', function ($args)
 });
 
 /**
-**	Returns an array with the values of the object.
-**
-**	values <object-expr>
-*/
+ * Returns an array with the values of the object.
+ * values <object-expr>
+ */
 Expr::register('values', function ($args)
 {
     if ($args->get(1) && typeOf($args->get(1)) == 'Rose\\Map')
@@ -2173,9 +2171,10 @@ Expr::register('values', function ($args)
 });
 
 /**
-**	each [<varname>] <array-expr> <block>
-*/
-Expr::register('_each', function ($parts, $data)
+ * Executes the specified block for each item in the list and constructs a new list with the returned values.
+ * each [<varname>] <array-expr> <block>
+ */
+Expr::register('_each', function ($parts, $data) // VIOLET: DEPRECATE
 {
     $var_name = 'i';
     $i = 1;
@@ -2217,8 +2216,9 @@ Expr::register('_each', function ($parts, $data)
 });
 
 /**
-**	for [<varname>] <array-expr> <block>
-*/
+ * Executes the specified block for each item in the list.
+ * for [<varname>] <array-expr> <block>
+ */
 Expr::register('_for', function ($parts, $data)
 {
     $var_name = 'i';
@@ -2227,7 +2227,6 @@ Expr::register('_for', function ($parts, $data)
     Expr::takeIdentifier($parts, $data, $i, $var_name);
 
     $list = Expr::value($parts->get($i), $data);
-
     $j = 0;
 
     if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
@@ -2261,10 +2260,9 @@ Expr::register('_for', function ($parts, $data)
 
 
 /**
-**	Returns `valueA` if the expression is `true` otherwise returns `valueB` or empty string if valueB was not specified. This is a short version of the `if` function.
-**
-**	? <expr> <valueA> [<valueB>]
-*/
+ * Returns `valueA` if the expression is `true` otherwise returns `valueB` or empty string if valueB was not specified. This is a short version of the `if` function.
+ * ? <expr> <valueA> [<valueB>]
+ */
 Expr::register('_?', function ($parts, $data)
 {
     if (Expr::expand($parts->get(1), $data, 'arg'))
@@ -2277,10 +2275,9 @@ Expr::register('_?', function ($parts, $data)
 });
 
 /**
-**	Returns the value if the expression is true, supports 'elif' and 'else' as well.
-**
-**	if <condition> <block> [elif <condition> <block>] [else <block>]
-*/
+ * Returns the value if the expression is true, supports 'elif' and 'else' as well.
+ * if <condition> <block> [elif <condition> <block>] [else <block>]
+ */
 Expr::register('_if', function ($parts, $data)
 {
     $mode = 0;
@@ -2312,13 +2309,11 @@ Expr::register('_if', function ($parts, $data)
             case 2: // Find else and run block, or elif and evaluate condition.
                 if ($value->type == 'identifier')
                 {
-                    if ($value->data == 'else')
-                    {
+                    if ($value->data == 'else') {
                         $mode = 1;
                         $start = $i+1;
                     }
-                    else if ($value->data == 'elif')
-                    {
+                    else if ($value->data == 'elif') {
                         $mode = 0;
                     }
                 }
@@ -2331,16 +2326,18 @@ Expr::register('_if', function ($parts, $data)
 });
 
 /**
-**	block <block...>
-*/
+ * Returns the value of the block.
+ * block <block...>
+ */
 Expr::register('_block', function ($parts, $data)
 {
     return Expr::blockValue($parts->slice(1), $data);
 });
 
 /**
-**	when <condition> <block>
-*/
+ * Executes the block if the condition is true.
+ * when <condition> <block>
+ */
 Expr::register('_when', function ($parts, $data)
 {
     if (Expr::expand($parts->get(1), $data, 'arg'))
@@ -2350,8 +2347,9 @@ Expr::register('_when', function ($parts, $data)
 });
 
 /**
-**	when-not <condition> <block>
-*/
+ * Executes the block if the condition is false.
+ * when-not <condition> <block>
+ */
 Expr::register('_when-not', function ($parts, $data)
 {
     if (!Expr::expand($parts->get(1), $data, 'arg'))
@@ -2424,7 +2422,7 @@ Expr::register('_switch', function ($parts, $data)
 });
 
 /**
-**	case <expr> <case1> <value1> ... <caseN> <valueN> default <defvalue> 
+**	case <expr> <case1> <value1> ... <caseN> <valueN> [else] <defvalue> 
 */
 Expr::register('_case', function ($parts, $data)
 {
@@ -2436,7 +2434,7 @@ Expr::register('_case', function ($parts, $data)
         $case_value = (string)Expr::expand($parts->get($i), $data, 'arg');
         if ($i == $n-1 && ($n&1)) return $case_value;
 
-        if ($case_value == $value || $case_value == 'default')
+        if ($case_value == $value || $case_value == 'else')
             return Expr::expand($parts->get($i+1), $data, 'arg');
     }
 
@@ -2460,8 +2458,118 @@ Expr::register('_continue', function ($parts, $data)
 });
 
 /**
-**	repeat [<varname>] [from <number>] [to <number>] [times <number>] [step <number>] <block>
-*/
+ * Repeats the specified block the specified number of times and gathers the results to construct an array.
+ * gather [<varname>] [from <number>] [to <number>] [times <number>] [step <number>] <block>
+ */
+Expr::register('_gather', function ($parts, $data)
+{
+    $var_name = Expr::value($parts->get(1), $data);
+    $i = 2;
+
+    if ($var_name == 'from' || $var_name == 'to' || $var_name == 'times' || $var_name == 'step') {
+        $var_name = 'i';
+        $i = 1;
+    }
+
+    $count = null;
+    $from = 0;
+    $to = null;
+    $step = null;
+
+    for (; $i < $parts->length-1; $i+=2)
+    {
+        $value = Expr::value($parts->get($i), $data);
+        switch (Text::toLowerCase($value))
+        {
+            case 'from':
+                $from = (float)Expr::value($parts->get($i+1), $data);
+                break;
+
+            case 'to':
+                $to = (float)Expr::value($parts->get($i+1), $data);
+                break;
+
+            case 'times':
+                $count = (float)Expr::value($parts->get($i+1), $data);
+                break;
+
+            case 'step':
+                $step = (float)Expr::value($parts->get($i+1), $data);
+                break;
+        }
+    }
+
+    $block = $parts->slice($i);
+    $arr = new Arry();
+
+    if ($to !== null)
+    {
+        if ($step === null)
+            $step = $from > $to ? -1 : 1;
+
+        if ($step < 0)
+        {
+            for ($i = $from; $i >= $to; $i += $step)
+            {
+                try {
+                    $data->set($var_name, $i);
+                    $arr->push(Expr::blockValue($block, $data));
+                }
+                catch (\Throwable $e) {
+                    $name = $e->getMessage();
+                    if ($name == 'EXC_BREAK') break;
+                    if ($name == 'EXC_CONTINUE') continue;
+                    throw $e;
+                }
+            }
+        }
+        else
+        {
+            for ($i = $from; $i <= $to; $i += $step)
+            {
+                try {
+                    $data->set($var_name, $i);
+                    $arr->push(Expr::blockValue($block, $data));
+                }
+                catch (\Throwable $e) {
+                    $name = $e->getMessage();
+                    if ($name == 'EXC_BREAK') break;
+                    if ($name == 'EXC_CONTINUE') continue;
+                    throw $e;
+                }
+            }
+        }
+    }
+    else if ($count !== null)
+    {
+        if ($step === null)
+            $step = 1;
+
+        for ($i = $from; $count > 0; $count--, $i += $step)
+        {
+            try {
+                $data->set($var_name, $i);
+                $arr->push(Expr::blockValue($block, $data));
+            }
+            catch (\Throwable $e) {
+                $name = $e->getMessage();
+                if ($name == 'EXC_BREAK') break;
+                if ($name == 'EXC_CONTINUE') continue;
+                throw $e;
+            }
+        }
+    }
+    else
+        throw new Error('gather requires the `to` or `times` parameter');
+
+    $data->remove($var_name);
+    return $arr;
+});
+
+/**
+ * Repeats the specified block the specified number of times.
+ * repeat [<varname>] [from <number>] [to <number>] [times <number>] [step <number>] <block>
+ */
 Expr::register('_repeat', function ($parts, $data)
 {
     $var_name = Expr::value($parts->get(1), $data);
@@ -2500,8 +2608,7 @@ Expr::register('_repeat', function ($parts, $data)
         }
     }
 
-    $tpl = $parts->get($parts->length-1);
-    $arr = new Arry();
+    $block = $parts->slice($i);
 
     if ($to !== null)
     {
@@ -2514,7 +2621,7 @@ Expr::register('_repeat', function ($parts, $data)
             {
                 try {
                     $data->set($var_name, $i);
-                    $arr->push(Expr::value($tpl, $data));
+                    Expr::blockValue($block, $data);
                 }
                 catch (\Throwable $e) {
                     $name = $e->getMessage();
@@ -2530,7 +2637,7 @@ Expr::register('_repeat', function ($parts, $data)
             {
                 try {
                     $data->set($var_name, $i);
-                    $arr->push(Expr::value($tpl, $data));
+                    Expr::blockValue($block, $data);
                 }
                 catch (\Throwable $e) {
                     $name = $e->getMessage();
@@ -2550,7 +2657,7 @@ Expr::register('_repeat', function ($parts, $data)
         {
             try {
                 $data->set($var_name, $i);
-                $arr->push(Expr::value($tpl, $data));
+                Expr::blockValue($block, $data);
             }
             catch (\Throwable $e) {
                 $name = $e->getMessage();
@@ -2569,7 +2676,7 @@ Expr::register('_repeat', function ($parts, $data)
         {
             try {
                 $data->set($var_name, $i);
-                $arr->push(Expr::value($tpl, $data));
+                Expr::blockValue($block, $data);
             }
             catch (\Throwable $e) {
                 $name = $e->getMessage();
@@ -2581,14 +2688,13 @@ Expr::register('_repeat', function ($parts, $data)
     }
 
     $data->remove($var_name);
-    return $arr;
+    return null;
 });
 
 /**
-**	Repeats the specified block infinitely until a "break" is found.
-**
-**	loop <block>
-*/
+ * Repeats the specified block infinitely until a "break" is found.
+ * loop <block>
+ */
 Expr::register('_loop', function ($parts, $data)
 {
     if ($parts->length < 2)
@@ -2786,10 +2892,18 @@ Expr::register('_map', function ($parts, $data)
         $data->set($var_name . '##', $j++);
         $data->set($var_name . '#', $key);
 
-        if ($arrayMode)
-            $output->push(Expr::blockValue($block, $data));
-        else
-            $output->set($key, Expr::blockValue($block, $data));
+        try {
+            if ($arrayMode)
+                $output->push(Expr::blockValue($block, $data));
+            else
+                $output->set($key, Expr::blockValue($block, $data));
+        }
+        catch (\Throwable $e) {
+            $name = $e->getMessage();
+            if ($name == 'EXC_BREAK') return false;
+            if ($name == 'EXC_CONTINUE') return;
+            throw $e;
+        }
     });
 
     $data->remove($var_name);
@@ -3114,14 +3228,14 @@ Expr::register('expand', function ($args, $parts, $data)
 });
 
 /**
-**	eval <template> <data>
+**	eval <expression-string> [<data>]
 */
 Expr::register('eval', function ($args, $parts, $data)
 {
     if (typeOf($args->get(1)) == 'Rose\\Arry')
-        return Expr::expand ($args->get(1), $args->length == 3 ? $args->get(2) : $data, 'arg');
+        return Expr::expand(Expr::clean($args->get(1)), $args->length == 3 ? $args->get(2) : $data, 'last');
     else
-        return Expr::expand (Expr::parseTemplate (Expr::clean($args->get(1)), '{', '}', false, 1, false), $args->length == 3 ? $args->get(2) : $data, 'arg');
+        return Expr::expand(Expr::clean(Expr::parseTemplate (Expr::clean($args->get(1)), '(', ')', false, 1, true)), $args->length == 3 ? $args->get(2) : $data, 'last');
 });
 
 

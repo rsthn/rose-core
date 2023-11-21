@@ -57,6 +57,7 @@ Expr::register('gateway', function ($args) { return Gateway::getInstance(); });
 Expr::register('gateway::redirect', function ($args) { return Gateway::redirect($args->get(1)); });
 Expr::register('gateway::flush', function ($args) { return Gateway::flush(); });
 Expr::register('gateway::persistent', function ($args) { return Gateway::persistent(); });
+Expr::register('gateway::timeout', function ($args) { return Gateway::setTimeout($args->get(1)); });
 
 Expr::register('math::toHex', function ($args) { return Math::toHex($args->get(1)); });
 Expr::register('math::toBin', function ($args) { return Math::toBin($args->get(1)); });
@@ -154,6 +155,9 @@ Expr::register('utils::gz::uncompress', function($args) { return gzuncompress ($
 Expr::register('utils::gz::deflate', function($args) { return gzdeflate ($args->get(1)); });
 Expr::register('utils::gz::inflate', function($args) { return gzinflate ($args->get(1)); });
 
+/**
+ * (utils::lpad <length> [<pad>] <string>)
+ */
 Expr::register('utils::lpad', function($args)
 {
 	if ($args->length > 3)
@@ -162,6 +166,9 @@ Expr::register('utils::lpad', function($args)
 		return Text::lpad($args->get(2), $args->get(1));
 });
 
+/**
+ * (utils::rpad <length> [<pad>] <string>)
+ */
 Expr::register('utils::rpad', function($args)
 {
 	if ($args->length > 3)
@@ -170,6 +177,10 @@ Expr::register('utils::rpad', function($args)
 		return Text::rpad($args->get(2), $args->get(1));
 });
 
+/**
+ * (utils::lpad+0 <length> <string>)
+ * (utils::rpad+0 <length> <string>)
+ */
 Expr::register('utils::lpad+0', function($args) { return Text::lpad($args->get(2), $args->get(1), '0'); });
 Expr::register('utils::rpad+0', function($args) { return Text::rpad($args->get(2), $args->get(1), '0'); });
 

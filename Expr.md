@@ -958,19 +958,45 @@ Skips execution and continues the next iteration of the current inner most loop.
 ; 2 4 6 8 10
 ```
 
-## `repeat` [\<varname>] [from \<number>] [to \<number>] [times \<number>] [step \<number>] \<block>
-Constructs an array with the results of repeating the specified block for a number of times.
+## `gather` [\<varname>] [from \<number>] [to \<number>] [times \<number>] [step \<number>] \<block>
+Repeats the specified block the specified number of times and gathers the results to construct an array.
 ```lisp
-(repeat times 4 (i))
+(gather times 4 (i))
 ; [0,1,2,3]
 
-(repeat from 1 times 10 step 2 (i))
+(gather from 1 times 10 step 2 (i))
 ; [1,3,5,7,9,11,13,15,17,19]
 
-(repeat x from 4 to 6
+(gather x from 4 to 6
     (pow 2 (x))
 )
 ; [16,32,64]
+```
+
+## `repeat` [\<varname>] [from \<number>] [to \<number>] [times \<number>] [step \<number>] \<block>
+Repeats the specified block the specified number of times.
+```lisp
+(repeat times 2
+    (echo (i))
+)
+; 0
+; 1
+
+(repeat from 1 times 5 step 2
+    (echo (i))
+)
+; 1
+; 3
+; 5
+; 7
+; 9
+
+(repeat x from 4 to 6
+    (echo (pow 2 (x)))
+)
+; 16
+; 32
+; 64
 ```
 
 ## `loop` \<block>
