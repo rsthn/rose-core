@@ -1,3 +1,14 @@
+# v4.1.3 - Nov 21 2023
+
+#### Expr
+- Added fixups to `eval` to ensure comments are removed and only returns the last value.
+- Added support for `break` and `continue` to expressions `repeat`, `gather` and `loop`.
+- Updated `repeat` to no longer construct an array, use `gather` instead.
+- Removed support for infinite loop in `gather` expression.
+- Default case for expression `case` is now just `else` instead of `default`, or you can ommit the keyword.
+
+<br/>
+
 # v4.1.2 - Nov 20 2023
 
 #### General
