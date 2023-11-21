@@ -2476,25 +2476,28 @@ Expr::register('_gather', function ($parts, $data)
     $to = null;
     $step = null;
 
-    for (; $i < $parts->length-1; $i+=2)
+    while ($i < $parts->length-1)
     {
-        $value = Expr::value($parts->get($i), $data);
-        switch (Text::toLowerCase($value))
+        $tmp = '';
+        if (!Expr::takeIdentifier ($parts, $data, $i, $tmp))
+            break;
+
+        switch ($tmp)
         {
             case 'from':
-                $from = (float)Expr::value($parts->get($i+1), $data);
+                $from = (float)Expr::value($parts->get($i++), $data);
                 break;
 
             case 'to':
-                $to = (float)Expr::value($parts->get($i+1), $data);
+                $to = (float)Expr::value($parts->get($i++), $data);
                 break;
 
             case 'times':
-                $count = (float)Expr::value($parts->get($i+1), $data);
+                $count = (float)Expr::value($parts->get($i++), $data);
                 break;
 
             case 'step':
-                $step = (float)Expr::value($parts->get($i+1), $data);
+                $step = (float)Expr::value($parts->get($i++), $data);
                 break;
         }
     }
@@ -2575,7 +2578,7 @@ Expr::register('_repeat', function ($parts, $data)
     $var_name = Expr::value($parts->get(1), $data);
     $i = 2;
 
-    if ($var_name == 'from' || $var_name == 'to' || $var_name == 'times' || $var_name == 'step') {
+    if ($var_name === 'from' || $var_name === 'to' || $var_name === 'times' || $var_name === 'step') {
         $var_name = 'i';
         $i = 1;
     }
@@ -2585,25 +2588,28 @@ Expr::register('_repeat', function ($parts, $data)
     $to = null;
     $step = null;
 
-    for (; $i < $parts->length-1; $i+=2)
+    while ($i < $parts->length-1)
     {
-        $value = Expr::value($parts->get($i), $data);
-        switch (Text::toLowerCase($value))
+        $tmp = '';
+        if (!Expr::takeIdentifier ($parts, $data, $i, $tmp))
+            break;
+
+        switch ($tmp)
         {
             case 'from':
-                $from = (float)Expr::value($parts->get($i+1), $data);
+                $from = (float)Expr::value($parts->get($i++), $data);
                 break;
 
             case 'to':
-                $to = (float)Expr::value($parts->get($i+1), $data);
+                $to = (float)Expr::value($parts->get($i++), $data);
                 break;
 
             case 'times':
-                $count = (float)Expr::value($parts->get($i+1), $data);
+                $count = (float)Expr::value($parts->get($i++), $data);
                 break;
 
             case 'step':
-                $step = (float)Expr::value($parts->get($i+1), $data);
+                $step = (float)Expr::value($parts->get($i++), $data);
                 break;
         }
     }
