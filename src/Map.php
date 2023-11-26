@@ -6,6 +6,7 @@ use Rose\Regex;
 use Rose\Text;
 use Rose\Expr;
 use Rose\Arry;
+use Rose\JSON;
 
 /*
 **	Generic container for name-indexed items only, this class is an associative-array.
@@ -433,7 +434,7 @@ class Map
 
 		foreach ($this->__nativeArray as $name => $item)
 		{
-			$name = \json_encode((string)$name).':';
+			$name = JSON::stringify((string)$name).':';
 
 			switch (typeOf($item, true))
 			{
@@ -456,7 +457,7 @@ class Map
 					break;
 
 				case 'string':
-					$s[] = $name . \json_encode($item);
+					$s[] = $name . JSON::stringify($item);
 					break;
 
 				case 'function':
@@ -464,7 +465,7 @@ class Map
 					break;
 	
 				default:
-					$s[] = $name . \json_encode((string)$item);
+					$s[] = $name . JSON::stringify((string)$item);
 					break;
 			}
 		}

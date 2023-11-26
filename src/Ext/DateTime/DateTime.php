@@ -5,6 +5,7 @@ namespace Rose\Ext;
 use Rose\DateTime;
 use Rose\Expr;
 use Rose\Text;
+use Rose\Math;
 
 /**
  * Returns the current date and time.
@@ -23,7 +24,7 @@ Expr::register('datetime::now-int', function ($args) {
 });
 
 /**
- * Parses a date and time string.
+ * Parses a date and time string. Assumes source is in LTZ if no sourceTimezone specified.
  * @code (datetime::parse <string> [targetTimezone] [sourceTimezone])
  */
 Expr::register('datetime::parse', function ($args) {
@@ -39,8 +40,8 @@ Expr::register('datetime::int', function ($args) {
 });
 
 /**
- * Returns the subtraction of two dates in a given unit.
- * @code (datetime::sub <datetime> <datetime> [SECOND|MINUTE|HOUR|DAY|WEEK|YEAR])
+ * Returns the subtraction of two dates in a given unit (a minus b).
+ * @code (datetime::sub <datetime_a> <datetime_b> [SECOND|MINUTE|HOUR|DAY|WEEK|YEAR])
  */
 Expr::register('datetime::sub', function ($args) {
     $a = new DateTime ($args->get(1));
@@ -50,14 +51,14 @@ Expr::register('datetime::sub', function ($args) {
 });
 
 /**
- * Returns the differente between two dates in a given unit.
- * @code (datetime::diff <datetime> <datetime> [SECOND|MINUTE|HOUR|DAY|WEEK|YEAR])
+ * Returns the absolute difference between two dates in a given unit (defaults to seconds).
+ * @code (datetime::diff <datetime_a> <datetime_b> [SECOND|MINUTE|HOUR|DAY|WEEK|YEAR])
  */
 Expr::register('datetime::diff', function ($args) {
     $a = new DateTime ($args->get(1));
     $b = new DateTime ($args->get(2));
     $unit = $args->length == 4 ? $args->get(3) : 'SECOND';
-    return $a->sub($b, $unit);
+    return Math::abs($a->sub($b, $unit));
 });
 
 /**

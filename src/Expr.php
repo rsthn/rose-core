@@ -11,6 +11,7 @@ use Rose\Map;
 use Rose\IO\Path;
 use Rose\IO\File;
 use Rose\Math;
+use Rose\JSON;
 
 /**
  * 	Description of a linked context.
@@ -923,8 +924,8 @@ class Expr
             if (false) {
                 echo "<pre>";
                 $s = (string)$mparts;
-                $s = json_decode($s);
-                echo json_encode($s, JSON_PRETTY_PRINT);
+                $s = JSON::parse($s);
+                echo JSON::prettify($s);
                 echo "</pre>";
                 exit;
             }
@@ -1821,7 +1822,7 @@ Expr::register('dump', function ($args)
     $value = $args->get(1);
 
     if (\Rose\typeOf($value) === 'primitive')
-        return json_encode($value);
+        return JSON::stringify($value);
 
     return (string)$value;
 });
@@ -3365,7 +3366,7 @@ Expr::register('_assert', function ($parts, $data)
     if (Expr::expand($parts->get(1), $data, 'arg'))
         return null;
 
-    throw new \Exception ($parts->has(2) ? Expr::expand($parts->get(2), $data) : 'Assertion failed');
+    throw new \Exception ($parts->has(2) ? Expr::expand($parts->get(2), $data) : 'assertion failed');
 });
 
 /**

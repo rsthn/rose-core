@@ -1,3 +1,24 @@
+# v4.1.5 - Nov 26 2023
+
+#### DateTime
+- Updated `datetime::diff` to always return positive value.
+- Added `ISO` format option to return string as "YYYY-mm-ddTHH:ii:ss".
+
+#### General
+- Added JSON class to contain JSON-manipulation methods.
+- Updated all classes that used `json_encode` and `json_decode` to use now JSON static methods.
+
+#### PostgreSQL
+- Added fixup to prevent `lastval` error when calling `getLastInsertId`.
+
+#### Database
+- Updated all methods accepting parameters for prepared statements to allow immediate values instead of just an array.
+
+#### Utils
+- Added function `utils::random-bytes` which returns binary data.
+
+<br/>
+
 # v4.1.4 - Nov 21 2023
 
 #### Expr

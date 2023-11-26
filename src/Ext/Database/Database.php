@@ -6,6 +6,7 @@ use Rose\Data\Connection;
 use Rose\Resources;
 use Rose\Configuration;
 use Rose\Expr;
+use Rose\Errors\ArgumentError;
 
 $mainConn = null;
 
@@ -13,7 +14,7 @@ $mainConn = null;
  * Create global resource 'Database' which maps to a Connection created using the `Database` configuration section.
  */
 Resources::getInstance()->registerConstructor ('Database', function() {
-	return Connection::fromConfig (Configuration::getInstance()->Database);
+    return Connection::fromConfig (Configuration::getInstance()->Database);
 });
 
 /**
@@ -22,21 +23,21 @@ Resources::getInstance()->registerConstructor ('Database', function() {
  */
 Expr::register('db::conn', function ($args)
 {
-	global $mainConn;
+    global $mainConn;
 
-	if ($args->length == 1)
-		return Resources::getInstance()->Database;
+    if ($args->length == 1)
+        return Resources::getInstance()->Database;
 
-	if ($args->get(1) === null) {
-		Resources::getInstance()->Database = $mainConn;
-		return null;
-	}
+    if ($args->get(1) === null) {
+        Resources::getInstance()->Database = $mainConn;
+        return null;
+    }
 
-	if (!$mainConn)
-		$mainConn = Resources::getInstance()->exists('Database', true) ? Resources::getInstance()->Database : null;
+    if (!$mainConn)
+        $mainConn = Resources::getInstance()->exists('Database', true) ? Resources::getInstance()->Database : null;
 
-	Resources::getInstance()->Database = $args->get(1);
-	return null;
+    Resources::getInstance()->Database = $args->get(1);
+    return null;
 });
 
 /**
@@ -45,7 +46,7 @@ Expr::register('db::conn', function ($args)
  * @example (db::escape "Jack O'Neill")
  */
 Expr::register('db::escape', function ($args) {
-	return Resources::getInstance()->Database->escapeExt ($args->get(1));
+    return Resources::getInstance()->Database->escapeExt ($args->get(1));
 });
 
 /**
@@ -54,91 +55,109 @@ Expr::register('db::escape', function ($args) {
  * @example (db::escape-name "First Name")
  */
 Expr::register('db::escape-name', function ($args) {
-	return Resources::getInstance()->Database->escapeName($args->get(1));
+    return Resources::getInstance()->Database->escapeName($args->get(1));
 });
 
 /**
  * Executes a query and returns a scalar value, that is, first column of first row or `null` if no rows are returned.
- * @code (db::scalar <query> [params])
+ * @code (db::scalar <query> [...params])
  * @example (db::scalar `SELECT COUNT(*) FROM users WHERE name LIKE ?` (# "Jack%" ))
  */
 Expr::register('db::scalar', function ($args) {
-	return Resources::getInstance()->Database->execScalar($args->get(1), $args->{2});
+    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
+        throw new ArgumentError('(db::scalar) expected scalar value');
+    return Resources::getInstance()->Database->execScalar($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
 /**
  * Executes a query and returns an array with scalars value (all rows, first column).
- * @code (db::scalars <query> [params])
+ * @code (db::scalars <query> [...params])
  * @example (db::scalars `SELECT name, last_name FROM users WHERE age > ?` (# 18))
  */
 Expr::register('db::scalars', function ($args) {
-	return Resources::getInstance()->Database->execQuery($args->get(1), $args->{2})->map(function($i) { return $i->values()->get(0); });
+    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
+        throw new ArgumentError('(db::scalars) expected scalar value');
+    return Resources::getInstance()->Database->execQuery($args->get(1), $args->length() > 2 ? $args->slice(2) : null)
+        ->map(function($i) { return $i->values()->get(0); });
 });
 
 /**
  * Executes a query and returns a map with the first row.
- * @code (db::row <query> [params])
+ * @code (db::row <query> [...params])
  * @example (db::row `SELECT name, last_name FROM users WHERE age >= ?` (# 21))
  */
 Expr::register('db::row', function ($args) {
-	return Resources::getInstance()->Database->execAssoc($args->get(1), $args->{2});
+    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
+        throw new ArgumentError('(db::row) expected scalar value');
+    return Resources::getInstance()->Database->execAssoc($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
 /**
  * Executes a query and returns an array with the first row, values only.
- * @code (db::row:array <query> [params])
+ * @code (db::row:array <query> [...params])
  * @example (db::row:array `SELECT name, last_name FROM users WHERE age >= ?` (# 21))
  */
 Expr::register('db::row-values', function ($args) {
-	return Resources::getInstance()->Database->execArray($args->get(1), $args->{2});
+    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
+        throw new ArgumentError('(db::row-values) expected scalar value');
+    return Resources::getInstance()->Database->execArray($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
 /**
  * Executes a query and returns an array with the result rows.
- * @code (db::table <query> [params])
+ * @code (db::table <query> [...params])
  * @example (db::table `SELECT name, last_name FROM users WHERE age >= ?` (# 18))
  */
 Expr::register('db::table', function ($args) {
-	return Resources::getInstance()->Database->execQuery($args->get(1), $args->{2});
+    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
+        throw new ArgumentError('(db::table) expected scalar value');
+    return Resources::getInstance()->Database->execQuery($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
 /**
  * Executes a query and returns the header, that is the field names and the number of rows the query would produce.
- * @code (db::header <query> [params])
+ * @code (db::header <query> [...params])
  * @example (db::header `SELECT name, last_name FROM clients WHERE status=?` (# 'active'))
  */
 Expr::register('db::header', function ($args) {
-	return Resources::getInstance()->Database->execHeader($args->get(1), $args->{2});
+    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
+        throw new ArgumentError('(db::header) expected scalar value');
+    return Resources::getInstance()->Database->execHeader($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
 /**
  * Executes a query and returns an array with row values.
- * @code (db::table-values <query> [params])
+ * @code (db::table-values <query> [...params])
  * @example (db::table-values `SELECT name, last_name FROM clients WHERE status=?` (# 'active'))
  */
 Expr::register('db::table-values', function ($args) {
-	return Resources::getInstance()->Database->execArray($args->get(1), $args->{2});
+    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
+        throw new ArgumentError('(db::table-values) expected scalar value');
+    return Resources::getInstance()->Database->execArray($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
 /**
  * Executes a query and returns the reader object from which rows can be read manually incrementally or all at once.
- * @code (db::reader <query> [params])
+ * @code (db::reader <query> [...params])
  * @example (db::reader `SELECT name, last_name FROM clients WHERE status=?` (# 'active'))
  */
 Expr::register('db::reader', function ($args) {
-	return Resources::getInstance()->Database->execReader($args->get(1), $args->{2});
+    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
+        throw new ArgumentError('(db::reader) expected scalar value');
+    return Resources::getInstance()->Database->execReader($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
 /**
  * Executes a query and returns a boolean.
- * @code (db::exec <query> [params])
+ * @code (db::exec <query> [...params])
  * @example (db::exec `DELETE FROM clients WHERE status=?` (# 'inactive'))
  */
-Expr::register('db::exec', function ($args)
-{
-	$query = trim($args->get(1));
-	if (!$query) return true;
-	return Resources::getInstance()->Database->execQuery($query, $args->{2}) === true ? true : false;
+Expr::register('db::exec', function ($args) {
+    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
+        throw new ArgumentError('(db::exec) expected scalar value');
+    $query = trim($args->get(1));
+    if (!$query) return true;
+    return Resources::getInstance()->Database->execQuery($query, $args->length() > 2 ? $args->slice(2) : null) === true ? true : false;
 });
 
 /**
@@ -148,21 +167,21 @@ Expr::register('db::exec', function ($args)
  */
 Expr::register('db::update', function ($args)
 {
-	$conn = Resources::getInstance()->Database;
-	$table = $args->get(1);
-	$condition = $args->get(2);
-	$data = $args->get(3);
-	if ($data->length == 0) return true;
+    $conn = Resources::getInstance()->Database;
+    $table = $args->get(1);
+    $condition = $args->get(2);
+    $data = $args->get(3);
+    if ($data->length == 0) return true;
 
-	if (\Rose\typeOf($condition, true) !== 'string') {
-		$cond = $condition->map(function($value, $name) use(&$conn) { return $conn->escapeName($name).'='.$conn->escapeValue($value); })->values()->join(' AND ');
-		if ($cond) $cond = ' WHERE ' . $cond;
-	}
-	else
-		$cond = $condition ? ' WHERE ' . $condition : '';
+    if (\Rose\typeOf($condition, true) !== 'string') {
+        $cond = $condition->map(function($value, $name) use(&$conn) { return $conn->escapeName($name).'='.$conn->escapeValue($value); })->values()->join(' AND ');
+        if ($cond) $cond = ' WHERE ' . $cond;
+    }
+    else
+        $cond = $condition ? ' WHERE ' . $condition : '';
 
-	$s = 'UPDATE ' . $table . ' SET ' . $conn->escapeExt($data)->join(', ') . $cond;
-	return $conn->execQuery($s);
+    $s = 'UPDATE ' . $table . ' SET ' . $conn->escapeExt($data)->join(', ') . $cond;
+    return $conn->execQuery($s);
 });
 
 /**
@@ -172,12 +191,12 @@ Expr::register('db::update', function ($args)
  */
 Expr::register('db::insert', function ($args)
 {
-	$conn = Resources::getInstance()->Database;
-	$table = $args->get(1);
-	$data = $args->get(2);
+    $conn = Resources::getInstance()->Database;
+    $table = $args->get(1);
+    $data = $args->get(2);
 
-	$s = 'INSERT INTO ' . $table . ' ('. $data->keys()->map(function($i) use(&$conn) { return $conn->escapeName($i); })->join(', ') .')';
-	$s .= ' VALUES (' . $conn->escapeExt ($data->values())->join(', ') . ')';
+    $s = 'INSERT INTO ' . $table . ' ('. $data->keys()->map(function($i) use(&$conn) { return $conn->escapeName($i); })->join(', ') .')';
+    $s .= ' VALUES (' . $conn->escapeExt ($data->values())->join(', ') . ')';
 
     return $conn->execQuery($s) === true ? $conn->getLastInsertId() : null;
 });
@@ -189,21 +208,21 @@ Expr::register('db::insert', function ($args)
  */
 Expr::register('db::get', function ($args)
 {
-	$conn = Resources::getInstance()->Database;
+    $conn = Resources::getInstance()->Database;
 
-	$table = $args->get(1);
-	$condition = $args->get(2);
+    $table = $args->get(1);
+    $condition = $args->get(2);
 
-	if (\Rose\typeOf($condition, true) !== 'string')
-	{
-		$cond = $condition->map(function($value, $name) use(&$conn) { return $conn->escapeName($name).'='.$conn->escapeValue($value); })->values()->join(' AND ');
-		if ($cond) $cond = ' WHERE ' . $cond;
-	}
-	else
-		$cond = $condition ? ' WHERE ' . $condition : '';
+    if (\Rose\typeOf($condition, true) !== 'string')
+    {
+        $cond = $condition->map(function($value, $name) use(&$conn) { return $conn->escapeName($name).'='.$conn->escapeValue($value); })->values()->join(' AND ');
+        if ($cond) $cond = ' WHERE ' . $cond;
+    }
+    else
+        $cond = $condition ? ' WHERE ' . $condition : '';
 
-	$s = 'SELECT * FROM ' . $table . $cond;
-	return $conn->execAssoc($s);
+    $s = 'SELECT * FROM ' . $table . $cond;
+    return $conn->execAssoc($s);
 });
 
 /**
@@ -213,19 +232,19 @@ Expr::register('db::get', function ($args)
  */
 Expr::register('db::delete', function ($args)
 {
-	$conn = Resources::getInstance()->Database;
-	$table = $args->get(1);
-	$condition = $args->get(2);
+    $conn = Resources::getInstance()->Database;
+    $table = $args->get(1);
+    $condition = $args->get(2);
 
-	if (\Rose\typeOf($condition, true) !== 'string') {
-		$cond = $condition->map(function($value, $name) use(&$conn) { return $conn->escapeName($name).'='.$conn->escapeValue($value); })->values()->join(' AND ');
-		if ($cond) $cond = ' WHERE ' . $cond;
-	}
-	else
-		$cond = $condition ? ' WHERE ' . $condition : '';
+    if (\Rose\typeOf($condition, true) !== 'string') {
+        $cond = $condition->map(function($value, $name) use(&$conn) { return $conn->escapeName($name).'='.$conn->escapeValue($value); })->values()->join(' AND ');
+        if ($cond) $cond = ' WHERE ' . $cond;
+    }
+    else
+        $cond = $condition ? ' WHERE ' . $condition : '';
 
-	$s = 'DELETE FROM ' . $table . $cond;
-	return $conn->execQuery($s);
+    $s = 'DELETE FROM ' . $table . $cond;
+    return $conn->execQuery($s);
 });
 
 /**
@@ -233,7 +252,7 @@ Expr::register('db::delete', function ($args)
  * @code (db::lastInsertId)
  */
 Expr::register('db::lastInsertId', function ($args) {
-	return Resources::getInstance()->Database->getLastInsertId();
+    return Resources::getInstance()->Database->getLastInsertId();
 });
 
 /**
@@ -241,15 +260,8 @@ Expr::register('db::lastInsertId', function ($args) {
  * @code (db::affectedRows)
  */
 Expr::register('db::affectedRows', function ($args) {
-	return Resources::getInstance()->Database->getAffectedRows();
+    return Resources::getInstance()->Database->getAffectedRows();
 });
-
-//Expr::register('db::fields:update', function ($args) {
-//	return Resources::getInstance()->Database->escapeExt ($args->get(1))->join(', ');
-//});
-//Expr::register('db::fields:insert', function ($args) {
-//	return Resources::getInstance()->Database->escapeExt ($args->get(1)->values())->join(', ');
-//});
 
 /**
  * Opens a new connection and returns the database handle.
@@ -257,7 +269,7 @@ Expr::register('db::affectedRows', function ($args) {
  * @example (db::open (& server "localhost" user "usrname" password "mypwd" database "test" driver "mysql" trace false ))
  */
 Expr::register('db::open', function ($args) {
-	return Connection::fromConfig ($args->get(1));
+    return Connection::fromConfig ($args->get(1));
 });
 
 /**
@@ -266,11 +278,11 @@ Expr::register('db::open', function ($args) {
  */
 Expr::register('db::close', function ($args)
 {
-	global $mainConn;
+    global $mainConn;
 
-	if ((Resources::getInstance()->exists('Database', true) ? Resources::getInstance()->Database : null) === $args->get(1))
-		Resources::getInstance()->Database = $mainConn;
+    if ((Resources::getInstance()->exists('Database', true) ? Resources::getInstance()->Database : null) === $args->get(1))
+        Resources::getInstance()->Database = $mainConn;
 
-	$args->get(1)->close();
-	return null;
+    $args->get(1)->close();
+    return null;
 });

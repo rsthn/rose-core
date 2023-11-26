@@ -384,23 +384,22 @@ class Session
 	DROP TABLE IF EXISTS sessions;
 	CREATE TABLE sessions
 	(
-		session_id varchar(48) primary key not null,
+		session_id VARCHAR(48) PRIMARY KEY NOT NULL,
 
-		created_at datetime default null,
-		last_activity datetime default null,
+		created_at DATETIME DEFAULT NULL,
+		last_activity DATETIME DEFAULT NULL,
 
-		device_id varchar(48) default null,
+		device_id INT DEFAULT NULL,
         INDEX (device_id),
 
-		user_id int unsigned default null foreign key references users (user_id),
-		data varchar(8192) default null
+		user_id INT DEFAULT NULL FOREIGN KEY REFERENCES users (user_id),
+		data VARCHAR(8192) DEFAULT NULL
 	)
-	ENGINE=InnoDB CHARSET=utf8mb4 COLLATE=utf8_unicode_ci;
-
+	ENGINE=InnoDB CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 	DROP PROCEDURE IF EXISTS session_cleanup;
 	DELIMITER //
-	CREATE PROCEDURE session_cleanup (timeout INT UNSIGNED)
+	CREATE PROCEDURE session_cleanup (timeout INT)
 	BEGIN
 		DELETE FROM sessions
 		WHERE TIMESTAMPDIFF(SECOND, last_activity, NOW()) >= timeout;

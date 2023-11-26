@@ -15,6 +15,7 @@ use Rose\Regex;
 use Rose\Expr;
 use Rose\Map;
 use Rose\Arry;
+use Rose\JSON;
 
 Expr::register('config', function ($args) { return Configuration::getInstance(); });
 
@@ -69,6 +70,8 @@ Expr::register('math::fromOct', function ($args) { return Math::fromOct($args->g
 Expr::register('utils::gc', function() { gc_collect_cycles(); });
 Expr::register('utils::getenv', function($args) { return $args->has(1) ? getenv($args->get(1)) : getenv(); });
 Expr::register('utils::putenv', function($args) { putenv($args->slice(1)->join('')); return null; });
+
+Expr::register('utils::random-bytes', function($args) { return random_bytes((int)$args->get(1)); });
 
 Expr::register('utils::rand', function() { return Math::rand(); });
 Expr::register('utils::randstr', function($args) { return bin2hex(random_bytes((int)$args->get(1))); });
@@ -191,7 +194,7 @@ Expr::register('utils::json::stringify', function($args)
 	if (\Rose\typeOf($value) == 'Rose\\Arry' || \Rose\typeOf($value) == 'Rose\\Map')
 		return (string)$value;
 
-	return json_encode($value);
+	return JSON::stringify($value);
 });
 
 Expr::register('utils::json::prettify', function($args)
@@ -199,9 +202,9 @@ Expr::register('utils::json::prettify', function($args)
 	$value = $args->get(1);
 
 	if (\Rose\typeOf($value) === 'primitive')
-		return json_encode($value);
+		return JSON::stringify($value);
 
-	return json_encode(json_decode((string)$value, true), JSON_PRETTY_PRINT);
+	return JSON::prettify(JSON::parse((string)$value));
 });
 
 Expr::register('dump+fmt', function($args)
@@ -209,9 +212,9 @@ Expr::register('dump+fmt', function($args)
 	$value = $args->get(1);
 
 	if (\Rose\typeOf($value) === 'primitive')
-		return json_encode($value);
+		return JSON::stringify($value);
 
-	return json_encode(json_decode((string)$value, true), JSON_PRETTY_PRINT);
+	return JSON::prettify(JSON::parse((string)$value));
 });
 
 Expr::register('utils::json::parse', function($args)
@@ -219,7 +222,7 @@ Expr::register('utils::json::parse', function($args)
 	$value = (string)$args->get(1);
 	if (Text::length($value) == 0) return null;
 
-	return $value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true));
+	return $value[0] == '[' ? Arry::fromNativeArray(JSON::parse($value)) : ($value[0] == '{' ? Map::fromNativeArray(JSON::parse($value)) : JSON::parse($value));
 });
 
 function xmlToMap($xml)

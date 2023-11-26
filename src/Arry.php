@@ -9,6 +9,7 @@ use Rose\Text;
 use Rose\Regex;
 use Rose\Map;
 use Rose\Math;
+use Rose\JSON;
 
 /*
 **	Generic container for objects. This class allows the items to be indexed using only numeric indices.
@@ -624,7 +625,7 @@ class Arry
 					break;
 
 				case 'string':
-					$s[] = \json_encode($item);
+					$s[] = JSON::stringify($item);
 					break;
 
 				case 'function':
@@ -632,7 +633,7 @@ class Arry
 					break;
 	
 				default:
-					$s[] = \json_encode((string)$item);
+					$s[] = JSON::stringify((string)$item);
 					break;
 			}
 		}

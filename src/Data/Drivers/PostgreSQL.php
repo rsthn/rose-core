@@ -28,7 +28,11 @@ class PostgreSQL extends Driver
     }
 
     public function getLastInsertId ($conn) {
-        $rs = $this->query ('SELECT LASTVAL()', $conn);
+        try {
+            $rs = $this->query ('SELECT LASTVAL()', $conn, null);
+        } catch (\Exception $e) {
+            return 0;
+        }
         if ($rs === false || $rs === true || $rs === null) return 0;
 
         $ret = $this->fetchRow($rs, $conn);
