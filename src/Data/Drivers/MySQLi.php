@@ -33,10 +33,12 @@ class MySQLi extends Driver
 				throw new Error ('Unsupported charset UTF8MB4');
 
 			mysqli_query ($conn, 'SET collation_connection = \'utf8mb4_unicode_ci\'');
+            mysqli_query ($conn, 'SET NAMES utf8mb4');
 		}
 		catch (\Throwable $e) {
 			mysqli_set_charset ($conn, 'UTF8');
 			mysqli_query ($conn, 'SET collation_connection = \'utf8_unicode_ci\'');
+            mysqli_query ($conn, 'SET NAMES utf8');
 		}
 
         return $conn;
@@ -78,14 +80,15 @@ class MySQLi extends Driver
         $stmt = $conn->prepare($query);
         $stmt->bind_param($types, ...$params->__nativeArray);
 
-        $success = $stmt->execute();
-        if (!$success) {
-            $stmt->close();
-            return false;
+        try {
+            $success = $stmt->execute();
+            if (!$success) return false;
+            $result = $stmt->get_result();
+            return $result === false ? true : $result;
         }
-        $result = $stmt->get_result();
-        $stmt->close();
-        return $result === false ? true : $result;
+        finally {
+            $stmt->close();
+        }
     }
 
     public function reader ($query, $conn, $params) {

@@ -3239,12 +3239,26 @@ Expr::register('expand', function ($args, $parts, $data)
 */
 Expr::register('eval', function ($args, $parts, $data)
 {
-    if (typeOf($args->get(1)) == 'Rose\\Arry')
-        return Expr::expand(Expr::clean($args->get(1)), $args->length == 3 ? $args->get(2) : $data, 'last');
-    else
-        return Expr::expand(Expr::clean(Expr::parseTemplate (Expr::clean($args->get(1)), '(', ')', false, 1, true)), $args->length == 3 ? $args->get(2) : $data, 'last');
-});
+    try {
+        if (typeOf($args->get(1)) == 'Rose\\Arry')
+            return Expr::expand(Expr::clean($args->get(1)), $args->length == 3 ? $args->get(2) : $data, 'last');
+        else
+            return Expr::expand(Expr::clean(Expr::parseTemplate (Expr::clean($args->get(1)), '(', ')', false, 1, true)), $args->length == 3 ? $args->get(2) : $data, 'last');
+    }
+    catch (MetaError $e)
+    {
+        switch ($e->isForMe(-1) ? $e->code : null)
+        {
+            case 'EXPR_YIELD':
+                return $e->value;
 
+            case 'FN_RET':
+                return $e->value;
+        }
+
+        throw $e;
+    }
+});
 
 /**
 **	try <block> [catch <block>] [finally <block>]

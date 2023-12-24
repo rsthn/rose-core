@@ -283,12 +283,12 @@ class Connection
         if (!$this->driver->isAlive($this->conn))
             $this->open();
 
-        $rs = null;
+        $rs = null; $err = null;
         try { $rs = $this->driver->query($queryString, $this->conn, $params); }
-        catch (\Throwable $e) { }
+        catch (\Throwable $e) { $err = $e->getMessage(); }
 
-        if ($rs === false || $rs === null)
-            throw new Error ($this->driver->getLastError($this->conn));
+        if ($rs === false || $rs === null || $err !== null)
+            throw new Error ($err ? $err : $this->driver->getLastError($this->conn));
         if ($rs === true)
             return $rs;
 
@@ -322,12 +322,12 @@ class Connection
         if (!$this->driver->isAlive($this->conn))
             $this->open();
 
-        $rs = null;
+        $rs = null; $err = null;
         try { $rs = $this->driver->reader($queryString, $this->conn, $params); }
-        catch (\Throwable $e) { }
+        catch (\Throwable $e) { $err = $e->getMessage(); }
 
-        if ($rs === false || $rs === null)
-            throw new Error ($this->driver->getLastError($this->conn));
+        if ($rs === false || $rs === null || $err !== null)
+            throw new Error ($err ? $err : $this->driver->getLastError($this->conn));
         if ($rs === true)
             throw new Error ('Result is not a data set.');
 
@@ -351,12 +351,12 @@ class Connection
         if (!$this->driver->isAlive($this->conn))
             $this->open();
 
-        $rs = null;
+        $rs = null; $err = null;
         try { $rs = $this->driver->reader($queryString, $this->conn, $params); }
-        catch (\Throwable $e) { }
+        catch (\Throwable $e) { $err = $e->getMessage(); }
 
-        if ($rs === false || $rs === null)
-            throw new Error ($this->driver->getLastError($this->conn));
+        if ($rs === false || $rs === null || $err !== null)
+            throw new Error ($err ? $err : $this->driver->getLastError($this->conn));
         if ($rs === true)
             throw new Error ('Result is not a data set.');
 
@@ -390,12 +390,12 @@ class Connection
         if (!$this->driver->isAlive($this->conn))
             $this->open();
 
-        $rs = null;
+        $rs = null; $err = null;
         try { $rs = $this->driver->query($queryString, $this->conn, $params); }
-        catch (\Throwable $e) { }
+        catch (\Throwable $e) { $err = $e->getMessage(); }
 
-        if ($rs === false || $rs === null)
-            throw new Error ($this->driver->getLastError($this->conn));
+        if ($rs === false || $rs === null || $err !== null)
+            throw new Error ($err ? $err : $this->driver->getLastError($this->conn));
         if ($rs === true)
             throw new Error ('Result is not a data set.');
 
@@ -422,12 +422,12 @@ class Connection
         if (!$this->driver->isAlive($this->conn))
             $this->open();
 
-        $rs = null;
+        $rs = null; $err = null;
         try { $rs = $this->driver->query($queryString, $this->conn, $params); }
-        catch (\Throwable $e) { }
+        catch (\Throwable $e) { $err = $e->getMessage(); }
 
-        if ($rs === false || $rs === null)
-            throw new Error ($this->driver->getLastError($this->conn));
+        if ($rs === false || $rs === null || $err !== null)
+            throw new Error ($err ? $err : $this->driver->getLastError($this->conn));
         if ($rs === true)
             throw new Error ('Result is not a data set.');
 
@@ -461,12 +461,12 @@ class Connection
         if (!$this->driver->isAlive($this->conn))
             $this->open();
 
-        $rs = null;
+        $rs = null; $err = null;
         try { $rs = $this->driver->query($queryString, $this->conn, $params); }
-        catch (\Throwable $e) { }
+        catch (\Throwable $e) { $err = $e->getMessage(); }
 
-        if ($rs === false || $rs === null)
-            throw new Error ($this->driver->getLastError($this->conn));
+        if ($rs === false || $rs === null || $err !== null)
+            throw new Error ($err ? $err : $this->driver->getLastError($this->conn));
         if ($rs === true)
             throw new Error ('Result is not a data set.');
 

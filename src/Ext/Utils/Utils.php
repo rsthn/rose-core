@@ -740,7 +740,11 @@ Expr::register('re::matches', function($args)
 	return Regex::_matches($args->get(1), $args->get(2));
 });
 
-Expr::register('re::matchFirst', function($args)
+Expr::register('re::matchFirst', function($args) // deprecate
+{
+	return Regex::_matchFirst($args->get(1), $args->get(2));
+});
+Expr::register('re::match-first', function($args)
 {
 	return Regex::_matchFirst($args->get(1), $args->get(2));
 });
@@ -750,7 +754,11 @@ Expr::register('re::match', function($args)
 	return Regex::_matchFirst($args->get(1), $args->get(2));
 });
 
-Expr::register('re::matchAll', function($args)
+Expr::register('re::matchAll', function($args) // deprecate
+{
+	return Regex::_matchAll($args->get(1), $args->get(2), $args->{3} ?? 0);
+});
+Expr::register('re::match-all', function($args)
 {
 	return Regex::_matchAll($args->get(1), $args->get(2), $args->{3} ?? 0);
 });
