@@ -2858,16 +2858,21 @@ Expr::register('contains', function ($args, $parts, $data)
 **
 **	has <name> <map-expr>
 **	has <value> <array-expr>
+**  has <value> <string-expr>
 */
 Expr::register('has', function ($args, $parts, $data)
 {
     $value = $args->get(2);
+    $typeOf = typeOf($value);
 
-    if (typeOf($value) == 'Rose\\Map')
+    if ($typeOf === 'Rose\\Map')
         return $value->has($args->get(1), true);
 
-    if (typeOf($value) == 'Rose\\Arry')
+    if ($typeOf === 'Rose\\Arry')
         return $value->indexOf($args->get(1)) !== null;
+
+    if ($typeOf === 'primitive')
+        return Text::indexOf($value, $args->get(1)) !== false;
 
     return false;
 });

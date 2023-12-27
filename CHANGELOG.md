@@ -1,3 +1,27 @@
+# v4.1.6 - Dec 27 2023
+
+#### Connection
+- Improved error reporting in all database functions.
+
+#### MySQLi
+- Added `set names utf8mb4` to connection startup code.
+
+#### Expr
+- Updated `eval` function to return the last value only.
+- Function `has` now supports checking for sub-strings, such as (has 'aa' 'aab').
+
+#### Utils
+- Added `re::match-first` and marked `re::matchFirst` for deprecation.
+- Added `re::match-all` and marked `re::matchAll` for deprecation.
+
+#### Gateway
+- Patched to ensure property 'method' is always in uppercase.
+
+#### Session
+- Patched bug causing null session object when using on-database session storage and cookie expired.
+
+<br/>
+
 # v4.1.5 - Nov 26 2023
 
 #### DateTime

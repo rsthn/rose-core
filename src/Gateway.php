@@ -190,7 +190,7 @@ class Gateway
         if ($this->relativePath) $this->relativePath = '/'.$this->relativePath;
 
         /* ** */
-        $this->method = $this->serverParams->REQUEST_METHOD;
+        $this->method = Text::toUpperCase($this->serverParams->REQUEST_METHOD);
         $this->remoteAddress = $this->serverParams->REMOTE_ADDR;
         $this->remotePort = $this->serverParams->REMOTE_PORT;
 
