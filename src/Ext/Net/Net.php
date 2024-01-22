@@ -464,6 +464,27 @@ Expr::register('http::head', function ($args)
 });
 
 /* ****************** */
+/* http::status <url> [<fields>*] */
+
+Expr::register('http::status', function ($args)
+{
+	$fields = new Map();
+
+	for ($i = 2; $i < $args->length; $i++)
+	{
+		$data = $args->get($i);
+
+		if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
+			continue;
+
+		$fields->merge($data, true);
+	}
+
+	Http::post($args->get(1), $args->length == 2 ? '' : $fields, null, 'HEAD');
+    return Http::getCode();
+});
+
+/* ****************** */
 /* http::post <url> [<fields>*] */
 
 Expr::register('http::post', function ($args)

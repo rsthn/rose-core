@@ -1,3 +1,15 @@
+# v4.1.7 - Jan 22 2024
+
+#### Expr
+- Added support to specify key and value variable names in iterators instead of the default ones. Supported by: for, map, filter, every, some, find, findIndex, reduce, select, mapify, and groupify.
+- Deprecated functions `each`, `%`, `%%`, and `void` have been removed.
+- Added function `concat` to concatenate a sequence of values.
+
+#### Net
+- Added `http::status` function, performs a HEAD request and returns the HTTP status code.
+
+<br/>
+
 # v4.1.6 - Dec 27 2023
 
 #### Connection

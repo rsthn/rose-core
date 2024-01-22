@@ -1661,6 +1661,29 @@ class Expr
 
         return false;
     }
+
+    /**
+     * Returns the name of the iterator, key and index variables.
+     */
+    public static function getIteratorName ($parts, $data, &$index, &$var_name, &$key_name, &$index_name, $def_name='i')
+    {
+        $var_name = $def_name;
+        Expr::takeIdentifier($parts, $data, $index, $var_name);
+
+        if (Text::endsWith($var_name, ':')) {
+            $key_name = Text::substring($var_name, 0, -1);
+            if (!Expr::takeIdentifier($parts, $data, $index, $var_name))
+                throw new Error ('identifier expected for iterator `val` variable');
+        }
+        else if (Text::indexOf($var_name, ':') !== false) {
+            $key_name = Text::substring($var_name, 0, Text::indexOf($var_name, ':'));
+            $var_name = Text::substring($var_name, Text::indexOf($var_name, ':')+1);
+        }
+        else {
+            $key_name = $var_name.'#';
+        }
+        $index_name = $key_name.'#';
+    }
 };
 
 
@@ -1690,7 +1713,9 @@ Expr::register('len', function($args) { $s = $args->get(1); return \Rose\typeOf(
 Expr::register('strlen', function($args) { return Text::length((string)$args->get(1), 'utf8'); });
 Expr::register('int', function($args) { return (int)$args->get(1); });
 Expr::register('bool', function($args) { return \Rose\bool($args->get(1)); });
+// TODO: 'str' should be just a converter, and concat the new 'str'
 Expr::register('str', function($args) { $s = ''; for ($i = 1; $i < $args->length; $i++) $s .= (string)$args->get($i); return $s; });
+Expr::register('concat', function($args) { $s = ''; for ($i = 1; $i < $args->length; $i++) $s .= (string)$args->get($i); return $s; });
 Expr::register('float', function($args) { return (float)$args->get(1); });
 Expr::register('chr', function($args) { return chr($args->get(1)); });
 Expr::register('ord', function($args) { return ord($args->get(1)); });
@@ -1788,18 +1813,6 @@ Expr::register('in?', function ($args)
     }
 
     return false;
-});
-
-// VIOLET: DEPRECATE
-/**
-**	Executes the block and returns null.
-**
-**	void <block>
-*/
-Expr::register('_void', function ($parts, $data)
-{
-    Expr::blockValue($parts->slice(1), $data);
-    return null;
 });
 
 /**
@@ -2057,61 +2070,6 @@ Expr::register('nl2br', function ($args)
     return Expr::apply($args->slice(1), function($value) { return Text::replace("\n", '<br/>', $value); });
 });
 
-/**
-**	Returns a string with the value inside an XML tag named `tag-name`, the value can be a string, sequence or an array.
-**
-**	% <tag-name> <value>
-*/
-Expr::register('%', function ($args) // VIOLET: DEPRECATE
-{
-    $args->shift();
-    $name = $args->shift();
-
-    $s = '';
-
-    for ($i = 0; $i < $args->length(); $i++)
-    {
-        if (typeOf($args->get($i)) == 'Rose\\Arry')
-        {
-            $s .= '<'.$name.'>';
-
-            for ($j = 0; $j < $args->get($i)->length(); $j++)
-                $s .= $args->get($i)->get($j);
-
-            $s .= '</'.$name.'>';
-        }
-        else
-            $s .= '<'.$name.'>'.$args->get($i).'</'.$name.'>';
-    }
-
-    return $s;
-});
-
-/**
-**	Returns a string with the value inside an XML tag named `tag-name`, each pair of attr-value will become attributes of the tag
-**	and the last value will be treated as the tag contents.
-**
-**	%% <tag-name> [<attr> <value>]* [<value>]
-*/
-Expr::register('%%', function ($args) // VIOLET: DEPRECATE
-{
-    $args->shift();
-    $name = $args->shift();
-
-    $attr = '';
-    $text = '';
-
-    for ($i = 0; $i < $args->length(); $i += 2)
-    {
-        if ($i+1 < $args->length())
-            $attr .= ' '.$args->get($i).'="'.$args->get($i+1).'"';
-        else
-            $text = $args->get($i);
-    }
-
-    return $text ? '<'.$name.$attr.'>'.$text.'</'.$name.'>' : '<'.$name.$attr.'/>';
-});
-
 
 /**
 **	Joins the array into a string. If glue is provided, it will be used as separator.
@@ -2172,60 +2130,13 @@ Expr::register('values', function ($args)
 });
 
 /**
- * Executes the specified block for each item in the list and constructs a new list with the returned values.
- * each [<varname>] <array-expr> <block>
- */
-Expr::register('_each', function ($parts, $data) // VIOLET: DEPRECATE
-{
-    $var_name = 'i';
-    $i = 1;
-
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
-
-    $list = Expr::value($parts->get($i), $data);
-
-    $s = new Arry();
-    $j = 0;
-
-    if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
-        return $s;
-
-    $block = $parts->slice($i+1);
-
-    $list->forEach(function($item, $key) use(&$var_name, &$s, &$j, &$k, &$data, &$block)
-    {
-        $data->set($var_name, $item);
-        $data->set($var_name . '##', $j++);
-        $data->set($var_name . '#', $key);
-
-        try {
-            $s->push(Expr::blockValue($block, $data));
-        }
-        catch (\Throwable $e) {
-            $name = $e->getMessage();
-            if ($name == 'EXC_BREAK') return false;
-            if ($name == 'EXC_CONTINUE') return;
-            throw $e;
-        }
-    });
-
-    $data->remove($var_name);
-    $data->remove($var_name . '##');
-    $data->remove($var_name . '#');
-
-    return $s;
-});
-
-/**
  * Executes the specified block for each item in the list.
  * for [<varname>] <array-expr> <block>
  */
 Expr::register('_for', function ($parts, $data)
 {
-    $var_name = 'i';
     $i = 1;
-
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
+    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
     $list = Expr::value($parts->get($i), $data);
     $j = 0;
@@ -2234,12 +2145,11 @@ Expr::register('_for', function ($parts, $data)
         return $list;
 
     $block = $parts->slice($i+1);
-
     foreach ($list->__nativeArray as $key => $item)
     {
         $data->set($var_name, $item);
-        $data->set($var_name . '##', $j++);
-        $data->set($var_name . '#', $key);
+        $data->set($index_name, $j++);
+        $data->set($key_name, $key);
 
         try {
             Expr::blockValue($block, $data);
@@ -2253,8 +2163,8 @@ Expr::register('_for', function ($parts, $data)
     }
 
     $data->remove($var_name);
-    $data->remove($var_name . '##');
-    $data->remove($var_name . '#');
+    $data->remove($index_name);
+    $data->remove($key_name);
 
     return $list;
 });
@@ -2882,10 +2792,8 @@ Expr::register('has', function ($args, $parts, $data)
 */
 Expr::register('_map', function ($parts, $data)
 {
-    $var_name = 'i';
     $i = 1;
-
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
+    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
     $list = Expr::expand($parts->get($i), $data, 'arg');
 
@@ -2897,12 +2805,11 @@ Expr::register('_map', function ($parts, $data)
     $j = 0;
 
     $block = $parts->slice($i+1);
-
-    $list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$block)
+    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$arrayMode, &$data, &$block)
     {
         $data->set($var_name, $item);
-        $data->set($var_name . '##', $j++);
-        $data->set($var_name . '#', $key);
+        $data->set($index_name, $j++);
+        $data->set($key_name, $key);
 
         try {
             if ($arrayMode)
@@ -2919,8 +2826,8 @@ Expr::register('_map', function ($parts, $data)
     });
 
     $data->remove($var_name);
-    $data->remove($var_name . '##');
-    $data->remove($var_name . '#');
+    $data->remove($index_name);
+    $data->remove($key_name);
 
     return $output;
 });
@@ -2930,10 +2837,8 @@ Expr::register('_map', function ($parts, $data)
 */
 Expr::register('_filter', function ($parts, $data)
 {
-    $var_name = 'i';
     $i = 1;
-
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
+    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
     $list = Expr::expand($parts->get($i), $data, 'arg');
 
@@ -2945,12 +2850,11 @@ Expr::register('_filter', function ($parts, $data)
     $j = 0;
 
     $block = $parts->slice($i+1);
-
-    $list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$block)
+    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$arrayMode, &$data, &$block)
     {
         $data->set($var_name, $item);
-        $data->set($var_name . '##', $j++);
-        $data->set($var_name . '#', $key);
+        $data->set($index_name, $j++);
+        $data->set($key_name, $key);
 
         if (!!Expr::blockValue($block, $data))
         {
@@ -2962,8 +2866,8 @@ Expr::register('_filter', function ($parts, $data)
     });
 
     $data->remove($var_name);
-    $data->remove($var_name . '##');
-    $data->remove($var_name . '#');
+    $data->remove($index_name);
+    $data->remove($key_name);
 
     return $output;
 });
@@ -2973,10 +2877,8 @@ Expr::register('_filter', function ($parts, $data)
 */
 Expr::register('_every', function ($parts, $data)
 {
-    $var_name = 'i';
     $i = 1;
-
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
+    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
     $list = Expr::expand($parts->get($i), $data, 'arg');
 
@@ -2987,12 +2889,11 @@ Expr::register('_every', function ($parts, $data)
     $j = 0;
 
     $block = $parts->slice($i+1);
-
-    $list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$data, &$block)
+    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$data, &$block)
     {
         $data->set($var_name, $item);
-        $data->set($var_name . '##', $j++);
-        $data->set($var_name . '#', $key);
+        $data->set($index_name, $j++);
+        $data->set($key_name, $key);
 
         if (!Expr::blockValue($block, $data))
         {
@@ -3002,8 +2903,8 @@ Expr::register('_every', function ($parts, $data)
     });
 
     $data->remove($var_name);
-    $data->remove($var_name . '##');
-    $data->remove($var_name . '#');
+    $data->remove($index_name);
+    $data->remove($key_name);
 
     return $output;
 });
@@ -3013,10 +2914,8 @@ Expr::register('_every', function ($parts, $data)
 */
 Expr::register('_some', function ($parts, $data)
 {
-    $var_name = 'i';
     $i = 1;
-
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
+    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
     $list = Expr::expand($parts->get($i), $data, 'arg');
 
@@ -3027,12 +2926,11 @@ Expr::register('_some', function ($parts, $data)
     $j = 0;
 
     $block = $parts->slice($i+1);
-
-    $list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$data, &$block)
+    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$data, &$block)
     {
         $data->set($var_name, $item);
-        $data->set($var_name . '##', $j++);
-        $data->set($var_name . '#', $key);
+        $data->set($index_name, $j++);
+        $data->set($key_name, $key);
 
         if (!!Expr::blockValue($block, $data))
         {
@@ -3042,8 +2940,8 @@ Expr::register('_some', function ($parts, $data)
     });
 
     $data->remove($var_name);
-    $data->remove($var_name . '##');
-    $data->remove($var_name . '#');
+    $data->remove($index_name);
+    $data->remove($key_name);
 
     return $output;
 });
@@ -3053,10 +2951,8 @@ Expr::register('_some', function ($parts, $data)
 */
 Expr::register('_find', function ($parts, $data)
 {
-    $var_name = 'i';
     $i = 1;
-
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
+    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
     $list = Expr::expand($parts->get($i), $data, 'arg');
 
@@ -3067,12 +2963,11 @@ Expr::register('_find', function ($parts, $data)
     $j = 0;
 
     $block = $parts->slice($i+1);
-
-    $list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$data, &$block)
+    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$data, &$block)
     {
         $data->set($var_name, $item);
-        $data->set($var_name . '##', $j++);
-        $data->set($var_name . '#', $key);
+        $data->set($index_name, $j++);
+        $data->set($key_name, $key);
 
         if (!!Expr::blockValue($block, $data))
         {
@@ -3082,8 +2977,8 @@ Expr::register('_find', function ($parts, $data)
     });
 
     $data->remove($var_name);
-    $data->remove($var_name . '##');
-    $data->remove($var_name . '#');
+    $data->remove($index_name);
+    $data->remove($key_name);
 
     return $output;
 });
@@ -3093,10 +2988,8 @@ Expr::register('_find', function ($parts, $data)
 */
 Expr::register('_findIndex', function ($parts, $data)
 {
-    $var_name = 'i';
     $i = 1;
-
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
+    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
     $list = Expr::expand($parts->get($i), $data, 'arg');
 
@@ -3107,12 +3000,11 @@ Expr::register('_findIndex', function ($parts, $data)
     $j = 0;
 
     $block = $parts->slice($i+1);
-
-    $list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$data, &$block)
+    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$data, &$block)
     {
         $data->set($var_name, $item);
-        $data->set($var_name . '##', $j++);
-        $data->set($var_name . '#', $key);
+        $data->set($index_name, $j++);
+        $data->set($key_name, $key);
 
         if (!!Expr::blockValue($block, $data))
         {
@@ -3122,8 +3014,8 @@ Expr::register('_findIndex', function ($parts, $data)
     });
 
     $data->remove($var_name);
-    $data->remove($var_name . '##');
-    $data->remove($var_name . '#');
+    $data->remove($index_name);
+    $data->remove($key_name);
 
     return $output;
 });
@@ -3133,11 +3025,10 @@ Expr::register('_findIndex', function ($parts, $data)
 */
 Expr::register('_reduce', function ($parts, $data)
 {
-    $var_name = 'a';
-    $initial_name = 'b';
     $i = 1;
+    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name, 'a');
 
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
+    $initial_name = 'b';
     Expr::takeIdentifier($parts, $data, $i, $initial_name);
 
     $initial = Expr::expand($parts->get($i++), $data, 'arg');
@@ -3145,23 +3036,23 @@ Expr::register('_reduce', function ($parts, $data)
     if (!$list || (\Rose\typeOf($list) != 'Rose\Arry' && \Rose\typeOf($list) != 'Rose\Map'))
         return $list;
 
-    $block = $parts->slice($i);
     $j = 0;
 
-    $list->forEach(function($item, $key) use(&$var_name, &$initial_name, &$initial, &$j, &$data, &$block)
+    $block = $parts->slice($i);
+    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$initial_name, &$initial, &$j, &$data, &$block)
     {
         $data->set($initial_name, $initial);
         $data->set($var_name, $item);
-        $data->set($var_name . '##', $j++);
-        $data->set($var_name . '#', $key);
+        $data->set($index_name, $j++);
+        $data->set($key_name, $key);
 
         $initial = Expr::blockValue($block, $data);
     });
 
     $data->remove($initial_name);
     $data->remove($var_name);
-    $data->remove($var_name . '##');
-    $data->remove($var_name . '#');
+    $data->remove($index_name);
+    $data->remove($key_name);
 
     return $initial;
 });
@@ -3171,10 +3062,8 @@ Expr::register('_reduce', function ($parts, $data)
 */
 Expr::register('_select', function ($parts, $data)
 {
-    $var_name = 'i';
     $i = 1;
-
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
+    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
     $list = $parts->has($i+1) ? Expr::expand($parts->get($i+1), $data, 'arg') : Expr::$context->defaultValue;
 
@@ -3186,12 +3075,11 @@ Expr::register('_select', function ($parts, $data)
     $j = 0;
 
     $condition = $parts->get($i);
-
-    $list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$condition)
+    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$arrayMode, &$data, &$condition)
     {
         $data->set($var_name, $item);
-        $data->set($var_name . '##', $j++);
-        $data->set($var_name . '#', $key);
+        $data->set($index_name, $j++);
+        $data->set($key_name, $key);
 
         if (!!Expr::value($condition, $data))
         {
@@ -3203,8 +3091,8 @@ Expr::register('_select', function ($parts, $data)
     });
 
     $data->remove($var_name);
-    $data->remove($var_name . '##');
-    $data->remove($var_name . '#');
+    $data->remove($index_name);
+    $data->remove($key_name);
 
     return $output;
 });
@@ -4110,10 +3998,8 @@ Expr::register('map-get', function($args, $parts, $data)
 */
 Expr::register('_mapify', function ($parts, $data)
 {
-    $var_name = 'i';
     $i = 1;
-
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
+    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
     $list = Expr::expand($parts->get($i), $data, 'arg');
 
@@ -4126,11 +4012,11 @@ Expr::register('_mapify', function ($parts, $data)
     $key_expr = $parts->get($i+1);
     $val_expr = $parts->has($i+2) ? $parts->get($i+2) : null;
 
-    $list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$key_expr, &$val_expr)
+    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$arrayMode, &$data, &$key_expr, &$val_expr)
     {
         $data->set($var_name, $item);
-        $data->set($var_name . '##', $j++);
-        $data->set($var_name . '#', $key);
+        $data->set($index_name, $j++);
+        $data->set($key_name, $key);
 
         $key = Expr::expand($key_expr, $data, 'arg');
         $value = $item;
@@ -4142,8 +4028,8 @@ Expr::register('_mapify', function ($parts, $data)
     });
 
     $data->remove($var_name);
-    $data->remove($var_name . '##');
-    $data->remove($var_name . '#');
+    $data->remove($index_name);
+    $data->remove($key_name);
 
     return $output;
 });
@@ -4153,10 +4039,8 @@ Expr::register('_mapify', function ($parts, $data)
 */
 Expr::register('_groupify', function ($parts, $data)
 {
-    $var_name = 'i';
     $i = 1;
-
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
+    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
     $list = Expr::expand($parts->get($i), $data, 'arg');
 
@@ -4169,11 +4053,11 @@ Expr::register('_groupify', function ($parts, $data)
     $key_expr = $parts->get($i+1);
     $val_expr = $parts->has($i+2) ? $parts->get($i+2) : null;
 
-    $list->forEach(function($item, $key) use(&$var_name, &$output, &$j, &$arrayMode, &$data, &$key_expr, &$val_expr)
+    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$arrayMode, &$data, &$key_expr, &$val_expr)
     {
         $data->set($var_name, $item);
-        $data->set($var_name . '##', $j++);
-        $data->set($var_name . '#', $key);
+        $data->set($index_name, $j++);
+        $data->set($key_name, $key);
 
         $key = (string)Expr::expand($key_expr, $data, 'arg');
         $value = $item;
@@ -4188,8 +4072,8 @@ Expr::register('_groupify', function ($parts, $data)
     });
 
     $data->remove($var_name);
-    $data->remove($var_name . '##');
-    $data->remove($var_name . '#');
+    $data->remove($index_name);
+    $data->remove($key_name);
 
     return $output;
 });
