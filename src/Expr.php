@@ -357,6 +357,7 @@ class Expr
 
                 switch ($r)
                 {
+                    case '0': $r = "\0"; break;
                     case 'n': $r = "\n"; break;
                     case 'r': $r = "\r"; break;
                     case 'f': $r = "\f"; break;
@@ -2058,6 +2059,14 @@ Expr::register('str::lastIndexOf', function ($args)
  */
 Expr::register('str::compare', function ($args) {
 	return Text::compare($args->get(1), $args->get(2));
+});
+
+/**
+ * Translates characters in the given string.
+ * str::tr <source-set> <replacement-set> <value>
+ */
+Expr::register('str::tr', function($args) {
+    return strtr ($args->get(1), $args->get(2), $args->get(3));
 });
 
 /**
