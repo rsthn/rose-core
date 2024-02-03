@@ -1,3 +1,17 @@
+# v4.1.8 - Feb 03 2024
+
+#### Crypto
+- Added "Crypto" native extension.
+- Added functions `crypto:hashlist`, `crypto:hash`, `crypto:hash-bin`, `crypto:hmac`, `crypto:hmac-bin`.
+
+#### Expr
+- Added functions `base64u:encode`, `base64u:decode`, `url-query:stringify`, `html-text:encode`, `html-text:decode`.
+
+#### General
+- Marked several functions to be deprecated on next major version, alternatives will be provided when applicable.
+
+<br/>
+
 # v4.1.7 - Jan 22 2024
 
 #### Expr
