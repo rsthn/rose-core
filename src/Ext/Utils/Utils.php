@@ -35,7 +35,7 @@ Expr::register('strings', function ($args)
     return Strings::get($args->get(1));
 });
 
-Expr::register('s', function ($args)
+Expr::register('s', function ($args) // DEPRECATE
 {
     if ($args->length == 1)
         return Strings::getInstance();
@@ -43,7 +43,16 @@ Expr::register('s', function ($args)
     return Strings::get($args->get(1));
 });
 
-Expr::register('s::lang', function ($args)
+Expr::register('s::lang', function ($args) // DEPRECATE
+{
+    if ($args->length == 1)
+        return Strings::getInstance()->lang;
+
+    Strings::getInstance()->setLang($args->get(1));
+    return null;
+});
+
+Expr::register('strings::lang', function ($args)
 {
     if ($args->length == 1)
         return Strings::getInstance()->lang;
@@ -136,8 +145,8 @@ Expr::register('utils::sleep', function($args) { sleep($args->get(1)); return nu
 
 Expr::register('utils::base64::encode', function($args) { return base64_encode ($args->get(1)); }); // DEPRECATE
 Expr::register('utils::base64::decode', function($args) { return base64_decode ($args->get(1)); }); // DEPRECATE
-Expr::register('base64::encode', function($args) { return base64_encode ($args->get(1)); });
-Expr::register('base64::decode', function($args) { return base64_decode ($args->get(1)); });
+Expr::register('base64:encode', function($args) { return base64_encode ($args->get(1)); });
+Expr::register('base64:decode', function($args) { return base64_decode ($args->get(1)); });
 
 function base64url_encode($data) {
     return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
@@ -147,40 +156,44 @@ function base64url_decode($data) {
     return base64_decode(str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT));
 }
 
-Expr::register('base64u::encode', function($args) { return base64url_encode ($args->get(1)); });
-Expr::register('base64u::decode', function($args) { return base64url_decode ($args->get(1)); });
+Expr::register('base64u:encode', function($args) { return base64url_encode ($args->get(1)); });
+Expr::register('base64u:decode', function($args) { return base64url_decode ($args->get(1)); });
 
 Expr::register('utils::hex::encode', function($args) { return bin2hex ($args->get(1)); }); // DEPRECATE
 Expr::register('utils::hex::decode', function($args) { return hex2bin ($args->get(1)); }); // DEPRECATE
-Expr::register('hex::encode', function($args) { return bin2hex ($args->get(1)); });
-Expr::register('hex::decode', function($args) { return hex2bin ($args->get(1)); });
+Expr::register('hex:encode', function($args) { return bin2hex ($args->get(1)); });
+Expr::register('hex:decode', function($args) { return hex2bin ($args->get(1)); });
 
 Expr::register('utils::url::encode', function($args) { return urlencode ($args->get(1) ?? ''); }); // DEPRECATE
 Expr::register('utils::url::decode', function($args) { return urldecode ($args->get(1) ?? ''); }); // DEPRECATE
-Expr::register('url::encode', function($args) { return urlencode ($args->get(1) ?? ''); });
-Expr::register('url::decode', function($args) { return urldecode ($args->get(1) ?? ''); });
+Expr::register('url:encode', function($args) { return urlencode ($args->get(1) ?? ''); });
+Expr::register('url:decode', function($args) { return urldecode ($args->get(1) ?? ''); });
 
 Expr::register('utils::serialize', function($args) { return serialize ($args->get(1)); }); // DEPRECATE
 Expr::register('utils::deserialize', function($args) { return unserialize ($args->get(1)); }); // DEPRECATE
 
-Expr::register('utils::urlSearchParams', function($args) {
+Expr::register('utils::urlSearchParams', function($args) { // DEPRECATE
+    return $args->get(1)->map(function($value, $key) { return urlencode($key).'='.urlencode($value); })->values()->join('&');
+});
+
+Expr::register('url-query:stringify', function($args) {
     return $args->get(1)->map(function($value, $key) { return urlencode($key).'='.urlencode($value); })->values()->join('&');
 });
 
 Expr::register('utils::html::encode', function($args) { return htmlspecialchars ($args->get(1)); }); // DEPRECATE
 Expr::register('utils::html::decode', function($args) { return htmlspecialchars_decode ($args->get(1)); }); // DEPRECATE
-Expr::register('html::encode', function($args) { return htmlspecialchars ($args->get(1)); });
-Expr::register('html::decode', function($args) { return htmlspecialchars_decode ($args->get(1)); });
+Expr::register('html-text:encode', function($args) { return htmlspecialchars ($args->get(1)); });
+Expr::register('html-text:decode', function($args) { return htmlspecialchars_decode ($args->get(1)); });
 
 Expr::register('utils::gz::compress', function($args) { return gzcompress ($args->get(1)); }); // DEPRECATE
 Expr::register('utils::gz::uncompress', function($args) { return gzuncompress ($args->get(1)); }); // DEPRECATE
 Expr::register('utils::gz::deflate', function($args) { return gzdeflate ($args->get(1)); }); // DEPRECATE
 Expr::register('utils::gz::inflate', function($args) { return gzinflate ($args->get(1)); }); // DEPRECATE
 
-Expr::register('gz::compress', function($args) { return gzcompress ($args->get(1)); });
-Expr::register('gz::uncompress', function($args) { return gzuncompress ($args->get(1)); });
-Expr::register('gz::deflate', function($args) { return gzdeflate ($args->get(1)); });
-Expr::register('gz::inflate', function($args) { return gzinflate ($args->get(1)); });
+Expr::register('gz:compress', function($args) { return gzcompress ($args->get(1)); });
+Expr::register('gz:decompress', function($args) { return gzuncompress ($args->get(1)); });
+Expr::register('gz:deflate', function($args) { return gzdeflate ($args->get(1)); });
+Expr::register('gz:inflate', function($args) { return gzinflate ($args->get(1)); });
 
 /**
  * (utils::lpad <length> [<pad>] <string>)
@@ -221,7 +234,7 @@ Expr::register('utils::json::stringify', function($args) // DEPRECATE
     return JSON::stringify($value);
 });
 
-Expr::register('json::stringify', function($args)
+Expr::register('json:stringify', function($args)
 {
     $value = $args->get(1);
 
@@ -241,7 +254,7 @@ Expr::register('utils::json::prettify', function($args)  // DEPRECATE
     return JSON::prettify(JSON::parse((string)$value));
 });
 
-Expr::register('json::prettify', function($args)
+Expr::register('json:prettify', function($args)
 {
     $value = $args->get(1);
 
@@ -269,7 +282,7 @@ Expr::register('utils::json::parse', function($args)  // DEPRECATE
     return $value[0] == '[' ? Arry::fromNativeArray(JSON::parse($value)) : ($value[0] == '{' ? Map::fromNativeArray(JSON::parse($value)) : JSON::parse($value));
 });
 
-Expr::register('json::parse', function($args)
+Expr::register('json:parse', function($args)
 {
     $value = (string)$args->get(1);
     if (Text::length($value) == 0) return null;
@@ -335,7 +348,7 @@ function xmlSimplify ($xml, $parent)
     return $parent;
 }
 
-Expr::register('utils::xml::parse', function($args)
+Expr::register('utils::xml::parse', function($args) // DEPRECATE
 {
     $value = (string)$args->get(1);
     if (Text::length($value) == 0) return null;
@@ -352,13 +365,107 @@ Expr::register('utils::xml::parse', function($args)
     return $result;
 });
 
-Expr::register('utils::xml::simplify', function($args)
+Expr::register('xml:parse', function($args)
+{
+    $value = (string)$args->get(1);
+    if (Text::length($value) == 0) return null;
+
+    $value = simplexml_load_string($value);
+    $result = xmlToMap($value);
+
+    $value = $value->getNamespaces();
+    $value = sizeof($value) != 0 ? array_keys($value)[0] : null;
+
+    if ($value)
+        $result->tagName = $value . ':' . $result->tagName;
+
+    return $result;
+});
+
+Expr::register('utils::xml::simplify', function($args) // DEPRECATE
 {
     $m = new Map();
     return $args->get(1) ? xmlSimplify($args->get(1), $m) : $m;
 });
 
-Expr::register('utils::html', function($args)
+Expr::register('xml:simplify', function($args)
+{
+    $m = new Map();
+    return $args->get(1) ? xmlSimplify($args->get(1), $m) : $m;
+});
+
+Expr::register('utils::html', function($args) // DEPRECATE
+{
+    $data = $args->get(1);
+
+    Wind::contentType(new Arry([null, 'text/html']));
+
+    if (\Rose\typeOf($data) == 'Rose\Data\Reader')
+    {
+        $s = '';
+
+        foreach ($data->fields->__nativeArray as $name)
+        {
+            $s .= "<th>$name</th>";
+        }
+
+        $s = "<tr>$s</tr>";
+
+        $data->forEach(function ($row) use (&$s)
+        {
+            $i = '';
+
+            foreach ($row->__nativeArray as $col)
+                $i .= "<td>$col</td>";
+
+            $s .= '<tr>'.nl2br($i).'</tr>';
+        });
+
+        return "<table style='font-family: monospace;' border='1'>$s</table>";
+    }
+
+    if (\Rose\typeOf($data) == 'Rose\Arry')
+    {
+        if (!$data->length) return '';
+
+        $s = '';
+
+        foreach ($data->get(0)->keys()->__nativeArray as $name)
+        {
+            $s .= "<th>$name</th>";
+        }
+
+        $s = "<tr>$s</tr>";
+
+        $data->forEach(function ($row) use (&$s)
+        {
+            $i = '';
+
+            foreach ($row->__nativeArray as $col)
+                $i .= "<td>$col</td>";
+
+            $s .= '<tr>'.nl2br($i).'</tr>';
+        });
+
+        return "<table style='font-family: monospace;' border='1'>$s</table>";
+    }
+
+    if (\Rose\typeOf($data) == 'Rose\Map')
+    {
+        $s = '';
+
+        $data->forEach(function ($value, $key) use (&$s)
+        {
+            $s .= '<tr>'.nl2br("<th>$key</th><td>$value</td>").'</tr>';
+        });
+
+        return "<table style='font-family: monospace;' border='1'>$s</table>";
+    }
+
+    return $data;
+});
+
+Expr::register('html:encode', function($args)
 {
     $data = $args->get(1);
 
@@ -440,37 +547,6 @@ Expr::register('utils::exec', function($args)
     $result = 0;
     passthru ($args->get(1), $result);
     return $result;
-});
-
-/* ************************** */
-Expr::register('utils::hashes', function($args)
-{
-    return Arry::fromNativeArray(hash_algos());
-});
-
-Expr::register('utils::hash', function($args)
-{
-    return hash($args->get(1), $args->get(2));
-});
-
-Expr::register('utils::hash-binary', function($args) {
-    return hash($args->get(1), $args->get(2), true);
-});
-
-/**
- * Returns the HMAC of a string (hexadecimal).
- * @code (utils::hmac <algorithm> <secret-key> <data>)
- */
-Expr::register('utils::hmac', function($args) {
-    return hash_hmac($args->get(1), $args->get(3), $args->get(2));
-});
-
-/**
- * Returns the HMAC of a string (binary).
- * @code (utils::hmac-binary <algorithm> <secret-key> <data>)
- */
-Expr::register('utils::hmac-binary', function($args) {
-    return hash_hmac($args->get(1), $args->get(3), $args->get(2), true);
 });
 
 /* ************ */
