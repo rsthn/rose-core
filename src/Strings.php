@@ -22,56 +22,56 @@ use Rose\Map;
 
 class Strings
 {
-	/*
-	**	Location from which the 'lang' parameter can be loaded (in order of precedence).
-	*/
-	public const FROM_NOWHERE				= 0;
-	public const FROM_CONFIG				= 1;
-	public const FROM_COOKIE				= 2;
-	public const FROM_CURRENT_USER			= 3;
-	public const FROM_RELATIVE_PATH			= 4;
-	public const FROM_REQUEST				= 5;
+    /*
+    **	Location from which the 'lang' parameter can be loaded (in order of precedence).
+    */
+    public const FROM_NOWHERE				= 0;
+    public const FROM_CONFIG				= 1;
+    public const FROM_COOKIE				= 2;
+    public const FROM_CURRENT_USER			= 3;
+    public const FROM_RELATIVE_PATH			= 4;
+    public const FROM_REQUEST				= 5;
 
-	/*
-	**	Primary and only instance of this class.
-	*/
-	private static $objectInstance = null;
+    /*
+    **	Primary and only instance of this class.
+    */
+    private static $objectInstance = null;
 
-	/*
-	**	List of already loaded strings files.
-	*/
-	private $loadedMaps;
+    /*
+    **	List of already loaded strings files.
+    */
+    private $loadedMaps;
 
-	/*
-	**	Current language code.
-	*/
-	public $lang;
+    /*
+    **	Current language code.
+    */
+    public $lang;
 
-	/*
-	**	Indicates the location from which the 'lang' parameter was loaded.
-	*/
+    /*
+    **	Indicates the location from which the 'lang' parameter was loaded.
+    */
     public $langFrom;
 
-	/*
-	**	Base directory for general strings.
-	*/
-	public $base;
-	public $altBase;
+    /*
+    **	Base directory for general strings.
+    */
+    public $base;
+    public $altBase;
 
-	/*
-	**	Base directories for language strings.
-	*/
-	public $langBase;
-	public $altLangBase;
+    /*
+    **	Base directories for language strings.
+    */
+    public $langBase;
+    public $altLangBase;
 
-	/*
-	**	Indicates if we're debugging string output, values are: null, 'blank', or 'code'.
-	*/
-	public $debug;
+    /*
+    **	Indicates if we're debugging string output, values are: null, 'blank', or 'code'.
+    */
+    public $debug;
 
-	/*
-	**	Returns the instance of this class.
-	*/
+    /*
+    **	Returns the instance of this class.
+    */
     public static function getInstance ()
     {
         if (Strings::$objectInstance == null)
@@ -80,264 +80,264 @@ class Strings
         return Strings::$objectInstance;
     }
 
-	/*
-	**	Initializes the instance of the class. Similar to calling getInstance().
-	*/
-	public static function init ()
-	{
-		self::getInstance();
-	}
+    /*
+    **	Initializes the instance of the class. Similar to calling getInstance().
+    */
+    public static function init ()
+    {
+        self::getInstance();
+    }
 
-	/*
-	**	Constructs the Strings object, this is a private constructor as this class can have only one instance.
-	*/
+    /*
+    **	Constructs the Strings object, this is a private constructor as this class can have only one instance.
+    */
     private function __construct ()
     {
-		$this->loadedMaps = new Map ();
+        $this->loadedMaps = new Map ();
         $this->debug = Configuration::getInstance()->Strings;
-		if ($this->debug) $this->debug = $this->debug->debug;
+        if ($this->debug) $this->debug = $this->debug->debug;
 
-		$this->altLangBase = $this->altBase = $this->langBase = $this->base = Main::$CORE_DIR.'/strings/';
+        $this->altLangBase = $this->altBase = $this->langBase = $this->base = Main::$CORE_DIR.'/strings/';
 
-		// Use default internal language code.
-		$this->langFrom = Strings::FROM_NOWHERE;
-		$this->lang = '';
+        // Use default internal language code.
+        $this->langFrom = Strings::FROM_NOWHERE;
+        $this->lang = '';
 
-		$this->setLang();
+        $this->setLang();
     }
 
-	/*
-	**	Sets the strings language code to the specified value. The language directory CORE_DIR/strings/XX for code XX should exist, if the
-	**	parameter is not specified, the lang code will be loaded from one of the supported locations.
-	*/
+    /*
+    **	Sets the strings language code to the specified value. The language directory CORE_DIR/strings/XX for code XX should exist, if the
+    **	parameter is not specified, the lang code will be loaded from one of the supported locations.
+    */
     public function setLang ($lang=null)
     {
-		$conf = Configuration::getInstance()->Locale;
+        $conf = Configuration::getInstance()->Locale;
 
-		if ($lang == null)
-		{
-			$gateway = Gateway::getInstance();
+        if ($lang == null)
+        {
+            $gateway = Gateway::getInstance();
 
-			// Attempt to load language code from configuration.
-			if ($conf && $conf->lang != null)
-			{
-				$lang = $conf->lang;
-				$this->langFrom = Strings::FROM_CONFIG;
-			}
+            // Attempt to load language code from configuration.
+            if ($conf && $conf->lang != null)
+            {
+                $lang = $conf->lang;
+                $this->langFrom = Strings::FROM_CONFIG;
+            }
 
-			// Attempt to load language code from cookie.
-			if (!$lang && Cookies::has('lang'))
-			{
-				$lang = Cookies::get('lang');
-				$this->langFrom = Strings::FROM_COOKIE;
-			}
+            // Attempt to load language code from cookie.
+            if (!$lang && Cookies::has('lang'))
+            {
+                $lang = Cookies::get('lang');
+                $this->langFrom = Strings::FROM_COOKIE;
+            }
 
-			// Attempt to load language code from current user.
-			if (!$lang && Session::$data->user != null && Session::$data->user->lang != null && Path::exists($this->base.Session::$data->user->lang))
-			{
-				$lang = Session::$data->user->lang;
-				$this->langFrom = Strings::FROM_CURRENT_USER;
-			}
+            // Attempt to load language code from current user.
+            if (!$lang && Session::$data->user != null && Session::$data->user->lang != null && Path::exists($this->base.Session::$data->user->lang))
+            {
+                $lang = Session::$data->user->lang;
+                $this->langFrom = Strings::FROM_CURRENT_USER;
+            }
 
-			// Attempt to load language code from relative path.
-			if (Regex::_matches('/^\/[a-z]{2}\//', $gateway->relativePath) && Path::exists($this->base.Text::substring($gateway->relativePath, 1, 2).'/'))
-			{
-				$lang = Text::substring($gateway->relativePath, 1, 2);
-				$gateway->relativePath = Text::substring($gateway->relativePath, 4);
-				if ($gateway->relativePath) $gateway->relativePath = '/'.$gateway->relativePath;
+            // Attempt to load language code from relative path.
+            if (Regex::_matches('/^\/[a-z]{2}\//', $gateway->relativePath) && Path::exists($this->base.Text::substring($gateway->relativePath, 1, 2).'/'))
+            {
+                $lang = Text::substring($gateway->relativePath, 1, 2);
+                $gateway->relativePath = Text::substring($gateway->relativePath, 4);
+                if ($gateway->relativePath) $gateway->relativePath = '/'.$gateway->relativePath;
 
-				$this->langFrom = Strings::FROM_RELATIVE_PATH;
-			}
-			else
-			// Attempt to load language code from request parameters.
-			if ($gateway->requestParams->has('__lang'))
-			{
-				$lang = $gateway->requestParams->__lang;
-				$this->langFrom = Strings::FROM_REQUEST;
-			}
+                $this->langFrom = Strings::FROM_RELATIVE_PATH;
+            }
+            else
+            // Attempt to load language code from request parameters.
+            if ($gateway->requestParams->has('__lang'))
+            {
+                $lang = $gateway->requestParams->__lang;
+                $this->langFrom = Strings::FROM_REQUEST;
+            }
 
-			// Ensure that if no language is selected (or is invalid) all strings will be loaded from the base strings directory.
-			if (!$lang || Text::length($lang) > 2 || !Path::exists($this->base.$lang.'/'))
-				$lang = '.';
+            // Ensure that if no language is selected (or is invalid) all strings will be loaded from the base strings directory.
+            if (!$lang || Text::length($lang) > 2 || !Path::exists($this->base.$lang.'/'))
+                $lang = '.';
 
-			$gateway->requestParams->__lang = $lang;
-		}
+            $gateway->requestParams->__lang = $lang;
+        }
 
-		$this->lang = $lang;
+        $this->lang = $lang;
 
         $this->altLangBase = $this->altBase.$this->lang.'/';
-		$this->langBase = $this->base.$this->lang.'/';
+        $this->langBase = $this->base.$this->lang.'/';
     }
 
-	/*
-	**	Sets the strings base directory. If $base is null, the default will be set.
-	*/
+    /*
+    **	Sets the strings base directory. If $base is null, the default will be set.
+    */
     public function setBase ($base)
     {
-		if (!$base) $base = Main::$CORE_DIR.'/strings/';
+        if (!$base) $base = Main::$CORE_DIR.'/strings/';
 
         if (Text::substring($base, -1) != '/')
             $base .= '/';
 
-		$this->base = $base;
-		$this->langBase = $this->base.$this->lang.'/';
+        $this->base = $base;
+        $this->langBase = $this->base.$this->lang.'/';
     }
 
-	/*
-	**	Sets the strings alternative base directory. If $base is null, the default will be set.
-	*/
+    /*
+    **	Sets the strings alternative base directory. If $base is null, the default will be set.
+    */
     public function setAltBase ($base)
     {
-		if (!$base) $base = Main::$CORE_DIR.'/strings/';
+        if (!$base) $base = Main::$CORE_DIR.'/strings/';
 
         if (Text::substring($base, -1) != '/')
             $base .= '/';
 
-		$this->altBase = $base;
-		$this->altLangBase = $this->altBase.$this->lang.'/';
+        $this->altBase = $base;
+        $this->altLangBase = $this->altBase.$this->lang.'/';
     }
 
-	/*
-	**	Retrieves a strings map given its name. Will attempt to retrieve the strings map from the cache, however if not loaded it will load it
-	**	from whichever file is found first (conf, or plain) using the base directory, if not found, will retry using the alternative base
-	**	directory, and if still not found an error will be issued.
-	**
-	**	If `name` starts with '//' it will be treated as an absolute path. If it starts with '@' it will be considered a language string
-	**	and the `langBase` directory will be used, in other cases the `base` directory will be used.
-	*/
+    /*
+    **	Retrieves a strings map given its name. Will attempt to retrieve the strings map from the cache, however if not loaded it will load it
+    **	from whichever file is found first (conf, or plain) using the base directory, if not found, will retry using the alternative base
+    **	directory, and if still not found an error will be issued.
+    **
+    **	If `name` starts with '//' it will be treated as an absolute path. If it starts with '@' it will be considered a language string
+    **	and the `langBase` directory will be used, in other cases the `base` directory will be used.
+    */
     public function retrieve ($name)
     {
-		if ($this->debug)
-		{
-			if ($this->debug == 'blank')
-            	return null;
+        if ($this->debug)
+        {
+            if ($this->debug == 'blank')
+                return null;
 
-			if ($this->debug == 'code')
-				return $name;
-		}
+            if ($this->debug == 'code')
+                return $name;
+        }
 
-		if ($this->loadedMaps->has($name, true))
-			return $this->loadedMaps->get($name);
+        if ($this->loadedMaps->has($name, true))
+            return $this->loadedMaps->get($name);
 
-		// Attempt to load conf or plain from base directory.
-		$tmp = Text::substring($name,0,2) == '//' ? Text::substring($name,2) : ($name[0] == '@' ? $this->langBase.Text::substring($name,1) : $this->base.$name);
+        // Attempt to load conf or plain from base directory.
+        $tmp = Text::substring($name,0,2) == '//' ? Text::substring($name,2) : ($name[0] == '@' ? $this->langBase.Text::substring($name,1) : $this->base.$name);
 
-		if (Path::exists($tmp.'.conf'))
-		{
-			$this->loadedMaps->set ($name, $data = Configuration::loadFrom($tmp.'.conf'));
-			return $data;
-		}
+        if (Path::exists($tmp.'.conf'))
+        {
+            $this->loadedMaps->set ($name, $data = Configuration::loadFrom($tmp.'.conf'));
+            return $data;
+        }
 
-		if (Path::exists($tmp.'.plain'))
-		{
-			$this->loadedMaps->set ($name, $data = File::getContents($tmp.'.plain'));
-			return $data;
-		}
+        if (Path::exists($tmp.'.plain'))
+        {
+            $this->loadedMaps->set ($name, $data = File::getContents($tmp.'.plain'));
+            return $data;
+        }
 
-		// Attempt to load conf or plain from alternative base directory.
-		$tmp2 = Text::substring($name,0,2) == '//' ? Text::substring($name,2) : ($name[0] == '@' ? $this->altLangBase.Text::substring($name,1) : $this->altBase.$name);
-		if ($tmp != $tmp2)
-		{
-			if (Path::exists($tmp2.'.conf'))
-			{
-				$this->loadedMaps->set ($name, $data = Configuration::loadFrom($tmp2.'.conf'));
-				return $data;
-			}
+        // Attempt to load conf or plain from alternative base directory.
+        $tmp2 = Text::substring($name,0,2) == '//' ? Text::substring($name,2) : ($name[0] == '@' ? $this->altLangBase.Text::substring($name,1) : $this->altBase.$name);
+        if ($tmp != $tmp2)
+        {
+            if (Path::exists($tmp2.'.conf'))
+            {
+                $this->loadedMaps->set ($name, $data = Configuration::loadFrom($tmp2.'.conf'));
+                return $data;
+            }
 
-			if (Path::exists($tmp2.'.plain'))
-			{
-				$this->loadedMaps->set ($name, $data = File::getContents($tmp2.'.plain'));
-				return $data;
-			}
-		}
+            if (Path::exists($tmp2.'.plain'))
+            {
+                $this->loadedMaps->set ($name, $data = File::getContents($tmp2.'.plain'));
+                return $data;
+            }
+        }
 
-		// Attempt to load conf or plain from base directory ignoring language specifier.
-		$tmp2 = Text::substring($name,0,2) == '//' ? Text::substring($name,2) : ($name[0] == '@' ? $this->base.Text::substring($name,1) : $this->base.$name);
-		if ($tmp != $tmp2)
-		{
-			if (Path::exists($tmp2.'.conf'))
-			{
-				$this->loadedMaps->set ($name, $data = Configuration::loadFrom($tmp2.'.conf'));
-				return $data;
-			}
+        // Attempt to load conf or plain from base directory ignoring language specifier.
+        $tmp2 = Text::substring($name,0,2) == '//' ? Text::substring($name,2) : ($name[0] == '@' ? $this->base.Text::substring($name,1) : $this->base.$name);
+        if ($tmp != $tmp2)
+        {
+            if (Path::exists($tmp2.'.conf'))
+            {
+                $this->loadedMaps->set ($name, $data = Configuration::loadFrom($tmp2.'.conf'));
+                return $data;
+            }
 
-			if (Path::exists($tmp2.'.plain'))
-			{
-				$this->loadedMaps->set ($name, $data = File::getContents($tmp2.'.plain'));
-				return $data;
-			}
-		}
+            if (Path::exists($tmp2.'.plain'))
+            {
+                $this->loadedMaps->set ($name, $data = File::getContents($tmp2.'.plain'));
+                return $data;
+            }
+        }
 
-		throw new Error ('Undefined strings file: '.$tmp);
+        throw new Error ('Undefined strings file: '.$tmp);
     }
 
-	/*
-	**	Loads a strings file from the specified path and registers under the given name.
-	*/
+    /*
+    **	Loads a strings file from the specified path and registers under the given name.
+    */
     public function load ($name, $path, $merge=false)
     {
         if ($this->loadedMaps->has($name, true) && !$merge)
             $this->loadedMaps->remove($name);
 
-		if (!Path::exists($path.'.conf'))
-		{
-			if (!Path::exists($path.'.plain'))
-				throw new Error ('Undefined strings file: '.$path);
+        if (!Path::exists($path.'.conf'))
+        {
+            if (!Path::exists($path.'.plain'))
+                throw new Error ('Undefined strings file: '.$path);
 
-			$this->loadedMaps->set ($name, File::getContents($path.'.plain'));
-		}
-		else
-		{
-			if ($merge)
-			{
-				if (!$this->loadedMaps->has($name, true))
-					$this->loadedMaps->set ($name, new Map ());
+            $this->loadedMaps->set ($name, File::getContents($path.'.plain'));
+        }
+        else
+        {
+            if ($merge)
+            {
+                if (!$this->loadedMaps->has($name, true))
+                    $this->loadedMaps->set ($name, new Map ());
 
-				$this->loadedMaps->get($name)->merge(Configuration::loadFrom($path.'.conf'), true);
-			}
-			else
-				$this->loadedMaps->set ($name, Configuration::loadFrom($path.'.conf'));
-		}
+                $this->loadedMaps->get($name)->merge(Configuration::loadFrom($path.'.conf'), true);
+            }
+            else
+                $this->loadedMaps->set ($name, Configuration::loadFrom($path.'.conf'));
+        }
     }
 
-	/*
-	**	Retrieves a strings map.
-	*/
+    /*
+    **	Retrieves a strings map.
+    */
     public function __get ($name)
     {
         return $this->retrieve($name);
-	}
+    }
 
-	/*
-	**	Utility function to return a string. If the target string is not found then the given string path will be returned (as a placeholder).
-	*/
-	public static function get ($path, $placeholder=true)
-	{
-		if (Strings::getInstance()->debug)
-		{
-			if (Strings::getInstance()->debug == 'blank')
-            	return null;
+    /*
+    **	Utility function to return a string. If the target string is not found then the given string path will be returned (as a placeholder).
+    */
+    public static function get ($path, $placeholder=true)
+    {
+        if (Strings::getInstance()->debug)
+        {
+            if (Strings::getInstance()->debug == 'blank')
+                return null;
 
-			if (Strings::getInstance()->debug == 'code')
-				return $path;
-		}
+            if (Strings::getInstance()->debug == 'code')
+                return $path;
+        }
 
-		$args = Text::split('.', $path);
-		$tmp = Strings::getInstance();
+        $args = Text::split('.', $path);
+        $tmp = Strings::getInstance();
 
-		foreach ($args->__nativeArray as $i)
-		{
-			try {
-				$tmp = $tmp->{$i};
-			}
-			catch (\Throwable $e) {
-				$tmp = null;
-			}
+        foreach ($args->__nativeArray as $i)
+        {
+            try {
+                $tmp = $tmp->{$i};
+            }
+            catch (\Throwable $e) {
+                $tmp = null;
+            }
 
-			if ($tmp == null)
-				return $placeholder ? $path : null;
-		}
+            if ($tmp == null)
+                return $placeholder ? $path : null;
+        }
 
-		return $tmp;
-	}
+        return $tmp;
+    }
 };

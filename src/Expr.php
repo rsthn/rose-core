@@ -366,6 +366,7 @@ class Expr
                     case 'e': $r = "\x1B"; break;
                     case '"': $r = "\""; break;
                     case "'": $r = "\'"; break;
+                    case "`": $r = "`"; break;
                     case "(": $r = "("; break;
                     case ")": $r = ")"; break;
                     case "{": $r = "{"; break;
@@ -2032,9 +2033,9 @@ Expr::register('replace', function ($args)
 /**
 **	Returns the index of a sub-string in the given text. Returns -1 when not found.
 **
-**	str::indexOf <search> <value>
+**	str:indexOf <search> <value>
 */
-Expr::register('str::indexOf', function ($args)
+Expr::register('str:indexOf', function ($args)
 {
     $i = Text::indexOf($args->get(2), $args->get(1));
     return $i === false ? -1 : $i;
@@ -2043,9 +2044,9 @@ Expr::register('str::indexOf', function ($args)
 /**
 **	Returns the last index of a sub-string in the given text. Returns -1 when not found.
 **
-**	str::lastIndexOf <search> <value>
+**	str:lastIndexOf <search> <value>
 */
-Expr::register('str::lastIndexOf', function ($args)
+Expr::register('str:lastIndexOf', function ($args)
 {
     $i = Text::revIndexOf($args->get(2), $args->get(1));
     return $i === false ? -1 : $i;
@@ -2055,17 +2056,17 @@ Expr::register('str::lastIndexOf', function ($args)
  * Compares two strings and returns 0 if they are equal, -1 if the first is smaller than the second and 1 if
  * the first is greater than the second.
  *
- * str::compare <a> <b>
+ * str:compare <a> <b>
  */
-Expr::register('str::compare', function ($args) {
-	return Text::compare($args->get(1), $args->get(2));
+Expr::register('str:compare', function ($args) {
+    return Text::compare($args->get(1), $args->get(2));
 });
 
 /**
  * Translates characters in the given string.
- * str::tr <source-set> <replacement-set> <value>
+ * str:tr <source-set> <replacement-set> <value>
  */
-Expr::register('str::tr', function($args) {
+Expr::register('str:tr', function($args) {
     return strtr ($args->get(1), $args->get(2), $args->get(3));
 });
 
@@ -4089,9 +4090,9 @@ Expr::register('_groupify', function ($parts, $data)
 
 /**
  * Dumps the current context chain.
- * (debug::dumpContextChain [include-root] [include-private])
+ * (debug:dumpContextChain [include-root] [include-private])
  */
-Expr::register('debug::dumpContextChain', function($args)
+Expr::register('debug:dumpContextChain', function($args)
 {
     echo "Context " . Expr::$context->getId() . ":\n";
 
@@ -4154,9 +4155,9 @@ Expr::register('debug::dumpContextChain', function($args)
 
 /**
  * Returns all functions in the root context. Optionally with some prefix.
- * (debug::fn [prefix])
+ * (debug:fn [prefix])
  */
-Expr::register('debug::fn', function($args)
+Expr::register('debug:fn', function($args)
 {
     $context = Context::getContext(0);
     $list = new Arry();
@@ -4196,9 +4197,9 @@ Expr::register('debug::fn', function($args)
 
 /**
  * Returns the current execution context ID.
- * (debug::contextId)
+ * (debug:contextId)
  */
-Expr::register('debug::contextId', function($args) {
+Expr::register('debug:contextId', function($args) {
     return Expr::$context->getId();
 });
 

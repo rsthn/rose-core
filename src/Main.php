@@ -2,7 +2,7 @@
 /*
 **	Rose Framework Initializer
 **
-**	Copyright (c) 2010-2021, RedStar Technologies, All rights reserved.
+**	Copyright (c) 2010-2023, RedStar Technologies, All rights reserved.
 **	https://rsthn.com/
 **
 **	THIS LIBRARY IS PROVIDED BY REDSTAR TECHNOLOGIES "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,

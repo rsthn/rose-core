@@ -30,12 +30,12 @@ As any other package of the modern web, this one should be installed using a pac
 
 # Expression Functions
 
-Rose comes with a hyper powerful expression evaluator (located in the `Expr` class), based on a lisp-like (or clojure-like if you would) language known as Violet. There are several built-in expression functions and you can find all of them in the [Expr.md](./Expr.md) file.
+Rose comes with a powerful expression evaluator (located in the `Expr` class), based on a lisp-like (or clojure-like if you would) language variation known as Violet. There are several built-in functions and you can find all of them in the [Documentation](./docs).
 
 <br/>
 
 # FAQ
 
-**Q: If there is no need to write host-language code, what happens when I need something new that is not doable using current expressions?**
+**Q: If there is no need to write host-language code, what happens when I need something new that is not doable using current functions?**
 
 A: Given such case, you're free to build your own Rose-extensions in the host-language, and use it in any expression. Read our extensions documentation for more information.

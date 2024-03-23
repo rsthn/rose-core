@@ -475,6 +475,14 @@ class Connection
 
         return $data === null ? null : Map::fromNativeArray($data, false);
     }
+
+    /**
+     * Returns the string representation of the reader.
+     */
+    public function __toString()
+    {
+        return '[Rose\Data\Connection]';
+    }
 };
 
 /* ****************** */

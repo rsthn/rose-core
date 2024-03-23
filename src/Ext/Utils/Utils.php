@@ -19,11 +19,11 @@ use Rose\JSON;
 
 Expr::register('config', function ($args) { return Configuration::getInstance(); });
 
-Expr::register('config::parse', function ($args) {
+Expr::register('config:parse', function ($args) {
     return Configuration::loadFromBuffer($args->get(1));
 });
 
-Expr::register('config::stringify', function ($args) {
+Expr::register('config:stringify', function ($args) {
     return Configuration::saveToBuffer($args->get(1));
 });
 
@@ -35,24 +35,7 @@ Expr::register('strings', function ($args)
     return Strings::get($args->get(1));
 });
 
-Expr::register('s', function ($args) // DEPRECATE
-{
-    if ($args->length == 1)
-        return Strings::getInstance();
-
-    return Strings::get($args->get(1));
-});
-
-Expr::register('s::lang', function ($args) // DEPRECATE
-{
-    if ($args->length == 1)
-        return Strings::getInstance()->lang;
-
-    Strings::getInstance()->setLang($args->get(1));
-    return null;
-});
-
-Expr::register('strings::lang', function ($args)
+Expr::register('strings:lang', function ($args)
 {
     if ($args->length == 1)
         return Strings::getInstance()->lang;
@@ -64,28 +47,28 @@ Expr::register('strings::lang', function ($args)
 Expr::register('resources', function ($args) { return Resources::getInstance(); });
 
 Expr::register('gateway', function ($args) { return Gateway::getInstance(); });
-Expr::register('gateway::redirect', function ($args) { return Gateway::redirect($args->get(1)); });
-Expr::register('gateway::flush', function ($args) { return Gateway::flush(); });
-Expr::register('gateway::persistent', function ($args) { return Gateway::persistent(); });
-Expr::register('gateway::timeout', function ($args) { return Gateway::setTimeout($args->get(1)); });
+Expr::register('gateway:redirect', function ($args) { return Gateway::redirect($args->get(1)); });
+Expr::register('gateway:flush', function ($args) { return Gateway::flush(); });
+Expr::register('gateway:persistent', function ($args) { return Gateway::persistent(); });
+Expr::register('gateway:timeout', function ($args) { return Gateway::setTimeout($args->get(1)); });
 
-Expr::register('math::toHex', function ($args) { return Math::toHex($args->get(1)); });
-Expr::register('math::toBin', function ($args) { return Math::toBin($args->get(1)); });
-Expr::register('math::toOct', function ($args) { return Math::toOct($args->get(1)); });
-Expr::register('math::fromHex', function ($args) { return Math::fromHex($args->get(1)); });
-Expr::register('math::fromBin', function ($args) { return Math::fromBin($args->get(1)); });
-Expr::register('math::fromOct', function ($args) { return Math::fromOct($args->get(1)); });
+Expr::register('math:to-hex', function ($args) { return Math::toHex($args->get(1)); });
+Expr::register('math:to-bin', function ($args) { return Math::toBin($args->get(1)); });
+Expr::register('math:to-oct', function ($args) { return Math::toOct($args->get(1)); });
+Expr::register('math:from-hex', function ($args) { return Math::fromHex($args->get(1)); });
+Expr::register('math:from-bin', function ($args) { return Math::fromBin($args->get(1)); });
+Expr::register('math:from-oct', function ($args) { return Math::fromOct($args->get(1)); });
 
-Expr::register('utils::gc', function() { gc_collect_cycles(); });
-Expr::register('utils::getenv', function($args) { return $args->has(1) ? getenv($args->get(1)) : getenv(); });
-Expr::register('utils::putenv', function($args) { putenv($args->slice(1)->join('')); return null; });
+Expr::register('utils:gc', function() { gc_collect_cycles(); });
+Expr::register('utils:getenv', function($args) { return $args->has(1) ? getenv($args->get(1)) : getenv(); });
+Expr::register('utils:putenv', function($args) { putenv($args->slice(1)->join('')); return null; });
 
-Expr::register('utils::random-bytes', function($args) { return random_bytes((int)$args->get(1)); });
+Expr::register('utils:random-bytes', function($args) { return random_bytes((int)$args->get(1)); });
 
-Expr::register('utils::rand', function() { return Math::rand(); });
-Expr::register('utils::randstr', function($args) { return bin2hex(random_bytes((int)$args->get(1))); });
-Expr::register('utils::randstr-base64', function($args) { return base64_encode(random_bytes((int)$args->get(1))); });
-Expr::register('utils::uuid', function() {
+Expr::register('utils:rand', function() { return Math::rand(); });
+Expr::register('utils:randstr', function($args) { return bin2hex(random_bytes((int)$args->get(1))); });
+Expr::register('utils:randstr-base64', function($args) { return base64_encode(random_bytes((int)$args->get(1))); });
+Expr::register('utils:uuid', function() {
     $data = random_bytes(16);
 
     $tmp = explode(' ', microtime());
@@ -105,7 +88,7 @@ Expr::register('utils::uuid', function() {
     return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 });
 
-Expr::register('utils::unique', function($args)
+Expr::register('utils:unique', function($args)
 {
     $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._';
 
@@ -141,10 +124,8 @@ Expr::register('utils::unique', function($args)
     return $tmp;
 });
 
-Expr::register('utils::sleep', function($args) { sleep($args->get(1)); return null; });
+Expr::register('utils:sleep', function($args) { sleep($args->get(1)); return null; });
 
-Expr::register('utils::base64::encode', function($args) { return base64_encode ($args->get(1)); }); // DEPRECATE
-Expr::register('utils::base64::decode', function($args) { return base64_decode ($args->get(1)); }); // DEPRECATE
 Expr::register('base64:encode', function($args) { return base64_encode ($args->get(1)); });
 Expr::register('base64:decode', function($args) { return base64_decode ($args->get(1)); });
 
@@ -159,36 +140,18 @@ function base64url_decode($data) {
 Expr::register('base64u:encode', function($args) { return base64url_encode ($args->get(1)); });
 Expr::register('base64u:decode', function($args) { return base64url_decode ($args->get(1)); });
 
-Expr::register('utils::hex::encode', function($args) { return bin2hex ($args->get(1)); }); // DEPRECATE
-Expr::register('utils::hex::decode', function($args) { return hex2bin ($args->get(1)); }); // DEPRECATE
 Expr::register('hex:encode', function($args) { return bin2hex ($args->get(1)); });
 Expr::register('hex:decode', function($args) { return hex2bin ($args->get(1)); });
 
-Expr::register('utils::url::encode', function($args) { return urlencode ($args->get(1) ?? ''); }); // DEPRECATE
-Expr::register('utils::url::decode', function($args) { return urldecode ($args->get(1) ?? ''); }); // DEPRECATE
 Expr::register('url:encode', function($args) { return urlencode ($args->get(1) ?? ''); });
 Expr::register('url:decode', function($args) { return urldecode ($args->get(1) ?? ''); });
-
-Expr::register('utils::serialize', function($args) { return serialize ($args->get(1)); }); // DEPRECATE
-Expr::register('utils::deserialize', function($args) { return unserialize ($args->get(1)); }); // DEPRECATE
-
-Expr::register('utils::urlSearchParams', function($args) { // DEPRECATE
-    return $args->get(1)->map(function($value, $key) { return urlencode($key).'='.urlencode($value); })->values()->join('&');
-});
 
 Expr::register('url-query:stringify', function($args) {
     return $args->get(1)->map(function($value, $key) { return urlencode($key).'='.urlencode($value); })->values()->join('&');
 });
 
-Expr::register('utils::html::encode', function($args) { return htmlspecialchars ($args->get(1)); }); // DEPRECATE
-Expr::register('utils::html::decode', function($args) { return htmlspecialchars_decode ($args->get(1)); }); // DEPRECATE
 Expr::register('html-text:encode', function($args) { return htmlspecialchars ($args->get(1)); });
 Expr::register('html-text:decode', function($args) { return htmlspecialchars_decode ($args->get(1)); });
-
-Expr::register('utils::gz::compress', function($args) { return gzcompress ($args->get(1)); }); // DEPRECATE
-Expr::register('utils::gz::uncompress', function($args) { return gzuncompress ($args->get(1)); }); // DEPRECATE
-Expr::register('utils::gz::deflate', function($args) { return gzdeflate ($args->get(1)); }); // DEPRECATE
-Expr::register('utils::gz::inflate', function($args) { return gzinflate ($args->get(1)); }); // DEPRECATE
 
 Expr::register('gz:compress', function($args) { return gzcompress ($args->get(1)); });
 Expr::register('gz:decompress', function($args) { return gzuncompress ($args->get(1)); });
@@ -196,9 +159,9 @@ Expr::register('gz:deflate', function($args) { return gzdeflate ($args->get(1));
 Expr::register('gz:inflate', function($args) { return gzinflate ($args->get(1)); });
 
 /**
- * (utils::lpad <length> [<pad>] <string>)
+ * (utils:lpad <length> [<pad>] <string>)
  */
-Expr::register('utils::lpad', function($args)
+Expr::register('utils:lpad', function($args)
 {
     if ($args->length > 3)
         return Text::lpad($args->get(3), $args->get(1), $args->get(2));
@@ -207,9 +170,9 @@ Expr::register('utils::lpad', function($args)
 });
 
 /**
- * (utils::rpad <length> [<pad>] <string>)
+ * (utils:rpad <length> [<pad>] <string>)
  */
-Expr::register('utils::rpad', function($args)
+Expr::register('utils:rpad', function($args)
 {
     if ($args->length > 3)
         return Text::rpad($args->get(3), $args->get(1), $args->get(2));
@@ -218,21 +181,11 @@ Expr::register('utils::rpad', function($args)
 });
 
 /**
- * (utils::lpad+0 <length> <string>)
- * (utils::rpad+0 <length> <string>)
+ * (utils:lpad+0 <length> <string>)
+ * (utils:rpad+0 <length> <string>)
  */
-Expr::register('utils::lpad+0', function($args) { return Text::lpad($args->get(2), $args->get(1), '0'); });
-Expr::register('utils::rpad+0', function($args) { return Text::rpad($args->get(2), $args->get(1), '0'); });
-
-Expr::register('utils::json::stringify', function($args) // DEPRECATE
-{
-    $value = $args->get(1);
-
-    if (\Rose\typeOf($value) == 'Rose\\Arry' || \Rose\typeOf($value) == 'Rose\\Map')
-        return (string)$value;
-
-    return JSON::stringify($value);
-});
+Expr::register('utils:lpad+0', function($args) { return Text::lpad($args->get(2), $args->get(1), '0'); });
+Expr::register('utils:rpad+0', function($args) { return Text::rpad($args->get(2), $args->get(1), '0'); });
 
 Expr::register('json:stringify', function($args)
 {
@@ -242,16 +195,6 @@ Expr::register('json:stringify', function($args)
         return (string)$value;
 
     return JSON::stringify($value);
-});
-
-Expr::register('utils::json::prettify', function($args)  // DEPRECATE
-{
-    $value = $args->get(1);
-
-    if (\Rose\typeOf($value) === 'primitive')
-        return JSON::stringify($value);
-
-    return JSON::prettify(JSON::parse((string)$value));
 });
 
 Expr::register('json:prettify', function($args)
@@ -272,14 +215,6 @@ Expr::register('dump+fmt', function($args)
         return JSON::stringify($value);
 
     return JSON::prettify(JSON::parse((string)$value));
-});
-
-Expr::register('utils::json::parse', function($args)  // DEPRECATE
-{
-    $value = (string)$args->get(1);
-    if (Text::length($value) == 0) return null;
-
-    return $value[0] == '[' ? Arry::fromNativeArray(JSON::parse($value)) : ($value[0] == '{' ? Map::fromNativeArray(JSON::parse($value)) : JSON::parse($value));
 });
 
 Expr::register('json:parse', function($args)
@@ -348,23 +283,6 @@ function xmlSimplify ($xml, $parent)
     return $parent;
 }
 
-Expr::register('utils::xml::parse', function($args) // DEPRECATE
-{
-    $value = (string)$args->get(1);
-    if (Text::length($value) == 0) return null;
-
-    $value = simplexml_load_string($value);
-    $result = xmlToMap($value);
-
-    $value = $value->getNamespaces();
-    $value = sizeof($value) != 0 ? array_keys($value)[0] : null;
-
-    if ($value)
-        $result->tagName = $value . ':' . $result->tagName;
-
-    return $result;
-});
-
 Expr::register('xml:parse', function($args)
 {
     $value = (string)$args->get(1);
@@ -382,87 +300,10 @@ Expr::register('xml:parse', function($args)
     return $result;
 });
 
-Expr::register('utils::xml::simplify', function($args) // DEPRECATE
-{
-    $m = new Map();
-    return $args->get(1) ? xmlSimplify($args->get(1), $m) : $m;
-});
-
 Expr::register('xml:simplify', function($args)
 {
     $m = new Map();
     return $args->get(1) ? xmlSimplify($args->get(1), $m) : $m;
-});
-
-Expr::register('utils::html', function($args) // DEPRECATE
-{
-    $data = $args->get(1);
-
-    Wind::contentType(new Arry([null, 'text/html']));
-
-    if (\Rose\typeOf($data) == 'Rose\Data\Reader')
-    {
-        $s = '';
-
-        foreach ($data->fields->__nativeArray as $name)
-        {
-            $s .= "<th>$name</th>";
-        }
-
-        $s = "<tr>$s</tr>";
-
-        $data->forEach(function ($row) use (&$s)
-        {
-            $i = '';
-
-            foreach ($row->__nativeArray as $col)
-                $i .= "<td>$col</td>";
-
-            $s .= '<tr>'.nl2br($i).'</tr>';
-        });
-
-        return "<table style='font-family: monospace;' border='1'>$s</table>";
-    }
-
-    if (\Rose\typeOf($data) == 'Rose\Arry')
-    {
-        if (!$data->length) return '';
-
-        $s = '';
-
-        foreach ($data->get(0)->keys()->__nativeArray as $name)
-        {
-            $s .= "<th>$name</th>";
-        }
-
-        $s = "<tr>$s</tr>";
-
-        $data->forEach(function ($row) use (&$s)
-        {
-            $i = '';
-
-            foreach ($row->__nativeArray as $col)
-                $i .= "<td>$col</td>";
-
-            $s .= '<tr>'.nl2br($i).'</tr>';
-        });
-
-        return "<table style='font-family: monospace;' border='1'>$s</table>";
-    }
-
-    if (\Rose\typeOf($data) == 'Rose\Map')
-    {
-        $s = '';
-
-        $data->forEach(function ($value, $key) use (&$s)
-        {
-            $s .= '<tr>'.nl2br("<th>$key</th><td>$value</td>").'</tr>';
-        });
-
-        return "<table style='font-family: monospace;' border='1'>$s</table>";
-    }
-
-    return $data;
 });
 
 Expr::register('html:encode', function($args)
@@ -537,12 +378,12 @@ Expr::register('html:encode', function($args)
 });
 
 /* ************************** */
-Expr::register('utils::shell', function($args)
+Expr::register('utils:shell', function($args)
 {
     return shell_exec ($args->get(1));
 });
 
-Expr::register('utils::exec', function($args)
+Expr::register('utils:exec', function($args)
 {
     $result = 0;
     passthru ($args->get(1), $result);
@@ -550,7 +391,7 @@ Expr::register('utils::exec', function($args)
 });
 
 /* ************ */
-Expr::register('array::new', function($args)
+Expr::register('array:new', function($args)
 {
     $array = new Arry();
 
@@ -561,9 +402,9 @@ Expr::register('array::new', function($args)
 });
 
 /**
- * array::sort [<a-var>] [<b-var>] <array-expr> <block>
+ * array:sort [<a-var>] [<b-var>] <array-expr> <block>
  */
-Expr::register('_array::sort', function($parts, $data)
+Expr::register('_array:sort', function($parts, $data)
 {
     $a_name = 'a';
     $b_name = 'b';
@@ -574,7 +415,7 @@ Expr::register('_array::sort', function($parts, $data)
 
     $list = Expr::expand($parts->get($i++), $data, 'arg');
     if (!$list || \Rose\typeOf($list) != 'Rose\Arry')
-        throw new \Rose\Errors\Error('(array::sort) invalid array expression');
+        throw new \Rose\Errors\Error('(array:sort) invalid array expression');
 
     $block = $parts->slice($i);
 
@@ -605,35 +446,35 @@ Expr::register('_array::sort', function($parts, $data)
     return $list;
 });
 
-Expr::register('array::sort-asc', function($args)
+Expr::register('array:sort-asc', function($args)
 {
     $array = $args->get(1);
     $array->sort('ASC');
     return $array;
 });
 
-Expr::register('array::sort-desc', function($args)
+Expr::register('array:sort-desc', function($args)
 {
     $array = $args->get(1);
     $array->sort('DESC');
     return $array;
 });
 
-Expr::register('array::sortl-asc', function($args)
+Expr::register('array:sortl-asc', function($args)
 {
     $array = $args->get(1);
     $array->sortl('ASC');
     return $array;
 });
 
-Expr::register('array::sortl-desc', function($args)
+Expr::register('array:sortl-desc', function($args)
 {
     $array = $args->get(1);
     $array->sortl('DESC');
     return $array;
 });
 
-Expr::register('array::push', function($args)
+Expr::register('array:push', function($args)
 {
     $array = $args->get(1);
 
@@ -643,7 +484,7 @@ Expr::register('array::push', function($args)
     return $array;
 });
 
-Expr::register('array::unshift', function($args)
+Expr::register('array:unshift', function($args)
 {
     $array = $args->get(1);
 
@@ -653,81 +494,81 @@ Expr::register('array::unshift', function($args)
     return $array;
 });
 
-Expr::register('array::pop', function($args)
+Expr::register('array:pop', function($args)
 {
     return $args->get(1)->pop();
 });
 
-Expr::register('array::shift', function($args)
+Expr::register('array:shift', function($args)
 {
     return $args->get(1)->shift();
 });
 
-Expr::register('array::first', function($args)
+Expr::register('array:first', function($args)
 {
     return $args->get(1)->first();
 });
 
-Expr::register('array::last', function($args)
+Expr::register('array:last', function($args)
 {
     return $args->get(1)->last();
 });
 
-Expr::register('array::remove', function($args)
+Expr::register('array:remove', function($args)
 {
     return $args->get(1)->remove((int)$args->get(2));
 });
 
-Expr::register('array::indexOf', function($args)
+Expr::register('array:indexOf', function($args)
 {
     return $args->get(1)->indexOf($args->get(2));
 });
 
-Expr::register('array::lastIndexOf', function($args)
+Expr::register('array:lastIndexOf', function($args)
 {
     return $args->get(1)->lastIndexOf($args->get(2));
 });
 
-Expr::register('array::length', function($args)
+Expr::register('array:length', function($args)
 {
     return $args->get(1)->length();
 });
 
-Expr::register('array::append', function($args)
+Expr::register('array:append', function($args)
 {
     return $args->get(1)->append($args->get(2));
 });
 
-Expr::register('array::merge', function($args)
+Expr::register('array:merge', function($args)
 {
     return $args->get(1)->merge($args->get(2));
 });
 
-Expr::register('array::unique', function($args)
+Expr::register('array:unique', function($args)
 {
     return $args->get(1)->unique();
 });
 
-Expr::register('array::reverse', function($args)
+Expr::register('array:reverse', function($args)
 {
     return $args->get(1)->reverse();
 });
 
-Expr::register('array::clear', function($args)
+Expr::register('array:clear', function($args)
 {
     return $args->get(1)->clear();
 });
 
-Expr::register('array::clone', function($args)
+Expr::register('array:clone', function($args)
 {
     return $args->get(1)->replicate($args->{2} ?? false);
 });
 
 /**
- * 	array::flatten <depth> <array>
- * 	array::flatten <array>
+ * 	array:flatten <depth> <array>
+ * 	array:flatten <array>
  */
-Expr::register('array::flatten', function($args)
+Expr::register('array:flatten', function($args)
 {
     if ($args->length == 3)
         return $args->get(2)->flatten($args->get(1));
@@ -736,10 +577,10 @@ Expr::register('array::flatten', function($args)
 });
 
 /**
- * 	array::slice <start> <length> <array>
- * 	array::slice <start> <array>
+ * 	array:slice <start> <length> <array>
+ * 	array:slice <start> <array>
  */
-Expr::register('array::slice', function($args)
+Expr::register('array:slice', function($args)
 {
     if ($args->length == 4)
         return $args->get(3)->slice($args->get(1), $args->get(2));
@@ -750,7 +591,7 @@ Expr::register('array::slice', function($args)
 
 
 /* ************ */
-Expr::register('map::new', function($args)
+Expr::register('map:new', function($args)
 {
     $map = new Map();
 
@@ -760,47 +601,47 @@ Expr::register('map::new', function($args)
     return $map;
 });
 
-Expr::register('map::sort-asc', function($args)
+Expr::register('map:sort-asc', function($args)
 {
     $map = $args->get(1);
     $map->sort('ASC');
     return $map;
 });
 
-Expr::register('map::sort-desc', function($args)
+Expr::register('map:sort-desc', function($args)
 {
     $map = $args->get(1);
     $map->sort('DESC');
     return $map;
 });
 
-Expr::register('map::sortk-asc', function($args)
+Expr::register('map:sortk-asc', function($args)
 {
     $map = $args->get(1);
     $map->sortk('ASC');
     return $map;
 });
 
-Expr::register('map::sortk-desc', function($args)
+Expr::register('map:sortk-desc', function($args)
 {
     $map = $args->get(1);
     $map->sortk('DESC');
     return $map;
 });
 
-Expr::register('map::keys', function($args)
+Expr::register('map:keys', function($args)
 {
     $map = $args->get(1);
     return $map->keys();
 });
 
-Expr::register('map::values', function($args)
+Expr::register('map:values', function($args)
 {
     $map = $args->get(1);
     return $map->values();
 });
 
-Expr::register('map::set', function($args)
+Expr::register('map:set', function($args)
 {
     $map = $args->get(1);
 
@@ -810,34 +651,34 @@ Expr::register('map::set', function($args)
     return null;
 });
 
-Expr::register('map::get', function($args)
+Expr::register('map:get', function($args)
 {
     $map = $args->get(1);
     return $map->{$args->get(2)};
 });
 
-Expr::register('map::has', function($args)
+Expr::register('map:has', function($args)
 {
     $map = $args->get(1);
     return $map->has($args->get(2));
 });
 
-Expr::register('map::remove', function($args)
+Expr::register('map:remove', function($args)
 {
     return $args->get(1)->remove((string)$args->get(2));
 });
 
-Expr::register('map::keyOf', function($args)
+Expr::register('map:keyOf', function($args)
 {
     return $args->get(1)->keyOf($args->get(2));
 });
 
-Expr::register('map::length', function($args)
+Expr::register('map:length', function($args)
 {
     return $args->get(1)->length();
 });
 
-Expr::register('map::assign', function($args)
+Expr::register('map:assign', function($args)
 {
     $m = $args->get(1);
 
@@ -847,7 +688,7 @@ Expr::register('map::assign', function($args)
     return $m;
 });
 
-Expr::register('map::merge', function($args)
+Expr::register('map:merge', function($args)
 {
     $m = $args->get(1);
 
@@ -857,59 +698,51 @@ Expr::register('map::merge', function($args)
     return $m;
 });
 
-Expr::register('map::clear', function($args)
+Expr::register('map:clear', function($args)
 {
     return $args->get(1)->clear();
 });
 
 /* ************ */
-Expr::register('re::matches', function($args)
+Expr::register('re:matches', function($args)
 {
     return Regex::_matches($args->get(1), $args->get(2));
 });
 
-Expr::register('re::matchFirst', function($args) // deprecate
-{
-    return Regex::_matchFirst($args->get(1), $args->get(2));
-});
-Expr::register('re::match-first', function($args)
+Expr::register('re:match-first', function($args)
 {
     return Regex::_matchFirst($args->get(1), $args->get(2));
 });
 
-Expr::register('re::match', function($args)
+Expr::register('re:match', function($args)
 {
     return Regex::_matchFirst($args->get(1), $args->get(2));
 });
 
-Expr::register('re::matchAll', function($args) // deprecate
-{
-    return Regex::_matchAll($args->get(1), $args->get(2), $args->{3} ?? 0);
-});
-Expr::register('re::match-all', function($args)
+Expr::register('re:match-all', function($args)
 {
     return Regex::_matchAll($args->get(1), $args->get(2), $args->{3} ?? 0);
 });
 
-Expr::register('re::split', function($args)
+Expr::register('re:split', function($args)
 {
     return Regex::_split($args->get(1), $args->get(2));
 });
 
 /**
- * (re::replace <pattern> <replacement> <subject>)
+ * (re:replace <pattern> <replacement> <subject>)
  */
-Expr::register('re::replace', function($args)
+Expr::register('re:replace', function($args)
 {
     return Regex::_replace($args->get(1), $args->get(2), $args->get(3));
 });
 
-Expr::register('re::extract', function($args)
+Expr::register('re:extract', function($args)
 {
     return Regex::_extract($args->get(1), $args->get(2));
 });
 
-Expr::register('re::get', function($args)
+Expr::register('re:get', function($args)
 {
     return Regex::_getString($args->get(1), $args->get(2), $args->has(3) ? $args->get(3) : 0);
 });

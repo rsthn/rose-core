@@ -17,7 +17,7 @@ use Rose\Text;
 
 class Configuration extends Map
 {
-	/**
+    /**
      * Primary and only instance of this class.
      */
     private static $objectInstance;
@@ -27,7 +27,7 @@ class Configuration extends Map
      */
     public $env;
 
-	/**
+    /**
      * Initializes the instance of the Configuration class and loads the configuration files.
      */
     public function __construct()
@@ -36,7 +36,7 @@ class Configuration extends Map
         $this->reload();
     }
 
-	/**
+    /**
      * Returns the instance of this class.
      */
     public static function getInstance()
@@ -47,36 +47,36 @@ class Configuration extends Map
         return Configuration::$objectInstance;
     }
 
-	/**
+    /**
      * Reloads the configuration files.
      */
     public function reload()
     {
-		$this->clear();
+        $this->clear();
 
         // Load default configuration file...
         $basePath = Main::$CORE_DIR == '.' ? './conf/' : Main::$CORE_DIR.'/conf/';
-		try {
-			Configuration::loadFrom ($basePath.'system.conf', $this, true);
-		}
-		catch (\Throwable $e) { }
+        try {
+            Configuration::loadFrom ($basePath.'system.conf', $this, true);
+        }
+        catch (\Throwable $e) { }
 
-		// ... And a custom file based on the 'rose-env' file contents.
+        // ... And a custom file based on the 'rose-env' file contents.
         $this->env = 'def';
-		if (Path::exists('rose-env'))
-		{
-			$this->env = Text::trim(File::getContents('rose-env'));
-			if (Path::exists($basePath.$this->env.'.conf')) {
-				try {
-					Configuration::loadFrom ($basePath.$this->env.'.conf', $this, true);
-				}
-				catch (\Throwable $e) {
-				}
-			}
-		}
+        if (Path::exists('rose-env'))
+        {
+            $this->env = Text::trim(File::getContents('rose-env'));
+            if (Path::exists($basePath.$this->env.'.conf')) {
+                try {
+                    Configuration::loadFrom ($basePath.$this->env.'.conf', $this, true);
+                }
+                catch (\Throwable $e) {
+                }
+            }
+        }
     }
 
-	/**
+    /**
      * Parses the given configuration file and stores it on the given map, if no map is provided a new one will be created. The map is returned.
      */
     public static function loadFrom ($source, $target=null, $merge=false)
@@ -87,28 +87,28 @@ class Configuration extends Map
         return Configuration::loadFromBuffer (Path::exists($source) ? File::getContents($source) : '', $target, $merge);
     }
 
-	/*
-	**	Parses the given configuration buffer and stores it on the given map, if no map is provided a new one will be created. The buffer data is just
-	**	field-name pairs separated by equal-sign (i.e. Name=John), and sections enclosed in square brakets (i.e. [General]).
-	**
-	**	Note that you can use the equal-sign in the field value without any issues because the parser will look only for the first to delimit the name.
-	**
-	**	If a multiline value is desired, single back-ticks can be used (after the equal sign to start, and on a single line to end) to span multiple
-	**	lines, each line will be trimmed first before concatenating it to the value, and new-line character is preserved.
-	*/
+    /*
+    **	Parses the given configuration buffer and stores it on the given map, if no map is provided a new one will be created. The buffer data is just
+    **	field-name pairs separated by equal-sign (i.e. Name=John), and sections enclosed in square brakets (i.e. [General]).
+    **
+    **	Note that you can use the equal-sign in the field value without any issues because the parser will look only for the first to delimit the name.
+    **
+    **	If a multiline value is desired, single back-ticks can be used (after the equal sign to start, and on a single line to end) to span multiple
+    **	lines, each line will be trimmed first before concatenating it to the value, and new-line character is preserved.
+    */
     public static function loadFromBuffer ($source, $target=null, $merge=false)
     {
         $elem = null;
         $tmp1 = null;
-		$tmp2 = null;
-		$state = 0;
+        $tmp2 = null;
+        $state = 0;
 
         if ($target == null)
             $target = new Map();
 
         foreach (Text::split("\n", $source)->__nativeArray as $line)
         {
-			$line = Text::trim($line);
+            $line = Text::trim($line);
 
             if ($state == 1)
             {
@@ -121,62 +121,62 @@ class Configuration extends Map
 
                     $state = 0;
                     continue;
-				}
+                }
 
                 if ($tmp1) $tmp1 .= "\n";
 
                 $tmp1 .= $line;
                 continue;
-			}
+            }
 
             if ($line == '' || $line[0] == '#')
                 continue;
 
             if ($line[0] == '[')
             {
-				$line = Text::trim(Text::substring($line, 1, -1));
+                $line = Text::trim(Text::substring($line, 1, -1));
                 if (!$target->has($line) || $merge==false)
                     $target->set($line, new Map());
 
                 $elem = $target->get($line);
                 continue;
-			}
+            }
 
-			$tmp = Text::position($line, '=');
+            $tmp = Text::position($line, '=');
             if ($tmp === false) continue;
 
             $name = Text::trim(Text::substring($line, 0, $tmp));
-			$value = Text::trim(Text::substring($line, $tmp+1));
-			
-			if ($name == '')
+            $value = Text::trim(Text::substring($line, $tmp+1));
+            
+            if ($name == '')
                 continue;
 
-			if ($value == '`') {
-				$tmp1 = '';
-				$tmp2 = $name;
-				$state = 1;
-				continue;
-			}
+            if ($value == '`') {
+                $tmp1 = '';
+                $tmp2 = $name;
+                $state = 1;
+                continue;
+            }
 
             if ($elem != null)
                 $elem->set($name, $value);
             else
                 $target->set($name, $value);
-		}
+        }
 
         return $target;
     }
 
-	/*
-	**	Saves the specified configuration map to a buffer. If none specified the main Configuration instance will be used.
-	*/
+    /*
+    **	Saves the specified configuration map to a buffer. If none specified the main Configuration instance will be used.
+    */
     public static function saveToBuffer ($conf=null)
     {
         if (!$conf)
             $conf = Configuration::$objectInstance;
 
         $buff = '';
-		$section = null;
+        $section = null;
 
         foreach ($conf->__nativeArray as $key=>$value)
         {
@@ -191,18 +191,18 @@ class Configuration extends Map
             else {
                 $buff .= $key.'='.$value."\n";
             }
-		}
+        }
 
         if (Text::substring($buff,-2) != "\n\n") {
             $buff .= "\n";
-		}
+        }
 
         foreach ($conf->__nativeArray as $sec=>$data)
         {
             if (typeOf($data) != 'Rose\\Map')
                 continue;
 
-			$buff .= '['.$sec."]\n";
+            $buff .= '['.$sec."]\n";
 
             foreach ($data->__nativeArray as $key=>$value)
             {

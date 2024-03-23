@@ -118,7 +118,14 @@ class MySQLi extends Driver
     }
 
     public function getNumRows ($rs, $conn) {
-		return mysqli_num_rows ($rs);
+        try {
+		    return mysqli_num_rows($rs);
+        }
+        catch (\Error $e) {
+            if (Text::indexOf($e->getMessage(), 'MYSQLI_USE_RESULT') !== false)
+                return -1;
+            throw $e;
+        }
     }
 
     public function getNumFields ($rs, $conn) {

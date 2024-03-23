@@ -12,3 +12,4 @@ deploy.js
 TODO.md
 test.php
 scripts/
+*.code-workspace

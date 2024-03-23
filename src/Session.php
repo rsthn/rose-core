@@ -95,7 +95,7 @@ class Session
                 return;
         }
 
-        if (Configuration::getInstance()->Session && Configuration::getInstance()->Session->database == 'true') {
+        if (Configuration::getInstance()->Session && Configuration::getInstance()->Session->database === 'true') {
             Session::dbSessionDelete();
         }
         else {
@@ -128,7 +128,7 @@ class Session
         $conf = Configuration::getInstance()->Session;
 
         // Load session data from the database if specified in the configuration field 'Session.database'.
-        if ($conf && $conf->database == 'true')
+        if ($conf && $conf->database === 'true')
         {
             try {
                 if (!Session::dbSessionLoad($createSession))
@@ -202,7 +202,7 @@ class Session
         if (Session::$sessionOpen == false)
             return;
 
-        if (Configuration::getInstance()->Session->database == 'true') {
+        if (Configuration::getInstance()->Session->database === 'true') {
             Session::dbSessionSave($shallow);
         }
         else {
