@@ -47,8 +47,6 @@ class Wind
     public static $data;
 
     public static $multiResponseMode;
-    public static $contentFlushed;
-    public static $contentType;
     public static $response;
 
     public static $callStack;
@@ -71,11 +69,7 @@ class Wind
 
         self::$base = Main::$CORE_DIR.'/wind';
         self::$cache = 'volatile/wind';
-
         self::$callStack = new Arry();
-    
-        self::$contentFlushed = false;
-        self::$contentType = null;
         self::$multiResponseMode = 0;
     }
 
@@ -86,25 +80,21 @@ class Wind
 
         if (\Rose\typeOf($response) == 'Rose\\Map' || \Rose\typeOf($response) == 'Rose\\Arry')
         {
-            if (\Rose\typeOf($response) == 'Rose\\Arry')
-            {
+            if (\Rose\typeOf($response) == 'Rose\\Arry') {
                 $response = new Map([ 'response' => Wind::R_OK, 'data' => $response ], false);
             }
             else
             {
-                if (!$response->has('response'))
-                {
+                if (!$response->has('response')) {
                     $tmp = new Map([ 'response' => Wind::R_OK ]);
                     $tmp->merge ($response, true);
                     $response = $tmp;
                 }
             }
         }
-        else if (\Rose\isString($response))
-        {
+        else if (\Rose\isString($response)) {
         }
-        else
-        {
+        else {
             $response = $response ? (string)$response : null;
         }
 
@@ -113,26 +103,23 @@ class Wind
 
     public static function reply ($response)
     {
-        if (self::$data->internal_call != 0)
-        {
+        if (self::$data->internal_call != 0) {
             self::$response = $response;
             throw new SubReturn();
         }
 
-        if (self::$contentFlushed)
+        if (Gateway::$contentFlushed)
             Gateway::exit();
 
         $response = self::prepare($response);
 
-        if (\Rose\typeOf($response) == 'Rose\Map' || \Rose\typeOf($response) == 'Rose\Arry')
-        {
-            if (self::$contentType == null)
-                self::$contentType = 'Content-Type: application/json; charset=utf-8';
+        if (\Rose\typeOf($response) == 'Rose\Map' || \Rose\typeOf($response) == 'Rose\Arry') {
+            if (Gateway::$contentType == null)
+                Gateway::$contentType = 'Content-Type: application/json; charset=utf-8';
         }
-        else if (\Rose\isString($response) && strlen($response) != 0)
-        {
-            if (self::$contentType == null)
-                self::$contentType = 'Content-Type: text/plain; charset=utf-8';
+        else if (\Rose\isString($response) && strlen($response) != 0) {
+            if (Gateway::$contentType == null)
+                Gateway::$contentType = 'Content-Type: text/plain; charset=utf-8';
         }
 
         self::$response = $response;
@@ -140,9 +127,8 @@ class Wind
         if (self::$multiResponseMode)
             throw new FalseError();
 
-        if ($response != null)
-        {
-            Gateway::header(self::$contentType);
+        if ($response != null) {
+            Gateway::header(Gateway::$contentType);
             echo (string)$response;
         }
 
@@ -219,22 +205,17 @@ class Wind
         }
         catch (SubReturn $e)
         {
-            if (!self::$contentFlushed)
+            if (!Gateway::$contentFlushed)
                 echo self::$response;
         }
         catch (FalseError $e) {
         }
     }
 
-    private static function requiresJsonReply()
-    {
-        return strstr($_SERVER['HTTP_ACCEPT'], 'application/json') !== false;
-    }
-
     public static function main ()
     {
         $gateway = Gateway::getInstance();
-        $params = $gateway->requestParams;
+        $params = $gateway->request;
 
         // Handle OPTIONS request.
         if ($gateway->method === 'OPTIONS')
@@ -261,9 +242,9 @@ class Wind
                 if ($i->length != 2) continue;
 
                 try {
-                    $gateway->requestParams->clear()->merge($originalParams, true);
+                    $gateway->request->clear()->merge($originalParams, true);
                     parse_str(base64_decode($i->get(1)), $requestParams);
-                    $gateway->requestParams->__nativeArray = $gateway->requestParams->__nativeArray + $requestParams;
+                    $gateway->request->__nativeArray = $gateway->request->__nativeArray + $requestParams;
                 }
                 catch (\Throwable $e) {
                     \Rose\trace('Error: '.$e->getMessage());
@@ -276,12 +257,12 @@ class Wind
                 {
                     self::resetContext();
 
-                    $f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $gateway->requestParams->f);
+                    $f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $gateway->request->f);
                     if (!$f) {
-                        if (!$gateway->requestParams->has('f'))
+                        if (!$gateway->request->has('f'))
                             throw new WindError ([ 'response' => self::R_OK, 'message' => Strings::get('@messages.operational') ]);
                         else
-                            throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $gateway->requestParams->f ]);
+                            throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $gateway->request->f ]);
                     }
 
                     self::process($f);
@@ -353,34 +334,9 @@ class Wind
                     throw $e;
             }
         }
-        catch (\Throwable $e)
-        {
-            if (self::requiresJsonReply())
-                self::reply ([ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
-            else
-                throw $e;
+        catch (\Throwable $e) {
+            self::reply ([ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
         }
-    }
-
-    /**
-    **	header <header-line>
-    */
-    public static function header ($args)
-    {
-        if (Text::toUpperCase(Text::substring($args->get(1), 0, 12)) == 'CONTENT-TYPE')
-            self::$contentType = $args->get(1);
-
-        Gateway::header($args->get(1));
-        return null;
-    }
-
-    /**
-    **	contentType <mime>
-    */
-    public static function contentType ($args)
-    {
-        self::$contentType = 'Content-Type: ' . $args->get(1);
-        return null;
     }
 
     /**
@@ -402,66 +358,6 @@ class Wind
             self::reply ($args->get(1));
 
         Gateway::exit();
-    }
-
-    /**
-    **	echo <message> [<message>...]
-    */
-    public static function _echo ($parts, $data, $addNewLine)
-    {
-        $s = '';
-
-        for ($i = 1; $i < $parts->length(); $i++)
-            $s .= Expr::expand($parts->get($i), $data, 'arg');
-
-        if ($addNewLine)
-            $s .= "\n";
-
-        if (!self::$contentFlushed)
-        {
-            try {
-                Gateway::header(self::$contentType ? self::$contentType : 'Content-Type: text/plain; charset=utf-8'); }
-            catch (\Throwable $e) {
-            }
-
-            self::$contentFlushed = true;
-        }
-
-        echo $s;
-
-        return null;
-    }
-
-    /**
-    **	trace <message> [<message>...]
-    */
-    public static function _trace ($parts, $data)
-    {
-        $s = '';
-
-        for ($i = 1; $i < $parts->length(); $i++)
-            $s .= ' ' . Expr::expand($parts->get($i), $data, 'arg');
-
-        if ($s != '')
-            \Rose\trace(Text::substring($s, 1));
-
-        return null;
-    }
-
-    /**
-    **	trace::alt <output> <message> [<message>...]
-    */
-    public static function _trace_alt ($parts, $data)
-    {
-        $s = '';
-
-        for ($i = 2; $i < $parts->length(); $i++)
-            $s .= ' ' . Expr::expand($parts->get($i), $data, 'arg');
-
-        if ($s != '')
-            \Rose\trace(Text::substring($s, 1), '@'.Expr::expand($parts->get(1), $data, 'arg').'.log');
-
-        return null;
     }
 
     /**
@@ -511,11 +407,7 @@ class Wind
         {
             self::$data->internal_call = self::$data->internal_call - 1;
             self::$data->args = $p_args;
-
-            if (self::requiresJsonReply())
-                throw new WindError ([ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
-            else
-                throw $e;
+            throw new WindError ([ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
         }
 
         self::$data->internal_call = self::$data->internal_call - 1;
@@ -569,11 +461,7 @@ class Wind
         {
             self::$data = $p_data;
             self::$data->internal_call = self::$data->internal_call - 1;
-
-            if (self::requiresJsonReply())
-                throw new WindError ([ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
-            else
-                throw $e;
+            throw new WindError ([ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
         }
 
         self::$data = $p_data;
@@ -596,7 +484,7 @@ class Wind
         self::$eventsEnabled = true;
         self::$lastSent = time();
 
-        self::$contentType = 'text/event-stream; charset=utf-8';
+        Gateway::$contentType = 'text/event-stream; charset=utf-8';
 
         Gateway::header("Content-Type: text/event-stream; charset=utf-8");
         Gateway::header("Transfer-Encoding: identity");
@@ -656,19 +544,12 @@ class Wind
 
 /* ****************************************************************************** */
 
-Expr::register('header', function(...$args) { return Wind::header(...$args); });
-Expr::register('content-type', function(...$args) { return Wind::contentType(...$args); });
-
 Expr::register('evt:init', function(...$args) { return Wind::enableEvents(); });
 Expr::register('evt:send', function(...$args) { return Wind::sendEvent(...$args); });
 Expr::register('evt:alive', function(...$args) { return Wind::eventsAlive(); });
 
 Expr::register('stop', function(...$args) { return Wind::stop(...$args); });
 Expr::register('return', function(...$args) { return Wind::_return(...$args); });
-Expr::register('_echo', function($parts, $data) { return Wind::_echo($parts, $data, true); });
-Expr::register('_print', function($parts, $data) { return Wind::_echo($parts, $data, false); });
-Expr::register('_trace', function(...$args) { return Wind::_trace(...$args); });
-Expr::register('_trace-alt', function(...$args) { return Wind::_trace_alt(...$args); });
 Expr::register('_call', function(...$args) { return Wind::_call(...$args); });
 Expr::register('_icall', function(...$args) { return Wind::_icall(...$args); });
 

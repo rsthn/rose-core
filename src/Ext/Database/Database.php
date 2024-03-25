@@ -20,7 +20,7 @@ Resources::getInstance()->registerConstructor ('Database', function() {
 });
 
 /**
- * Escapes a value to be used in SQL queries. Uses the driver escape function when necessary.
+ * Escapes a value to be used in SQL queries. Uses the connection's driver escape function when necessary.
  * @code (`db:escape` <value>)
  * @example
  * (db:escape "Jack O'Neill")
@@ -31,7 +31,7 @@ Expr::register('db:escape', function ($args) {
 });
 
 /**
- * Uses the driver to escape the given value considering it to be a column/table name.
+ * Uses the connection's driver to escape the given value considering it to be a column/table name.
  * @code (`db:escape-name` <value>)
  * @example
  * (db:escape-name "First Name")

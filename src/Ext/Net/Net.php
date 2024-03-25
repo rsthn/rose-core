@@ -11,9 +11,9 @@ use Rose\Arry;
 use Rose\Map;
 use Rose\Text;
 
-/*
-**	Small utility class to execute HTTP requests.
-*/
+// @title HTTP Requests
+// @short Request
+// @desc Provides an interface to perform HTTP requests.
 
 class Http
 {
@@ -85,27 +85,24 @@ class Http
             self::$headers->set($name, $val ? Text::trim($name) . ': ' . $val : Text::trim($name) . ';' );
     }
 
-    /*
-    **	Returns the HTTP code of the last request.
-    */
-    public static function getCode ()
-    {
+    /**
+     * Returns the HTTP code of the last request.
+     */
+    public static function getCode() {
         return self::$curl_last_info['http_code'];
     }
 
-    /*
-    **	Returns the content-type of the last request.
-    */
-    public static function getContentType ()
-    {
+    /**
+     * Returns the content-type of the last request.
+     */
+    public static function getContentType() {
         return self::$curl_last_info['content_type'];
     }
 
-    /*
-    **	Returns the data returned by the last request.
-    */
-    public static function getData ()
-    {
+    /**
+     * Returns the data returned by the last request.
+     */
+    public static function getData() {
         return self::$curl_last_data;
     }
 
@@ -168,7 +165,7 @@ class Http
         if ($fields)
         {
             if (\Rose\typeOf($fields) !== 'Rose\\Map')
-                throw new Error('Parameter `fields` for Net::get should be Map.');
+                throw new Error('GET operation requires a map, not ' . \Rose\typeOf($fields, true));
 
             $fields->forEach(function(&$value, $name) use(&$list)
             {
@@ -185,14 +182,19 @@ class Http
         $url .= $list->join('&');
 
         $ch = Text::substring($url, -1);
-        if ($ch == '?' || $ch == '&') $url = Text::substring($url, 0, -1);
+        if ($ch === '?' || $ch === '&') $url = Text::substring($url, 0, -1);
 
         curl_setopt ($c, CURLOPT_URL, $url);
         curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
         curl_setopt ($c, CURLOPT_CUSTOMREQUEST, $method);
         curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
+
         curl_setopt ($c, CURLINFO_HEADER_OUT, true);
+        curl_setopt ($c, CURLOPT_HEADERFUNCTION, function($curl, $header) {
+            self::header ($header, true);
+            return Text::length($header);
+        });
 
         if (!self::$verify_ssl) {
             curl_setopt ($c, CURLOPT_SSL_VERIFYHOST, 0);
@@ -244,23 +246,23 @@ class Http
         $tempFiles = new Arry();
         $useFormData = false;
 
-        if (\Rose\typeOf($data) == 'Rose\Map')
+        if (\Rose\typeOf($data) === 'Rose\Map')
         {
             $data->forEach(function($value, $name) use(&$fields, &$tempFiles, &$useFormData, &$debugFields)
             {
                 $value2 = $value;
 
-                if (\Rose\typeOf($value) == 'Rose\Map')
+                if (\Rose\typeOf($value) === 'Rose\Map')
                 {
                     if ($value->has('path'))
                     {
                         $path = Path::resolve($value->get('path'));
 
                         if (!Path::exists($path))
-                            throw new Error ('File for field \''.$name.'\' not found.');
+                            throw new Error ('File for field `'.$name.'` not found');
 
                         if (!Path::isFile($path))
-                            throw new Error ('Path specified for field \''.$name.'\' is not a file.');
+                            throw new Error ('Path specified for field `'.$name.'` is not a file');
 
                         if ($value->has('name'))
                             $value = curl_file_create ($path, '', $value->get('name'));
@@ -289,7 +291,7 @@ class Http
                 $fields->set($name, $value);
             });
 
-            if (!$useFormData && (!$headers->has('content-type') || $headers->get('content-type') == 'content-type: application/x-www-form-urlencoded'))
+            if (!$useFormData && (!$headers->has('content-type') || $headers->get('content-type') === 'content-type: application/x-www-form-urlencoded'))
             {
                 $temp = $fields->map(function ($value, $name) {
                     return urlencode($name) . '=' . urlencode($value ?? '');
@@ -297,19 +299,16 @@ class Http
 
                 $temp = $temp->values()->join('&');
 
-                if (Text::length($temp) > 2048)
-                {
+                if (Text::length($temp) > 2048) {
                     $headers->set('content-type', 'content-type: multipart/form-data');
                     $fields = $fields->__nativeArray;
                 }
-                else
-                {
+                else {
                     $headers->set('content-type', 'content-type: application/x-www-form-urlencoded');
                     $fields = $temp;
                 }
             }
-            else
-            {
+            else {
                 $headers->set('content-type', 'content-type: multipart/form-data');
                 $fields = $fields->__nativeArray;
             }
@@ -317,8 +316,7 @@ class Http
         else
         {
             if (!$headers->has('content-type') && $data !== '')
-                $headers->set('content-type', 'content-type: ' . ($data[0] == '<' ? 'text/xml' : ($data[0] == '[' || $data[0] == '{' ? 'application/json' : 'application/octet-stream')));
-
+                $headers->set('content-type', 'content-type: ' . ($data[0] === '<' ? 'text/xml' : ($data[0] === '[' || $data[0] === '{' ? 'application/json' : 'application/octet-stream')));
             $fields = $data;
         }
 
@@ -326,21 +324,21 @@ class Http
         curl_setopt ($c, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt ($c, CURLOPT_RETURNTRANSFER, true);
 
-        if ($method == 'HEAD')
+        if ($method === 'HEAD')
             curl_setopt ($c, CURLOPT_NOBODY, true);
 
-        if ($method == 'POST')
+        if ($method === 'POST')
             curl_setopt ($c, CURLOPT_POST, true);
         else
             curl_setopt ($c, CURLOPT_CUSTOMREQUEST, $method);
 
         curl_setopt ($c, CURLOPT_HTTPHEADER, $headers->values()->__nativeArray);
-        curl_setopt ($c, CURLINFO_HEADER_OUT, true);
         curl_setopt ($c, CURLOPT_POSTFIELDS, $fields ? $fields : '');
 
-         curl_setopt($c, CURLOPT_HEADERFUNCTION, function($curl, $header) {
+        curl_setopt ($c, CURLINFO_HEADER_OUT, true);
+        curl_setopt ($c, CURLOPT_HEADERFUNCTION, function($curl, $header) {
             self::header ($header, true);
-              return Text::length($header);
+            return Text::length($header);
         });
 
         if (!self::$verify_ssl) {
@@ -369,27 +367,30 @@ class Http
     }
 
     /**
-    **	Forwards the parameters to fetchGet or fetchPost (based on current method), parses the JSON result and returns a Map or Arry.
-    */
+     * Forwards the parameters to fetchGet or fetchPost (based on current method), parses the JSON result and returns a Map or Arry.
+     */
     public static function fetch ($url, $fields)
     {
         $method = self::$method;
         self::$method = 'GET';
 
-        return ($method == 'POST' || $method == 'PUT' || $method == 'DELETE' || $method == 'HEAD') ? self::fetchPost($url, $fields, $method) : self::fetchGet($url, $fields, $method);
+        return ($method === 'POST' || $method === 'PUT' || $method === 'DELETE' || $method === 'HEAD')
+            ? self::fetchPost($url, $fields, $method) 
+            : self::fetchGet($url, $fields, $method)
+            ;
     }
 
     /**
-    **	Forwards the parameters to Http::get(), parses the JSON result and returns a Map or Arry.
-    */
+     * Forwards the parameters to Http::get(), parses the JSON result and returns a Map or Arry.
+     */
     public static function fetchGet ($url, $fields, $method='GET')
     {
         return Expr::call('json:parse', new Arry ([null, self::get($url, $fields, new Map([ 'Accept' => 'Accept: application/json' ]), $method)]));
     }
 
     /**
-    **	Forwards the parameters to Http::post(), parses the JSON result and returns a Map or Arry.
-    */
+     * Forwards the parameters to Http::post(), parses the JSON result and returns a Map or Arry.
+     */
     public static function fetchPost ($url, $data, $method='POST')
     {
         return Expr::call('json:parse', new Arry ([null, self::post($url, $data, new Map([ 'Accept' => 'Accept: application/json' ]), $method)]));
@@ -399,294 +400,233 @@ class Http
 
 Http::init();
 
-/* ****************** */
-/* http:init */
-
-Expr::register('http:clear', function ($args)
-{
-    Http::clear();
-    return null;
-});
-
-/* ****************** */
-/* http:get <url> [<fields>*] */
-
-Expr::register('http:get', function ($args)
+/**
+ * Returns a map or a string with the fields to be sent in the request.
+ */
+function getFields ($args, $i=2)
 {
     $fields = new Map();
 
-    for ($i = 2; $i < $args->length; $i++)
+    for (; $i < $args->length; $i++)
     {
         $data = $args->get($i);
+        $type = \Rose\typeOf($data, true);
 
-        if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
+        if ($type === 'string') {
+            $fields = $data;
+            break;
+        }
+
+        if (!$data || $type !== 'Rose\\Map')
             continue;
 
         $fields->merge($data, true);
     }
 
-    return Http::get($args->get(1), $args->length == 2 ? '' : $fields, null);
+    return $fields;
+}
+
+/**
+ * Executes a GET request and returns the response data.
+ * @code (`request:get` <url> [fields...])
+ * @example
+ * (request:get "http://example.com/api/currentTime")
+ * ; 2024-12-31T23:59:59
+ */
+Expr::register('request:get', function ($args) {
+    return Http::get($args->get(1), $args->length == 2 ? '' : getFields($args), null);
 });
 
-/* ****************** */
-/* http:head <url> [<fields>*] */
-
-Expr::register('http:head', function ($args)
-{
-    $fields = new Map();
-
-    for ($i = 2; $i < $args->length; $i++)
-    {
-        $data = $args->get($i);
-
-        if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
-            continue;
-
-        $fields->merge($data, true);
-    }
-
-    return Http::post($args->get(1), $args->length == 2 ? '' : $fields, null, 'HEAD');
-});
-
-/* ****************** */
-/* http:status <url> [<fields>*] */
-
-Expr::register('http:status', function ($args)
-{
-    $fields = new Map();
-
-    for ($i = 2; $i < $args->length; $i++)
-    {
-        $data = $args->get($i);
-
-        if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
-            continue;
-
-        $fields->merge($data, true);
-    }
-
-    Http::post($args->get(1), $args->length == 2 ? '' : $fields, null, 'HEAD');
+/**
+ * Executes a HEAD request and returns the HTTP status code. Response headers will be available using `request:headers`.
+ * @code (`request:head` <url> [fields...])
+ * @example
+ * (request:head "http://example.com/api/currentTime")
+ * ; 200
+ */
+Expr::register('request:head', function ($args) {
+    Http::post($args->get(1), $args->length == 2 ? '' : getFields($args), null, 'HEAD');
     return Http::getCode();
 });
 
-/* ****************** */
-/* http:post <url> [<fields>*] */
-
-Expr::register('http:post', function ($args)
-{
-    $fields = new Map();
-
-    for ($i = 2; $i < $args->length; $i++)
-    {
-        $data = $args->get($i);
-
-        if (\Rose\typeOf($data, true) == 'string')
-        {
-            $fields = $data;
-            break;
-        }
-
-        if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
-            continue;
-
-        $fields->merge($data, true);
-    }
-
-    return Http::post($args->get(1), $args->length == 2 ? '' : $fields);
+/**
+ * Executes a POST request and returns the response data.
+ * @code (`request:post` <url> [fields...])
+ * @example
+ * (request:post "http://example.com/api/login" (& "username" "admin" "password" "admin"))
+ * ; { "token": "eyJhbGciOiJIUzI" }
+ */
+Expr::register('request:post', function ($args) {
+    return Http::post($args->get(1), $args->length == 2 ? '' : getFields($args));
 });
 
-/* ****************** */
-/* http:put <url> [<fields>*] */
-
-Expr::register('http:put', function ($args)
-{
-    $fields = new Map();
-
-    for ($i = 2; $i < $args->length; $i++)
-    {
-        $data = $args->get($i);
-
-        if (\Rose\typeOf($data, true) == 'string')
-        {
-            $fields = $data;
-            break;
-        }
-
-        if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
-            continue;
-
-        $fields->merge($data, true);
-    }
-
-    return Http::post($args->get(1), $args->length == 2 ? '' : $fields, null, 'PUT');
+/**
+ * Executes a PUT request and returns the response data.
+ * @code (`request:put` <url> [fields...])
+ * @example
+ * (request:put "http://example.com/api/user/1" (& "name" "John Doe"))
+ * ; { "id": 1, "name": "John Doe" }
+ */
+Expr::register('request:put', function ($args) {
+    return Http::post($args->get(1), $args->length == 2 ? '' : getFields($args), null, 'PUT');
 });
 
-
-/* ****************** */
-/* http:delete <url> [<fields>*] */
-
-Expr::register('http:delete', function ($args)
-{
-    $fields = new Map();
-
-    for ($i = 2; $i < $args->length; $i++)
-    {
-        $data = $args->get($i);
-
-        if (\Rose\typeOf($data, true) == 'string')
-        {
-            $fields = $data;
-            break;
-        }
-
-        if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
-            continue;
-
-        $fields->merge($data, true);
-    }
-
-    return Http::post($args->get(1), $args->length == 2 ? '' : $fields, null, 'DELETE');
+/**
+ * Executes a DELETE request and returns the response data.
+ * @code (`request:delete` <url> [fields...])
+ * @example
+ * (request:delete "http://example.com/api/user/1")
+ * ; { "id": 1, "name": "John Doe" }
+ */
+Expr::register('request:delete', function ($args) {
+    return Http::post($args->get(1), $args->length == 2 ? '' : getFields($args), null, 'DELETE');
 });
 
-
-/* ****************** */
-/* http:fetch [<method>] <url> [<fields>] */
-
-Expr::register('http:fetch', function ($args)
+/**
+ * Executes a fetch request using the specified method and returns a parsed JSON response. Default method is `GET`.
+ * @code (`request:fetch` [method] <url> [fields...])
+ * @example
+ * (request:fetch "http://example.com/api/currentTime")
+ * ; { "currentTime": "2024-12-31T23:59:59" }
+ */
+Expr::register('request:fetch', function ($args)
 {
     $fields = new Map();
-
     $j = 1;
 
-    switch (Text::toUpperCase($args->get($j)))
-    {
+    switch (Text::toUpperCase($args->get($j))) {
         case 'GET': case 'PUT': case 'POST': case 'DELETE': case 'HEAD':
             Http::$method = Text::toUpperCase($args->get($j++));
             break;
     }
 
-    for ($i = $j+1; $i < $args->length; $i++)
-    {
-        $data = $args->get($i);
-
-        if (\Rose\typeOf($data, true) == 'string')
-        {
-            $fields = $data;
-            break;
-        }
-
-        if (!$data || \Rose\typeOf($data) != 'Rose\\Map')
-            continue;
-
-        $fields->merge($data, true);
-    }
-
-    return Http::fetch($args->get($j), $fields);
+    return Http::fetch($args->get($j), getFields($args, $j+1));
 });
 
-/* ****************** */
-/* http:header [header-line] */
-
-Expr::register('http:header', function ($args)
+/**
+ * Sets one or more headers for the next request.
+ * @code (`request:header` <header...>)
+ * @example
+ * (request:header "Authorization: Bearer MyToken")
+ * ; true
+ */
+Expr::register('request:header', function ($args)
 {
-    Http::header($args->get(1));
-    return null;
+    for ($i = 1; $i < $args->length; $i++)
+        Http::header($args->get($i));
+    return true;
 });
 
-/* ****************** */
-/* http:headers [array|map] */
-
-Expr::register('http:headers', function ($args)
+/**
+ * Returns the response headers of the last request or a single header (if exists).
+ * @code (`request:headers` [header])
+ * @example
+ * (request:headers)
+ * ; { "content-type": "application/json", "content-length": "123" }
+ *
+ * (request:headers "content-type")
+ * ; application/json
+ */
+Expr::register('request:headers', function ($args)
 {
-    if ($args->length == 1)
-        return Http::$responseHeaders;
+    if ($args->length === 2)
+        return Http::$responseHeaders->get($args->get(1));
 
-    if (\Rose\typeOf($args->get(1)) === 'Rose\Map') {
-        $args->get(1)->forEach(function ($value, $key) {
-            Http::header($key.':'.$value);
-        });
-    }
-    else {
-        $args->get(1)->forEach(function ($value) {
-            Http::header($value);
-        });
-    }
-
-    return null;
+    return Http::$responseHeaders;
 });
 
-/* ****************** */
-/* http:method method */
-
-Expr::register('http:method', function ($args)
-{
-    Http::$method = Text::toUpperCase($args->get(1));
-    return null;
-});
-
-
-/* ****************** */
-/* http:debug value */
-
-Expr::register('http:debug', function ($args)
-{
+/**
+ * Enables or disables request debugging. When enabled request data will be output to the log file.
+ * @code (`request:debug` <value>)
+ * @example
+ * (request:debug true)
+ * ; true
+ */
+Expr::register('request:debug', function ($args) {
     Http::$debug = \Rose\bool($args->get(1));
-    return null;
+    return true;
 });
 
-/* ****************** */
-/* http:verify value */
-
-Expr::register('http:verify', function ($args)
+/**
+ * Enables or disables SSL verification for requests.
+ * @code (`request:verify` <value>)
+ * @example
+ * (request:verify false)
+ * ; true
+ */
+Expr::register('request:verify', function ($args)
 {
     Http::$verify_ssl = \Rose\bool($args->get(1));
-    return null;
+    return true;
 });
 
 
-/* ****************** */
-/* http:auth basic <username> <password> */
-/* http:auth basic <username> */
-/* http:auth bearer <token> */
-/* http:auth <token> */
-/* http:auth false */
-
-Expr::register('http:auth', function ($args)
+/**
+ * Sets the HTTP Authorization header for the next request.
+ * @code (`request:auth` "basic" <username> <password>)
+ * @code (`request:auth` "basic" <username>)
+ * @code (`request:auth` "bearer" <token>)
+ * @code (`request:auth` <token>)
+ * @code (`request:auth` false)
+ * @example
+ * (request:auth "basic" "admin" "admin")
+ * ; true
+ */
+Expr::register('request:auth', function ($args)
 {
     if ($args->length == 2)
     {
-        if (!$args->get(1) || $args->get(1) === 'false')
-        {
-            Http::auth (false);
-            return null;
+        if (!$args->get(1) || $args->get(1) === 'false') {
+            Http::auth(false);
+            return true;
         }
 
-        Http::auth ('value', $args->get(1));
-        return null;
+        Http::auth('value', $args->get(1));
+        return true;
     }
 
-    Http::auth ($args->get(1), $args->get(2), $args->{3});
-    return null;
+    Http::auth($args->get(1), $args->get(2), $args->{3});
+    return true;
 });
 
-/* ****************** */
-Expr::register('http:code', function ($args)
-{
-    if ($args->length == 2)
-    {
-        http_response_code(~~$args->get(1));
-        return null;
-    }
-
+/**
+ * Returns the HTTP status code of the last request.
+ * @code (`request:code`)
+ * @example
+ * (request:code)
+ * ; 200
+ */
+Expr::register('request:code', function ($args) {
     return Http::getCode();
 });
 
-Expr::register('http:content-type', function ($args)
-{
+/**
+ * Returns the content-type of the last request. Shorthand for `(request:headers "content-type")` without the charset.
+ * @code (`request:content-type`)
+ * @example
+ * (request:content-type)
+ * ; text/html
+ */
+Expr::register('request:content-type', function ($args) {
     return Http::getContentType();
 });
 
-Expr::register('http:data', function ($args)
-{
+/**
+ * Returns the raw data returned by the last request.
+ * @code (`request:data`)
+ * @example
+ * (request:data)
+ * ; HelloWorld
+ */
+Expr::register('request:data', function ($args) {
     return Http::getData();
+});
+
+/**
+ * Clears the current headers, response headers and response data.
+ * @code (`request:clear`)
+ */
+Expr::register('request:clear', function ($args) {
+    Http::clear();
+    return null;
 });

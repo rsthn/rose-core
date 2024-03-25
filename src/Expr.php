@@ -10,6 +10,7 @@ use Rose\Arry;
 use Rose\Map;
 use Rose\IO\Path;
 use Rose\IO\File;
+use Rose\Gateway;
 use Rose\Math;
 use Rose\JSON;
 
@@ -1702,12 +1703,111 @@ Expr::$importedTime = new Map();
 Expr::$importedContext = new Map();
 Expr::$importPath = Path::resolve(Main::$CORE_DIR);
 
-
-/**
-**	Expression functions.
-*/
 global $_glb_object;
 $_glb_object = new Map();
+
+
+/**
+**	************* Expression functions ************* 
+*/
+
+
+/**
+ * Writes the specified values to standard output and adds a new-line at the end.
+ * @code (`echo` <value...>)
+ * @example
+ * (echo "Hello" " " "World")
+ * (echo "!")
+ * ; Hello World
+ * ; !
+ */
+Expr::register('_echo', function($parts, $data)
+{
+    $s = '';
+
+    for ($i = 1; $i < $parts->length(); $i++)
+        $s .= Expr::expand($parts->get($i), $data, 'arg');
+
+    $s .= "\n";
+
+    if (!Gateway::$contentFlushed) {
+        try {
+            Gateway::header(Gateway::$contentType ? Gateway::$contentType : 'Content-Type: text/plain; charset=utf-8');
+        } catch (\Throwable $e) { }
+        Gateway::$contentFlushed = true;
+    }
+
+    echo $s;
+    return null;
+});
+
+/**
+ * Writes the specified values to standard output.
+ * @code (`echo` <value...>)
+ * @example
+ * (print "Hello" "World" "!")
+ * (print "!")
+ * ; HelloWorld!!
+ */
+Expr::register('_print', function($parts, $data)
+{
+    $s = '';
+
+    for ($i = 1; $i < $parts->length(); $i++)
+        $s .= Expr::expand($parts->get($i), $data, 'arg');
+
+    if (!Gateway::$contentFlushed) {
+        try {
+            Gateway::header(Gateway::$contentType ? Gateway::$contentType : 'Content-Type: text/plain; charset=utf-8');
+        } catch (\Throwable $e) { }
+        Gateway::$contentFlushed = true;
+    }
+
+    echo $s;
+    return null;
+});
+
+/**
+ * Writes the specified message(s) separated by space to the default log file.
+ * @code (`trace` <message...>)
+ * @example
+ * (trace "Hello" "World")
+ * ; String "Hello World" will be in the `system.log` file in the `logs` folder.
+ */
+Expr::register('_trace', function($parts, $data)
+{
+    $s = '';
+
+    for ($i = 1; $i < $parts->length(); $i++)
+        $s .= ' ' . Expr::expand($parts->get($i), $data, 'arg');
+
+    if ($s != '')
+        \Rose\trace(Text::substring($s, 1));
+
+    return null;
+});
+
+/**
+ * Writes the specified message(s) separated by space to the specified log file in the `logs` folder. No need to add path or extension.
+ * @code (`trace-alt` <log-name> <message...>)
+ * @example
+ * (trace-alt "mylog" "Hello" "World")
+ * ; String "Hello World" will be in the `mylog.log` file in the `logs` folder.
+ */
+Expr::register('_trace-alt', function($parts, $data)
+{
+    $s = '';
+
+    for ($i = 2; $i < $parts->length(); $i++)
+        $s .= ' ' . Expr::expand($parts->get($i), $data, 'arg');
+
+    if ($s != '')
+        \Rose\trace(Text::substring($s, 1), '@'.Expr::expand($parts->get(1), $data, 'arg').'.log');
+
+    return null;
+});
+
+
 
 Expr::register('global', function($args) { global $_glb_object; return $_glb_object; });
 
@@ -2672,19 +2772,6 @@ Expr::register('_while', function ($parts, $data)
     }
 
     return null;
-});
-
-/**
-**	Writes the specified arguments to standard output separated by space.
-**
-**	echo <expr> [<expr>...]
-*/
-Expr::register('_echo', function ($parts, $data)
-{
-    for ($i = 1; $i < $parts->length(); $i++)
-        echo(Expr::expand($parts->get($i), $data, 'arg').' ');
-
-    return '';
 });
 
 /**
@@ -4197,15 +4284,15 @@ Expr::register('debug:fn', function($args)
 
 /**
  * Returns the current execution context ID.
- * (debug:contextId)
+ * @code (`debug:contextId`)
  */
 Expr::register('debug:contextId', function($args) {
     return Expr::$context->getId();
 });
 
 /**
- * Returns the reference to the specified function.
- * (get-fn function-name)
+ * Returns a reference to the specified function.
+ * @code (`get-fn` function-name)
  */
 Expr::register('get-fn', function($args) {
     if ($args->length < 2)
@@ -4216,9 +4303,10 @@ Expr::register('get-fn', function($args) {
 
 /**
  * Sets or removes the reference of a function in the root context.
- * (set-fn function-name [function-reference|null])
+ * @code (`set-fn` function-name [function-reference])
  */
-Expr::register('set-fn', function($args) {
+Expr::register('set-fn', function($args)
+{
     if ($args->length < 2)
         throw new Error('(set-fn) function name missing');
 

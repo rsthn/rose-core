@@ -2,7 +2,7 @@
 /*
 **	Rose Framework Initializer
 **
-**	Copyright (c) 2010-2023, RedStar Technologies, All rights reserved.
+**	Copyright (c) 2010-2024, RedStar Technologies, All rights reserved.
 **	https://rsthn.com/
 **
 **	THIS LIBRARY IS PROVIDED BY REDSTAR TECHNOLOGIES "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -343,13 +343,10 @@ function fatal_handler()
             echo '<div style="color: #0ff; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $error['message'] . '</div>';
     }
 
-    if ($lastException != null)
-    {
+    if ($lastException != null) {
         echo '<div style="padding: 2px; color: #fff; font-size: 1.3em;">' . typeOf($lastException) . '</div>';
         echo '<div style="padding: 2px; color: #888;">' . basename($lastException->getFile()) . ':' . $lastException->getLine() . '</div>';
-
         echo '<div style="padding: 8px 0; color: #0ff; margin-top: 16px; margin-bottom: 16px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $lastException->getMessage() . '</div>';
-
         $stackTrace = $lastException->getTrace();
     }
 
@@ -420,9 +417,8 @@ class Main
     /**
      * Returns the version of the framework.
      */
-    static function version ()
-    {
-        return json_decode(file_get_contents(dirname(__FILE__).'/../composer.json'))->version;
+    static function version() {
+        return file_get_contents(dirname(__FILE__).'/../VERSION');
     }
 
     /*

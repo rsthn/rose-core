@@ -84,7 +84,7 @@ class Configuration extends Map
         if (Text::position($source, '//') !== false)
             throw new Error ('Blocked attempt to load configuration from a remote address: ' . $source);
 
-        return Configuration::loadFromBuffer (Path::exists($source) ? File::getContents($source) : '', $target, $merge);
+        return Configuration::loadFromBuffer(Path::exists($source) ? File::getContents($source) : '', $target, $merge);
     }
 
     /*

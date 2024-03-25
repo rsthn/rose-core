@@ -1,19 +1,4 @@
 <?php
-/*
-**	Rose\File
-**
-**	Copyright (c) 2018-2020, RedStar Technologies, All rights reserved.
-**	https://rsthn.com/
-**
-**	THIS LIBRARY IS PROVIDED BY REDSTAR TECHNOLOGIES "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-**	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
-**	PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL REDSTAR TECHNOLOGIES BE LIABLE FOR ANY
-**	DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
-**	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
-**	OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
-**	STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-**	USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 
 namespace Rose\IO;
 
@@ -23,10 +8,9 @@ use Rose\IO\Directory;
 use Rose\IO\DataStream;
 use Rose\IO\StreamDescriptor;
 use Rose\DateTime;
+use Rose\Expr;
 
-/*
-**	Describes a file. The static methods of this class provide access to several file specific functions.
-*/
+// @title File
 
 class File
 {
@@ -165,7 +149,7 @@ class File
     }
 
 	/*
-	**	Copies a file (overwrite behavior if exists) to the given target (which can be directory or file).
+	**	Copies a file (overwrites if exists) to the given target, which can be directory or file.
 	*/
     public static function copy (string $source, string $target)
     {
@@ -187,3 +171,138 @@ class File
         return true;
     }
 };
+
+/**
+ * Returns the size of the file.
+ * @code (`file:size` <path>)
+ * @example
+ * (file:size "/var/www/image.jpg")
+ * ; 1024
+ */
+Expr::register('file:size', function ($args) {
+    return File::size($args->get(1));
+});
+
+/**
+ * Dumps the file contents to the standard output.
+ * @code (`file:dump` <path>)
+ * @example
+ * (file:dump "/var/www/image.jpg")
+ * ; Image data
+ */
+Expr::register('file:dump', function ($args) {
+    File::dump($args->get(1));
+    return null;
+});
+
+/**
+ * Returns the modification time of the file as a datetime string (LTZ).
+ * @code (`file:mtime` <path>)
+ * @example
+ * (file:mtime "/var/www/image.jpg")
+ * ; 2024-03-24 03:36:18
+ */
+Expr::register('file:mtime', function ($args) {
+    return File::mtime($args->get(1));
+});
+
+/**
+ * Returns the last access time of the file as a datetime string (LTZ).
+ * @code (`file:atime` <path>)
+ * @example
+ * (file:atime "/var/www/image.jpg")
+ * ; 2024-03-24 03:36:18
+ */
+Expr::register('file:atime', function ($args) {
+    return File::atime($args->get(1));
+});
+
+/**
+ * Sets the last modified time of a file (UTC). Datetime can be a datetime object, string or a unix timestamp.
+ * @code (`file:touch` <path> [datetime])
+ * @example
+ * (file:touch "/var/www/image.jpg" "2024-03-24 03:36:18")
+ * ; true
+ */
+Expr::register('file:touch', function ($args) {
+    return File::touch($args->get(1), $args->has(2) ? $args->get(2) : null);
+});
+
+/**
+ * Reads and returns the contents of the file.
+ * @code (`file:read` <path>)
+ * @example
+ * (file:read "/var/www/test.txt")
+ * ; "Hello, World!"
+ */
+Expr::register('file:read', function ($args) {
+    return Path::exists($args->get(1)) ? File::getContents($args->get(1)) : null;
+});
+
+/**
+ * Writes the contents to the file.
+ * @code (`file:write` <path> <contents>)
+ * @example
+ * (file:write "/var/www/test.txt" "Hello, World!")
+ * ; true
+ */
+Expr::register('file:write', function ($args) {
+    File::setContents($args->get(1), $args->get(2));
+    return true;
+});
+
+/**
+ * Appends the given contents to the file.
+ * @code (`file:append` <path> <contents>)
+ * @example
+ * (file:append "/var/www/test.txt" "Hello, World!")
+ * ; true
+ */
+Expr::register('file:append', function ($args) {
+    File::appendContents($args->get(1), $args->get(2));
+    return true;
+});
+
+/**
+ * Deletes a file, returns `true` if success.
+ * @code (`file:remove` <path>)
+ * @example
+ * (file:remove "/var/www/test.txt")
+ * ; true
+ */
+Expr::register('file:remove', function ($args) {
+    return File::remove($args->get(1));
+});
+
+/**
+ * Deletes a file. Does not check anything.
+ * @code (`file:unlink` <path>)
+ * @example
+ * (file:unlink "/var/www/test.txt")
+ * ; true
+ */
+Expr::register('file:unlink', function ($args) {
+    return File::unlink($args->get(1));
+});
+
+/**
+ * Copies a file (overwrites if exists) to the given target, which can be directory or file.
+ * @code (`file:copy` <source> <target>)
+ * @example
+ * (file:copy "/var/www/image.jpg" "/var/www/images")
+ * ; true
+ */
+Expr::register('file:copy', function ($args) {
+    return File::copy($args->get(1), $args->get(2));
+});
+
+/**
+ * Creates a file, returns `true` if the file was created, or `false` if an error occurred.
+ * @code (`file:create` <path>)
+ * @example
+ * (file:create "/var/www/test.txt")
+ * ; true
+ */
+Expr::register('file:create', function ($args) {
+    return File::create($args->get(1));
+});

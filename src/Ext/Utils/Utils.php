@@ -46,12 +46,6 @@ Expr::register('strings:lang', function ($args)
 
 Expr::register('resources', function ($args) { return Resources::getInstance(); });
 
-Expr::register('gateway', function ($args) { return Gateway::getInstance(); });
-Expr::register('gateway:redirect', function ($args) { return Gateway::redirect($args->get(1)); });
-Expr::register('gateway:flush', function ($args) { return Gateway::flush(); });
-Expr::register('gateway:persistent', function ($args) { return Gateway::persistent(); });
-Expr::register('gateway:timeout', function ($args) { return Gateway::setTimeout($args->get(1)); });
-
 Expr::register('math:to-hex', function ($args) { return Math::toHex($args->get(1)); });
 Expr::register('math:to-bin', function ($args) { return Math::toBin($args->get(1)); });
 Expr::register('math:to-oct', function ($args) { return Math::toOct($args->get(1)); });
@@ -308,9 +302,8 @@ Expr::register('xml:simplify', function($args)
 
 Expr::register('html:encode', function($args)
 {
+    Gateway::$contentType = 'text/html';
     $data = $args->get(1);
-
-    Wind::contentType(new Arry([null, 'text/html']));
 
     if (\Rose\typeOf($data) == 'Rose\Data\Reader')
     {
@@ -701,48 +694,4 @@ Expr::register('map:merge', function($args)
 Expr::register('map:clear', function($args)
 {
     return $args->get(1)->clear();
-});
-
-/* ************ */
-Expr::register('re:matches', function($args)
-{
-    return Regex::_matches($args->get(1), $args->get(2));
-});
-
-Expr::register('re:match-first', function($args)
-{
-    return Regex::_matchFirst($args->get(1), $args->get(2));
-});
-
-Expr::register('re:match', function($args)
-{
-    return Regex::_matchFirst($args->get(1), $args->get(2));
-});
-
-Expr::register('re:match-all', function($args)
-{
-    return Regex::_matchAll($args->get(1), $args->get(2), $args->{3} ?? 0);
-});
-
-Expr::register('re:split', function($args)
-{
-    return Regex::_split($args->get(1), $args->get(2));
-});
-
-/**
- * (re:replace <pattern> <replacement> <subject>)
- */
-Expr::register('re:replace', function($args)
-{
-    return Regex::_replace($args->get(1), $args->get(2), $args->get(3));
-});
-
-Expr::register('re:extract', function($args)
-{
-    return Regex::_extract($args->get(1), $args->get(2));
-});
-
-Expr::register('re:get', function($args)
-{
-    return Regex::_getString($args->get(1), $args->get(2), $args->has(3) ? $args->get(3) : 0);
 });

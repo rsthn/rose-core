@@ -14,105 +14,175 @@ use Rose\IO\Path;
 use Rose\Regex;
 use Rose\Arry;
 use Rose\Extensions;
+use Rose\Expr;
 
-/*
-**	Provides an interface between clients and the system. No client can have access to the system without passing first through the Gateway.
-*/
+// @title Gateway
+// @desc Provides an interface between clients and the system. No client can have access to the system without passing first through the Gateway.
 
 class Gateway
 {
-    /*
-    **	Primary and only instance of this class.
-    */
+    /**
+     * Primary and only instance of this class.
+     */
     private static $instance = null;
 
-    /*
-    **	List of registered services, each time the "srv" request parameter is detected, its value will be checked in
-    **	this map, if an object is found, it's main() method will be invoked.
-    */
+    /**
+     * List of registered services, each time the "srv" request parameter is detected, its value will be checked in
+     * this map, if an object is found, it's main() method will be invoked.
+     */
     private $registeredServices;
 
-    /*
-    **	Client request parameters (both GET and POST).
-    */
-    public $requestParams;
-    public $request;
+/**
+ * Map with the request parameters from both GET and POST methods.
+ * @code (`gateway.request`)
+ * @example
+ * (gateway.request)
+ * ; {"name": "John"}
+ */
+public $request;
 
-    /*
-    **	Server parameters (basically the $_SERVER array).
-    */
-    public $serverParams;
-    public $server;
+/**
+ * Map with the server parameters sent via CGI.
+ * @code (`gateway.server`)
+ * @example
+ * (gateway.server)
+ * ; {"SERVER_NAME": "localhost"}
+ */
+public $server;
 
-    /*
-    **	Relative path (if any) obtained from the PHP_SELF server parameter.
-    */
+/**
+ * Map with the HTTP headers sent via CGI.
+ * @code (`gateway.headers`)
+ * @example
+ * (gateway.headers)
+ * ; {"HOST": "localhost", "X_KEY": "12345"}
+ */
+public $headers;
+
+    /**
+     * Relative path (if any) obtained from the PHP_SELF server parameter.
+     */
     public $relativePath;
 
-    /*
-    **	Available cookies (basically the $_COOKIES array).
-    */
-    public $cookies;
+/**
+ * Map with the cookies sent by the client.
+ * @code (`gateway.cookies`)
+ * @example
+ * (gateway.cookies)
+ * ; {"session": "123"}
+ */
+public $cookies;
 
-    /*
-    **	Full URL address to the entry point of the active service. Never ends with slash.
-    */
-    public $ep;
-    public $url;
+    /**
+     * Current globally set content type for the response.
+     */
+    public static $contentType = null;
 
-    /*
-    **	Full URL address to the entry point of the system (root entry point).
-    */
-    public $rep;
+    /**
+     * Indicates if the content has been flushed.
+     */
+    public static $contentFlushed = false;
 
-    /*
-    **	Server name. Obtained from the $_SERVER array or from configuration settings (Gateway.server_name).
-    */
-    public $serverName;
+/**
+ * Full URL address to the entry point of the active service. Never ends with slash.
+ * @code (`gateway.ep`)
+ * @example
+ * (gateway.ep)
+ * ; "http://localhost"
+ */
+public $ep;
 
-    /*
-    **	HTTP Method used to access this entry point.
-    */
-    public $method;
+/**
+ * Server name obtained from the CGI fields or from the `server_name` field in the `Gateway` configuration section.
+ * @code (`gateway.serverName`)
+ * @example
+ * (gateway.serverName)
+ * ; "localhost"
+ */
+public $serverName;
 
-    /*
-    **	Remote client address and port.
-    */
-    public $remoteAddress, $remotePort;
+/**
+ * HTTP method used to access the gateway, will always be in uppercase.
+ * @code (`gateway.method`)
+ * @example
+ * (gateway.method)
+ * ; "GET"
+ */
+public $method;
 
-    /*
-    **	Relative URL root where the index is found. Usually it is "/".
-    */
-    public $root;
+/**
+ * Remote address (and port) of the client.
+ * @code (`gateway.remoteAddress`)
+ * @code (`gateway.remotePort`)
+ * @example
+ * (gateway.remoteAddress)
+ * ; "127.0.0.1"
+ *
+ * (gateway.remotePort)
+ * ; 12873
+ */
+public $remoteAddress;
+public $remotePort;
 
-    /*
-    **	Local file system root where the index is found.
-    */
-    public $fsroot;
+/**
+ * Relative URL root where the index file is found. Usually it is "/".
+ * @code (`gateway.root`)
+ * @example
+ * (gateway.root)
+ * ; "/"
+ */
+public $root;
 
-    /*
-    **	Indicates if we're on a secure context (HTTPS).
-    */
-    public $secure;
+/**
+ * Local file system root where the index file is found.
+ * @code (`gateway.fsroot`)
+ * @example
+ * (gateway.fsroot)
+ * ; "/var/www/html"
+ */
+public $fsroot;
 
-    /*
-    **	Object contaning the input data received. Basically what was POSTed to the gateway.
-    */
-    public $input;
+/**
+ * Indicates if we're on a secure context (HTTPS).
+ * @code (`gateway.secure`)
+ * @example
+ * (gateway.secure)
+ * ; true
+ */
+public $secure;
 
-    /*
-    **	Indicates if the Gateway is in CLI mode, when so, certain functions will not be used (i.e. header).
-    */
+/**
+ * Object contaning information about the request body received.
+ * @code (`gateway.input`)
+ * @example
+ * (gateway.input)
+ * ; {"contentType": "application/json", "size": 16, "path": "/tmp/1f29g87h12"}
+ */
+public $input;
+
+/**
+ * Contains a parsed object if the content-type is `application/json`. For other content types, it will be `null` and the actual data can
+ * be read from the file specified in the `path` field of the `input` object.
+ * @code (`gateway.body`)
+ * @example
+ * (gateway.body)
+ * ; {"name": "John"}
+ */
+public $body;
+
+    /**
+     * Indicates if the Gateway is in CLI mode, when so, certain functions will not be used (i.e. header).
+     */
     public static $cli = false;
 
-    /*
-    **	Last value passed to the `header` function. Available only in CLI mode.
-    */
+    /**
+     * Last value passed to the `header` function. Available only in CLI mode.
+     */
     public static $header;
 
-    /*
-    **	Returns the instance of this class.
-    */
+    /**
+     * Returns the instance of this class.
+     */
     public static function getInstance ()
     {
         if (Gateway::$instance == null)
@@ -121,68 +191,82 @@ class Gateway
         return Gateway::$instance;
     }
 
-    /*
-    **	Constructs the Gateway object, this is a private constructor as this class can have only one instance.
-    */
+    /**
+     * Constructs the Gateway object, this is a private constructor as this class can have only one instance.
+     */
     private function __construct()
     {
         foreach ($_FILES as &$file) {
             $file['path'] = $file['tmp_name'];
         }
 
-        $this->request = $this->requestParams = new Map (array_merge ($_REQUEST, $_FILES));
-        $this->server = $this->serverParams = new Map ($_SERVER);
+        $this->request = new Map (array_merge ($_REQUEST, $_FILES));
+        $this->server = new Map ($_SERVER);
         $this->cookies = new Map ($_COOKIE);
 
+        $this->headers = $headers = new Map();
+        $this->server->forEach(function ($item, $key) use (&$headers) {
+            if (Text::startsWith($key, 'HTTP_'))
+                $headers->set(Text::substring($key, 5), $item);
+        });
+
         $this->registeredServices = new Map();
-        $this->input = new Map([ 'contentType' => Text::toLowerCase(Text::trim(Text::split(";", $this->server->CONTENT_TYPE)->get(0))), 'size' => $this->server->CONTENT_LENGTH, 'path' => 'php://input' ]);
+        $this->input = null;
+        $this->body = null;
 
-        switch ($this->input->contentType)
-        {
-            case 'application/x-www-form-urlencoded':
-            case 'multipart/form-data':
-                break;
-
-            case 'application/json':
-                $value = file_get_contents($this->input->path);
-                $this->input->data = !$value ? new Map() : ($value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true)));
-                break;
-
-            case 'text':
-                $this->input->data = file_get_contents($this->input->path);
-                break;
-
-            default:
-                break;
+        $contentType = Text::toLowerCase(Text::trim(Text::split(";", $this->server->CONTENT_TYPE)->get(0)));
+        if ($contentType) {
+            $this->input = new Map([ 
+                'contentType' => $contentType,
+                'size' => intval($this->server->CONTENT_LENGTH),
+                'path' => 'php://input'
+            ]);
         }
+
+        if ($this->input !== null)
+        {
+            // TODO: Add some sort of limit of content-length to avoid loading huge files into memory.
+            if ($this->input->contentType === 'application/json') {
+                $value = file_get_contents($this->input->path);
+                $this->body = !$value ? new Map() : ($value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true)));
+            }
+            else if ($this->input->contentType === 'application/x-www-form-urlencoded') {
+                $this->input = null;
+            }
+            else if ($this->input->contentType === 'multipart/form-data') {
+                $this->input = null;
+            }
+        }
+
+        if ($this->input === null)
+            $this->input = new Map([ 'contentType' => null ]);
     }
 
-    /*
-    **	Executed by the framework initializer to initialize the gateway.
-    */
+    /**
+     * Executed by the framework initializer to initialize the gateway.
+     */
     public function init ($cli, $fsroot)
     {
         self::$cli = $cli;
 
         // Set entry point URL and root.
-        $this->root = Text::substring($this->serverParams->SCRIPT_NAME, 0, -9);
+        $this->root = Text::substring($this->server->SCRIPT_NAME, 0, -9);
 
-        $this->secure = Text::toUpperCase($this->serverParams->HTTPS) == 'ON';
-        if (!$this->secure && Text::toUpperCase($this->serverParams->HTTP_X_FORWARDED_PROTO) == 'HTTPS')
-        {
-            $this->serverParams->SERVER_PORT = 443;
+        $this->secure = Text::toUpperCase($this->server->HTTPS) == 'ON';
+        if (!$this->secure && Text::toUpperCase($this->server->HTTP_X_FORWARDED_PROTO) == 'HTTPS') {
+            $this->server->SERVER_PORT = 443;
             $this->secure = true;
         }
 
         while (Text::endsWith($this->root, '/'))
             $this->root = Text::substring($this->root, 0, -1);
 
-        $name = Regex::_getString('|.*/(.+)\.php$|', $this->serverParams->SCRIPT_NAME, 1);
+        $name = Regex::_getString('|.*/(.+)\.php$|', $this->server->SCRIPT_NAME, 1);
 
         /* ** */
-        $n = Text::length(Regex::_getString ('/^(.+)'.$name.'\.php/', $this->serverParams->SCRIPT_NAME, 1));
+        $n = Text::length(Regex::_getString ('/^(.+)'.$name.'\.php/', $this->server->SCRIPT_NAME, 1));
 
-        $tmp = Text::substring($this->serverParams->REQUEST_URI, $n);
+        $tmp = Text::substring($this->server->REQUEST_URI, $n);
         if (Text::startsWith($tmp, $name.'.php')) $tmp = Text::substring($tmp, Text::length($name)+4);
         if (Text::startsWIth($tmp, '/')) $tmp = Text::substring($tmp, 1);
 
@@ -190,24 +274,21 @@ class Gateway
         if ($this->relativePath) $this->relativePath = '/'.$this->relativePath;
 
         /* ** */
-        $this->method = Text::toUpperCase($this->serverParams->REQUEST_METHOD);
-        $this->remoteAddress = $this->serverParams->REMOTE_ADDR;
-        $this->remotePort = $this->serverParams->REMOTE_PORT;
+        $this->method = Text::toUpperCase($this->server->REQUEST_METHOD);
+        $this->remoteAddress = $this->server->REMOTE_ADDR;
+        $this->remotePort = $this->server->REMOTE_PORT;
 
-        $this->serverName = Configuration::getInstance()?->Gateway?->server_name ? Configuration::getInstance()->Gateway->server_name : $this->serverParams->SERVER_NAME;
+        $this->serverName = Configuration::getInstance()?->Gateway?->server_name ? Configuration::getInstance()->Gateway->server_name : $this->server->SERVER_NAME;
         $this->ep = ($this->secure ? 'https://' : 'http://')
                     .$this->serverName
                     .(
-                        ($this->secure ? $this->serverParams->SERVER_PORT != '443' : $this->serverParams->SERVER_PORT != '80')
-                        ? ':'.$this->serverParams->SERVER_PORT
+                        ($this->secure ? $this->server->SERVER_PORT != '443' : $this->server->SERVER_PORT != '80')
+                        ? ':'.$this->server->SERVER_PORT
                         : ''
                     )
                     .$this->root;
 
-        $this->url = $this->ep;
-        $this->rep = $this->ep;
-
-        if (Configuration::getInstance()?->Gateway?->allow_origin && $this->serverParams->has('HTTP_ORIGIN'))
+        if (Configuration::getInstance()?->Gateway?->allow_origin && $this->server->has('HTTP_ORIGIN'))
         {
             self::header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization');
             self::header('Access-Control-Allow-Methods: POST, GET, PUT, DELETE, PATCH, OPTIONS');
@@ -228,40 +309,40 @@ class Gateway
         Extensions::init();
     }
 
-    /*
-    **	Executed by the framework initializer when a client has sent a request to the system.
-    */
+    /**
+     * Executed by the framework initializer when a client has sent a request to the system.
+     */
     public function main ()
     {
         // If service parameter is set in Gateway configuration, load it as 'srv' to force activation of service.
         if (Configuration::getInstance()?->Gateway?->service != null)
-            $this->requestParams->srv = Configuration::getInstance()->Gateway->service;
+            $this->request->srv = Configuration::getInstance()->Gateway->service;
 
         // Detect is a service is being requested.
-        if ($this->requestParams->srv != null)
+        if ($this->request->srv != null)
         {
-            $this->requestParams->srv = Regex::_extract('/[A-Za-z0-9_-]+/', $this->requestParams->srv);
+            $this->request->srv = Regex::_extract('/[A-Za-z0-9_-]+/', $this->request->srv);
 
-            if ($this->registeredServices->has($this->requestParams->srv))
-                $this->registeredServices->get($this->requestParams->srv)->main();
+            if ($this->registeredServices->has($this->request->srv))
+                $this->registeredServices->get($this->request->srv)->main();
             else
-                throw new Error ("Service `" . $this->requestParams->srv . "` is not registered.");
+                throw new Error ("Service `" . $this->request->srv . "` is not registered.");
 
             return;
         }
     }
 
-    /*
-    **	Registers a service.
-    */
+    /**
+     * Registers a service.
+     */
     public static function registerService ($serviceCode, $handlerObject)
     {
         Gateway::getInstance()->registeredServices->set ($serviceCode, $handlerObject);
     }
 
-    /*
-    **	Returns the service handler object given a service code.
-    */
+    /**
+     * Returns the service handler object given a service code.
+     */
     public static function getService ($serviceCode)
     {
         if (Gateway::getInstance()->registeredServices->has($serviceCode))
@@ -270,48 +351,48 @@ class Gateway
             return null;
     }
 
-    /*
-    **	Invalidates the gateway instance.
-    */
-    public static function close ()
-    {
+    /**
+     * Invalidates the gateway instance.
+     */
+    public static function close () {
         Session::close();
         Gateway::$instance = null;
     }
 
-    /*
-    **	Adds a header to the HTTP response.
-    */
-    public static function header ($headerItem)
+    /**
+     * Adds a header to the HTTP response.
+     */
+    public static function header ($value)
     {
+        if (Text::toUpperCase(Text::substring($value, 0, 12)) === 'CONTENT-TYPE')
+            Gateway::$contentType = $value;
+
         if (self::$cli) {
-            self::$header = $headerItem;
+            self::$header = $value;
             return;
         }
 
-        \header ($headerItem);
+        \header ($value);
     }
 
-    /*
-    **	Immediately redirects to the specified URL. A FalseError is triggered to ensure immediate exit.
-    */
-    public static function redirect ($location)
-    {
+    /**
+     * Immediately redirects to the specified URL. A FalseError is triggered to ensure immediate exit.
+     */
+    public static function redirect ($location) {
         self::header('location: '.$location);
-        throw new FalseError ();
+        throw new FalseError();
     }
 
-    /*
-    **	Exits immediately.
-    */
-    public static function exit ()
-    {
-        throw new FalseError ();
+    /**
+     * Exits immediately.
+     */
+    public static function exit () {
+        throw new FalseError();
     }
 
-    /*
-    **	Flushes all output buffers and prepares for direct output.
-    */
+    /**
+     * Flushes all output buffers and prepares for immediate mode (unbuffered output).
+     */
     public static function flush ()
     {
         if (function_exists("apache_setenv"))
@@ -327,30 +408,151 @@ class Gateway
         //set_time_limit(0);
         ob_implicit_flush(1);
         flush();
+
+        return true;
     }
 
     /**
-     * Configures the system to use persistent execution mode.
+     * Configures the system to use persistent execution mode in which the script will continue to run indefinitely for as 
+     * long as the server allows, even if the client connection is lost.
      */
-    public static function persistent ()
-    {
+    public static function persistent() {
         ignore_user_abort(true);
         set_time_limit(0);
+        return true;
     }
 
     /**
-     * Sets the maximum execution time.
+     * Sets the maximum execution time of the current operation.
      */
-    public static function setTimeout ($seconds)
-    {
-        set_time_limit($seconds);
+    public static function setTimeout ($seconds) {
+        set_time_limit($seconds === 'NEVER' ? 0 : $seconds);
+        return true;
     }
 
-    /*
-    **	Returns boolean indicating if the client connection was been disconnected.
-    */
-    public static function connected ()
-    {
+    /**
+     * Returns boolean indicating if the client connection was been disconnected.
+     */
+    public static function connected() {
         return !connection_aborted();
     }
+
+    /**
+     * Returns the string representation of this object.
+     */
+    public function __toString() {
+        return '[Rose\Gateway]';
+    }
 };
+
+/**
+ * Provides access to the instance properties of the Gateway class.
+ */
+Expr::register('gateway', function ($args) {
+    return Gateway::getInstance();
+});
+
+/**
+ * Sets the HTTP status code to be sent to the client.
+ * @code (`gateway:status` <code>)
+ * @example
+ * (gateway:status 404)
+ * ; true
+ */
+Expr::register('gateway:status', function($args) {
+    http_response_code(~~$args->get(1));
+    return true;
+});
+
+/**
+ * Sets a header in the current HTTP response.
+ * @code (`gateway:header` <header-line...>)
+ * @example
+ * (gateway:header "Content-Type: application/json")
+ * ; true
+ */
+Expr::register('gateway:header', function($args) {
+    for ($i = 1; $i < $args->length; $i++)
+        Gateway::header($args->get($i));
+    return true;
+});
+
+/**
+ * Redirects the client to the specified URL by setting the `Location` header and exiting immediately.
+ * @code (`gateway:redirect` <url>)
+ */
+Expr::register('gateway:redirect', function ($args) {
+    return Gateway::redirect($args->get(1));
+});
+
+/**
+ * Flushes all output buffers and prepares for immediate mode (unbuffered output).
+ * @code (`gateway:flush`)
+ * @example
+ * (gateway:flush)
+ * ; true
+ */
+Expr::register('gateway:flush', function ($args) {
+    return Gateway::flush();
+});
+
+/**
+ * Configures the system to use persistent execution mode in which the script will continue to run indefinitely for as 
+ * long as the server allows, even if the client connection is lost.
+ * @code (`gateway:persistent`)
+ * @example
+ * (gateway:persistent)
+ * ; true
+ */
+Expr::register('gateway:persistent', function ($args) {
+    return Gateway::persistent();
+});
+
+/**
+ * Sets the maximum execution time of the current operation. Use `NEVER` to disable the timeout.
+ * @code (`gateway:timeout` <seconds>)
+ * @example
+ * (gateway:timeout 30)
+ * ; true
+ */
+Expr::register('gateway:timeout', function ($args) {
+    return Gateway::setTimeout($args->get(1));
+});
+
+/**
+ * Returns a response to the client and exits immediately.
+ * @code (`gateway:return` [<status>] [<response>])
+ * @example
+ * (gateway:return 200 "Hello, World!")
+ * ; Client will receive:
+ * ; Hello, World!
+ */
+Expr::register('gateway:return', function ($args)
+{
+    $status = $args->{1};
+    $response = $args->{2};
+
+    if ($status) {
+        if (\Rose\isInteger($status))
+            http_response_code($status);
+        else
+            $response = $status;
+    }
+
+    if (Gateway::$contentFlushed || !$response)
+        Gateway::exit();
+
+    if (Gateway::$contentType === null) {
+        $type = \Rose\typeOf($response);
+        if ($type === 'Rose\Map' || $type === 'Rose\Arry') {
+            Gateway::$contentType = 'Content-Type: application/json; charset=utf-8';
+        }
+        else if (\Rose\isString($response) && Text::length($response) != 0) {
+            Gateway::$contentType = 'Content-Type: text/plain; charset=utf-8';
+        }
+    }
+
+    Gateway::header(Gateway::$contentType);
+    echo (string)$response;
+    Gateway::exit();
+});

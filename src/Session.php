@@ -70,8 +70,8 @@ class Session
         // Verify if m_<SessionName> was provided over POST or GET to override session id.
         if (Session::$sessionName)
         {
-            if (Gateway::getInstance()->requestParams->has('m_'.Session::$sessionName))
-                Session::$sessionId = Gateway::getInstance()->requestParams->get('m_'.Session::$sessionName);
+            if (Gateway::getInstance()->request->has('m_'.Session::$sessionName))
+                Session::$sessionId = Gateway::getInstance()->request->get('m_'.Session::$sessionName);
             else
                 Session::$sessionId = Cookies::get(Session::$sessionName);
 

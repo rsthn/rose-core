@@ -1,37 +1,5 @@
 # Wind
 
-## `trace` \<message...>
-Writes the specified message(s) separated by space to the log file.
-
-```lisp
-(trace "Hello" "World")
-; String "Hello World" will be in the `system.log` file in the `logs` folder.
-```
-
-## `trace-alt` \<name> \<message...>
-Writes the specified message(s) separated by space to the specified log file in the `logs` folder. No need to add path nor extension.
-
-```lisp
-(trace::alt "mylog" "Hello" "World")
-; String "Hello World" will be in the `mylog.log` file in the `logs` folder.
-```
-
-## `header` \<header-line>
-Sets a header of the current HTTP response.
-
-```lisp
-(header "Content-Type: application/json")
-; Header will be set in HTTP response.
-```
-
-## `content-type` \<mime-type>
-Sets the content type of the current HTTP response. This is a useful shortcut for `(header "Content-Type: <mime-type>")`.
-
-```lisp
-(content-type "text/html")
-; Header "Content-Type: text/html" will be set in HTTP response.
-```
-
 ## `call` \<name> [\<varName> \<varValue>...]
 Calls the specified API function with the given parameters which will be available as globals to the target. Returns the response object.
 

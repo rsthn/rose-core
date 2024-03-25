@@ -150,9 +150,9 @@ class Strings
             }
             else
             // Attempt to load language code from request parameters.
-            if ($gateway->requestParams->has('__lang'))
+            if ($gateway->request->has('__lang'))
             {
-                $lang = $gateway->requestParams->__lang;
+                $lang = $gateway->request->__lang;
                 $this->langFrom = Strings::FROM_REQUEST;
             }
 
@@ -160,7 +160,7 @@ class Strings
             if (!$lang || Text::length($lang) > 2 || !Path::exists($this->base.$lang.'/'))
                 $lang = '.';
 
-            $gateway->requestParams->__lang = $lang;
+            $gateway->request->__lang = $lang;
         }
 
         $this->lang = $lang;
