@@ -1,3 +1,16 @@
+# v5.0.0 - Mar 26 2024
+
+#### General
+- Refactored to comply with latest v5 syntax guide.
+- Completed documentation of all available functions.
+- Removed all deprecated functions.
+- Added OpenSSL and Cookies extensions.
+
+#### Gateway
+- Refactored code and added new functions.
+
+<br/>
+
 # v4.1.8 - Feb 03 2024
 
 #### Crypto

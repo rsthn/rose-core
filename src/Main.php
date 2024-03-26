@@ -490,8 +490,7 @@ class Main
         Main::defs();
 
         // Load specially encoded request if "req64" parameter is set.
-        if (isset($_REQUEST['req64']))
-        {
+        if (isset($_REQUEST['req64'])) {
             parse_str (base64_decode ($_REQUEST['req64']), $tmp);
             $_REQUEST = array_merge($_REQUEST, $tmp);
         }
@@ -516,8 +515,7 @@ class Main
 
             Gateway::getInstance()->close();
         }
-        catch (\Throwable $e)
-        {
+        catch (\Throwable $e) {
             $lastException = $e;
         }
 

@@ -7,13 +7,12 @@ use Rose\Errors\Error;
 use Rose\IO\Path;
 use Rose\IO\File;
 
+use Rose\Expr;
 use Rose\Map;
 use Rose\Regex;
 use Rose\Text;
 
-/*
-**	Provides an interface to read system configuration parameters.
-*/
+// @title Configuration
 
 class Configuration extends Map
 {
@@ -23,7 +22,7 @@ class Configuration extends Map
     private static $objectInstance;
 
     /**
-     * Indicates what configuration environment was used.
+     * Indicates what environment mode was used to load the configuration.
      */
     public $env;
 
@@ -226,3 +225,55 @@ class Configuration extends Map
         return $buff;
     }
 };
+
+/**
+ * Object containing the currently loaded system configuration fields.
+ * @code (`config`)
+ * @example
+ * (config)
+ * ; {"General": {"version": "1.0.0"}}
+ */
+Expr::register('config', function ($args) {
+    return Configuration::getInstance();
+});
+
+/**
+ * Indicates what environment mode was used to load the configuration.
+ * @code (`config.env`)
+ * @example
+ * (config.env)
+ * ; dev
+ */
+
+/**
+ * Parses the given configuration buffer and returns a map. The buffer data is composed of key-value pairs
+ * separated by equal-sign (i.e. Name=John), and sections enclosed in square brakets (i.e. [General]).
+ * 
+ * Note that you can use the equal-sign in the field value without any issues because the parser will look
+ * only for the first to delimit the name.
+ * 
+ * If a multi-line value is desired, single back-ticks (`) can be used after the equal sign to mark a start, and
+ * on a single line to mark the end. Each line will be trimmed first before concatenating it to the value, and
+ * new-line character is preserved.
+ * @code (`config:parse` <config-string>)
+ * @example
+ * (config:parse "[General]\nversion=1.0.0")
+ * ; {"General": {"version": "1.0.0"}}
+ */
+Expr::register('config:parse', function ($args) {
+    return Configuration::loadFromBuffer($args->get(1));
+});
+
+
+/**
+ * Converts the specified object to a configuration string. Omit the `value` parameter to use the
+ * currently loaded configuration object.
+ * @code (`config:stringify` <value>)
+ * @example
+ * (config:stringify (& general (& version "1.0.0")))
+ * ; [General]
+ * ; version=1.0.0
+ */
+Expr::register('config:stringify', function ($args) {
+    return Configuration::saveToBuffer($args->get(1));
+});

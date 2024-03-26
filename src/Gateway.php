@@ -445,12 +445,14 @@ public $body;
     }
 };
 
+
 /**
  * Provides access to the instance properties of the Gateway class.
  */
 Expr::register('gateway', function ($args) {
     return Gateway::getInstance();
 });
+
 
 /**
  * Sets the HTTP status code to be sent to the client.
@@ -463,6 +465,7 @@ Expr::register('gateway:status', function($args) {
     http_response_code(~~$args->get(1));
     return true;
 });
+
 
 /**
  * Sets a header in the current HTTP response.
@@ -477,6 +480,7 @@ Expr::register('gateway:header', function($args) {
     return true;
 });
 
+
 /**
  * Redirects the client to the specified URL by setting the `Location` header and exiting immediately.
  * @code (`gateway:redirect` <url>)
@@ -484,6 +488,7 @@ Expr::register('gateway:header', function($args) {
 Expr::register('gateway:redirect', function ($args) {
     return Gateway::redirect($args->get(1));
 });
+
 
 /**
  * Flushes all output buffers and prepares for immediate mode (unbuffered output).
@@ -495,6 +500,7 @@ Expr::register('gateway:redirect', function ($args) {
 Expr::register('gateway:flush', function ($args) {
     return Gateway::flush();
 });
+
 
 /**
  * Configures the system to use persistent execution mode in which the script will continue to run indefinitely for as 
@@ -508,6 +514,7 @@ Expr::register('gateway:persistent', function ($args) {
     return Gateway::persistent();
 });
 
+
 /**
  * Sets the maximum execution time of the current operation. Use `NEVER` to disable the timeout.
  * @code (`gateway:timeout` <seconds>)
@@ -518,6 +525,7 @@ Expr::register('gateway:persistent', function ($args) {
 Expr::register('gateway:timeout', function ($args) {
     return Gateway::setTimeout($args->get(1));
 });
+
 
 /**
  * Returns a response to the client and exits immediately.

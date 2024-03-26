@@ -1807,18 +1807,224 @@ Expr::register('_trace-alt', function($parts, $data)
     return null;
 });
 
+/**
+ * Does nothing and returns `null`, any arguments will not be evaluated.
+ * @code (`nop` ...)
+ * @example
+ * (nop (call_expensive_function 1 2 3))
+ * ; null
+ */
+Expr::register('_nop', function ($parts, $data) {
+    return null;
+});
+
+/**
+ * Returns the length of the given text or number of elements in a structure.
+ * @code (`len` <value>)
+ * @example
+ * (len "Hello World")
+ * ; 11
+ *
+ * (len [1 2 3 4 5])
+ * ; 5
+ */
+Expr::register('len', function($args) {
+    $s = $args->get(1);
+    return \Rose\typeOf($s) === 'primitive' ? Text::length((string)$s) : $s->length;
+});
+
+/**
+ * Converts the given value to a string.
+ * @code (`str` <value>)
+ * @example (str 123)
+ * ; 123
+ */
+Expr::register('str', function($args) {
+    if ($args->length > 1)//violet: remove on v6
+        throw new Error('str function does not accept multiple arguments, did you mean to use `concat`?');
+    return Text::toString($args->get(1));
+});
+
+/**
+ * Converts the given value to an integer.
+ * @code (`int` <value>)
+ * @example
+ * (int "123")
+ * ; 123
+ */
+Expr::register('int', function($args) {
+    return (int)$args->get(1);
+});
+
+/**
+ * Converts the given value to a boolean.
+ * @code (`bool` <value>)
+ * @example
+ * (bool "true")
+ * ; true
+ */
+Expr::register('bool', function($args) {
+    return \Rose\bool($args->get(1));
+});
+
+/**
+ * Converts the given value to a float.
+ * @code (`float` <value>)
+ * @example
+ * (float "123.45")
+ * ; 123.45
+ */
+Expr::register('float', function($args) {
+    return (float)$args->get(1);
+});
+
+/**
+ * Sets the value of one or more variables in the data context.
+ * @code (`set` <target> <value>)
+ * @example
+ * (set name "John")
+ * (set person.name "Jane")
+ */
+Expr::register('_set', function ($parts, $data)
+{
+    if ($parts->length == 2) {
+        Expr::$context->defaultValue = Expr::value($parts->get(1), $data);
+        return null;
+    }
+
+    for ($i = 1; $i+1 < $parts->length; $i += 2)
+    {
+        $value = Expr::value($parts->get($i+1), $data);
+        if ($parts->get($i)->length > 1)
+        {
+            $ref = Expr::expand($parts->get($i), $data, 'varref');
+            if ($ref != null) {
+                if (!$ref[0])
+                    throw new Error('unable to assign: ' . $parts->get($i)->map(function($i) { return $i->data; })->join('')  );
+                Expr::accessSet($ref[0], $ref[1], $value);
+            }
+        }
+        else {
+            $data->set(Expr::value($parts->get($i), $data), Expr::$context->defaultValue = $value);
+        }
+    }
+
+    return null;
+});
+
+/**
+ * Increases the value of a variable by the given value (or `1` if none provided).
+ * @code (`inc` <target> [value])
+ * @example
+ * (set count 0)
+ * (inc count)
+ * ; 1
+ * (inc count 5)
+ * ; 6
+ */
+Expr::register('_inc', function ($parts, $data)
+{
+    $ref = Expr::expand($parts->get(1), $data, 'varref');
+    if (!$ref) return null;
+
+    if (!$ref[0])
+        throw new Error('unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join(''));
+
+    $value = $parts->has(2) ? Expr::value($parts->get(2), $data) : 1;
+    Expr::accessSet($ref[0], $ref[1], Expr::accessGet($ref[0], $ref[1]) + $value);
+});
+
+/**
+ * Decreases the value of a variable by the given value (or `1` if none provided).
+ * @code (`dec` <target> [value])
+ * @example
+ * (set count 10)
+ * (dec count)
+ * ; 9
+ * (dec count 5)
+ * ; 4
+ */
+Expr::register('_dec', function ($parts, $data)
+{
+    $ref = Expr::expand($parts->get(1), $data, 'varref');
+    if (!$ref) return null;
+
+    if (!$ref[0])
+        throw new Error('unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join(''));
+
+    $value = $parts->has(2) ? Expr::value($parts->get(2), $data) : 1;
+    Expr::accessSet($ref[0], $ref[1], Expr::accessGet($ref[0], $ref[1]) - $value);
+});
+
+/**
+ * Appends the given value(s) to the variable.
+ * @code (`append` <target> <value...>)
+ * @example
+ * (set name "John")
+ * (append name " Doe")
+ * ; John Doe
+ */
+Expr::register('_append', function ($parts, $data)
+{
+    $ref = Expr::expand($parts->get(1), $data, 'varref');
+    if (!$ref) return null;
+
+    if (!$ref[0])
+        throw new Error('unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join(''));
+
+    for ($i = 2; $i < $parts->length; $i++) {
+        $value = Expr::value($parts->get($i), $data);
+        Expr::accessSet($ref[0], $ref[1], Expr::accessGet($ref[0], $ref[1]) . $value);
+    }
+
+    return Expr::accessGet($ref[0], $ref[1]);
+});
+
+/**
+ * Removes one or more variables from the data context.
+ * @code (`unset` <target...>)
+ * @example
+ * (unset name)
+ */
+Expr::register('_unset', function ($parts, $data)
+{
+    for ($i = 1; $i < $parts->length; $i++) {
+        if ($parts->get($i)->length > 1) {
+            $ref = Expr::expand($parts->get($i), $data, 'varref');
+            if ($ref != null) $ref[0]->remove ($ref[1]);
+        }
+        else
+            $data->remove(Expr::value($parts->get($i), $data));
+    }
+    return null;
+});
+
+// TODO: Make this nicer, to work with map,array,string
+/**
+ * Check if the specified subject matches any of the given values.
+ * in <subject> <values...>
+ */
+Expr::register('in?', function ($args)
+{
+    $value = $args->get(1);
+
+    for ($i = 2; $i < $args->length; $i++)
+    {
+        if ($value == $args->get($i))
+            return true;
+    }
+
+    return false;
+});
+
+
+
+
 
 
 Expr::register('global', function($args) { global $_glb_object; return $_glb_object; });
 
-Expr::register('len', function($args) { $s = $args->get(1); return \Rose\typeOf($s) == 'primitive' ? Text::length((string)$s) : $s->length; });
-Expr::register('strlen', function($args) { return Text::length((string)$args->get(1), 'utf8'); });
-Expr::register('int', function($args) { return (int)$args->get(1); });
-Expr::register('bool', function($args) { return \Rose\bool($args->get(1)); });
-// TODO: 'str' should be just a converter, and concat the new 'str'
-Expr::register('str', function($args) { $s = ''; for ($i = 1; $i < $args->length; $i++) $s .= (string)$args->get($i); return $s; });
 Expr::register('concat', function($args) { $s = ''; for ($i = 1; $i < $args->length; $i++) $s .= (string)$args->get($i); return $s; });
-Expr::register('float', function($args) { return (float)$args->get(1); });
 Expr::register('chr', function($args) { return chr($args->get(1)); });
 Expr::register('ord', function($args) { return ord($args->get(1)); });
 
@@ -1868,9 +2074,6 @@ Expr::register('object?', function($args) { return typeOf($args->get(1), true) =
 Expr::register('map?', function($args) { return typeOf($args->get(1), true) === 'Rose\\Map'; });
 Expr::register('fn?', function($args) { return typeOf($args->get(1), true) === 'function'; });
 
-Expr::register('starts-with', function($args) { return Text::startsWith($args->get(2), $args->get(1)); });
-Expr::register('ends-with', function($args) { return Text::endsWith($args->get(2), $args->get(1)); });
-
 Expr::register('typeof', function($args)
 {
     $type = typeOf($args->get(1), true);
@@ -1895,37 +2098,8 @@ Expr::register('pow', function($args) { return Expr::reduce($args->get(1), $args
 
 Expr::register('min', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::min($accum, $value); }); });
 Expr::register('max', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::max($accum, $value); }); });
-Expr::register('abs', function($args) { return Math::abs($args->get(1)); });
-Expr::register('round', function($args) { return Math::round($args->get(1)); });
-Expr::register('ceil', function($args) { return Math::ceil($args->get(1)); });
-Expr::register('floor', function($args) { return Math::floor($args->get(1)); });
 
-/**
- * Check if the specified subject matches any of the given values.
- * in <subject> <values...>
- */
-Expr::register('in?', function ($args)
-{
-    $value = $args->get(1);
 
-    for ($i = 2; $i < $args->length; $i++)
-    {
-        if ($value == $args->get($i))
-            return true;
-    }
-
-    return false;
-});
-
-/**
-**	Does nothing but return null.
-**
-**	nop <block>
-*/
-Expr::register('_nop', function ($parts, $data)
-{
-    return null;
-});
 
 /**
 **	Returns the JSON representation of the expression.
@@ -1942,243 +2116,6 @@ Expr::register('dump', function ($args)
     return (string)$value;
 });
 
-/**
-**	Sets one or more variables in the data context.
-**
-**	set <varname-expr> <expr> [<varname-expr> <expr>]*
-**	set <expr>
-*/
-Expr::register('_set', function ($parts, $data)
-{
-    if ($parts->length == 2) {
-        Expr::$context->defaultValue = Expr::value($parts->get(1), $data);
-        return null;
-    }
-
-    for ($i = 1; $i+1 < $parts->length; $i += 2)
-    {
-        $value = Expr::value($parts->get($i+1), $data);
-        if ($parts->get($i)->length > 1)
-        {
-            $ref = Expr::expand($parts->get($i), $data, 'varref');
-            if ($ref != null) {
-                if (!$ref[0])
-                    throw new Error('unable to assign: ' . $parts->get($i)->map(function($i) { return $i->data; })->join('')  );
-                Expr::accessSet($ref[0], $ref[1], $value);
-            }
-        }
-        else {
-            $data->set(Expr::value($parts->get($i), $data), Expr::$context->defaultValue = $value);
-        }
-    }
-
-    return null;
-});
-
-/**
-**	Increases the value of a variable by the given value (or 1 if none provided).
-**
-**	inc <varname-expr> [<value>]
-*/
-Expr::register('_inc', function ($parts, $data)
-{
-    $ref = Expr::expand($parts->get(1), $data, 'varref');
-    if (!$ref) return null;
-
-    if (!$ref[0])
-        throw new Error('unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join(''));
-
-    $value = $parts->has(2) ? Expr::value($parts->get(2), $data) : 1;
-    Expr::accessSet($ref[0], $ref[1], Expr::accessGet($ref[0], $ref[1]) + $value);
-});
-
-/**
-**	Decreases the value of a variable by the given value (or 1 if none provided).
-**
-**	dec <varname-expr> [<value>]
-*/
-Expr::register('_dec', function ($parts, $data)
-{
-    $ref = Expr::expand($parts->get(1), $data, 'varref');
-    if (!$ref) return null;
-
-    if (!$ref[0])
-        throw new Error('unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join(''));
-
-    $value = $parts->has(2) ? Expr::value($parts->get(2), $data) : 1;
-    Expr::accessSet($ref[0], $ref[1], Expr::accessGet($ref[0], $ref[1]) - $value);
-});
-
-/**
-**	Appends the value to a variable.
-**
-**	append <varname-expr> <value> [<value>...]
-*/
-Expr::register('_append', function ($parts, $data)
-{
-    $ref = Expr::expand($parts->get(1), $data, 'varref');
-    if (!$ref) return null;
-
-    if (!$ref[0])
-        throw new Error('unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join(''));
-
-    for ($i = 2; $i < $parts->length; $i++)
-    {
-        $value = Expr::value($parts->get($i), $data);
-        Expr::accessSet($ref[0], $ref[1], Expr::accessGet($ref[0], $ref[1]) . $value);
-    }
-
-    return Expr::accessGet($ref[0], $ref[1]);
-});
-
-/**
-**	Removes one or more variables from the data context.
-**
-**	unset <varname-expr> [<varname-expr>]*
-*/
-Expr::register('_unset', function ($parts, $data)
-{
-    for ($i = 1; $i < $parts->length; $i++)
-    {
-        if ($parts->get($i)->length > 1)
-        {
-            $ref = Expr::expand($parts->get($i), $data, 'varref');
-            if ($ref != null) $ref[0]->remove ($ref[1]);
-        }
-        else
-            $data->remove(Expr::value($parts->get($i), $data));
-    }
-
-    return null;
-});
-
-/**
-**	Returns the expression without white-space on the left or right.
-**
-**	trim <kargs>
-*/
-Expr::register('trim', function ($args)
-{
-    return Expr::apply($args->slice(1), function($value) { return Text::trim($value); });
-});
-
-/**
-**	Returns the expression in uppercase.
-**
-**	upper <kargs>
-*/
-Expr::register('upper', function ($args)
-{
-    return Expr::apply($args->slice(1), function($value) { return Text::toUpperCase($value, 'utf8'); });
-});
-
-/**
-**	Returns the expression in lower.
-**
-**	lower <kargs>
-*/
-Expr::register('lower', function ($args)
-{
-    return Expr::apply($args->slice(1), function($value) { return Text::toLowerCase($value, 'utf8'); });
-});
-
-/**
-**	Returns a sub-string of the given string.
-**
-**	substr <start> <count> <value>
-**	substr <start> <value>
-*/
-Expr::register('substr', function ($args)
-{
-    $s = (string)$args->get($args->length-1);
-
-    $start = 0;
-    $count = null;
-
-    if ($args->length == 4)
-    {
-        $start = (int)($args->get(1));
-        $count = (int)($args->get(2));
-    }
-    else
-    {
-        $start = (int)($args->get(1));
-        $count = null;
-    }
-
-    if ($start < 0) $start += Text::length($s);
-    if ($count < 0) $count += Text::length($s);
-
-    if ($count === null)
-        $count = Text::length($s) - $start;
-
-    return Text::substring ($s, $start, $count);
-});
-
-/**
-**	Replaces a matching string with the given replacement string.
-**
-**	replace <search> <replacement> <kargs>
-*/
-Expr::register('replace', function ($args)
-{
-    $search = $args->get(1);
-    $replacement = $args->get(2);
-
-    return Expr::apply($args->slice(3), function($value) use(&$search, &$replacement) {
-        return Text::replace($search, $replacement, $value);
-    });
-});
-
-/**
-**	Returns the index of a sub-string in the given text. Returns -1 when not found.
-**
-**	str:indexOf <search> <value>
-*/
-Expr::register('str:indexOf', function ($args)
-{
-    $i = Text::indexOf($args->get(2), $args->get(1));
-    return $i === false ? -1 : $i;
-});
-
-/**
-**	Returns the last index of a sub-string in the given text. Returns -1 when not found.
-**
-**	str:lastIndexOf <search> <value>
-*/
-Expr::register('str:lastIndexOf', function ($args)
-{
-    $i = Text::revIndexOf($args->get(2), $args->get(1));
-    return $i === false ? -1 : $i;
-});
-
-/**
- * Compares two strings and returns 0 if they are equal, -1 if the first is smaller than the second and 1 if
- * the first is greater than the second.
- *
- * str:compare <a> <b>
- */
-Expr::register('str:compare', function ($args) {
-    return Text::compare($args->get(1), $args->get(2));
-});
-
-/**
- * Translates characters in the given string.
- * str:tr <source-set> <replacement-set> <value>
- */
-Expr::register('str:tr', function($args) {
-    return strtr ($args->get(1), $args->get(2), $args->get(3));
-});
-
-/**
-**	Converts all new-line chars in the expression to <br/>.
-**
-**	nl2br <kargs>
-*/
-Expr::register('nl2br', function ($args)
-{
-    return Expr::apply($args->slice(1), function($value) { return Text::replace("\n", '<br/>', $value); });
-});
 
 
 /**
@@ -2241,7 +2178,7 @@ Expr::register('values', function ($args)
 
 /**
  * Executes the specified block for each item in the list.
- * for [<varname>] <array-expr> <block>
+ * for [varname] <array-expr> <block>
  */
 Expr::register('_for', function ($parts, $data)
 {
@@ -2282,7 +2219,7 @@ Expr::register('_for', function ($parts, $data)
 
 /**
  * Returns `valueA` if the expression is `true` otherwise returns `valueB` or empty string if valueB was not specified. This is a short version of the `if` function.
- * ? <expr> <valueA> [<valueB>]
+ * ? <expr> <valueA> [valueB]
  */
 Expr::register('_?', function ($parts, $data)
 {
@@ -2480,7 +2417,7 @@ Expr::register('_continue', function ($parts, $data)
 
 /**
  * Repeats the specified block the specified number of times and gathers the results to construct an array.
- * gather [<varname>] [from <number>] [to <number>] [times <number>] [step <number>] <block>
+ * gather [varname] [from <number>] [to <number>] [times <number>] [step <number>] <block>
  */
 Expr::register('_gather', function ($parts, $data)
 {
@@ -2592,7 +2529,7 @@ Expr::register('_gather', function ($parts, $data)
 
 /**
  * Repeats the specified block the specified number of times.
- * repeat [<varname>] [from <number>] [to <number>] [times <number>] [step <number>] <block>
+ * repeat [varname] [from <number>] [to <number>] [times <number>] [step <number>] <block>
  */
 Expr::register('_repeat', function ($parts, $data)
 {
@@ -2777,7 +2714,7 @@ Expr::register('_while', function ($parts, $data)
 /**
 **	Constructs a list from the given arguments and returns it.
 **
-**	# <expr> [<expr>...]
+**	# <expr> [expr...]
 */
 Expr::register('_#', function ($parts, $data)
 {
@@ -2792,7 +2729,7 @@ Expr::register('_#', function ($parts, $data)
 /**
 **	Constructs a non-expanded list from the given arguments and returns it.
 **
-**	## <expr> [<expr>...]
+**	## <expr> [expr...]
 */
 Expr::register('_##', function ($parts, $data)
 {
@@ -2807,9 +2744,9 @@ Expr::register('_##', function ($parts, $data)
 /**
 **	Constructs an object.
 **
-**	& <name> <expr> [<name> <expr>...]
-**	& <name>: <expr> [<name>: <expr>...]
-**	& :<name> <expr> [:<name> <expr>...]
+**	& <name> <expr> [name expr...]
+**	& <name>: <expr> [name: expr...]
+**	& :<name> <expr> [:name expr...]
 */
 Expr::register('_&', function ($parts, $data)
 {
@@ -2819,8 +2756,8 @@ Expr::register('_&', function ($parts, $data)
 /**
  **	Constructs a non-expanded associative array (dictionary) and returns it.
  **
- **	&& <name> <expr> [<name> <expr>...]
- **	&& <name>: <expr> [<name>: <expr>...]
+ **	&& <name> <expr> [name <expr>...]
+ **	&& <name>: <expr> [name: <expr>...]
  **	&& :<name> <expr> [:<name> <expr>...]
  */
 Expr::register('_&&', function ($parts, $data)
@@ -2831,7 +2768,7 @@ Expr::register('_&&', function ($parts, $data)
 /**
 **	Returns true if the specified map contains all the specified keys. If it fails the global variable `err` will contain an error message.
 **
-**	contains <expr> <name> [<name>...]
+**	contains <expr> <name> [name...]
 */
 Expr::register('contains', function ($args, $parts, $data)
 {
@@ -2885,7 +2822,7 @@ Expr::register('has', function ($args, $parts, $data)
 });
 
 /**
-**	map [<varname>] <array-expr> <block>
+**	map [varname] <array-expr> <block>
 */
 Expr::register('_map', function ($parts, $data)
 {
@@ -2930,7 +2867,7 @@ Expr::register('_map', function ($parts, $data)
 });
 
 /**
-**	filter [<varname>] <array-expr> <block>
+**	filter [varname] <array-expr> <block>
 */
 Expr::register('_filter', function ($parts, $data)
 {
@@ -2970,7 +2907,7 @@ Expr::register('_filter', function ($parts, $data)
 });
 
 /**
-**	every [<varname>] <array-expr> <block>
+**	every [varname] <array-expr> <block>
 */
 Expr::register('_every', function ($parts, $data)
 {
@@ -3007,7 +2944,7 @@ Expr::register('_every', function ($parts, $data)
 });
 
 /**
-**	some [<varname>] <array-expr> <block>
+**	some [varname] <array-expr> <block>
 */
 Expr::register('_some', function ($parts, $data)
 {
@@ -3044,7 +2981,7 @@ Expr::register('_some', function ($parts, $data)
 });
 
 /**
-**	find [<varname>] <array-expr> <block>
+**	find [varname] <array-expr> <block>
 */
 Expr::register('_find', function ($parts, $data)
 {
@@ -3081,7 +3018,7 @@ Expr::register('_find', function ($parts, $data)
 });
 
 /**
-**	findIndex [<varname>] <array-expr> <block>
+**	findIndex [varname] <array-expr> <block>
 */
 Expr::register('_findIndex', function ($parts, $data)
 {
@@ -3118,7 +3055,7 @@ Expr::register('_findIndex', function ($parts, $data)
 });
 
 /**
-**	reduce [<iter-var>] [<init-var>] <initial> <array-expr> <block>
+**	reduce [iter-var] [init-var] <initial> <array-expr> <block>
 */
 Expr::register('_reduce', function ($parts, $data)
 {
@@ -3155,7 +3092,7 @@ Expr::register('_reduce', function ($parts, $data)
 });
 
 /**
-**	select [<varname>] <condition> <array-expr>
+**	select [varname] <condition> <array-expr>
 */
 Expr::register('_select', function ($parts, $data)
 {
@@ -3225,7 +3162,7 @@ Expr::register('expand', function ($args, $parts, $data)
 });
 
 /**
-**	eval <expression-string> [<data>]
+**	eval <expression-string> [data]
 */
 Expr::register('eval', function ($args, $parts, $data)
 {
@@ -3363,7 +3300,7 @@ Expr::register('throw', function ($args, $parts, $data)
 });
 
 /**
-**	assert <condition> [<message>]
+**	assert <condition> [message]
 */
 Expr::register('_assert', function ($parts, $data)
 {
@@ -3375,7 +3312,7 @@ Expr::register('_assert', function ($parts, $data)
 
 /**
 **	yield <level> <value>
-**	yield [<value>]
+**	yield [value]
 */
 Expr::register('yield', function($args) {
     
@@ -3425,7 +3362,7 @@ Expr::register('_with', function($parts, $data)
 });
 
 /**
-**	ret [<value>]
+**	ret [value]
 */
 Expr::register('ret', function($args) {
     throw new MetaError ('FN_RET', $args->has(1) ? $args->get(1) : null);
@@ -3832,7 +3769,7 @@ Expr::register('_def', function($parts, $data)
 
 
 /*
-**	ns [public|private] [<str-expr>]
+**	ns [public|private] [str-expr]
 */
 Expr::register('ns', function($args, $parts, $data)
 {
@@ -4091,7 +4028,7 @@ Expr::register('map-get', function($args, $parts, $data)
 });
 
 /**
-**	mapify [<varname>] <array-expr> <key-expr> [<value-expr>]
+**	mapify [varname] <array-expr> <key-expr> [value-expr]
 */
 Expr::register('_mapify', function ($parts, $data)
 {
@@ -4132,7 +4069,7 @@ Expr::register('_mapify', function ($parts, $data)
 });
 
 /**
-**	groupify [<varname>] <array-expr> <key-expr> [<value-expr>]
+**	groupify [varname] <array-expr> <key-expr> [value-expr]
 */
 Expr::register('_groupify', function ($parts, $data)
 {

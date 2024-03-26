@@ -17,68 +17,334 @@ use Rose\Map;
 use Rose\Arry;
 use Rose\JSON;
 
-Expr::register('config', function ($args) { return Configuration::getInstance(); });
+// @title Utilities
 
-Expr::register('config:parse', function ($args) {
-    return Configuration::loadFromBuffer($args->get(1));
-});
-
-Expr::register('config:stringify', function ($args) {
-    return Configuration::saveToBuffer($args->get(1));
-});
-
-Expr::register('strings', function ($args)
-{
+Expr::register('strings', function ($args) {
     if ($args->length == 1)
         return Strings::getInstance();
-
     return Strings::get($args->get(1));
 });
 
-Expr::register('strings:lang', function ($args)
-{
+Expr::register('strings:lang', function ($args) {
     if ($args->length == 1)
         return Strings::getInstance()->lang;
-
     Strings::getInstance()->setLang($args->get(1));
     return null;
 });
 
-Expr::register('resources', function ($args) { return Resources::getInstance(); });
 
-Expr::register('math:to-hex', function ($args) { return Math::toHex($args->get(1)); });
-Expr::register('math:to-bin', function ($args) { return Math::toBin($args->get(1)); });
-Expr::register('math:to-oct', function ($args) { return Math::toOct($args->get(1)); });
-Expr::register('math:from-hex', function ($args) { return Math::fromHex($args->get(1)); });
-Expr::register('math:from-bin', function ($args) { return Math::fromBin($args->get(1)); });
-Expr::register('math:from-oct', function ($args) { return Math::fromOct($args->get(1)); });
+/**
+ * Sleeps for the given number of seconds.
+ * @code (`sys:sleep` <seconds>)
+ * @example
+ * (sys:sleep 1)
+ * ; true
+ */
+Expr::register('sys:sleep', function($args) {
+    sleep($args->get(1));
+    return true;
+});
 
-Expr::register('utils:gc', function() { gc_collect_cycles(); });
-Expr::register('utils:getenv', function($args) { return $args->has(1) ? getenv($args->get(1)) : getenv(); });
-Expr::register('utils:putenv', function($args) { putenv($args->slice(1)->join('')); return null; });
+/**
+ * Runs the garbage collector.
+ * @code (`sys:gc`)
+ * @example
+ * (sys:gc)
+ * ; 1
+ */
+Expr::register('sys:gc', function() {
+    return gc_collect_cycles();
+});
+
+/**
+ * Executes a shell command and returns the complete output as a string.
+ * @code (`sys:shell` <command>)
+ * @example
+ * (sys:shell "ls -l")
+ * ; "total 0\n-rw-r--r-- 1 user user 0 Jan  1 00:00 file.txt\n"
+ */
+Expr::register('sys:shell', function($args) {
+    return shell_exec ($args->get(1));
+});
+
+/**
+ * Executes a command and returns the exit code.
+ * @code (`sys:exec` <command>)
+ * @example
+ * (sys:exec "ls -l")
+ * ; 0
+ */
+Expr::register('sys:exec', function($args) {
+    $result = 0;
+    passthru ($args->get(1), $result);
+    return $result;
+});
+
+/**
+ * Returns all the environment variables.
+ * @code (`env:get-all`)
+ * @example
+ * (env:get-all)
+ * ; {"HOME":"/home/user","PATH":"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"}
+ */
+Expr::register('env:get-all', function($args) {
+    return $args->has(1) ? getenv($args->get(1)) : getenv();
+});
+
+/**
+ * Returns an environment variable or `null` if not found.
+ * @code (`env:get` <name>)
+ * @example
+ * (env:get "HOME")
+ * ; "/home/user"
+ */
+Expr::register('env:get', function($args) {
+    return getenv($args->get(1));
+});
+
+/**
+ * Sets an environment variable.
+ * @code (`env:set` <name> <value>)
+ * @example
+ * (env:set "HOME" "/home/user")
+ * ; true
+ */
+Expr::register('env:set', function($args) {
+    return putenv($args->slice(1)->join(''));
+});
+
+
+/**
+ * Encodes a value to base64.
+ * @code (`base64:encode` <value>)
+ * @example
+ * (base64:encode "Hello, World!")
+ * ; "SGVsbG8sIFdvcmxkIQ=="
+ */
+Expr::register('base64:encode', function($args) {
+    return base64_encode ($args->get(1));
+});
+
+/**
+ * Decodes a base64 value.
+ * @code (`base64:decode` <value>)
+ * @example
+ * (base64:decode "SGVsbG8sIFdvcmxkIQ==")
+ * ; "Hello, World!"
+ */
+Expr::register('base64:decode', function($args) {
+    return base64_decode ($args->get(1));
+});
+
+/**
+ * Encodes a value to base64 URL-safe format, that is a base64 string with `+` as `-`, `/` as `_` and without any `=`.
+ * @code (`base64u:encode` <value>)
+ * @example
+ * (base64u:encode "Hello, World!")
+ * ; "SGVsbG8sIFdvcmxkIQ"
+ */
+Expr::register('base64u:encode', function($args) {
+    return rtrim(strtr(base64_encode($args->get(1)), '+/', '-_'), '=');
+});
+
+/**
+ * Decodes a base64 URL-safe value.
+ * @code (`base64u:decode` <value>)
+ * @example
+ * (base64u:decode "SGVsbG8sIFdvcmxkIQ")
+ * ; "Hello, World!"
+ */
+Expr::register('base64u:decode', function($args) {
+    $data = $args->get(1);
+    return base64_decode(str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT));
+});
+
+/**
+ * Encodes a string into hexadecimal format.
+ * @code (`hex:encode` <string>)
+ * @example
+ * (hex:encode "Hi!")
+ * ; "486921"
+ */
+Expr::register('hex:encode', function($args) {
+    return bin2hex ($args->get(1));
+});
+
+/**
+ * Decodes a hexadecimal string.
+ * @code (`hex:decode` <string>)
+ * @example
+ * (hex:decode "486921")
+ * ; "Hi!"
+ */
+Expr::register('hex:decode', function($args) {
+    return hex2bin ($args->get(1));
+});
+
+/**
+ * Encodes a value to be used in a URL.
+ * @code (`url:encode` <value>)
+ * @example
+ * (url:encode "Hello = World")
+ * ; "Hello%20%3D%20World"
+ */
+Expr::register('url:encode', function($args) {
+    return urlencode ($args->get(1) ?? '');
+});
+
+/**
+ * Decodes a URL-encoded value.
+ * @code (`url:decode` <value>)
+ * @example
+ * (url:decode "Hello%20%3D%20World")
+ * ; "Hello = World"
+ */
+Expr::register('url:decode', function($args) {
+    return urldecode ($args->get(1) ?? '');
+});
+
+/**
+ * Converts a map to a URL query string.
+ * @code (`url-query:stringify` <fields>)
+ * @example
+ * (url-query:stringify (& name "John" "age" 35))
+ * ; "name=John&age=35"
+ */
+Expr::register('url-query:stringify', function($args) {
+    return $args->get(1)->map(function($value, $key) { return urlencode($key).'='.urlencode($value); })->values()->join('&');
+});
+
+/**
+ * Encodes a value to be used in HTML text.
+ * @code (`html-text:encode` <value>)
+ * @example
+ * (html-text:encode "<Hello>")
+ * ; "&lt;Hello&gt;"
+ */
+Expr::register('html-text:encode', function($args) {
+    return htmlspecialchars ($args->get(1));
+});
+
+/**
+ * Decodes a value encoded for HTML text.
+ * @code (`html-text:decode` <value>)
+ * @example
+ * (html-text:decode "&lt;Hello&gt;")
+ * ; "<Hello>"
+ */
+Expr::register('html-text:decode', function($args) {
+    return htmlspecialchars_decode ($args->get(1));
+});
+
+/**
+ * Compresses a string using the Gzip algorithm.
+ * @code (`gz:compress` <string>)
+ * @example
+ * (gz:compress "Hi!")
+ * ; (binary data)
+ */
+Expr::register('gz:compress', function($args) {
+    return gzcompress ($args->get(1));
+});
+
+/**
+ * Decompresses a string compressed using the Gzip algorithm.
+ * @code (`gz:decompress` <string>)
+ * @example
+ * (gz:decompress (gz:compress "Hi!"))
+ * ; "Hi!"
+ */
+Expr::register('gz:decompress', function($args) {
+    return gzuncompress ($args->get(1));
+});
+
+/**
+ * Compresses a string using the Deflate algorithm.
+ * @code (`gz:deflate` <string>)
+ * @example
+ * (gz:deflate "Hi!")
+ * ; (binary data)
+ */
+Expr::register('gz:deflate', function($args) {
+    return gzdeflate ($args->get(1));
+});
+
+/**
+ * Inflates (decompresses) a string compressed using the Deflate algorithm.
+ * @code (`gz:inflate` <string>)
+ * @example
+ * (gz:inflate (gz:deflate "Hi!"))
+ * ; "Hi!"
+ */
+Expr::register('gz:inflate', function($args) {
+    return gzinflate ($args->get(1));
+});
+
+/**
+ * Converts a value to a JSON string.
+ * @code (`json:stringify` <value>)
+ * @example
+ * (json:stringify (# 1 2 3))
+ * ; [1,2,3]
+ */
+Expr::register('json:stringify', function($args) {
+    $value = $args->get(1);
+    if (\Rose\typeOf($value) == 'Rose\\Arry' || \Rose\typeOf($value) == 'Rose\\Map')
+        return (string)$value;
+    return JSON::stringify($value);
+});
+
+/**
+ * Converts a value to a JSON string with indentation (pretty). Useful with nested structures.
+ * @code (`json:prettify` <value>)
+ * @example
+ * (json:prettify (# 1 2 3))
+ * ; [1, 2, 3]
+ */
+Expr::register('json:prettify', function($args) {
+    $value = $args->get(1);
+    if (\Rose\typeOf($value) === 'primitive')
+        return JSON::stringify($value);
+    return JSON::prettify(JSON::parse((string)$value));
+});
+
+/**
+ * Parses a JSON string and returns the value.
+ * @code (`json:parse` <string>)
+ * @example
+ * (json:parse "[ 1, 2, 3 ]")
+ * ; [1,2,3]
+ */
+Expr::register('json:parse', function($args) {
+    $value = (string)$args->get(1);
+    if (Text::length($value) == 0) return null;
+    return $value[0] == '[' ? Arry::fromNativeArray(JSON::parse($value)) : ($value[0] == '{' ? Map::fromNativeArray(JSON::parse($value)) : JSON::parse($value));
+});
+
+
+
+
+
+
+
+
 
 Expr::register('utils:random-bytes', function($args) { return random_bytes((int)$args->get(1)); });
-
-Expr::register('utils:rand', function() { return Math::rand(); });
 Expr::register('utils:randstr', function($args) { return bin2hex(random_bytes((int)$args->get(1))); });
 Expr::register('utils:randstr-base64', function($args) { return base64_encode(random_bytes((int)$args->get(1))); });
 Expr::register('utils:uuid', function() {
     $data = random_bytes(16);
-
     $tmp = explode(' ', microtime());
     $tmp[0] = (int)($tmp[0] * 0xFFFF);
     $tmp[1] = (int)$tmp[1];
-
     $data[15] = chr(($tmp[0] & 0xFF00) >> 8);
     $data[14] = chr(($tmp[1] & 0xFF000000) >> 24);
     $data[13] = chr(($tmp[1] & 0x00FF0000) >> 16);
     $data[12] = chr(($tmp[0] & 0x00FF) >> 0);
     $data[11] = chr(($tmp[1] & 0x000000FF) >> 0);
     $data[10] = chr(($tmp[1] & 0x0000FF00) >> 8);
-
     $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
     $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
-
     return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 });
 
@@ -118,88 +384,9 @@ Expr::register('utils:unique', function($args)
     return $tmp;
 });
 
-Expr::register('utils:sleep', function($args) { sleep($args->get(1)); return null; });
 
-Expr::register('base64:encode', function($args) { return base64_encode ($args->get(1)); });
-Expr::register('base64:decode', function($args) { return base64_decode ($args->get(1)); });
 
-function base64url_encode($data) {
-    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
-}
 
-function base64url_decode($data) {
-    return base64_decode(str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT));
-}
-
-Expr::register('base64u:encode', function($args) { return base64url_encode ($args->get(1)); });
-Expr::register('base64u:decode', function($args) { return base64url_decode ($args->get(1)); });
-
-Expr::register('hex:encode', function($args) { return bin2hex ($args->get(1)); });
-Expr::register('hex:decode', function($args) { return hex2bin ($args->get(1)); });
-
-Expr::register('url:encode', function($args) { return urlencode ($args->get(1) ?? ''); });
-Expr::register('url:decode', function($args) { return urldecode ($args->get(1) ?? ''); });
-
-Expr::register('url-query:stringify', function($args) {
-    return $args->get(1)->map(function($value, $key) { return urlencode($key).'='.urlencode($value); })->values()->join('&');
-});
-
-Expr::register('html-text:encode', function($args) { return htmlspecialchars ($args->get(1)); });
-Expr::register('html-text:decode', function($args) { return htmlspecialchars_decode ($args->get(1)); });
-
-Expr::register('gz:compress', function($args) { return gzcompress ($args->get(1)); });
-Expr::register('gz:decompress', function($args) { return gzuncompress ($args->get(1)); });
-Expr::register('gz:deflate', function($args) { return gzdeflate ($args->get(1)); });
-Expr::register('gz:inflate', function($args) { return gzinflate ($args->get(1)); });
-
-/**
- * (utils:lpad <length> [<pad>] <string>)
- */
-Expr::register('utils:lpad', function($args)
-{
-    if ($args->length > 3)
-        return Text::lpad($args->get(3), $args->get(1), $args->get(2));
-    else
-        return Text::lpad($args->get(2), $args->get(1));
-});
-
-/**
- * (utils:rpad <length> [<pad>] <string>)
- */
-Expr::register('utils:rpad', function($args)
-{
-    if ($args->length > 3)
-        return Text::rpad($args->get(3), $args->get(1), $args->get(2));
-    else
-        return Text::rpad($args->get(2), $args->get(1));
-});
-
-/**
- * (utils:lpad+0 <length> <string>)
- * (utils:rpad+0 <length> <string>)
- */
-Expr::register('utils:lpad+0', function($args) { return Text::lpad($args->get(2), $args->get(1), '0'); });
-Expr::register('utils:rpad+0', function($args) { return Text::rpad($args->get(2), $args->get(1), '0'); });
-
-Expr::register('json:stringify', function($args)
-{
-    $value = $args->get(1);
-
-    if (\Rose\typeOf($value) == 'Rose\\Arry' || \Rose\typeOf($value) == 'Rose\\Map')
-        return (string)$value;
-
-    return JSON::stringify($value);
-});
-
-Expr::register('json:prettify', function($args)
-{
-    $value = $args->get(1);
-
-    if (\Rose\typeOf($value) === 'primitive')
-        return JSON::stringify($value);
-
-    return JSON::prettify(JSON::parse((string)$value));
-});
 
 Expr::register('dump+fmt', function($args)
 {
@@ -211,13 +398,6 @@ Expr::register('dump+fmt', function($args)
     return JSON::prettify(JSON::parse((string)$value));
 });
 
-Expr::register('json:parse', function($args)
-{
-    $value = (string)$args->get(1);
-    if (Text::length($value) == 0) return null;
-
-    return $value[0] == '[' ? Arry::fromNativeArray(JSON::parse($value)) : ($value[0] == '{' ? Map::fromNativeArray(JSON::parse($value)) : JSON::parse($value));
-});
 
 function xmlToMap($xml)
 {
@@ -368,19 +548,6 @@ Expr::register('html:encode', function($args)
     }
 
     return $data;
-});
-
-/* ************************** */
-Expr::register('utils:shell', function($args)
-{
-    return shell_exec ($args->get(1));
-});
-
-Expr::register('utils:exec', function($args)
-{
-    $result = 0;
-    passthru ($args->get(1), $result);
-    return $result;
 });
 
 /* ************ */
