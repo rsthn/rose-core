@@ -2,21 +2,21 @@
 # Math
 
 
-#### (`math:rand`)
+### (`math:rand`)
 Returns a pseudo random number between 0 and 65535.
 ```lisp
 (math:rand)
 ; 4578
 ```
 
-#### (`math:abs` \<value>)
+### (`math:abs` \<value>)
 Returns the absolute value of the given value.
 ```lisp
 (math:abs -5)
 ; 5
 ```
 
-#### (`math:round` \<value>)
+### (`math:round` \<value>)
 Returns the number rounded up to the nearest integer.
 ```lisp
 (math:round 5.5)
@@ -26,21 +26,21 @@ Returns the number rounded up to the nearest integer.
 ; 5
 ```
 
-#### (`math:ceil` \<value>)
+### (`math:ceil` \<value>)
 Returns the ceiling value of a given number.
 ```lisp
 (math:ceil 5.1)
 ; 6
 ```
 
-#### (`math:floor` \<value>)
+### (`math:floor` \<value>)
 Returns the floor value of a given number.
 ```lisp
 (math:floor 5.8)
 ; 5
 ```
 
-#### (`math:clamp` \<value> \<min> \<max>)
+### (`math:clamp` \<value> \<min> \<max>)
 Clamps the given value to the range defined by [a, b].
 ```lisp
 (math:clamp 5 1 10)
@@ -53,42 +53,42 @@ Clamps the given value to the range defined by [a, b].
 ; 10
 ```
 
-#### (`math:to-hex` \<value>)
+### (`math:to-hex` \<value>)
 Converts a number to a hexadecimal string.
 ```lisp
 (math:to-hex 255)
 ; ff
 ```
 
-#### (`math:to-bin` \<value>)
+### (`math:to-bin` \<value>)
 Converts a number to a binary string.
 ```lisp
 (math:to-bin 129)
 ; 10000001
 ```
 
-#### (`math:to-oct` \<value>)
+### (`math:to-oct` \<value>)
 Converts a number to an octal string.
 ```lisp
 (math:to-oct 15)
 ; 17
 ```
 
-#### (`math:from-hex` \<value>)
+### (`math:from-hex` \<value>)
 Returns a number from a hexadecimal string.
 ```lisp
 (math:from-hex "ff")
 ; 255
 ```
 
-#### (`math:from-bin` \<value>)
+### (`math:from-bin` \<value>)
 Returns a number from a binary string.
 ```lisp
 (math:from-bin "10000001")
 ; 129
 ```
 
-#### (`math:from-oct` \<value>)
+### (`math:from-oct` \<value>)
 Returns a number from an octal string.
 ```lisp
 (math:from-oct "17")

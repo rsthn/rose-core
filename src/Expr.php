@@ -13,6 +13,7 @@ use Rose\IO\File;
 use Rose\Gateway;
 use Rose\Math;
 use Rose\JSON;
+use Rose\Ext\Wind;
 
 // @title Core
 
@@ -4325,7 +4326,7 @@ Expr::register('_groupify', function ($parts, $data)
 
 /**
  * Dumps the current context chain to standard output.
- * @code (`debug:dump-context-chain` [include-root=false] [include-private=false])
+ * @private-code (`debug:dump-context-chain` [include-root=false] [include-private=false])
  */
 Expr::register('debug:dump-context-chain', function($args)
 {
@@ -4438,4 +4439,63 @@ Expr::register('debug:fn', function($args)
  */
 Expr::register('debug:context-id', function($args) {
     return Expr::$context->getId();
+});
+
+/**
+ * Stops execution of the current request and returns the specified data to the browser. If none
+ * specified, nothing will be returned.
+ * Response is formatted following the same rules as `return`.
+ * @code (`stop` [value])
+ * @example
+ * (stop "Hello, World!")
+ * ; Hello, World!
+ */
+Expr::register('stop', function(...$args) {
+    return Wind::stop(...$args);
+});
+
+/**
+ * Returns the specified data (or an empty object if none specified) to the current invoker (not the same as a
+ * function caller). The invoker is most of time the browser, except when using `call` or `icall`.
+ * The response for the browser is always formatted for consistency:
+ * - If `data` is an object and doesn't have the `response` field it will be added with the value `200` (OK).
+ * - If `data` is an array, it will be placed in a field named `data` of the response object, with `response` code 200.
+ * @code (`return` [data])
+ * @example
+ * (return (&))
+ * ; {"response":200}
+ * 
+ * (return (# 1 2 3))
+ * ; {"response":200,"data":[1,2,3]}
+ */
+Expr::register('return', function(...$args) {
+    return Wind::_return(...$args);
+});
+
+/**
+ * Calls the specified API function with the given parameters which will be available as globals to the target,
+ * returns the response object.
+ * The context of the target will be set to the **current context**, so any global variables will be available
+ * to the target function.
+ * @code (`call` <function-name> [key value...])
+ * @example
+ * (call "users.list" count 1 offset 10)
+ * ; Executes file `fn/users/list.fn` in the current context with variables `count` and `offset`.
+ */
+Expr::register('_call', function(...$args) {
+    return Wind::_call(...$args);
+});
+
+/**
+ * Performs an **isolated call** to the specified API function with the given parameters which will be available as
+ * global variables to the target. Returns the response object.
+ * The context of the target will be set to a new context, so any global variables in the caller will **not be**
+ * available to the target function (except the pure `global` object).
+ * @code (`icall` <function-name> [key value...])
+ * @example
+ * (icall "users.get" id 12)
+ * ; Executes file `fn/users/get.fn` in a new context with variable `id`.
+ */
+Expr::register('_icall', function(...$args) {
+    return Wind::_icall(...$args);
 });

@@ -18,67 +18,7 @@ use Rose\Arry;
 use Rose\JSON;
 
 // @title Utilities
-
-Expr::register('strings', function ($args) {
-    if ($args->length == 1)
-        return Strings::getInstance();
-    return Strings::get($args->get(1));
-});
-
-Expr::register('strings:lang', function ($args) {
-    if ($args->length == 1)
-        return Strings::getInstance()->lang;
-    Strings::getInstance()->setLang($args->get(1));
-    return null;
-});
-
-
-/**
- * Sleeps for the given number of seconds.
- * @code (`sys:sleep` <seconds>)
- * @example
- * (sys:sleep 1)
- * ; true
- */
-Expr::register('sys:sleep', function($args) {
-    sleep($args->get(1));
-    return true;
-});
-
-/**
- * Runs the garbage collector.
- * @code (`sys:gc`)
- * @example
- * (sys:gc)
- * ; 1
- */
-Expr::register('sys:gc', function() {
-    return gc_collect_cycles();
-});
-
-/**
- * Executes a shell command and returns the complete output as a string.
- * @code (`sys:shell` <command>)
- * @example
- * (sys:shell "ls -l")
- * ; "total 0\n-rw-r--r-- 1 user user 0 Jan  1 00:00 file.txt\n"
- */
-Expr::register('sys:shell', function($args) {
-    return shell_exec ($args->get(1));
-});
-
-/**
- * Executes a command and returns the exit code.
- * @code (`sys:exec` <command>)
- * @example
- * (sys:exec "ls -l")
- * ; 0
- */
-Expr::register('sys:exec', function($args) {
-    $result = 0;
-    passthru ($args->get(1), $result);
-    return $result;
-});
+// @short Utils
 
 /**
  * Returns all the environment variables.
@@ -314,17 +254,24 @@ Expr::register('json:parse', function($args) {
 });
 
 
+/**
+ * Generates a pseudo-random string of bytes.
+ * @code (`utils:random-bytes` <length>)
+ * @example
+ * (utils:random-bytes 16)
+ * ; (binary data)
+ */
+Expr::register('utils:random-bytes', function($args) {
+    return random_bytes((int)$args->get(1));
+});
 
-
-
-
-
-
-
-Expr::register('utils:random-bytes', function($args) { return random_bytes((int)$args->get(1)); });
-Expr::register('utils:randstr', function($args) { return bin2hex(random_bytes((int)$args->get(1))); });
-Expr::register('utils:randstr-base64', function($args) { return base64_encode(random_bytes((int)$args->get(1))); });
-
+/**
+ * Generates a random UUID (Universally Unique Identifier) version 4.
+ * @code (`utils:uuid`)
+ * @example
+ * (utils:uuid)
+ * ; "550e8400-e29b-41d4-a716-446655440000"
+ */
 Expr::register('utils:uuid', function() {
     $data = random_bytes(16);
     $tmp = explode(' ', microtime());
@@ -340,48 +287,6 @@ Expr::register('utils:uuid', function() {
     $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
     return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 });
-
-Expr::register('utils:unique', function($args)
-{
-    $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._';
-
-    if ($args->has(2)) {
-        $chars = $args->get(2);
-        if (Text::length($chars) != 64)
-            throw new ArgumentError('Code charset string should be 64 characters long.');
-    }
-
-    $tmp = explode(' ', microtime());
-    $tmp[0] = ((int)($tmp[0] * 0x1000000)) & 0xFFFFFF;
-    $tmp[1] = ((int)$tmp[1]) & 0xFFFFFFFF;
-
-    $data = [
-        (($tmp[1] >> 24) & 0x3F),
-        (($tmp[1] >> 0) & 0x3F),
-        (($tmp[1] >> 12) & 0x3F),
-        (($tmp[1] >> 18) & 0x3F),
-        (($tmp[1] >> 6) & 0x3F),
-        (($tmp[0] >> 6) & 0x3F),
-        (((($tmp[1] >> 30) & 0x03) << 4) | (($tmp[0] >> 12) & 0x0F)),
-        (($tmp[0] >> 0) & 0x3F),
-    ];
-
-    $n = $args->length > 1 ? (int)$args->get(1) : 0;
-    while ($n-- > 8)
-        $data[] = ord(random_bytes(1)) & 0x3F;
-
-    $tmp = '';
-    for ($i = 0; $i < count($data); $i++)
-        $tmp .= $chars[ $data[$i] ^ (ord(random_bytes(1)) & 0x3F) ];
-
-    return $tmp;
-});
-
-
-
-
-
-
 
 function xmlToMap($xml)
 {
@@ -441,6 +346,36 @@ function xmlSimplify ($xml, $parent)
     return $parent;
 }
 
+/**
+ * Parses an XML string and returns a map containing XML node information fields `tagName`, `attributes`,
+ * `children` and `textContent`.
+ * @code (`xml:parse` <xml>)
+ * @example
+ * (xml:parse "<root><item id='1'>Item 1</item><item id='2'>Item 2</item></root>")
+ * ; {
+ * ;     "tagName": "root",
+ * ;     "attributes": {},
+ * ;     "children": [
+ * ;         {
+ * ;             "tagName": "item",
+ * ;             "attributes": {
+ * ;                 "id": "1"
+ * ;             },
+ * ;             "children": [],
+ * ;             "textContent": "Item 1"
+ * ;         },
+ * ;         {
+ * ;             "tagName": "item",
+ * ;             "attributes": {
+ * ;                 "id": "2"
+ * ;             },
+ * ;             "children": [],
+ * ;             "textContent": "Item 2"
+ * ;         }
+ * ;     ],
+ * ;     "textContent": ""
+ * ; }
+ */
 Expr::register('xml:parse', function($args)
 {
     $value = (string)$args->get(1);
@@ -458,12 +393,38 @@ Expr::register('xml:parse', function($args)
     return $result;
 });
 
+/**
+ * Simplifies an XML node into a more easy to traverse structure. Any node with no children and no attributes
+ * will be converted to a string with its text content. Nodes with children will be converted to a map with the
+ * tag name as key and the children as value. If a node has attributes, they will be stored in a `$` key.
+ * @code (`xml:simplify` <xml-node>)
+ * @example
+ * (xml:simplify (xml:parse "<root name=\"Test\"><item>Item 1</item><item>Item 2</item></root>"))
+ * ; {
+ * ;    "root": {
+ * ;        "$": {
+ * ;            "name": "Test"
+ * ;        },
+ * ;        "item": [
+ * ;            "Item 1",
+ * ;            "Item 2"
+ * ;        ]
+ * ;    }
+ * ; 
+ */
 Expr::register('xml:simplify', function($args)
 {
     $m = new Map();
     return $args->get(1) ? xmlSimplify($args->get(1), $m) : $m;
 });
 
+/**
+ * Converts an array or map into an HTML table.
+ * @code (`html:encode` <data>)
+ * @example
+ * (html:encode (# (& "Name" "John" "Age" 35) (& "Name" "Jane" "Age" 25)))
+ * ; <HTML table with two rows and two columns>
+ */
 Expr::register('html:encode', function($args)
 {
     Gateway::$contentType = 'text/html';
@@ -534,3 +495,90 @@ Expr::register('html:encode', function($args)
     return $data;
 });
 
+
+/**
+ * Sleeps for the given number of seconds.
+ * @code (`sys:sleep` <seconds>)
+ * @example
+ * (sys:sleep 1)
+ * ; true
+ */
+Expr::register('sys:sleep', function($args) {
+    sleep($args->get(1));
+    return true;
+});
+
+/**
+ * Runs the garbage collector.
+ * @code (`sys:gc`)
+ * @example
+ * (sys:gc)
+ * ; 1
+ */
+Expr::register('sys:gc', function() {
+    return gc_collect_cycles();
+});
+
+/**
+ * Executes a shell command and returns the complete output as a string.
+ * @code (`sys:shell` <command>)
+ * @example
+ * (sys:shell "ls -l")
+ * ; "total 0\n-rw-r--r-- 1 user user 0 Jan  1 00:00 file.txt\n"
+ */
+Expr::register('sys:shell', function($args) {
+    return shell_exec ($args->get(1));
+});
+
+/**
+ * Executes a command and returns the exit code.
+ * @code (`sys:exec` <command>)
+ * @example
+ * (sys:exec "ls -l")
+ * ; 0
+ */
+Expr::register('sys:exec', function($args) {
+    $result = 0;
+    passthru ($args->get(1), $result);
+    return $result;
+});
+
+
+/**
+ * Object used to access language strings. The strings are stored in the `strings` directory in the root of the project.
+ * @code (`strings`)
+ * @example
+ * (strings.messages)
+ * ; (value of the `messages` file located in `strings/messages.conf`)
+ *
+ * (strings.messages.welcome)
+ * ; (value of the `welcome` key in the `strings/messages.conf` file)
+ *
+ * (strings.@messages.welcome)
+ * ; (value of the `welcome` key in the `strings/en/messages.conf` file)
+ */
+Expr::register('strings', function ($args) {
+    return Strings::getInstance();
+});
+
+/**
+ * Returns or sets the current language for the strings extension. The folder should exist in the `strings` directory,
+ * otherwise an error will be thrown.
+ * @code (`strings:lang` [lang])
+ * @example
+ * (strings:lang)
+ * ; "en"
+ * (strings:lang "xx")
+ * ; Error: Language code `xx` is not supported
+ */
+Expr::register('strings:lang', function ($args)
+{
+    if ($args->length == 1)
+        return Strings::getInstance()->lang;
+    
+    $lang = $args->get(1);
+    if (!Strings::getInstance()->setLang($lang))
+        throw new ArgumentError('Language code `'.$lang.'` is not supported');
+
+    return null;
+});

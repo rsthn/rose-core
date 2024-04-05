@@ -29,12 +29,7 @@ use Rose\Ext\Wind\WindError;
 
 use Rose\Main;
 
-/*
-**	Wind extension.
-*/
-
-class WindProxy
-{
+class WindProxy {
     public function main() {
         Wind::main();
     }
@@ -542,16 +537,4 @@ class Wind
     }
 };
 
-/* ****************************************************************************** */
-
-Expr::register('evt:init', function(...$args) { return Wind::enableEvents(); });
-Expr::register('evt:send', function(...$args) { return Wind::sendEvent(...$args); });
-Expr::register('evt:alive', function(...$args) { return Wind::eventsAlive(); });
-
-Expr::register('stop', function(...$args) { return Wind::stop(...$args); });
-Expr::register('return', function(...$args) { return Wind::_return(...$args); });
-Expr::register('_call', function(...$args) { return Wind::_call(...$args); });
-Expr::register('_icall', function(...$args) { return Wind::_icall(...$args); });
-
-/* ****************************************************************************** */
 Wind::init();

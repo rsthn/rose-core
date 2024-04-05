@@ -574,7 +574,7 @@ Expr::register('gateway:return', function ($args)
  * ; Client will receive:
  * ; Hello, World!
  */
-Expr::register('gateway:tsr', function ($args)
+Expr::register('gateway:continue', function ($args)
 {
     $status = $args->{1};
     $response = $args->{2};

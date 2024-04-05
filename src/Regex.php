@@ -5,7 +5,8 @@ namespace Rose;
 use Rose\Arry;
 use Rose\Expr;
 
-// @title Regex
+// @title Regular Expressions
+// @short Regex
 // @desc Provides an interface to manipulate and operate strings using regular expressions.
 
 class Regex

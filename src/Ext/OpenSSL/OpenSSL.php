@@ -6,6 +6,8 @@ use Rose\Arry;
 use Rose\Regex;
 use Rose\Text;
 
+// @title OpenSSL
+
 function parseDER ($data)
 {
     $n = strlen($data);
@@ -123,7 +125,7 @@ function asn1_int7_array ($values, $pos=0)
 
 /**
  * Wraps the given buffer in a PEM encoded block with the specified label.
- * @code (pem:encode <label> <data>)
+ * @code (`pem:encode` <label> <data>)
  */
 Expr::register('pem:encode', function($args) {
     $label = $args->get(1);
@@ -134,7 +136,7 @@ Expr::register('pem:encode', function($args) {
 
 /**
  * Creates a new private key using the specified algorithm and key type.
- * @code (openssl:new <algorithm> <key-type> [<bits>])
+ * @code (`openssl:new` <algorithm> <key-type> [bits])
  */
 Expr::register('openssl:new', function($args)
 {
@@ -161,7 +163,7 @@ Expr::register('openssl:new', function($args)
 
 /**
  * Loads a private key (PEM format) from the specified data buffer.
- * @code (openssl:import-private <data>)
+ * @code (`openssl:import-private` <data>)
  */
 Expr::register('openssl:import-private', function($args) {
     $result = openssl_pkey_get_private($args->get(1));
@@ -172,7 +174,7 @@ Expr::register('openssl:import-private', function($args) {
 
 /**
  * Loads a public key (PEM format) from the specified data buffer.
- * @code (openssl:import-public <data>)
+ * @code (`openssl:import-public` <data>)
  */
 Expr::register('openssl:import-public', function($args) {
     $result = openssl_pkey_get_public($args->get(1));
@@ -194,7 +196,7 @@ Expr::register('openssl:error', function($args) {
 
 /**
  * Export the private key as a PEM encoded string.
- * @code (openssl:export-private <pkey>)
+ * @code (`openssl:export-private` <pkey>)
  */
 Expr::register('openssl:export-private', function($args) {
     $output = '';
@@ -203,7 +205,7 @@ Expr::register('openssl:export-private', function($args) {
 
 /**
  * Export the public key as a PEM encoded string.
- * @code (openssl:export-public <pkey>)
+ * @code (`openssl:export-public` <pkey>)
  */
 Expr::register('openssl:export-public', function($args) {
     $details = openssl_pkey_get_details($args->get(1));
@@ -212,7 +214,7 @@ Expr::register('openssl:export-public', function($args) {
 
 /**
  * Converts a PEM encoded key to DER format.
- * @code (openssl:get-der <pem-string>)
+ * @code (`openssl:get-der` <pem-string>)
  */
 Expr::register('openssl:get-der', function($args) {
     return base64_decode(Regex::_replace ('/-+BEGIN\s.+?-+|-+END\s.+?-+|\r|\n|\s|\t/', '', $args->get(1)));
@@ -220,7 +222,7 @@ Expr::register('openssl:get-der', function($args) {
 
 /**
  * Converts a DER string to raw DER format.
- * @code (openssl:get-raw <pem-string> [<int-size=0>])
+ * @code (`openssl:get-raw` <pem-string> [<int-size=0>])
  */
 Expr::register('openssl:get-raw', function($args) {
     $data = parseDER($args->get(1));
@@ -240,7 +242,7 @@ Expr::register('openssl:get-raw', function($args) {
 
 /**
  * Signs a data block using a private key and returns a signature in DER format.
- * @code (openssl:sign <algorithm> <private-key> <data>)
+ * @code (`openssl:sign` <algorithm> <private-key> <data>)
  */
 Expr::register('openssl:sign', function($args) {
     $signature = '';
@@ -250,8 +252,7 @@ Expr::register('openssl:sign', function($args) {
 });
 
 /**
- * XXXXXXXXXXXXXXXXXX
- * @code (openssl:parse-der <data>)
+ * @nop (`openssl:parse-der` <data>)
  */
 Expr::register('openssl:parse-der', function($args) {
     return parseDER($args->get(1));
@@ -259,7 +260,7 @@ Expr::register('openssl:parse-der', function($args) {
 
 /**
  * Generates a pseudo-random string of bytes.
- * @code (openssl:random-bytes <length>)
+ * @code (`openssl:random-bytes` <length>)
  */
 Expr::register('openssl:random-bytes', function($args) {
     return openssl_random_pseudo_bytes($args->get(1));
@@ -267,7 +268,7 @@ Expr::register('openssl:random-bytes', function($args) {
 
 /**
  * Generates a derived key from a shared secret.
- * @code (openssl:derive <private-key> <public-key> [<key-length>])
+ * @code (`openssl:derive` <private-key> <public-key> [key-length])
  */
 Expr::register('openssl:derive', function($args) {
     $shared = openssl_pkey_derive($args->get(2), $args->get(1), $args->has(3) ? $args->get(3) : 0);
@@ -278,13 +279,15 @@ Expr::register('openssl:derive', function($args) {
 
 /**
  * Generates a derived key from a shared secret.
- * @code (openssl:encrypt <algorithm> <secret> <nonce> <data>)
+ * @code (`openssl:encrypt` <algorithm> <secret> <nonce> <data>)
  */
 Expr::register('openssl:encrypt', function($args) {
     $tag = '';
     $output = openssl_encrypt($args->get(4), $args->get(1), $args->get(2), OPENSSL_RAW_DATA, $args->get(3), $output);
     return new Map([ 'tag' => $tag, 'data' => $output ]);
 });
+
+
 
 Expr::register('asn1:int', function($args) {
     $out = '';

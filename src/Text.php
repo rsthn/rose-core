@@ -9,7 +9,7 @@ use Rose\Strings;
 use Rose\Regex;
 use Rose\Expr;
 
-// @title Strings
+// @title Text
 // @desc Utility functions to manipulate text strings.
 
 class Text

@@ -13,7 +13,6 @@ use Rose\Text;
 
 // @title HTTP Requests
 // @short Request
-// @desc Provides an interface to perform HTTP requests.
 
 class Http
 {

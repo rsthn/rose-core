@@ -164,9 +164,10 @@ class Strings
         }
 
         $this->lang = $lang;
-
         $this->altLangBase = $this->altBase.$this->lang.'/';
         $this->langBase = $this->base.$this->lang.'/';
+
+        return Path::exists($this->langBase) || Path::exists($this->altLangBase);
     }
 
     /*
@@ -339,5 +340,9 @@ class Strings
         }
 
         return $tmp;
+    }
+
+    public function __toString() {
+        return '[Rose\Strings]';
     }
 };
