@@ -1710,7 +1710,7 @@ Expr::register('_echo', function($parts, $data)
 
 /**
  * Writes the specified values to standard output.
- * @code (`echo` <value...>)
+ * @code (`print` <value...>)
  * @example
  * (print "Hello" "World" "!")
  * (print "!")
@@ -2027,24 +2027,25 @@ Expr::register('set-fn', function($args)
  * Returns a string with the type-name of the value. Possible values are: `null`, `string`, `bool`, `array`,
  * `object`, `int`, `number`, and `function`.
  * @code (`typeof` <value>)
+ * @example
  * (typeof 12)
  * ; int
- *
+ * 
  * (typeof 3.14)
  * ; number
- *
+ * 
  * (typeof today)
  * ; string
- *
+ * 
  * (typeof null)
  * ; null
- *
+ * 
  * (typeof (# 1 2 3))
  * ; array
- *
+ * 
  * (typeof (& value "Yes"))
  * ; object
- *
+ * 
  * (typeof (fn n 0))
  * ; function
  */
@@ -2265,36 +2266,6 @@ Expr::register('split', function ($args)
         return Text::split('', $args->get(1));
 
     return Text::split($args->get(1), (string)$args->get(2));
-});
-
-/**
- * Returns an array with the keys of the object.
- * @code (`keys` <object>)
- * @example
- * (keys (& "a" 1 "b" 2 "c" 3))
- * ; ["a","b","c"]
- */
-Expr::register('keys', function ($args)
-{
-    if ($args->get(1) && typeOf($args->get(1)) === 'Rose\\Map')
-        return $args->get(1)->keys();
-
-    return new Arry();
-});
-
-/**
- * Returns an array with the values of the object.
- * @code (`values` <object>)
- * @example
- * (values (& "a" 1 "b" 2 "c" 3))
- * ; [1,2,3]
- */
-Expr::register('values', function ($args)
-{
-    if ($args->get(1) && typeOf($args->get(1)) === 'Rose\\Map')
-        return $args->get(1)->values();
-
-    return [];
 });
 
 /**

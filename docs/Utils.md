@@ -216,7 +216,7 @@ tag name as key and the children as value. If a node has attributes, they will b
 Converts an array or map into an HTML table.
 ```lisp
 (html:encode (# (& "Name" "John" "Age" 35) (& "Name" "Jane" "Age" 25)))
-; <HTML table with two rows and two columns>
+; HTML table with two rows and two columns
 ```
 
 ### (`sys:sleep` \<seconds>)
@@ -224,13 +224,6 @@ Sleeps for the given number of seconds.
 ```lisp
 (sys:sleep 1)
 ; true
-```
-
-### (`sys:gc`)
-Runs the garbage collector.
-```lisp
-(sys:gc)
-; 1
 ```
 
 ### (`sys:shell` \<command>)
@@ -245,6 +238,13 @@ Executes a command and returns the exit code.
 ```lisp
 (sys:exec "ls -l")
 ; 0
+```
+
+### (`sys:gc`)
+Runs the garbage collector.
+```lisp
+(sys:gc)
+; 1
 ```
 
 ### (`strings`)

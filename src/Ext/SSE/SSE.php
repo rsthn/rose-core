@@ -45,7 +45,7 @@ Expr::register('sse:send', function(...$args) {
  * 30 seconds ago. Returns `false` if the connection was already closed by the browser.
  * @code (`sse:alive`)
  * @example
- * (when (sse:alive)
+ * (while (sse:alive)
  *     ; Do something ...
  *     (sys:sleep 1)
  * )

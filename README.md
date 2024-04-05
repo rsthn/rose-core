@@ -30,7 +30,7 @@ As any other package of the modern web, this one should be installed using a pac
 
 # Expression Functions
 
-Rose comes with a powerful expression evaluator (located in the `Expr` class), based on a lisp-like (or clojure-like if you would) language variation known as Violet. There are several built-in functions and you can find all of them in the [Documentation](./docs).
+Rose comes with a powerful expression evaluator (located in the `Expr` class), based on a lisp-like (or clojure-like if you would) language variation known as Violet. There are several built-in functions and you can find all of them in the [Documentation](./docs/README.md).
 
 <br/>
 

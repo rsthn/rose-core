@@ -423,7 +423,7 @@ Expr::register('xml:simplify', function($args)
  * @code (`html:encode` <data>)
  * @example
  * (html:encode (# (& "Name" "John" "Age" 35) (& "Name" "Jane" "Age" 25)))
- * ; <HTML table with two rows and two columns>
+ * ; HTML table with two rows and two columns
  */
 Expr::register('html:encode', function($args)
 {
@@ -509,17 +509,6 @@ Expr::register('sys:sleep', function($args) {
 });
 
 /**
- * Runs the garbage collector.
- * @code (`sys:gc`)
- * @example
- * (sys:gc)
- * ; 1
- */
-Expr::register('sys:gc', function() {
-    return gc_collect_cycles();
-});
-
-/**
  * Executes a shell command and returns the complete output as a string.
  * @code (`sys:shell` <command>)
  * @example
@@ -543,6 +532,16 @@ Expr::register('sys:exec', function($args) {
     return $result;
 });
 
+/**
+ * Runs the garbage collector.
+ * @code (`sys:gc`)
+ * @example
+ * (sys:gc)
+ * ; 1
+ */
+Expr::register('sys:gc', function() {
+    return gc_collect_cycles();
+});
 
 /**
  * Object used to access language strings. The strings are stored in the `strings` directory in the root of the project.

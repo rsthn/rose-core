@@ -11,7 +11,7 @@ Writes the specified values to standard output and adds a new-line at the end.
 ; !
 ```
 
-### (`echo` \<value...>)
+### (`print` \<value...>)
 Writes the specified values to standard output.
 ```lisp
 (print "Hello" "World" "!")
@@ -143,9 +143,31 @@ Sets the reference of a function in the root context. If the reference is `null`
 ; Error: function `file:read` not found
 ```
 
-### (`typeof` \<value>)<br/>(typeof 12)<br/>; int<br/><br/>(typeof 3.14)<br/>; number<br/><br/>(typeof today)<br/>; string<br/><br/>(typeof null)<br/>; null<br/><br/>(typeof (# 1 2 3))<br/>; array<br/><br/>(typeof (& value "Yes"))<br/>; object<br/><br/>(typeof (fn n 0))<br/>; function
+### (`typeof` \<value>)
 Returns a string with the type-name of the value. Possible values are: `null`, `string`, `bool`, `array`,
 `object`, `int`, `number`, and `function`.
+```lisp
+(typeof 12)
+; int
+
+(typeof 3.14)
+; number
+
+(typeof today)
+; string
+
+(typeof null)
+; null
+
+(typeof (# 1 2 3))
+; array
+
+(typeof (& value "Yes"))
+; object
+
+(typeof (fn n 0))
+; function
+```
 
 ### (`dump` \<value>)
 Converts the value to dumpable format (JSON).
@@ -215,20 +237,6 @@ Splits the string by the specified delimiter (or empty string if none specified)
 
 (split "Hi!")
 ; ["H","i","!"]
-```
-
-### (`keys` \<object>)
-Returns an array with the keys of the object.
-```lisp
-(keys (& "a" 1 "b" 2 "c" 3))
-; ["a","b","c"]
-```
-
-### (`values` \<object>)
-Returns an array with the values of the object.
-```lisp
-(values (& "a" 1 "b" 2 "c" 3))
-; [1,2,3]
 ```
 
 ### (`for` [key-var:value-var | value-var] \<array> \<block>)
