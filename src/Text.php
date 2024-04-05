@@ -2,6 +2,7 @@
 
 namespace Rose;
 
+use Rose\Errors\Error;
 use Rose\Map;
 use Rose\Arry;
 use Rose\Strings;
@@ -28,16 +29,13 @@ class Text
     public static function substring ($text, $start, $length=null)
     {
         $text = self::str($text);
+        $n = Text::length($text);
 
-        if ($start < 0) {
-            $text = substr ($text, $start);
-        } else {
-            if ($length === null)
-                $text = substr ($text, $start);
-            else
-                $text = substr ($text, $start, $length);
-        }
+        if ($start < 0) $start += $n;
+        if ($length < 0) $length = $length + $n - $start;
+        if ($length === null) $length = $n - $start;
 
+        $text = substr($text, $start, $length);
         return $text === false ? '' : $text;
     }
 
@@ -199,11 +197,14 @@ class Text
  * (substr 1 2 "hello")
  * ; "el"
  *
- * (substr -4 2 "hello")
- * ; "el"
- * 
+ * (substr -4 2 "world")
+ * ; "or"
+ *
  * (substr -3 "hello")
  * ; "llo"
+ *
+ * (substr 2 -2 "goodbye")
+ * ; "odb"
  */
 Expr::register('substr', function ($args)
 {
@@ -220,13 +221,7 @@ Expr::register('substr', function ($args)
         $count = null;
     }
 
-    if ($start < 0) $start += Text::length($s);
-    if ($count < 0) $count += Text::length($s);
-
-    if ($count === null)
-        $count = Text::length($s) - $start;
-
-    return Text::substring ($s, $start, $count);
+    return Text::substring($s, $start, $count);
 });
 
 /**
@@ -334,20 +329,22 @@ Expr::register('ends-with', function($args) {
 });
 
 /**
- * Returns the length of the given text in characters.
+ * Returns the number of **characters** in the given text.
  * @code (`str:len` <value>)
  * @example
  * (str:len "hello")
  * ; 5
  * (str:len "你好")
  * ; 2
+ * (strlen "Привет!")
+ * ; 7
  */
 Expr::register('str:len', function($args) {
     return Text::length((string)$args->get(1), 'utf8');
 });
 
 /**
- * Replaces a string (a) for another (b) in the given text.
+ * Replaces all occurences of `a` with `b` in the given value.
  * @code (`str:replace` <search> <replacement> <value>)
  * @example
  * (str:replace "hello" "world" "hello world")
@@ -414,4 +411,36 @@ Expr::register('str:compare', function ($args) {
  */
 Expr::register('str:tr', function($args) {
     return strtr ($args->get(3), $args->get(1), $args->get(2));
+});
+
+/**
+ * Returns the octet values of the characters in the given string.
+ * @code (`str:bytes` <value>)
+ * @example
+ * (str:bytes "ABC")
+ * ; [65,66,67]
+ *
+ * (str:bytes "Любовь")
+ * ; [208,155,209,142,208,177,208,190,208,178,209,140]
+ */
+Expr::register('str:bytes', function($args) {
+    return Text::split('', $args->get(1))->map(function($value) {
+        return ord($value);
+    });
+});
+
+/**
+ * Returns the string corresponding to the given binary values.
+ * @code (`str:from-bytes` <octet-list>)
+ * @example
+ * (str:from-bytes (# 65 66 67))
+ * ; ABC
+ *
+ * (str:from-bytes (# 237 140 140 235 158 128 236 131 137))
+ * ; 파란색
+ */
+Expr::register('str:from-bytes', function($args) {
+    return $args->get(1)->map(function($value) {
+        return chr($value);
+    })->join('');
 });

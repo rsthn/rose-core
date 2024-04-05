@@ -30,26 +30,23 @@ use Rose\IO\Directory;
 use Rose\IO\Path;
 use Rose\Ext\Wind;
 
-/*
-**	Prints a tracing message to the log file.
-*/
+/**
+ * Prints a tracing message to the log file.
+ */
 function trace ($string, $out='@system.log')
 {
     static $paths = null;
 
-    if ($out[0] == '@') {
+    if ($out[0] == '@')
         $out = Main::$CWD . '/' . (Main::$CORE_DIR !== '.' ? Path::append(Main::$CORE_DIR, '../logs/'.Text::substring($out, 1)) : ('./logs/' . Text::substring($out, 1)));
-    }
 
     if (!$paths)
         $paths = new Map();
 
     $path = Path::dirname($out);
-    if (!$paths->has($path))
-    {
+    if (!$paths->has($path)) {
         if (!Path::exists($path))
             Directory::create($path, true);
-
         $paths->set($path, true);
     }
 
@@ -62,23 +59,20 @@ function trace ($string, $out='@system.log')
 
         fclose ($fp);
     }
-    catch (\Exception $e)
-    {
+    catch (\Exception $e) {
         if (!Text::endsWith($out, 'errors.log'))
             \Rose\trace($e->getMessage(), '@errors.log');
     }
 }
 
-/*
-**	Returns the class name of the given object.
-*/
+/**
+ * Returns the class name of the given object.
+ */
 function typeOf ($object, $detailed=false)
 {
-    if (is_object ($object))
-    {
+    if (is_object ($object)) {
         if ($object instanceof \Closure)
             return 'function';
-
         return get_class($object);
     }
 
@@ -109,23 +103,23 @@ function typeOf ($object, $detailed=false)
     return 'primitive';
 }
 
-/*
-**	Returns true if the value is an array.
-*/
+/**
+ * Returns `true` if the value is an array.
+ */
 function isArray ($value) {
     return is_array ($value);
 }
 
-/*
-**	Returns true if the value is an object.
-*/
+/**
+ * Returns `true` if the value is an object.
+ */
 function isObject ($value) {
     return is_object ($value);
 }
 
-/*
-**	Returns true if the value is an string.
-*/
+/**
+ * Returns `true` if the value is a string.
+ */
 function isString ($value) {
     return is_string ($value);
 }
@@ -137,31 +131,31 @@ function isNumeric ($value) {
     return is_numeric ($value);
 }
 
-/*
-**	Returns true if the value is an integer value.
-*/
+/**
+ * Returns `true` if the value is an integer value.
+ */
 function isInteger ($value) {
     return is_int ($value);
 }
 
-/*
-**	Returns true if the value represents a number, ensure to use a `float` or `double` cast when actually
-**	using the value, since it may contain extra characters after the number.
-*/
+/**
+ * Returns `true` if the value represents a number, ensure to use a `float` or `double` cast when actually using
+ * the value, since it may contain extra characters after the number.
+ */
 function isNumber ($value) {
     return is_double ($value);
 }
 
-/*
-**	Returns true if the value is a boolean value.
-*/
+/**
+ * Returns `true` if the value is a boolean value.
+ */
 function isBool ($value) {
     return is_bool ($value);
 }
 
-/*
-**	Returns the boolean value of the given argument.
-*/
+/**
+ * Returns the boolean value of the given argument.
+ */
 function bool ($value) {
     if ($value === true || $value === false)
         return $value;
@@ -169,40 +163,39 @@ function bool ($value) {
     return $value === 'true' || ($value !== 'false' && !!$value);
 }
 
-/*
-**	Raises a warning.
-*/
+/**
+ * Raises a warning.
+ */
 function raiseWarning ($message) {
     trigger_error ($message, E_USER_WARNING);
 }
 
-/*
-**	Raises an error.
-*/
+/**
+ * Raises an error.
+ */
 function raiseError ($message) {
     trigger_error ($message, E_USER_ERROR);
 }
 
-/*
-**	Returns true if the object is an instance of the given class.
-*/
+/**
+ * Returns true if the object is an instance of the given class.
+ */
 function isSubTypeOf ($object, $className) {
     return $object instanceof $className;
 }
 
-/*
-**	Returns the current time in milliseconds.
-*/
+/**
+ * Returns the current time in milliseconds.
+ */
 function mstime() {
     $t = explode (' ', microtime ());
     return (int) (($t[0] + $t[1]) * 1000);
 }
 
-/*
-**	Global error handler.
-*/
-function error_handler ($errno, $error, $file, $line)
-{
+/**
+ * Global error handler.
+ */
+function error_handler ($errno, $error, $file, $line) {
     throw new Error ($error . sprintf (' (%s %u)', $file, $line));
 }
 
@@ -236,172 +229,100 @@ function fatal_handler()
 
     ob_end_clean();
 
-    if (Configuration::getInstance()?->Gateway?->display_errors !== 'true')
-    {
-        $err_id = (string)time();
-        $err_id = substr($err_id, 0, 4) . chr(rand(65,90)) . substr($err_id, 3, 3) . chr(rand(65,90)) . substr($err_id, 6);
-        $s = '[' . date('Y-m-d h:i') . '] ' . $err_id . ': ';
-        $tab = '  ';
-        $msg = '';
-
-        if ($error != null)
-        {
-            $s .= 'Fatal Error ' . $error['type'] . ' in ' . basename($error['file']) . ':' . $error['line'] . "\n";
-
-            $msg = trim(Regex::_getString('/.*?:(.+) in/', $error['message'], 1));
-            if ($msg)
-            {
-            }
-            else
-            {
-                $msg = $error['message'];
-                $s .= $tab . '*** ' . $msg . " ***\n";
-            }
-        }
-
-        if ($lastException != null)
-        {
-            $msg = $lastException->getMessage();
-            $s .= typeOf($lastException) . ' in ' . basename($lastException->getFile()) . ':' . $lastException->getLine() . "\n";
-            $s .= $tab . '*** ' . $msg . " ***\n";
-            $stackTrace = $lastException->getTrace();
-        }
-
-        if (Wind::$callStack->length > 0)
-            $s .= $tab . 'Wind: ' . Wind::$callStack->map(function($i) { return $i[2]; })->join(", ") . "\n";
-
-        if ($stackTrace != null)
-        {
-            foreach ($stackTrace as $err)
-            {
-                if (isset($err['class']))
-                    $s .= $tab . $err['class'] . ' :: ' . $err['function'];
-                else
-                    $s .= $tab . $err['function'];
-
-                $s .= ' (';
-                if (isset($err['args']))
-                {
-                    for ($i = 0; $i < count($err['args']); $i++)
-                    {
-                        $s .= typeOf($err['args'][$i], true);
-    
-                        if ($i != count($err['args']) - 1)
-                            $s .= ', ';
-                    }
-                }
-                $s .= ')';
-    
-                if (isset($err['file']))
-                    $s .= ' ' . basename($err['file']) . ':' . $err['line'];
-
-                $s .= "\n";
-            }
-        }
-
-        \Rose\trace($s, '@errors.log');
-
-        if (!headers_sent())
-            header('content-type: application/json');
-
-        if (Configuration::getInstance()?->Gateway?->display_errors !== 'false')
-            echo (new Map([ 'response' => 409, 'error' => $msg ]));
-        else
-            echo (new Map([ 'response' => 409, 'error' => 'Unhandled error occurred: '.$err_id ]));
-
-        exit;
-    }
-
-    echo '<html>';
-    echo '<body style="background: #0f0a0f; padding: 24px;">';
-    echo '<pre style="font-size: 12px; line-height: 1em; color: #fff; padding: 32px 24px;">';
+    $err_id = (string)time();
+    $err_id = substr($err_id, 0, 4) . chr(rand(65,90)) . substr($err_id, 3, 3) . chr(rand(65,90)) . substr($err_id, 6);
+    $s = '[' . date('Y-m-d h:i') . '] ' . $err_id . ': ';
+    $tab = '  ';
+    $msg = '';
 
     if ($error != null)
     {
-        echo '<div style="padding: 2px; color: #fff; font-size: 1.3em;">' . sprintf('Fatal Error %04u', $error['type']) . '</div>';
-        echo '<div style="padding: 2px; color: #888;">' . basename($error['file']) . ':' . $error['line'] . '</div>';
+        $s .= 'Fatal Error ' . $error['type'] . ' in ' . basename($error['file']) . ':' . $error['line'] . "\n";
 
         $msg = trim(Regex::_getString('/.*?:(.+) in/', $error['message'], 1));
-        if ($msg)
-        {
-            echo '<div style="color: #0ff; margin-top: 16px; margin-bottom: 16px; padding: 8px 0; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $msg . '</div>';
-
-            $a = Regex::_matchAll('/#.+? (.+?)\(([0-9]+)\): ([^:(-]+)(->|::)?(.*)\(/', $msg, true);
-            $n = $a->shift()->length;
-
-            $stackTrace = array();
-
-            for ($i = 0; $i < $n; $i++)
-            {
-                if ($a->get(3)->get($i) == '')
-                    $stackTrace[] = ['file' => $a->get(0)->get($i), 'line' => $a->get(1)->get($i), 'function' => $a->get(2)->get($i)];
-                else
-                    $stackTrace[] = ['file' => $a->get(0)->get($i), 'line' => $a->get(1)->get($i), 'class' => $a->get(2)->get($i), 'function' => $a->get(4)->get($i)];
-            }
+        if ($msg) {
         }
-        else
-            echo '<div style="color: #0ff; margin-top: 16px; margin-bottom: 16px; padding: 2px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $error['message'] . '</div>';
+        else {
+            $msg = $error['message'];
+            $s .= $tab . '*** ' . $msg . " ***\n";
+        }
     }
 
-    if ($lastException != null) {
-        echo '<div style="padding: 2px; color: #fff; font-size: 1.3em;">' . typeOf($lastException) . '</div>';
-        echo '<div style="padding: 2px; color: #888;">' . basename($lastException->getFile()) . ':' . $lastException->getLine() . '</div>';
-        echo '<div style="padding: 8px 0; color: #0ff; margin-top: 16px; margin-bottom: 16px; font-weight: normal; font-size: 1.3em; line-height: 1.25em; white-space: normal;">' . $lastException->getMessage() . '</div>';
+    if ($lastException != null)
+    {
+        $msg = $lastException->getMessage();
+        $s .= typeOf($lastException) . ' in ' . basename($lastException->getFile()) . ':' . $lastException->getLine() . "\n";
+        $s .= $tab . '*** ' . $msg . " ***\n";
         $stackTrace = $lastException->getTrace();
     }
+
+    if (Wind::$callStack->length > 0)
+        $s .= $tab . 'Wind: ' . Wind::$callStack->map(function($i) { return $i[2]; })->join(", ") . "\n";
 
     if ($stackTrace != null)
     {
         foreach ($stackTrace as $err)
         {
-            echo '<div style="margin-top: 4px; padding: 2px 0; color: #ddd;">';
-
             if (isset($err['class']))
-                echo '<span style="color: #3f7;">(' . $err['class'] . ') </span>';
+                $s .= $tab . $err['class'] . ' :: ' . $err['function'];
+            else
+                $s .= $tab . $err['function'];
 
-            echo '<b>'.$err['function'].'</b>';
-
-            echo ' (';
+            $s .= ' (';
             if (isset($err['args']))
             {
                 for ($i = 0; $i < count($err['args']); $i++)
                 {
-                    echo typeOf($err['args'][$i], true);
+                    $s .= typeOf($err['args'][$i], true);
 
                     if ($i != count($err['args']) - 1)
-                        echo ', ';
+                        $s .= ', ';
                 }
             }
-            echo ')';
+            $s .= ')';
 
             if (isset($err['file']))
-            {
-                echo '<span style="color: #f3c;">';
-                echo ' ' . basename($err['file']) . ':' . $err['line'] . ' ';
-                echo '</span>';
-            }
+                $s .= ' ' . basename($err['file']) . ':' . $err['line'];
 
-            echo '</div>';
+            $s .= "\n";
         }
     }
 
-    echo '<div style="color: #bbb; margin-top: 24px;">';
-    echo '@rsthn/rose ' . Main::version() . ' &middot; PHP ' . phpversion();
-    echo '</div>';
+    \Rose\trace($s, '@errors.log');
 
-    echo '</pre>';
-    echo '</body>';
-    echo '</html>';
+    if (!headers_sent())
+        header('content-type: application/json');
+
+    if (Configuration::getInstance()?->Gateway?->display_errors !== 'false')
+        echo (new Map([ 'response' => 409, 'error' => $msg ]));
+    else
+        echo (new Map([ 'response' => 409, 'error' => 'Unhandled error occurred: '.$err_id ]));
+
+    exit;
 }
 
-/*
-**	Framework entry point.
-*/
+/**
+ * Framework entry point.
+ */
 class Main
 {
-    /*
-    **	Project's core directory.
-    */
+    /**
+     * Returns the name of the framework.
+     */
+    static function name() {
+        return 'rsthn/rose-core';
+    }
+
+    /**
+     * Returns the version of the framework.
+     */
+    static function version() {
+        return '5.0.0'; //@version
+    }
+
+    /**
+     * Project's core directory.
+     */
     public static $CORE_DIR = null;
 
     /**
@@ -409,21 +330,14 @@ class Main
      */
     public static $CWD = null;
 
-    /*
-    **	Constant that indicates if the framework has been loaded and initialized. Used as a dummy var to force autoload of the Main class by using `Main::$loaded`.
-    */
+    /**
+     * Constant that indicates if the framework has been loaded and initialized. Used as a dummy var to force autoload of the Main class by using `Main::$loaded`.
+     */
     public static $loaded = true;
 
     /**
-     * Returns the version of the framework.
+     * Sets the global definitions and PHP configuration. Called by `cli` or `initialize`.
      */
-    static function version() {
-        return file_get_contents(dirname(__FILE__).'/../VERSION');
-    }
-
-    /*
-    **	Sets the global definitions and PHP configuration. Called by `cli` or `initialize`.
-    */
     static function defs ($cliMode=false)
     {
         // Configure PHP environment.
@@ -456,13 +370,15 @@ class Main
         self::$CWD = str_replace('\\', '/', getcwd());
     }
 
-    /*
-    **	Initializes the primary framework classes for CLI operation.
-    */
+    /**
+     * Initializes the primary framework classes for CLI operation.
+     */
     static function cli ($fsroot, $keepSafes=false)
     {
-        Main::defs(!$keepSafes);
+        // Load certain required classes that are not auto-loaded in CLI mode.
+        require_once 'IO/File.php';
 
+        Main::defs(!$keepSafes);
         Expr::$cachePath = null;
 
         ignore_user_abort(true);
@@ -471,8 +387,7 @@ class Main
         try {
             Gateway::getInstance()->init(true, $fsroot);
         }
-        catch (\Throwable $e)
-        {
+        catch (\Throwable $e) {
             $lastException = $e;
         }
 
@@ -481,10 +396,10 @@ class Main
         });
     }
 
-    /*
-    **	Initializes the primary framework classes and passes control to the Gateway. If $callback is not null, it will be executed
-    **	after Gateway's main().
-    */
+    /**
+     * Initializes the primary framework classes and passes control to the Gateway. If `$callback` is not null,
+     * it will be executed after the Gateway's main().
+     */
     static function initialize ($fsroot, $callback)
     {
         Main::defs();
@@ -495,7 +410,7 @@ class Main
             $_REQUEST = array_merge($_REQUEST, $tmp);
         }
 
-        $ms_start = mstime ();
+        $ms_start = mstime();
 
         global $lastException;
         $lastException = null;

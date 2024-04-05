@@ -2,6 +2,8 @@
 
 namespace Rose;
 
+use Rose\Text;
+
 /**
  * JSON utility functions.
  */
@@ -13,7 +15,11 @@ class JSON
      * @param mixed $value
      * @return string
      */
-    public static function stringify ($value) {
+    public static function stringify ($value)
+    {
+        if (\Rose\typeOf($value) === 'Rose\\Arry' || \Rose\typeOf($value) === 'Rose\\Map')
+            return (string)$value;
+
         return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
@@ -22,7 +28,12 @@ class JSON
      * @param mixed $value
      * @return string
      */
-    public static function prettify ($value) {
+    public static function prettify ($value)
+    {
+        if (\Rose\typeOf($value) === 'primitive')
+            return JSON::stringify($value);
+
+        $value = JSON::parse((string)$value);
         return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 
@@ -31,7 +42,16 @@ class JSON
      * @param string $value
      * @return mixed
      */
-    public static function parse ($value) {
-        return json_decode($value, true);
+    public static function parse ($value)
+    {
+        if (Text::length($value) == 0)
+            return null;
+
+        return $value[0] === '[' 
+            ? Arry::fromNativeArray(json_decode($value, true)) 
+            : ($value[0] == '{' 
+                    ? Map::fromNativeArray(json_decode($value, true)) 
+                    : json_decode($value, true)
+            );
     }
 };

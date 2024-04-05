@@ -67,7 +67,7 @@ class Wind
     {
         Gateway::registerService ('wind', new WindProxy());
 
-        self::$base = Main::$CORE_DIR.'/wind';
+        self::$base = Main::$CORE_DIR.'/fn';
         self::$cache = 'volatile/wind';
         self::$callStack = new Arry();
         self::$multiResponseMode = 0;
@@ -183,7 +183,7 @@ class Wind
     }
 
     /**
-     * Runs a violet expression script in CLI-mode.
+     * Runs a script in CLI-mode.
      */
     public static function run ($path, $data=null)
     {
@@ -260,7 +260,7 @@ class Wind
                     $f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $gateway->request->f);
                     if (!$f) {
                         if (!$gateway->request->has('f'))
-                            throw new WindError ([ 'response' => self::R_OK, 'message' => Strings::get('@messages.operational') ]);
+                            throw new WindError ([ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
                         else
                             throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $gateway->request->f ]);
                     }
@@ -309,7 +309,7 @@ class Wind
             $f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $params->f);
             if (!$f) {
                 if (!$params->has('f'))
-                    throw new WindError ([ 'response' => self::R_OK, 'message' => Strings::get('@messages.operational') ]);
+                    throw new WindError ([ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
                 else
                     throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $params->f ]);
             }

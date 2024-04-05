@@ -268,12 +268,12 @@ Expr::register('config:parse', function ($args) {
 /**
  * Converts the specified object to a configuration string. Omit the `value` parameter to use the
  * currently loaded configuration object.
- * @code (`config:stringify` <value>)
+ * @code (`config:str` <value>)
  * @example
- * (config:stringify (& general (& version "1.0.0")))
+ * (config:str (& general (& version "1.0.0")))
  * ; [General]
  * ; version=1.0.0
  */
-Expr::register('config:stringify', function ($args) {
+Expr::register('config:str', function ($args) {
     return Configuration::saveToBuffer($args->get(1));
 });

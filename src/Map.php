@@ -82,23 +82,23 @@ class Map
     */
     public function sort ($order='ASC')
     {
-        if ($order == 'ASC')
-            asort ($this->__nativeArray);
+        if ($order === 'ASC')
+            \asort ($this->__nativeArray);
         else
-            arsort ($this->__nativeArray);
+            \arsort ($this->__nativeArray);
 
         return $this;
     }
 
-    /*
-    **	Sorts the map by key in ascending or descending order.
-    */
-    public function sortk ($order='ASC')
+    /**
+     * Sorts the map by key in ascending or descending order.
+     */
+    public function ksort ($order='ASC')
     {
-        if ($order == 'ASC')
-            ksort ($this->__nativeArray);
+        if ($order === 'ASC')
+            \ksort ($this->__nativeArray);
         else
-            krsort ($this->__nativeArray);
+            \krsort ($this->__nativeArray);
 
         return $this;
     }
@@ -139,7 +139,7 @@ class Map
         {
             foreach ($newMap->__nativeArray as $key => $value)
             {
-                if (typeOf($value) == 'Rose\\Arry' || typeOf($value) == 'Rose\\Map')
+                if (typeOf($value) === 'Rose\\Arry' || typeOf($value) === 'Rose\\Map')
                     $newMap->set ($key, $value->replicate(true));
             }
         }
@@ -407,10 +407,10 @@ class Map
                 return sizeof($this->__nativeArray);
 
             default:
-                if ($name[0] == '#')
+                if ($name[0] === '#')
                     return $this->has(Text::substring($name, 1));
 
-                if ($name[0] == '@')
+                if ($name[0] === '@')
                     return $this->get(Text::substring($name, 1));
 
                 return $this->get($name);

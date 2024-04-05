@@ -2,43 +2,50 @@
 # Regex
 Provides an interface to manipulate and operate strings using regular expressions.
 
-#### Tests the regular expression pattern on the given text, returns `true` if it matches, or `false` otherwise.
+#### (`re:matches` \<pattern> \<text>)
+Tests the regular expression pattern on the given text, returns `true` if it matches, or `false` otherwise.
 ```lisp
 (re:matches "/\d+/" "123")
 ; true
 ```
 
-#### Returns an array containing the information of the first string that matches the pattern.
+#### (`re:match` \<pattern> \<text>)
+Returns an array containing the information of the first string that matches the pattern.
 ```lisp
 (re:match "/\d/" "123")
 ; {0: "1"}
 ```
 
-#### Uses the pattern and tries to match as many items as possible from the given text string. Returns an array with the matched items.
+#### (`re:match-all` \<pattern> \<text> [\<capture-index>])
+Uses the pattern and tries to match as many items as possible from the given text string. Returns an array with the matched items.
 ```lisp
 (re:match-all "/\d/" "123")
 ; ["1", "2", "3"]
 ```
 
-#### Splits the given string using the pattern as the delimiter, returns an array containing the split elements.
+#### (`re:split` \<pattern> \<text>)
+Splits the given string using the pattern as the delimiter, returns an array containing the split elements.
 ```lisp
 (re:split "/[,;]/" "1,2;3")
 ; ["1", "2", "3"]
 ```
 
-#### Replaces all the strings that match the pattern by the given replacement.
+#### (`re:replace` \<pattern> \<replacement> \<text>)
+Replaces all the strings that match the pattern by the given replacement.
 ```lisp
 (re:replace "/\d/" "X" "a123b")
 ; "aXXXb"
 ```
 
-#### Returns only the parts of the text that match the pattern.
+#### (`re:extract` \<pattern> \<text>)
+Returns only the parts of the text that match the pattern.
 ```lisp
 (re:extract "/\d/" "a123b")
 ; "123"
 ```
 
-#### Matches one text string and returns it. Returns `null` if no match found.
+#### (`re:get` \<pattern> \<text> [\<capture-index>])
+Matches one text string and returns it. Returns `null` if no match found.
 ```lisp
 (re:get "/\d/" "123")
 ; "1"

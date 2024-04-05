@@ -11,9 +11,9 @@ use Rose\Map;
 use Rose\Math;
 use Rose\JSON;
 
-/*
-**	Generic container for objects. This class allows the items to be indexed using only numeric indices.
-*/
+/**
+ * Generic container for objects. This class allows the items to be indexed using only numeric indices.
+ */
 
 class Arry
 {
@@ -89,7 +89,7 @@ class Arry
             return null;
 
         if (!Math::inrange ((int)$index, 0, sizeof($this->__nativeArray)-1))
-            throw new ArgumentError ('Index Out of Bounds: ' . $index);
+            throw new ArgumentError ('Index out of bounds: ' . $index);
 
         return $this->__nativeArray[$index];
     }
@@ -108,7 +108,7 @@ class Arry
     */
     public function sort ($order='ASC')
     {
-        if ($order == 'ASC')
+        if ($order === 'ASC')
             asort ($this->__nativeArray);
         else
             arsort ($this->__nativeArray);
@@ -120,18 +120,18 @@ class Arry
     /*
     **	Sorts the array by item length.
     */
-    public function sortl ($order='ASC')
+    public function lsort ($order='ASC')
     {
-        if ($order == 'ASC')
-            usort ($this->__nativeArray, array('Rose\Arry', '__sortl1'));
+        if ($order === 'ASC')
+            usort ($this->__nativeArray, array('Rose\Arry', '__lsort_asc'));
         else
-            usort ($this->__nativeArray, array('Rose\Arry', '__sortl2'));
+            usort ($this->__nativeArray, array('Rose\Arry', '__lsort_desc'));
 
         return $this;
     }
 
-    public static function __sortl1 ($a, $b) { return Text::length($a) - Text::length($b); }
-    public static function __sortl2 ($a, $b) { return Text::length($b) - Text::length($a); }
+    public static function __lsort_asc ($a, $b) { return Text::length($a) - Text::length($b); }
+    public static function __lsort_desc ($a, $b) { return Text::length($b) - Text::length($a); }
 
     /*
     **	Sorts the array using the specified comparator function.
@@ -210,10 +210,13 @@ class Arry
     }
 
     /*
-    **	Removes an item from the array, returns the removed item or null if not found.
+    **	Removes an item from the array, throws an error if the index is out of bounds.
     */
     public function remove ($index)
     {
+        if (!Math::inrange ((int)$index, 0, sizeof($this->__nativeArray)-1))
+            throw new ArgumentError ('Index out of bounds: ' . $index);
+
         $item = $this->__nativeArray[$index];
         unset ($this->__nativeArray[$index]);
 
@@ -326,10 +329,10 @@ class Arry
     {
         if ($index != null && \Rose\isString($index) && $direct === false)
         {
-            if ($index[0] == '#' || $index == 'length')
+            if ($index[0] === '#' || $index === 'length')
                 return true;
 
-            if ($index[0] == '@')
+            if ($index[0] === '@')
                 return $this->has(Text::substring($index, 1), true);
         }
 
@@ -348,7 +351,7 @@ class Arry
         {
             foreach ($newArray->__nativeArray as $key => $value)
             {
-                if (typeOf($value) == 'Rose\\Arry' || typeOf($value) == 'Rose\\Map')
+                if (typeOf($value) === 'Rose\\Arry' || typeOf($value) === 'Rose\\Map')
                     $newArray->set ($key, $value->replicate(true));
             }
         }
@@ -571,10 +574,10 @@ class Arry
                     return sizeof($this->__nativeArray);
 
                 default:
-                    if ($name[0] == '#')
+                    if ($name[0] === '#')
                         return $this->has(Text::substring($name, 1));
 
-                    if ($name[0] == '@')
+                    if ($name[0] === '@')
                         return $this->get(Text::substring($name, 1));
             }
         }

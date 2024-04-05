@@ -374,7 +374,7 @@ class Http
         $method = self::$method;
         self::$method = 'GET';
 
-        return ($method === 'POST' || $method === 'PUT' || $method === 'DELETE' || $method === 'HEAD')
+        return ($method === 'POST' || $method === 'PUT' || $method === 'PATCH')
             ? self::fetchPost($url, $fields, $method) 
             : self::fetchGet($url, $fields, $method)
             ;
@@ -383,17 +383,15 @@ class Http
     /**
      * Forwards the parameters to Http::get(), parses the JSON result and returns a Map or Arry.
      */
-    public static function fetchGet ($url, $fields, $method='GET')
-    {
-        return Expr::call('json:parse', new Arry ([null, self::get($url, $fields, new Map([ 'Accept' => 'Accept: application/json' ]), $method)]));
+    public static function fetchGet ($url, $fields, $method='GET') {
+        return JSON::parse(self::get($url, $fields, new Map([ 'Accept' => 'Accept: application/json' ]), $method));
     }
 
     /**
      * Forwards the parameters to Http::post(), parses the JSON result and returns a Map or Arry.
      */
-    public static function fetchPost ($url, $data, $method='POST')
-    {
-        return Expr::call('json:parse', new Arry ([null, self::post($url, $data, new Map([ 'Accept' => 'Accept: application/json' ]), $method)]));
+    public static function fetchPost ($url, $data, $method='POST') {
+        return JSON::parse(self::post($url, $data, new Map([ 'Accept' => 'Accept: application/json' ]), $method));
     }
 
 };
@@ -483,6 +481,17 @@ Expr::register('request:delete', function ($args) {
 });
 
 /**
+ * Executes a PATCH request and returns the response data.
+ * @code (`request:patch` <url> [fields...])
+ * @example
+ * (request:patch "http://example.com/api/user/1")
+ * ; { "id": 1, "name": "John Doe" }
+ */
+Expr::register('request:patch', function ($args) {
+    return Http::post($args->get(1), $args->length == 2 ? '' : getFields($args), null, 'PATCH');
+});
+
+/**
  * Executes a fetch request using the specified method and returns a parsed JSON response. Default method is `GET`.
  * @code (`request:fetch` [method] <url> [fields...])
  * @example
@@ -495,7 +504,7 @@ Expr::register('request:fetch', function ($args)
     $j = 1;
 
     switch (Text::toUpperCase($args->get($j))) {
-        case 'GET': case 'PUT': case 'POST': case 'DELETE': case 'HEAD':
+        case 'GET': case 'PUT': case 'POST': case 'DELETE': case 'HEAD': case 'PATCH':
             Http::$method = Text::toUpperCase($args->get($j++));
             break;
     }

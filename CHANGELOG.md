@@ -1,13 +1,10 @@
 # v5.0.0 - Mar 26 2024
 
-#### General
 - Refactored to comply with latest v5 syntax guide.
-- Completed documentation of all available functions.
-- Removed all deprecated functions.
-- Added OpenSSL and Cookies extensions.
-
-#### Gateway
-- Refactored code and added new functions.
+- Completed [documentation](./docs/README.md) of all available functions.
+- Removed **all** deprecated functions.
+- Added [OpenSSL](./docs/OpenSSL.md) and [Cookies](./docs/Cookies.md) extensions.
+- Refactored Gateway code and added new functions, see [Gateway](./docs/Gateway.md).
 
 <br/>
 

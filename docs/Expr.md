@@ -1,7 +1,9 @@
 # Built-In Functions
 - [Core](./00-Core.md)
+- [Array](./Array.md)
 - [Configuration](./Configuration.md)
 - [Cookies](./Cookies.md)
+- [Core](./Core.md)
 - [Crypto](./Crypto.md)
 - [Database](./Database.md)
 - [DateTime](./DateTime.md)
@@ -10,6 +12,8 @@
 - [Gateway](./Gateway.md)
 - [HTTP](./HTTP.md)
 - [Image](./Image.md)
+- [Locale](./Locale.md)
+- [Map](./Map.md)
 - [Math](./Math.md)
 - [Path](./Path.md)
 - [Regex](./Regex.md)

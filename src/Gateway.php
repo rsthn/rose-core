@@ -225,7 +225,7 @@ public $body;
 
         if ($this->input !== null)
         {
-            // TODO: Add some sort of limit of content-length to avoid loading huge files into memory.
+            // RCO-004
             if ($this->input->contentType === 'application/json') {
                 $value = file_get_contents($this->input->path);
                 $this->body = !$value ? new Map() : ($value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true)));
@@ -243,7 +243,7 @@ public $body;
     }
 
     /**
-     * Executed by the framework initializer to initialize the gateway.
+     * Executed by the framework initializer to startup the gateway.
      */
     public function init ($cli, $fsroot)
     {
@@ -291,7 +291,7 @@ public $body;
         if (Configuration::getInstance()?->Gateway?->allow_origin && $this->server->has('HTTP_ORIGIN'))
         {
             self::header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization');
-            self::header('Access-Control-Allow-Methods: POST, GET, PUT, DELETE, PATCH, OPTIONS');
+            self::header('Access-Control-Allow-Methods: HEAD, POST, GET, PUT, DELETE, PATCH, OPTIONS');
             self::header('Access-Control-Allow-Credentials: true');
 
             if (Configuration::getInstance()->Gateway->allow_origin == '*')
@@ -301,6 +301,7 @@ public $body;
         }
 
         $this->fsroot = Path::append($fsroot);
+        self::header('X-Powered-By: ' . 'rsthn/rose-core ' . Main::version());
 
         // Initialize system classes.
         Session::init();
@@ -319,36 +320,29 @@ public $body;
             $this->request->srv = Configuration::getInstance()->Gateway->service;
 
         // Detect is a service is being requested.
-        if ($this->request->srv != null)
-        {
+        if ($this->request->srv != null) {
             $this->request->srv = Regex::_extract('/[A-Za-z0-9_-]+/', $this->request->srv);
-
             if ($this->registeredServices->has($this->request->srv))
                 $this->registeredServices->get($this->request->srv)->main();
             else
                 throw new Error ("Service `" . $this->request->srv . "` is not registered.");
-
-            return;
         }
     }
 
     /**
      * Registers a service.
      */
-    public static function registerService ($serviceCode, $handlerObject)
-    {
+    public static function registerService ($serviceCode, $handlerObject) {
         Gateway::getInstance()->registeredServices->set ($serviceCode, $handlerObject);
     }
 
     /**
      * Returns the service handler object given a service code.
      */
-    public static function getService ($serviceCode)
-    {
+    public static function getService ($serviceCode) {
         if (Gateway::getInstance()->registeredServices->has($serviceCode))
             return Gateway::getInstance()->registeredServices->get($serviceCode);
-        else
-            return null;
+        return null;
     }
 
     /**
@@ -364,7 +358,7 @@ public $body;
      */
     public static function header ($value)
     {
-        if (Text::toUpperCase(Text::substring($value, 0, 12)) === 'CONTENT-TYPE')
+        if (Text::toUpperCase(Text::substring($value, 0, 13)) === 'CONTENT-TYPE:')
             Gateway::$contentType = $value;
 
         if (self::$cli) {
@@ -395,6 +389,13 @@ public $body;
      */
     public static function flush ()
     {
+        if (Gateway::$contentFlushed)
+            return true;
+
+        Gateway::$contentFlushed = true;
+        Gateway::header("Cache-Control: no-store");
+        Gateway::header("X-Accel-Buffering: no");
+
         if (function_exists("apache_setenv"))
             apache_setenv("no-gzip", 1);
 
@@ -528,7 +529,7 @@ Expr::register('gateway:timeout', function ($args) {
 
 
 /**
- * Returns a response to the client and exits immediately.
+ * Sends a response to the client and exits immediately.
  * @code (`gateway:return` [<status>] [<response>])
  * @example
  * (gateway:return 200 "Hello, World!")
@@ -563,4 +564,51 @@ Expr::register('gateway:return', function ($args)
     Gateway::header(Gateway::$contentType);
     echo (string)$response;
     Gateway::exit();
+});
+
+/**
+ * Sends a response to the client and continues execution.
+ * @code (`gateway:continue` [<status>] [<response>])
+ * @example
+ * (gateway:continue 200 "Hello, World!")
+ * ; Client will receive:
+ * ; Hello, World!
+ */
+Expr::register('gateway:tsr', function ($args)
+{
+    $status = $args->{1};
+    $response = $args->{2};
+
+    if ($status) {
+        if (\Rose\isInteger($status))
+            http_response_code($status);
+        else
+            $response = $status;
+    }
+
+    if (Gateway::$contentFlushed)
+        return false;
+
+    if (Gateway::$contentType === null) {
+        $type = \Rose\typeOf($response);
+        if ($type === 'Rose\Map' || $type === 'Rose\Arry') {
+            Gateway::$contentType = 'Content-Type: application/json; charset=utf-8';
+        }
+        else if (\Rose\isString($response)) {
+            Gateway::$contentType = 'Content-Type: text/plain; charset=utf-8';
+        }
+    }
+
+    Gateway::header("Connection: close");
+    Gateway::header("Content-Length: " . Text::length($response));
+    Gateway::header("Cache-Control: no-store");
+    Gateway::header("X-Accel-Buffering: no");
+
+    if (Gateway::$contentType)
+        Gateway::header(Gateway::$contentType);
+
+    echo Text::rpad((string)$response, 8192);
+    Gateway::persistent();
+    Gateway::flush();
+    return true;
 });

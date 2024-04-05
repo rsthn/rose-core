@@ -2,19 +2,24 @@
 # Strings
 Utility functions to manipulate text strings.
 
-#### Returns a substring of a given string. Negative values in `start` indicate to start from the end of the string.
+#### (`substr` \<start> [count] \<value>)
+Returns a substring of a given string. Negative values in `start` indicate to start from the end of the string.
 ```lisp
 (substr 1 2 "hello")
 ; "el"
 
-(substr -4 2 "hello")
-; "el"
+(substr -4 2 "world")
+; "or"
 
 (substr -3 "hello")
 ; "llo"
+
+(substr 2 -2 "goodbye")
+; "odb"
 ```
 
-#### Pads a value by adding a character to the left until it reaches the desired length. If no padding character
+#### (`lpad` \<length> [pad] \<string>)
+Pads a value by adding a character to the left until it reaches the desired length. If no padding character
 is provided, it defaults to a space.
 ```lisp
 (lpad 5 "0" "123")
@@ -24,7 +29,8 @@ is provided, it defaults to a space.
 ; ..123
 ```
 
-#### Pads a value by adding a character to the right until it reaches the desired length. If no padding character
+#### (`rpad` \<length> [pad] \<string>)
+Pads a value by adding a character to the right until it reaches the desired length. If no padding character
 is provided, it defaults to a space.
 ```lisp
 (rpad 5 "0" "123")
@@ -34,69 +40,82 @@ is provided, it defaults to a space.
 ; 123..
 ```
 
-#### Converts the value to upper case.
+#### (`upper` \<value>)
+Converts the value to upper case.
 ```lisp
 (upper "hello")
 ; "HELLO"
 ```
 
-#### Converts the value to lower case.
+#### (`lower` \<value>)
+Converts the value to lower case.
 ```lisp
 (lower "HELLO")
 ; "hello"
 ```
 
-#### Converts the first letter in the word to upper case.
+#### (`upper-first` \<value>)
+Converts the first letter in the word to upper case.
 ```lisp
 (upper-first "hello")
 ; "Hello"
 ```
 
-#### Removes white space (or any of the given chars) and returns the result.
+#### (`trim` [chars] \<value>)
+Removes white space (or any of the given chars) and returns the result.
 ```lisp
 (trim "  hello  ")
 ; "hello"
 ```
 
-#### Returns boolean indicating if the given text starts with the given value.
+#### (`starts-with` \<value> \<text>)
+Returns boolean indicating if the given text starts with the given value.
 ```lisp
 (starts-with "hello" "hello world")
 ; true
 ```
 
-#### Returns boolean indicating if the given text ends with the given value.
+#### (`ends-with` \<value> \<text>)
+Returns boolean indicating if the given text ends with the given value.
 ```lisp
 (ends-with "world" "hello world")
 ; true
 ```
 
-#### Returns the length of the given text in characters.
+#### (`str:len` \<value>)
+Returns the number of **characters** in the given text.
 ```lisp
 (str:len "hello")
 ; 5
 (str:len "你好")
 ; 2
+(strlen "Привет!")
+; 7
 ```
 
-#### Replaces a string (a) for another (b) in the given text.
+#### (`str:replace` \<search> \<replacement> \<value>)
+Replaces all occurences of `a` with `b` in the given value.
 ```lisp
 (str:replace "hello" "world" "hello world")
 ; "world world"
 ```
 
-#### Returns the index of a sub-string in the given text. Returns -1 when not found.
+#### (`str:index` \<search> \<value>)
+Returns the index of a sub-string in the given text. Returns -1 when not found.
 ```lisp
 (str:index "world" "hello world")
 ; 6
 ```
 
-#### Returns the last index of a sub-string in the given text. Returns -1 when not found.
+#### (`str:last-index` \<search> \<value>)
+Returns the last index of a sub-string in the given text. Returns -1 when not found.
 ```lisp
 (str:last-index "world" "hello world world")
 ; 12
 ```
 
-#### Compares two strings and returns negative if a \< b, zero (0) if a == b, and positive if a > b.
+#### (`str:compare` \<a> \<b>)
+Compares two strings and returns negative if a \< b, zero (0) if a == b, and positive if a > b.
 ```lisp
 (str:compare "a" "b")
 ; -1
@@ -108,8 +127,29 @@ is provided, it defaults to a space.
 ; 0
 ```
 
-#### Translates characters in the given string.
+#### (`str:tr` \<source-set> \<replacement-set> \<value>)
+Translates characters in the given string.
 ```lisp
 (str:tr "abc" "123" "cabc")
 ; 3123
+```
+
+#### (`str:bytes` \<value>)
+Returns the octet values of the characters in the given string.
+```lisp
+(str:bytes "ABC")
+; [65,66,67]
+
+(str:bytes "Любовь")
+; [208,155,209,142,208,177,208,190,208,178,209,140]
+```
+
+#### (`str:from-bytes` \<octet-list>)
+Returns the string corresponding to the given binary values.
+```lisp
+(str:from-bytes (# 65 66 67))
+; ABC
+
+(str:from-bytes (# 237 140 140 235 158 128 236 131 137))
+; 파란색
 ```
