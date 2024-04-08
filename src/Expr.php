@@ -557,7 +557,7 @@ class Expr
                     $check = false;
                     $append_last = false;
                     $last = $template[$i];
-                    $bot = $sym_stack[count($sym_stack)-1];
+                    $bot = count($sym_stack) ? $sym_stack[count($sym_stack)-1] : null;
 
                     if ($last === '[' && $allow_special)
                     {
@@ -1998,10 +1998,10 @@ Expr::register('import', function($args, $parts, $data)
  * @code [ values... ]
  * @example
  * (# 1 2 3 4 5)
- * ; [1, 2, 3, 4, 5]
+ * ; [1,2,3,4,5]
  * 
  * ["a" "b" "c"]
- * ; ["a", "b", "c"]
+ * ; ["a","b","c"]
  */
 Expr::register('_#', function ($parts, $data)
 {
@@ -2014,15 +2014,15 @@ Expr::register('_#', function ($parts, $data)
 });
 
 /**
- * Constructs a map. Note that the first form (&) is legacy from previous syntax.
+ * Constructs a map with the given key-value pairs. Note that the first form (&) is legacy from previous syntax.
  * @code (`&` [key value...])
  * @code { key value... }
  * @example
  * (& "name" "Jenny" "age" 25)
- * ; { "name": "Jenny", "age": 25 }
+ * ; {"name":"Jenny","age":25}
  *
- * { "name" "Jenny" "age" 25 }
- * ; { "name": "Jenny", "age": 25 }
+ * { name "Jon" age 36 }
+ * ; {"name":"Jon","age":36}
  */
 Expr::register('_&', function ($parts, $data)
 {

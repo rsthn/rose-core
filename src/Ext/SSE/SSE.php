@@ -3,6 +3,7 @@
 namespace Rose\Ext;
 
 use Rose\Ext\Wind;
+use Rose\Expr;
 
 // @title Server-Sent Events (SSE)
 // @short SSE

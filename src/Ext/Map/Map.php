@@ -9,11 +9,19 @@ use Rose\Expr;
 // @title Map
 
 /**
- * Create a new map with the given key-value pairs (optional).
+ * Constructs a map with the given key-value pairs. Note that the second form (&) is legacy from previous syntax.
  * @code (`map:new` [key value...])
+ * @code (`&` [key value...])
+ * @code { key value... }
  * @example
  * (map:new 'a' 1 'b' 2)
- * ; {'a': 1, 'b': 2}
+ * ; {"a":1,"b":2}
+ *
+ * (& "name" "Jenny" "age" 25)
+ * ; {"name":"Jenny","age":25}
+ *
+ * { name "Jon" age 36 }
+ * ; {"name":"Jon","age":36}
  */
 Expr::register('map:new', function($args) {
     $map = new Map();

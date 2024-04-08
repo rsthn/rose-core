@@ -33,7 +33,7 @@ class JSON
         if (\Rose\typeOf($value) === 'primitive')
             return JSON::stringify($value);
 
-        $value = JSON::parse((string)$value);
+        $value = json_decode($value, true);
         return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 

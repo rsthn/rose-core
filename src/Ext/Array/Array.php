@@ -9,11 +9,19 @@ use Rose\Expr;
 // @title Array
 
 /**
- * Create a new array with the given values (optional).
+ * Constructs an array. Note that the second form (#) is legacy from previous syntax.
  * @code (`array` [values...])
+ * @code (`#` [values...])
+ * @code [ values... ]
  * @example
  * (array 1 2 3)
- * ; [1, 2, 3]
+ * ; [1,2,3]
+ *
+ * (# 1 2 3)
+ * ; [1,2,3]
+ *
+ * [1 2 3]
+ * ; [1,2,3]
  */
 Expr::register('array', function($args) {
     $array = new Arry();
