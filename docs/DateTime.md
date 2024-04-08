@@ -1,6 +1,6 @@
-[&laquo; Go Back](./Expr.md)
+[&laquo; Go Back](./README.md)
 # DateTime
-
+Provides functions to manipulate date and time.
 
 ### (`datetime:now` [targetTimezone])
 Returns the current date and time.

@@ -8,6 +8,7 @@ use Rose\Text;
 use Rose\Math;
 
 // @title DateTime
+// @desc Provides functions to manipulate date and time.
 
 /**
  * Returns the current date and time.

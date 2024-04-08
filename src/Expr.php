@@ -17,6 +17,8 @@ use Rose\Ext\Wind;
 
 // @title Core
 
+const NS_OPERATOR = ':';
+
 /**
  * Descriptor for a linked context.
  */
@@ -35,7 +37,7 @@ class LinkedContext
         if (!$this->ns)
             return $name;
 
-        if (Text::startsWith($name, $this->ns . '::'))
+        if (Text::startsWith($name, $this->ns . NS_OPERATOR))
             return Text::substring($name, Text::length($this->ns)+2);
 
         return null;
@@ -212,7 +214,6 @@ class Context
     }
 };
 
-
 /**
  * Definition of an expression function.
  */
@@ -251,7 +252,6 @@ class ExprFn
 /**
  * Expression compiler and evaluator. Completely re-built from (Rin)[https://github.com/rsthn/rin/] templating module.
  */
-
 class Expr
 {
     /**
@@ -324,12 +324,15 @@ class Expr
      */
     static private function postprocess ($value)
     {
-        if (typeOf($value) === 'Rose\\Arry') {
-            $value->forEach(function($value) { Expr::postprocess($value); });
+        $type = typeOf($value);
+        if ($type === 'Rose\\Arry') {
+            $value->forEach(function($value) {
+                Expr::postprocess($value);
+            });
             return $value;
         }
 
-        if (typeOf($value) === 'Rose\\Map')
+        if ($type === 'Rose\\Map')
         {
             switch ($value->type)
             {
@@ -373,6 +376,8 @@ class Expr
                     case ")": $r = ")"; break;
                     case "{": $r = "{"; break;
                     case "}": $r = "}"; break;
+                    case "[": $r = "["; break;
+                    case "]": $r = "]"; break;
                     case "\\": $r = "\\"; break;
                     case 'x': $r = chr(hexdec(Text::substring($value, $i+2, 2))); $n = 4; break;
                     default: continue 2;
@@ -388,9 +393,9 @@ class Expr
     /**
      * Parses a template and returns the compiled `parts` structure to be used by the `expand` method.
      */
-    static public function parseTemplate ($template, $sym_open, $sym_close, $is_tpl=false, $root=1, $remove_comments=true)
+    static public function parseTemplate ($template, $sym_open, $sym_close, $is_tpl=false, $root=1, $remove_comments=true, $allow_special=true)
     {
-        $nflush = 'string'; $flush = null; $state = 0; $count = 0;
+        $nflush = 'string'; $flush = null; $state = 0;
         $str = ''; $parts = new Arry(); $mparts = $parts; $nparts = false;
 
         if ($is_tpl === true)
@@ -403,35 +408,44 @@ class Expr
         }
 
         $template .= "\0";
+        $sym_stack = [];
 
-        $emit = function ($type, $data) use(&$parts, &$nparts, &$mparts, $sym_open, $sym_close, &$remove_comments)
+        $emit = function ($type, $data) use(&$parts, &$nparts, &$mparts, $sym_open, $sym_close, &$remove_comments, &$allow_special)
         {
             if ($type === 'template')
             {
-                $data = Expr::parseTemplate ($data, $sym_open, $sym_close, true, 0, $remove_comments);
+                $data = Expr::parseTemplate ($data, $sym_open, $sym_close, true, 0, $remove_comments, $allow_special);
+            }
+            else if ($type === 'template-inner')
+            {
+                $data = Expr::parseTemplate (Text::substring($data, 1, -1), $sym_open, $sym_close, true, 0, $remove_comments, $allow_special);
+                $type = 'template';
             }
             else if ($type === 'parse')
             {
-                $data = Expr::parseTemplate ($data, $sym_open, $sym_close, false, 0, $remove_comments);
+                $data = Expr::parseTemplate ($data, $sym_open, $sym_close, false, 0, $remove_comments, $allow_special);
                 $type = 'base-string';
 
-                if (typeOf($data) === 'Rose\\Arry')
-                {
+                if (typeOf($data) === 'Rose\\Arry') {
                     $type = $data->get(0)->type;
                     $data = $data->get(0)->data;
                 }
             }
             else if ($type === 'parse-trim-merge')
             {
-                $data = Expr::parseTemplate (Text::split ("\n", Text::trim($data))->map(function($i) { return Text::trim($i); })->join("\n"), $sym_open, $sym_close, false, 0, $remove_comments);
+                $data = Expr::parseTemplate (Text::split ("\n", Text::trim($data))->map(function($i) { return Text::trim($i); })->join("\n"), $sym_open, $sym_close, false, 0, $remove_comments, $allow_special);
             }
             else if ($type === 'parse-merge')
             {
-                $data = Expr::parseTemplate ($data, $sym_open, $sym_close, false, 0, $remove_comments);
+                $data = Expr::parseTemplate ($data, $sym_open, $sym_close, false, 0, $remove_comments, $allow_special);
+            }
+            else if ($type === 'parse-merge-no-special')
+            {
+                $data = Expr::parseTemplate ($data, $sym_open, $sym_close, false, 0, $remove_comments, false);
             }
             else if ($type === 'parse-merge-alt')
             {
-                $data = Expr::parseTemplate ($data, '{', '}', false, 0, $remove_comments);
+                $data = Expr::parseTemplate ($data, '{', '}', false, 0, $remove_comments, $allow_special);
             }
             else if ($type === 'integer')
             {
@@ -443,16 +457,16 @@ class Expr
             }
             else if ($type === 'identifier')
             {
-                switch ($data)
-                {
+                switch ($data) {
                     case 'null': $data = null; break;
                     case 'true': $data = true; break;
                     case 'false': $data = false; break;
                     case '_': $data = self::SYM_UNDERSCORE; break;
                 }
             }
+            //else if ($type === 'string') { }
 
-            if ($type === 'parse-merge' || $type === 'parse-merge-alt' || $type === 'parse-trim-merge')
+            if ($type === 'parse-merge' || $type === 'parse-merge-alt' || $type === 'parse-trim-merge' || $type === 'parse-merge-no-special')
             {
                 $data->forEach(function($i) use(&$parts) {
                     $parts->push($i);
@@ -461,8 +475,7 @@ class Expr
             else
                 $parts->push(new Map([ 'type' => $type, 'data' => $data ], false));
 
-            if ($nparts)
-            {
+            if ($nparts) {
                 $mparts->push($parts = new Arry());
                 $nparts = false;
             }
@@ -483,35 +496,49 @@ class Expr
                     {
                         $flush = 'string';
                     }
-                    else if ($template[$i] == $sym_open && $template[$i+1] === '<')
+                    else if ($template[$i] === $sym_open && $template[$i+1] === '<')
                     {
-                        $state = 1; $count = 1;
+                        $state = 1; $sym_stack[] = $sym_close;
                         $flush = 'string';
                         $nflush = 'parse-merge';
                     }
-                    else if ($template[$i] == $sym_open && $template[$i+1] === '@')
+                    else if ($template[$i] === $sym_open && $template[$i+1] === '@')
                     {
-                        $state = 1; $count = 1;
+                        $state = 1; $sym_stack[] = $sym_close;
                         $flush = 'string';
                         $nflush = 'parse-trim-merge';
                         $i++;
                     }
-                    else if ($template[$i] == $sym_open && $template[$i+1] === ':')
+                    else if ($template[$i] === $sym_open && $template[$i+1] === ':')
                     {
-                        $state = 12; $count = 1;
+                        $state = 12; $sym_stack[] = $sym_close;
                         $flush = 'string';
                         $nflush = 'string';
                         $i++;
                     }
-                    else if ($template[$i] == $sym_open)
+                    else if ($sym_open === '(' && $template[$i] === '[' && $allow_special)
                     {
-                        $state = 1; $count = 1;
+                        $state = 1;
+                        $flush = 'string';
+                        $nflush = 'template-inner';
+                        $i--;
+                    }
+                    else if ($sym_open === '(' && $template[$i] === '{' && $allow_special)
+                    {
+                        $state = 1;
+                        $flush = 'string';
+                        $nflush = 'template-inner';
+                        $i--;
+                    }
+                    else if ($template[$i] === $sym_open)
+                    {
+                        $state = 1; $sym_stack[] = $sym_close;
                         $flush = 'string';
                         $nflush = 'template';
                     }
                     else if ($template[$i] === ';' && $remove_comments && Text::trim($str) === '')
                     {
-                        $state = 20; $count = 1;
+                        $state = 20;
                         $flush = 'string';
                         $nflush = 'string';
                     }
@@ -524,33 +551,69 @@ class Expr
     
                 case 1:
                     if ($template[$i] === "\0") {
-                        throw new Error ("parse error: unexpected end of template");
+                        throw new Error ("parse error: unexpected end of template ($state)");
                     }
 
-                    if ($template[$i] == $sym_close)
-                    {
-                        $count--;
-    
-                        if ($count < 0)
-                            throw new Error ("parse error: unmatched " + $sym_close);
+                    $check = false;
+                    $append_last = false;
+                    $last = $template[$i];
+                    $bot = $sym_stack[count($sym_stack)-1];
 
-                        if ($count == 0)
-                        {
-                            $state = 0;
-                            $flush = $nflush;
-                            break;
-                        }
-                    }
-                    else if ($template[$i] == $sym_open)
+                    if ($last === '[' && $allow_special)
                     {
-                        $count++;
+                        $sym_stack[] = ']';
+                        $str .= $sym_open.'# ';
+                        break;
                     }
-                    else if ($template[$i] === '`')
+                    else if ($last === ']' && $allow_special && $bot === ']')
+                    {
+                        array_pop($sym_stack);
+                        $check = $append_last = true;
+                        $last = $sym_close;
+                    }
+                    else if ($sym_open === '(' && $last === '{' && $allow_special)
+                    {
+                        $sym_stack[] = '}';
+                        $str .= '(& ';
+                        break;
+                    }
+                    else if ($sym_open === '(' && $last === '}' && $allow_special && $bot === '}')
+                    {
+                        array_pop($sym_stack);
+                        $check = $append_last = true;
+                        $last = $sym_close;
+                    }
+                    else if ($last === $sym_close && $bot === $sym_close)
+                    {
+                        array_pop($sym_stack);
+                        $check = true;
+                    }
+                    else if ($last === $sym_open)
+                    {
+                        $sym_stack[] = $sym_close;
+                    }
+                    else if ($last === '`')
                     {
                         $state = 19;
                     }
-    
-                    $str .= $template[$i];
+                    else if ($last === '"')
+                    {
+                        $state = 24;
+                    }
+                    else if ($last === '\'')
+                    {
+                        $state = 25;
+                    }
+
+                    if ($check && !count($sym_stack))
+                    {
+                        $state = 0;
+                        $flush = $nflush;
+                        if ($append_last) $str .= $last;
+                        break;
+                    }
+
+                    $str .= $last;
                     break;
 
                 case 10:
@@ -610,48 +673,55 @@ class Expr
                         $i--;
                         break;
                     }
-                    else if ($template[$i] == $sym_open && $template[$i+1] === '<')
+                    else if ($template[$i] === $sym_open && $template[$i+1] === '<')
                     {
                         if ($str) $flush = $nflush;
-                        $state = 11; $count = 1; $nflush = 'parse-merge';
+                        $state = 11; $sym_stack[] = $sym_close; $nflush = 'parse-merge';
                         break;
                     }
-                    else if ($template[$i] == $sym_open && $template[$i+1] === '@')
+                    else if ($template[$i] === $sym_open && $template[$i+1] === '@')
                     {
                         if ($str) $flush = $nflush;
-                        $state = 11; $count = 1; $nflush = 'parse-trim-merge';
+                        $state = 11; $sym_stack[] = $sym_close; $nflush = 'parse-trim-merge';
+                        $i++;
+                        break;
+                    }
+                    else if ($template[$i] === '@' && $template[$i+1] === '`')
+                    {
+                        if ($str) $flush = $nflush;
+                        $state = 22; $sym_stack[] = $template[$i+1]; $nflush = 'string';
                         $i++;
                         break;
                     }
                     else if ($template[$i] === '"')
                     {
                         if ($str) $flush = $nflush;
-                        $state = 14; $count = 1; $nflush = 'parse-merge';
+                        $state = 14; $sym_stack[] = '"'; $nflush = 'parse-merge-no-special';
                         break;
                     }
                     else if ($template[$i] === '\'')
                     {
                         if ($str) $flush = $nflush;
-                        $state = 15; $count = 1; $nflush = 'parse-merge';
+                        $state = 15; $sym_stack[] = '\''; $nflush = 'parse-merge-no-special';
                         break;
                     }
                     else if ($template[$i] === '`')
                     {
                         if ($str) $flush = $nflush;
-                        $state = 16; $count = 1; $nflush = 'parse-merge-alt';
+                        $state = 16; $sym_stack[] = '`'; $nflush = 'parse-merge-alt';
                         break;
                     }
-                    else if ($template[$i] == $sym_open && $template[$i+1] === ':')
+                    else if ($template[$i] === $sym_open && $template[$i+1] === ':')
                     {
                         if ($str) $flush = $nflush;
-                        $state = 13; $count = 1; $nflush = 'string';
+                        $state = 13; $sym_stack[] = $sym_close; $nflush = 'string';
                         $i++;
                         break;
                     }
-                    else if ($template[$i] == $sym_open)
+                    else if ($template[$i] === $sym_open)
                     {
                         if ($str) $emit ($nflush, $str);
-                        $state = 11; $count = 1; $str = ''; $nflush = 'parse';
+                        $state = 11; $sym_stack[] = $sym_close; $str = ''; $nflush = 'parse';
                         $str .= $template[$i];
                         break;
                     }
@@ -673,26 +743,23 @@ class Expr
     
                 case 11:
                     if ($template[$i] === "\0")
-                        throw new Error ("parse error: unexpected end of template");
+                        throw new Error ("parse error: unexpected end of template ($state)");
     
-                    if ($template[$i] == $sym_close)
+                    if ($template[$i] === $sym_close)
                     {
-                        $count--;
-    
-                        if ($count < 0)
+                        if ($sym_stack[count($sym_stack)-1] !== $sym_close)
                             throw new Error ("parse error: unmatched " + $sym_close);
 
-                        if ($count == 0)
-                        {
+                        array_pop($sym_stack);
+                        if (!count($sym_stack)) {
                             $state = 10;
-    
-                            if ($nflush === 'parse-merge' || $nflush === 'parse-merge-alt' || $nflush === 'parse-trim-merge')
+                            if ($nflush === 'parse-merge' || $nflush === 'parse-merge-alt' || $nflush === 'parse-trim-merge' || $nflush === 'parse-merge-no-special')
                                 break;
                         }
                     }
-                    else if ($template[$i] == $sym_open)
+                    else if ($template[$i] === $sym_open)
                     {
-                        $count++;
+                        $sym_stack[] = $sym_close;
                     }
     
                     $str .= $template[$i];
@@ -700,19 +767,18 @@ class Expr
 
                 case 12:
                     if ($template[$i] === "\0")
-                        throw new Error ("parse error: unexpected end of template");
-    
-                    if ($template[$i] == $sym_close)
+                        throw new Error ("parse error: unexpected end of template ($state)");
+
+                    if ($template[$i] === $sym_close)
                     {
-                        $count--;
-    
-                        if ($count < 0)
+                        if ($sym_stack[count($sym_stack)-1] !== $sym_close)
                             throw new Error ("parse error: unmatched " + $sym_close);
 
-                        if ($count == 0)
+                        array_pop($sym_stack);
+                        if (!count($sym_stack))
                         {
-                            if (Text::length($str) != 0)
-                            {
+                            // Ensure tokens like (:<value>), (:[value]) or (: value) do not end up with open/close symbols.
+                            if (Text::length($str) != 0) {
                                 if (!($str[0] === '<' || $str[0] === '[' || $str[0] === ' '))
                                     $str = $sym_open . $str . $sym_close;
                             }
@@ -722,37 +788,39 @@ class Expr
                             break;
                         }
                     }
-                    else if ($template[$i] == $sym_open)
+                    else if ($template[$i] === $sym_open)
                     {
-                        $count++;
+                        $sym_stack[] = $sym_close;
                     }
-    
+
                     $str .= $template[$i];
                     break;
 
                 case 13:
                     if ($template[$i] === "\0")
-                        throw new Error ("parse error: unexpected end of template");
+                        throw new Error ("parse error: unexpected end of template ($state)");
 
-                    if ($template[$i] == $sym_close)
+                    if ($template[$i] === $sym_close)
                     {
-                        $count--;
-    
-                        if ($count < 0)
+                        if ($sym_stack[count($sym_stack)-1] !== $sym_close)
                             throw new Error ("parse error: unmatched " + $sym_close);
 
-                        if ($count == 0)
+                        array_pop($sym_stack);
+                        if (!count($sym_stack))
                         {
-                            if (!($str[0] === '<' || $str[0] === '[' || $str[0] === ' '))
-                                $str = $sym_open . $str . $sym_close;
-
+                            // Ensure tokens like (:<value>), (:[value]) or (: value) do not end up with open/close symbols.
+                            if (Text::length($str) != 0) {
+                                if (!($str[0] === '<' || $str[0] === '[' || $str[0] === ' '))
+                                    $str = $sym_open . $str . $sym_close;
+                            }
+    
                             $state = 10;
                             break;
                         }
                     }
-                    else if ($template[$i] == $sym_open)
+                    else if ($template[$i] === $sym_open)
                     {
-                        $count++;
+                        $sym_stack[] = $sym_close;
                     }
     
                     $str .= $template[$i];
@@ -760,20 +828,17 @@ class Expr
 
                 case 14:
                     if ($template[$i] === "\0")
-                        throw new Error ("parse error: unexpected end of template");
+                        throw new Error ("parse error: unexpected end of template ($state)");
     
                     if ($template[$i] === '"')
                     {
-                        $count--;
-    
-                        if ($count < 0)
+                        if ($sym_stack[count($sym_stack)-1] !== '"')
                             throw new Error ("parse error: unmatched " + '"');
 
-                        if ($count == 0)
-                        {
+                        array_pop($sym_stack);
+                        if (!count($sym_stack)) {
                             $state = 10;
-
-                            if ($nflush === 'parse-merge' || $nflush === 'parse-merge-alt' || $nflush === 'parse-trim-merge')
+                            if ($nflush === 'parse-merge' || $nflush === 'parse-merge-alt' || $nflush === 'parse-trim-merge' || $nflush === 'parse-merge-no-special')
                                 break;
                         }
                     }
@@ -783,20 +848,19 @@ class Expr
 
                 case 15:
                     if ($template[$i] === "\0")
-                        throw new Error ("parse error: unexpected end of template");
+                        throw new Error ("parse error: unexpected end of template ($state)");
 
                     if ($template[$i] === '\'')
                     {
-                        $count--;
-
-                        if ($count < 0)
+                        if ($sym_stack[count($sym_stack)-1] !== '\'')
                             throw new Error ("parse error: unmatched " + '\'');
 
-                        if ($count == 0)
+                        array_pop($sym_stack);
+                        if (!count($sym_stack))
                         {
                             $state = 10;
 
-                            if ($nflush === 'parse-merge' || $nflush === 'parse-merge-alt' || $nflush === 'parse-trim-merge')
+                            if ($nflush === 'parse-merge' || $nflush === 'parse-merge-alt' || $nflush === 'parse-trim-merge' || $nflush === 'parse-merge-no-special')
                                 break;
                         }
                     }
@@ -806,20 +870,19 @@ class Expr
 
                 case 16:
                     if ($template[$i] === "\0")
-                        throw new Error ("parse error: unexpected end of template");
+                        throw new Error ("parse error: unexpected end of template ($state)");
     
                     if ($template[$i] === '`')
                     {
-                        $count--;
-    
-                        if ($count < 0)
+                        if ($sym_stack[count($sym_stack)-1] !== '`')
                             throw new Error ("parse error: unmatched " + '`');
 
-                        if ($count == 0)
+                        array_pop($sym_stack);
+                        if (!count($sym_stack))
                         {
                             $state = 10;
     
-                            if ($nflush === 'parse-merge' || $nflush === 'parse-merge-alt' || $nflush === 'parse-trim-merge')
+                            if ($nflush === 'parse-merge' || $nflush === 'parse-merge-alt' || $nflush === 'parse-trim-merge' || $nflush === 'parse-merge-no-special')
                                 break;
                         }
                     }
@@ -856,7 +919,7 @@ class Expr
 
                 case 19:
                     if ($template[$i] === "\0")
-                        throw new Error ("parse error: unexpected end of template");
+                        throw new Error ("parse error: unexpected end of template ($state)");
     
                     if ($template[$i] === '`')
                         $state = 1;
@@ -883,6 +946,57 @@ class Expr
                         break;
                     }
 
+                    break;
+
+                case 22:
+                    if ($template[$i] === "\0")
+                        throw new Error ("parse error: unexpected end of template ($state)");
+
+                    if ($template[$i] === $sym_stack[count($sym_stack)-1])
+                    {
+                        array_pop($sym_stack);
+                        $state = 10;
+                        $flush = $nflush;
+                    }
+                    else
+                        $str .= $template[$i];
+
+                    break;
+
+                case 23:
+                    if ($template[$i] === "\0")
+                        throw new Error ("parse error: unexpected end of template ($state)");
+
+                    if ($template[$i] === $sym_stack[count($sym_stack)-1])
+                    {
+                        array_pop($sym_stack);
+                        $state = 0;
+                        $flush = $nflush;
+                        die('str='.$str);
+                    }
+                    else
+                        $str .= $template[$i];
+
+                    break;
+
+                case 24:
+                    if ($template[$i] === "\0")
+                        throw new Error ("parse error: unexpected end of template ($state)");
+
+                    if ($template[$i] === '"')
+                        $state = 1;
+
+                    $str .= $template[$i];
+                    break;
+
+                case 25:
+                    if ($template[$i] === "\0")
+                        throw new Error ("parse error: unexpected end of template ($state)");
+
+                    if ($template[$i] === '\'')
+                        $state = 1;
+
+                    $str .= $template[$i];
                     break;
             }
 
@@ -948,17 +1062,18 @@ class Expr
      */
     static public function clean ($value)
     {
-        if (\Rose\typeOf($value) === 'primitive')
-        {
+        $type = \Rose\typeOf($value);
+        if ($type === 'primitive') {
             $data = (string)$value;
             $data = Regex::_replace ('|/\*(.*?)\*/|s', '', $data);
             return $data;
         }
 
-        for ($i = 0; $i < $value->length; $i++)
-        {
-            if ($value->get($i)->type !== 'template')
-            {
+        if ($type !== 'Rose\Arry')
+            throw new Error ('invalid type \''.$type.'\' for `clean` function');
+
+        for ($i = 0; $i < $value->length; $i++) {
+            if ($value->get($i)->type !== 'template') {
                 $value->remove($i);
                 $i--;
             }
@@ -1624,12 +1739,12 @@ class Expr
     }
 
     /**
-     * Verifies if the value at parts[index] is an identifier with the given identifcal value.
+     * Verifies if the value at parts[index] is an identifier with the given (optional) value.
      */
-    public static function isIdentifier ($parts, $index, $value)
+    public static function isIdentifier ($parts, $index, $value=null)
     {
         if ($parts->get($index)->length == 1 && $parts->get($index)->get(0)->type === 'identifier')
-            return $parts->get($index)->get(0)->data === $value;
+            return $value === null || $parts->get($index)->get(0)->data === $value;
 
         return false;
     }
@@ -1651,6 +1766,13 @@ class Expr
             $key_name = Text::substring($var_name, 0, Text::indexOf($var_name, ':'));
             $var_name = Text::substring($var_name, Text::indexOf($var_name, ':')+1);
         }
+        else if (Expr::isIdentifier($parts, $index, ':'))
+        {
+            $key_name = $var_name;
+            $index++;
+            if (!Expr::takeIdentifier($parts, $data, $index, $var_name))
+                throw new Error ('identifier expected for iterator `val` variable');
+        }
         else {
             $key_name = $var_name.'#';
         }
@@ -1662,7 +1784,6 @@ class Expr
 /**
  * Initialize class constants.
  */
-
 Expr::$contextStack = new Arry();
 Expr::$context = new Context();
 Expr::$context->currentPath = Path::resolve(Main::$CORE_DIR);
@@ -1671,13 +1792,242 @@ Expr::$importedTime = new Map();
 Expr::$importedContext = new Map();
 Expr::$importPath = Path::resolve(Main::$CORE_DIR);
 
-global $_glb_object;
-$_glb_object = new Map();
-
 /**
  * Expression functions
  */
 
+/**
+ * Global object available across all contexes.
+ * @code (`global`)
+ * @example
+ * (set global.name "Jenny")
+ * (echo "My name is (global.name)")
+ * ; My name is Jenny
+ */
+Expr::register('global', function($args) {
+    static $globalObject = new Map();
+    return $globalObject;
+});
+
+/**
+ * Includes one or more source files and evaluates them as if they were written in the current source file.
+ * @code (`include` <source-path...>)
+ * @example
+ * (include "lib/math")
+ * (echo (math:PI))
+ * ; 3.141592
+ */
+Expr::register('include', function($args, $parts, $data)
+{
+    for ($i = 1; $i < $args->length; $i++)
+    {
+        $path = $args->get($i);
+
+        if (Text::startsWith($path, './'))
+            $path = Path::append(Expr::$context->currentPath, Text::substring($path, 2));
+        else if (!Text::startsWith($path, '/'))
+            $path = Path::append(Expr::$importPath, $path);
+
+        if (!Text::endsWith($path, '.fn'))
+            $path .= '.fn';
+
+        $path = Path::resolve($_path = $path);
+        if (!Path::exists($path))
+            throw new Error ("source does not exist: " . $_path);
+
+        $expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', '', File::getContents($path)));
+
+        for ($j = 0; $j < $expr->length; $j++)
+        {
+            if ($expr->get($j)->type !== 'template')
+            {
+                $expr->remove($j);
+                $j--;
+            }
+        }
+
+        MetaError::incBaseLevel();
+
+        try {
+            Expr::expand ($expr, Expr::$context->data, 'void');
+        }
+        catch (MetaError $e)
+        {
+            if (!$e->isForMe(-1)) throw $e;
+
+            switch ($e->code)
+            {
+                case 'EXPR_YIELD':
+                    break;
+
+                case 'FN_RET':
+                    break;
+
+                default:
+                    throw $e;
+            }
+        }
+        finally
+        {
+            MetaError::decBaseLevel();
+        }
+    }
+
+    return null;
+});
+
+/**
+ * Imports definitions from a source file into a namespace, or the current namespace if none specified.
+ * @code (`import` <source-path> [as <namespace-name>])
+ * @example
+ * (include "lib/math" as "m")
+ * (echo (m:PI))
+ * ; 3.141592
+ */
+Expr::register('import', function($args, $parts, $data)
+{
+    for ($i = 1; $i < $args->length; $i++)
+    {
+        $path = $args->get($i);
+        $ns = '';
+
+        if ($i+1 < $args->length && $args->get($i+1) === 'as') {
+            $ns = $args->get($i+2);
+            $i += 2;
+        }
+
+        if (Text::startsWith($path, './'))
+            $path = Path::append(Expr::$context->currentPath, Text::substring($path, 2));
+        else if (!Text::startsWith($path, '/'))
+            $path = Path::append(Expr::$importPath, $path);
+
+        if (!Text::endsWith($path, '.fn'))
+        {
+            if (!Path::exists(Path::resolve($path.'.fn'))) {
+                $env = Configuration::getInstance()->env;
+                if ($env && Path::exists(Path::resolve($path.'.'.$env.'.fn')))
+                    $path .= '.'.$env;
+            }
+            $path .= '.fn';
+        }
+
+        $path = Path::resolve($_path = $path);
+        $path_cache = null;
+
+        if (Expr::$cachePath && Text::startsWith($path, Expr::$importPath))
+            $path_cache = Path::append(Expr::$cachePath, Text::replace('/', '-', Text::substring($path, 1+Text::length(Expr::$importPath))));
+
+        if (!Path::exists($path))
+            throw new Error ("source does not exist: " . $_path);
+
+        if (Expr::$importedTime->get($path) == File::mtime($path, true))
+        {
+            Expr::$context->linkContext (Expr::$importedContext->get($path), $ns);
+            continue;
+        }
+
+        Expr::$importedTime->set($path, File::mtime($path, true));
+
+        if ($path_cache && Path::exists($path_cache) && File::mtime($path_cache, true) == File::mtime($path, true))
+        {
+            $expr = unserialize(File::getContents($path_cache));
+        }
+        else
+        {
+            $expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', '', File::getContents($path)));
+
+            for ($j = 0; $j < $expr->length; $j++)
+            {
+                if ($expr->get($j)->type !== 'template')
+                {
+                    $expr->remove($j);
+                    $j--;
+                }
+            }
+
+            if ($path_cache) {
+                File::setContents($path_cache, serialize($expr));
+                File::touch($path_cache, File::mtime($path, true));
+            }
+        }
+
+        Expr::$contextStack->push(Expr::$context);
+
+        Expr::$context = new Context();
+        Expr::$context->currentPath = Path::dirname($path);
+
+        Expr::$importedContext->set($path, Expr::$context);
+
+        MetaError::incBaseLevel();
+
+        try {
+            Expr::expand ($expr, Expr::$context->data, 'void');
+        }
+        catch (MetaError $e)
+        {
+            if (!$e->isForMe(-1)) throw $e;
+
+            switch ($e->code)
+            {
+                case 'EXPR_YIELD':
+                    break;
+
+                case 'FN_RET':
+                    break;
+
+                default:
+                    throw $e;
+            }
+        }
+        finally
+        {
+            $context = Expr::$context;
+            Expr::$context = Expr::$contextStack->pop();
+            Expr::$context->linkContext ($context, $ns);
+
+            MetaError::decBaseLevel();
+        }
+    }
+
+    return null;
+});
+
+/**
+ * Constructs an array. Note that the first form (#) is legacy from previous syntax.
+ * @code (`#` [values...])
+ * @code [ values... ]
+ * @example
+ * (# 1 2 3 4 5)
+ * ; [1, 2, 3, 4, 5]
+ * 
+ * ["a" "b" "c"]
+ * ; ["a", "b", "c"]
+ */
+Expr::register('_#', function ($parts, $data)
+{
+    $s = new Arry();
+
+    for ($i = 1; $i < $parts->length(); $i++)
+        $s->push(Expr::expand($parts->get($i), $data, 'arg'));
+
+    return $s;
+});
+
+/**
+ * Constructs a map. Note that the first form (&) is legacy from previous syntax.
+ * @code (`&` [key value...])
+ * @code { key value... }
+ * @example
+ * (& "name" "Jenny" "age" 25)
+ * ; { "name": "Jenny", "age": 25 }
+ *
+ * { "name" "Jenny" "age" 25 }
+ * ; { "name": "Jenny", "age": 25 }
+ */
+Expr::register('_&', function ($parts, $data)
+{
+    return Expr::getNamedValues ($parts, $data, 1, true);
+});
 
 /**
  * Writes the specified values to standard output and adds a new-line at the end.
@@ -1807,7 +2157,7 @@ Expr::register('len', function($args) {
  * ; 123
  */
 Expr::register('str', function($args) {
-    if ($args->length > 1) //violet: remove in v6
+    if ($args->length > 2) //violet: remove this check in v6
         throw new Error('str function does not accept multiple arguments, did you mean to use `concat`?');
     return Text::toString($args->get(1));
 });
@@ -1837,13 +2187,13 @@ Expr::register('bool', function($args) {
 });
 
 /**
- * Converts the given value to a float.
- * @code (`float` <value>)
+ * Converts the given value to a number.
+ * @code (`number` <value>)
  * @example
- * (float "123.45")
+ * (number "123.45")
  * ; 123.45
  */
-Expr::register('float', function($args) {
+Expr::register('number', function($args) {
     return (float)$args->get(1);
 });
 
@@ -2062,26 +2412,6 @@ Expr::register('typeof', function($args)
     return $type;
 });
 
-
-// VIOLET CONTINUE HERE
-// TODO: Make this nicer, to work with map,array,string
-/**
- * Check if the specified subject matches any of the given values.
- * in <subject> <values...>
- */
-Expr::register('in?', function ($args)
-{
-    $value = $args->get(1);
-
-    for ($i = 2; $i < $args->length; $i++)
-    {
-        if ($value == $args->get($i))
-            return true;
-    }
-
-    return false;
-});
-
 /**
  * Converts the value to dumpable format (JSON).
  * @code (`dump` <value>)
@@ -2154,6 +2484,7 @@ Expr::register('not', function($args) {
  * @example
  * (neg 8)
  * ; -8
+ *
  * (neg -8)
  * ; 8
  */
@@ -2161,70 +2492,733 @@ Expr::register('neg', function($args) {
     return -$args->get(1);
 });
 
+/**
+ * Checks each value and returns the first **falsey** found or the last one in the sequence.
+ * @code (`and` <value...>)
+ * @example
+ * (and true 12 "Hello")
+ * ; Hello
+ *
+ * (and 1 2 3)
+ * ; 3
+ *
+ * (and 1 0 12)
+ * ; 0
+ *
+ * (and true true true)
+ * ; true
+ *
+ * (and false 12 2)
+ * ; false
+ */
+Expr::register('_and', function($parts, $data) {
+    for ($i = 1; $i < $parts->length(); $i++) {
+        $v = Expr::value($parts->get($i), $data);
+        if (!$v) return $v;
+    }
+    return $v;
+});
 
+/**
+ * Checks each value and returns the first **truthy** found or the last one in the sequence.
+ * @code (`or` <value...>)
+ * @example
+ * (or false 12 "Hello")
+ * ; 12
+ *
+ * (or 0 0 0)
+ * ; 0
+ *
+ * (or 1 2 3)
+ * ; 1
+ *
+ * (or 0 false "Hello" false)
+ * ; Hello
+ */
+Expr::register('_or', function($parts, $data) {
+    for ($i = 1; $i < $parts->length(); $i++) {
+        $v = Expr::value($parts->get($i), $data);
+        if (!!$v) return $v;
+    }
+    return $v;
+});
 
+/**
+ * Returns the first value that is not `null` or `null` if all are `null`.
+ * @code (`coalesce` <value...>)
+ * @code (`??` <value...>)
+ * @example
+ * (coalesce null 12 "Hello")
+ * ; 12
+ *
+ * (coalesce null null null)
+ * ; null
+ *
+ * (?? null null "Hello")
+ * ; Hello
+ */
+Expr::register('_coalesce', function($parts, $data) {
+    for ($i = 1; $i < $parts->length(); $i++) {
+        $v = Expr::value($parts->get($i), $data);
+        if ($v !== null) return $v;
+    }
+    return null;
+});
 
+Expr::register('_??', function($parts, $data) {
+    for ($i = 1; $i < $parts->length(); $i++) {
+        $v = Expr::value($parts->get($i), $data);
+        if ($v !== null) return $v;
+    }
+    return null;
+});
 
-Expr::register('_and', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!$v) return $v; } return $v; });
-Expr::register('_or', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if (!!$v) return $v; } return $v; });
-Expr::register('_coalesce', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if ($v !== null) return $v; } return null; });
-Expr::register('_??', function($parts, $data) { for ($i = 1; $i < $parts->length(); $i++) { $v = Expr::value($parts->get($i), $data); if ($v !== null) return $v; } return null; });
+/**
+ * Return the result of a NOT (bitwise) operation.
+ * @code (`bit-not` <value>)
+ * @example
+ * (bit-not 12)
+ * ; -13
+ */
+Expr::register('bit-not', function($args) {
+    return ~$args->get(1);
+});
 
-Expr::register('global', function($args) { global $_glb_object; return $_glb_object; });
-Expr::register('bit-not', function($args) { return ~$args->get(1); });
-Expr::register('bit-and', function($args) { return $args->get(1) & $args->get(2); });
-Expr::register('bit-or', function($args) { return $args->get(1) | $args->get(2); });
-Expr::register('bit-xor', function($args) { return $args->get(1) ^ $args->get(2); });
+/**
+ * Returns the result of the AND (bitwise) operation.
+ * @code (`bit-and` <value-1> <value-2>)
+ * @example
+ * (bit-and 7 29)
+ * ; 5
+ */
+Expr::register('bit-and', function($args) {
+    return $args->get(1) & $args->get(2);
+});
 
-Expr::register('eq', function($args) { return $args->get(1) == $args->get(2); });
-Expr::register('eqq', function($args) { return $args->get(1) === $args->get(2); });
-Expr::register('ne', function($args) { return $args->get(1) != $args->get(2); });
-Expr::register('lt', function($args) { return $args->get(1) < $args->get(2); });
-Expr::register('le', function($args) { return $args->get(1) <= $args->get(2); });
-Expr::register('gt', function($args) { return $args->get(1) > $args->get(2); });
-Expr::register('ge', function($args) { return $args->get(1) >= $args->get(2); });
-Expr::register('isnotnull', function($args) { return $args->get(1) !== null; });
-Expr::register('isnull', function($args) { return $args->get(1) === null; });
-Expr::register('iszero', function($args) { return (float)$args->get(1) == 0; });
+/**
+ * Returns the result of the OR (bitwise) operation.
+ * @code (`bit-or` <value-1> <value-2>)
+ * @example
+ * (bit-or 7 29)
+ * ; 31
+ */
+Expr::register('bit-or', function($args) {
+    return $args->get(1) | $args->get(2);
+});
 
-Expr::register('eq?', function($args) { return $args->get(1) == $args->get(2); });
-Expr::register('eqq?', function($args) { return $args->get(1) === $args->get(2); });
-Expr::register('ne?', function($args) { return $args->get(1) != $args->get(2); });
-Expr::register('lt?', function($args) { return $args->get(1) < $args->get(2); });
-Expr::register('le?', function($args) { return $args->get(1) <= $args->get(2); });
-Expr::register('gt?', function($args) { return $args->get(1) > $args->get(2); });
-Expr::register('ge?', function($args) { return $args->get(1) >= $args->get(2); });
-Expr::register('not-null?', function($args) { return $args->get(1) !== null; });
-Expr::register('null?', function($args) { return $args->get(1) === null; });
-Expr::register('zero?', function($args) { return (float)$args->get(1) == 0; });
-Expr::register('even?', function($args) { return ((int)$args->get(1) & 1) == 0; });
-Expr::register('odd?', function($args) { return ((int)$args->get(1) & 1) == 1; });
+/**
+ * Returns the result of the XOR (bitwise) operation.
+ * @code (`bit-xor` <value-1> <value-2>)
+ * @example
+ * (bit-xor 7 29)
+ * ; 26
+ */
+Expr::register('bit-xor', function($args) {
+    return $args->get(1) ^ $args->get(2);
+});
 
-Expr::register('int?', function($args) { return typeOf($args->get(1), true) === 'int'; });
-Expr::register('str?', function($args) { return typeOf($args->get(1), true) === 'string'; });
-Expr::register('bool?', function($args) { return typeOf($args->get(1), true) === 'bool'; });
-Expr::register('float?', function($args) { return typeOf($args->get(1), true) === 'number'; });
-Expr::register('array?', function($args) { return typeOf($args->get(1), true) === 'Rose\\Arry'; });
-Expr::register('object?', function($args) { return typeOf($args->get(1), true) === 'Rose\\Map'; });
-Expr::register('map?', function($args) { return typeOf($args->get(1), true) === 'Rose\\Map'; });
-Expr::register('fn?', function($args) { return typeOf($args->get(1), true) === 'function'; });
+/**
+ * Checks if an iterable (map, array or string) has a value.
+ * @code (`in?` <iterable> <value> [val-true=true] [val-false=false])
+ * @example
+ * (in? [1 2 3] 2)
+ * ; true
+ * 
+ * (in? {name "John"} "name")
+ * ; true
+ * 
+ * (in? "Hello" "l")
+ * ; true
+ */
+Expr::register('_in?', function ($parts, $data)
+{
+    $iterable = Expr::value($parts->get(1), $data);
+    $value = Expr::value($parts->get(2), $data);
+    $result = false;
+    $type = \Rose\typeOf($iterable, true);
 
-Expr::register('*', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum*$value; }); });
-Expr::register('/', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum/$value; }); });
-Expr::register('+', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum+$value; }); });
-Expr::register('-', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum-$value; }); });
-Expr::register('mul', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return (int)($accum*$value); }); });
-Expr::register('div', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return (int)($accum/$value); }); });
-Expr::register('mod', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum%$value; }); });
-Expr::register('pow', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return pow($accum, $value); }); });
+    if ($type === 'Rose\\Map')
+        $result = $iterable->has($value, true);
+    else if ($type === 'Rose\\Arry')
+        $result = $iterable->indexOf($value) !== null;
+    else if ($type === 'string')
+        $result = Text::indexOf($iterable, $value) !== false;
+    else
+        throw new Error('invalid iterable type \''.$type.'\' for `in?` operation');
 
-Expr::register('min', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::min($accum, $value); }); });
-Expr::register('max', function($args) { return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::max($accum, $value); }); });
+    return $result 
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+    ;
+});
 
+/**
+ * Checks if `value1` is equal to `value2`, returns `val-true` or `val-false` (loose type comparison).
+ * @code (`eq?` <value1> <value2> [val-true=true] [val-false=false])
+ * @example
+ * (eq? 12 "12")
+ * ; true
+ *
+ * (eq? 0 false)
+ * ; true
+ *
+ * (eq? false null)
+ * ; true
+ *
+ * (eq? true 12)
+ * ; true
+ *
+ * (eq? 12 13)
+ * ; false
+ */
+Expr::register('_eq?', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) == Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
 
+Expr::register('_==', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) == Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
 
+/**
+ * Checks if `value1` is equal to `value2` and are of the same type, returns `val-true` or `val-false`.
+ * @code (`eqq?` <value1> <value2> [val-true=true] [val-false=false])
+ * @example
+ * (eqq? 12 "12")
+ * ; false
+ *
+ * (eqq? 0 false)
+ * ; false
+ *
+ * (eqq? false null)
+ * ; false
+ *
+ * (eqq? true 12)
+ * ; false
+ *
+ * (eqq? 12 12)
+ * ; true
+ *
+ * (eqq? "X" "X)
+ * ; true
+ */
+Expr::register('_eqq?', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) === Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
 
+Expr::register('_===', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) === Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
 
+/**
+ * Checks if `value1` is not equal to `value2`, returns `val-true` or `val-false`.
+ * @code (`ne?` <value1> <value2> [val-true=true] [val-false=false])
+ * @example
+ * (ne? 12 "12")
+ * ; false
+ *
+ * (ne? 0 false)
+ * ; false
+ *
+ * (ne? false null)
+ * ; false
+ *
+ * (ne? true 12)
+ * ; false
+ *
+ * (ne? 12 13)
+ * ; true
+ */
+Expr::register('_ne?', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) != Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
+
+Expr::register('_!=', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) != Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
+
+/**
+ * Checks if `value1` < `value2`, returns `val-true` or `val-false`.
+ * @code (`lt?` <value1> <value2> [val-true=true] [val-false=false])
+ * @example
+ * (lt? 1 2)
+ * ; true
+ *
+ * (lt? 10 10)
+ * ; false
+ *
+ * (lt? 10 5)
+ * ; false
+ */
+Expr::register('_lt?', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) < Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
+
+Expr::register('_<', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) < Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
+
+/**
+ * Checks if `value1` <= `value2`, returns `val-true` or `val-false`.
+ * @code (`le?` <value1> <value2> [val-true=true] [val-false=false])
+ * @example
+ * (le? 1 2)
+ * ; true
+ *
+ * (le? 10 10)
+ * ; true
+ *
+ * (le? 10 5)
+ * ; false
+ */
+Expr::register('_le?', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) <= Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
+
+Expr::register('_<=', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) <= Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
+
+/**
+ * Checks if `value1` > `value2`, returns `val-true` or `val-false`.
+ * @code (`gt?` <value1> <value2> [val-true=true] [val-false=false])
+ * @example
+ * (gt? 1 2)
+ * ; false
+ *
+ * (gt? 10 10)
+ * ; false
+ *
+ * (gt? 10 5)
+ * ; true
+ */
+Expr::register('_gt?', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) > Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
+
+Expr::register('_>', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) > Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
+
+/**
+ * Checks if `value1` >= `value2`, returns `val-true` or `val-false`.
+ * @code (`ge?` <value1> <value2> [val-true=true] [val-false=false])
+ * @example
+ * (ge? 1 2)
+ * ; false
+ *
+ * (ge? 10 10)
+ * ; true
+ *
+ * (ge? 10 5)
+ * ; true
+ */
+Expr::register('_ge?', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) >= Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
+
+Expr::register('_>=', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) >= Expr::value($parts->get(2), $data)
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is `null`, returns `val-true` or `val-false`.
+ * @code (`null?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (null? null)
+ * ; true
+ *
+ * (null? 0)
+ * ; false
+ *
+ * (null? null "Yes" "No")
+ * ; Yes
+ */
+Expr::register('_null?', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) === null
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is not `null`, returns `val-true` or `val-false`.
+ * @code (`not-null?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (not-null? null)
+ * ; false
+ *
+ * (not-null? 0)
+ * ; true
+ *
+ * (not-null? null "Yes" "No")
+ * ; No
+ */
+Expr::register('_not-null?', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) !== null
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is zero, returns `val-true` or `val-false`.
+ * @code (`zero?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (zero? 0)
+ * ; true
+ *
+ * (zero? 1)
+ * ; false
+ *
+ * (zero? null)
+ * ; false
+ *
+ * (zero? 0.0)
+ * ; true
+ */
+Expr::register('_zero?', function($parts, $data) {
+    $value = Expr::value($parts->get(1), $data);
+    return $value === 0 || $value === 0.0
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is even, returns `val-true` or `val-false`.
+ * @code (`even?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (even? 12)
+ * ; false
+ *
+ * (even? 13)
+ * ; true
+ */
+Expr::register('_even?', function($parts, $data) {
+    $value = Expr::value($parts->get(1), $data);
+    return (int)$value % 2 === 0
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is odd, returns `val-true` or `val-false`.
+ * @code (`odd?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (odd? 12)
+ * ; false
+ *
+ * (odd? 13)
+ * ; true
+ */
+Expr::register('_odd?', function($parts, $data) {
+    $value = Expr::value($parts->get(1), $data);
+    return (int)$value % 2 !== 0
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is `true` (strong type checking).
+ * @code (`true?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (true? true)
+ * ; true
+ *
+ * (true? 1)
+ * ; false
+ */
+Expr::register('_true?', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) === true
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is `false` (strong type checking).
+ * @code (`false?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (false? true)
+ * ; true
+ *
+ * (false? 1)
+ * ; false
+ */
+Expr::register('_false?', function($parts, $data) {
+    return Expr::value($parts->get(1), $data) === false
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is an integer.
+ * @code (`int?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (int? 12)
+ * ; true
+ *
+ * (int? 12.5)
+ * ; false
+ */
+Expr::register('_int?', function($parts, $data) {
+    return typeOf(Expr::value($parts->get(1), $data), true) === 'int'
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is a string.
+ * @code (`str?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (str? "Hello")
+ * ; true
+ *
+ * (str? 12)
+ * ; false
+ */
+Expr::register('_str?', function($parts, $data) {
+    return typeOf(Expr::value($parts->get(1), $data), true) === 'string'
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is a boolean.
+ * @code (`bool?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (bool? true)
+ * ; true
+ *
+ * (bool? 1)
+ * ; false
+ */
+Expr::register('_bool?', function($parts, $data) {
+    return typeOf(Expr::value($parts->get(1), $data), true) === 'bool'
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is a number.
+ * @code (`number?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (number? 12)
+ * ; true
+ *
+ * (number? 12.5)
+ * ; true
+ *
+ * (number? "12")
+ * ; false
+ */
+Expr::register('_number?', function($parts, $data) {
+    $type = typeOf(Expr::value($parts->get(1), $data), true);
+    return $type === 'number' || $type === 'int'
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is an array.
+ * @code (`array?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (array? (# 1 2 3))
+ * ; true
+ */
+Expr::register('_array?', function($parts, $data) {
+    return typeOf(Expr::value($parts->get(1), $data), true) === 'Rose\\Arry'
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is a map.
+ * @code (`map?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (map? (& value "Yes"))
+ * ; true
+ */
+Expr::register('_map?', function($parts, $data) {
+    return typeOf(Expr::value($parts->get(1), $data), true) === 'Rose\\Map'
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is a function.
+ * @code (`fn?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (fn? (fn x 0))
+ * ; true
+ */
+Expr::register('_fn?', function($parts, $data) {
+    return typeOf(Expr::value($parts->get(1), $data), true) === 'function'
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Returns the sum of the given values.
+ * @code (`+` <values...>)
+ * @example
+ * (+ 1 2 3)
+ * ; 6
+ */
+Expr::register('+', function($args) {
+    return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum+$value; });
+});
+
+/**
+ * Returns the result of subtracting each value by the next one.
+ * @code (`-` <values...>)
+ * @example
+ * (- 10 2 3)
+ * ; 5
+ */
+Expr::register('-', function($args) {
+    return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum-$value; });
+});
+
+/**
+ * Returns the result of multiplying the given values.
+ * @code (`*` <values...>)
+ * @example
+ * (* 2 -1.5 3.25)
+ * ; -9.75
+ */
+Expr::register('*', function($args) {
+    return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum*$value; });
+});
+
+/**
+ * Returns the integer result of multiplying the given values.
+ * @code (`mul` <values...>)
+ * @example
+ * (mul 2 -1.5 3.25)
+ * ; -9
+ */
+Expr::register('mul', function($args) {
+    return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return (int)($accum*$value); });
+});
+
+/**
+ * Returns the result of dividing each value by the next one.
+ * @code (`/` <values...>)
+ * @example
+ * (/ 100 10 3)
+ * ; 3.3333333333333
+ */
+Expr::register('/', function($args) {
+    return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum/$value; });
+});
+
+/**
+ * Returns the integer result of dividing each value by the next one.
+ * @code (`div` <values...>)
+ * @example
+ * (div 100 10 3)
+ * ; 3
+ */
+Expr::register('div', function($args) {
+    return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return (int)($accum/$value); });
+});
+
+/**
+ * Returns the result of the modulo operation.
+ * @code (`mod` <values...>)
+ * @example
+ * (mod 100 15)
+ * ; 2
+ */
+Expr::register('mod', function($args) {
+    return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum%$value; });
+});
+
+/**
+ * Returns the result of raising each number to the next one.
+ * @code (`pow` <values...>)
+ * @example
+ * (pow 3 2 4)
+ * ; 6561
+ */
+Expr::register('pow', function($args) {
+    return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return pow($accum, $value); });
+});
+
+/**
+ * Returns the minimum value of the given values.
+ * @code (`min` <values...>)
+ * @example
+ * (min 1 2 3)
+ * ; 1
+ */
+Expr::register('min', function($args) {
+    return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::min($accum, $value); });
+});
+
+/**
+ * Returns the maximum value of the given values.
+ * @code (`max` <values...>)
+ * @example
+ * (max 1 2 3)
+ * ; 3
+ */
+Expr::register('max', function($args) {
+    return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::max($accum, $value); });
+});
 
 /**
  * Joins the array into a string. If `glue` is provided, it will be used as separator.
@@ -2273,16 +3267,16 @@ Expr::register('split', function ($args)
  * NOTE: Extra variables `i#` and `i##` (iterator variable with suffix `#` and `##`) are automatically introduced to
  * hold the index or key and numeric index of each item respectively (if no variable provided). Note that the later (##)
  * will always have a numeric value.
- * @code (`for` [key-var:value-var | value-var] <array> <block>)
+ * @code (`for` [key-var:val-var | val-var] [`in`] <array> <block>)
  * @example
- * (for x (# 1 2 3)
+ * (for x [1 2 3]
  *     (echo (* (x) 1.5))
  * )
  * ; 1.5
  * ; 3
  * ; 4.5
  *
- * (for key: val (& "a" 1 "b" 2)
+ * (for key: val { "a" 1 "b" 2 }
  *     (echo "key: (key) value: (val)")
  * )
  * ; key: a value: 1
@@ -2293,13 +3287,17 @@ Expr::register('_for', function ($parts, $data)
     $i = 1;
     Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
-    $list = Expr::value($parts->get($i), $data);
-    $j = 0;
+    if (Expr::isIdentifier($parts, $i, 'in'))
+        $i++;
 
-    if (!$list || (\Rose\typeOf($list) !== 'Rose\Arry' && \Rose\typeOf($list) !== 'Rose\Map'))
-        return $list;
+    $list = Expr::value($parts->get($i), $data);
+    $type = \Rose\typeOf($list, true);
+    if ($type !== 'Rose\Arry' && $type !== 'Rose\Map')
+        throw new Error('invalid iterable type \''.$type.'\' for `for` operation');
 
     $block = $parts->slice($i+1);
+    $j = 0;
+
     foreach ($list->__nativeArray as $key => $item)
     {
         $data->set($var_name, $item);
@@ -2324,6 +3322,34 @@ Expr::register('_for', function ($parts, $data)
     return $list;
 });
 
+/**
+ * Exits the current inner most loop.
+ * @code (`break`)
+ * @example
+ * (for i [1 2 3]
+ *     (echo (i))
+ *     (break)
+ * )
+ * ; 1
+ */
+Expr::register('_break', function ($parts, $data) {
+    throw new \Exception('EXC_BREAK');
+});
+
+/**
+ * Skips execution and continues the next iteration of the current inner most loop.
+ * @code (`continue`)
+ * @example
+ * (for i [1 2 3 4 5 6 7 8 9 10]
+ *     (when (odd? (i))
+ *         (continue))
+ *     (echo (i))
+ * )
+ * ; 2 4 6 8 10
+ */
+Expr::register('_continue', function ($parts, $data) {
+    throw new \Exception('EXC_CONTINUE');
+});
 
 /**
  * Returns `a` if the expression is `true` otherwise returns `b` or empty string if `b` was not specified. This is a short version of the `if` function.
@@ -2524,47 +3550,19 @@ Expr::register('_switch', function ($parts, $data)
 });
 
 /**
- * Exits the current inner most loop.
- * @code (`break`)
- * @example
- * (for i (# 1 2 3 4 5 6 7 8 9 10)
- *     (echo (i))
- *     (break)
- * )
- * ; 1
- */
-Expr::register('_break', function ($parts, $data) {
-    throw new \Exception('EXC_BREAK');
-});
-
-/**
- * Skips execution and continues the next iteration of the current inner most loop.
- * @code (`continue`)
- * @example
- * (for i (# 1 2 3 4 5 6 7 8 9 10)
- *     (when (odd? (i))
- *         (continue))
- *     (echo (i))
- * )
- * ; 2 4 6 8 10
- */
-Expr::register('_continue', function ($parts, $data) {
-    throw new \Exception('EXC_CONTINUE');
-});
-
-
-
-
-
-
-
-
-
-
-
-/**
  * Repeats the specified block the specified number of times and gathers the results to construct an array.
- * gather [varname] [from <number>] [to <number>] [times <number>] [step <number>] <block>
+ * @code (`gather` [varname='i'] [`from` <number>] [`to` <number>] [`times` <number>] [`step` <number>] <block>)
+ * @example
+ * (gather times 4 (i))
+ * ; [0,1,2,3]
+ *
+ * (gather from 1 times 10 step 2 (i))
+ * ; [1,3,5,7,9,11,13,15,17,19]
+ *
+ * (gather x from 4 to 6
+ *     (pow 2 (x))
+ * )
+ * ; [16,32,64]
  */
 Expr::register('_gather', function ($parts, $data)
 {
@@ -2674,10 +3672,31 @@ Expr::register('_gather', function ($parts, $data)
     return $arr;
 });
 
-
 /**
  * Repeats the specified block the specified number of times.
- * repeat [varname] [from <number>] [to <number>] [times <number>] [step <number>] <block>
+ * @code (`repeat` [varname='i'] [`from` <number>] [`to` <number>] [`times` <number>] [`step` <number>] <block>)
+ * @example
+ * (repeat times 2
+ *     (echo (i))
+ * )
+ * ; 0
+ * ; 1
+ *
+ * (repeat from 1 times 5 step 2
+ *     (echo (i))
+ * )
+ * ; 1
+ * ; 3
+ * ; 5
+ * ; 7
+ * ; 9
+ *
+ * (repeat x from 4 to 6
+ *     (echo (pow 2 (x)))
+ * )
+ * ; 16
+ * ; 32
+ * ; 64
  */
 Expr::register('_repeat', function ($parts, $data)
 {
@@ -2804,16 +3823,21 @@ Expr::register('_repeat', function ($parts, $data)
 });
 
 /**
- * Repeats the specified block infinitely until a "break" is found.
- * loop <block>
+ * Repeats the specified block **indefinitely** until a `break` is found, be careful with this one.
+ * @code (`loop` <block>)
+ * @example
+ * (loop
+ *     (echo "Hello")
+ *     (break)
+ * )
+ * ; Hello
  */
 Expr::register('_loop', function ($parts, $data)
 {
     if ($parts->length < 2)
-        return '(`loop`: Wrong number of parameters)';
+        throw new Error('loop requires a block');
 
     $block = $parts->slice(1);
-
     while (true)
     {
         try {
@@ -2831,10 +3855,19 @@ Expr::register('_loop', function ($parts, $data)
 });
 
 /**
-**	Repeats the specified block until the condition is false or a "break" is found.
-**
-**	while <condition> <block>
-*/
+ * Repeats the specified block until the condition is `false` or a "break" is found.
+ * @code (`while` <condition> <block>)
+ * @example
+ * (set i 0)
+ * (while (lt? (i) 10)
+ *     (when-not (zero? (i))
+ *         (print ":"))
+ *
+ *     (print (i))
+ *     (inc i)
+ * )
+ * ; 0:1:2:3:4:5:6:7:8:9
+ */
 Expr::register('_while', function ($parts, $data)
 {
     if ($parts->length < 3)
@@ -2860,128 +3893,32 @@ Expr::register('_while', function ($parts, $data)
 });
 
 /**
-**	Constructs a list from the given arguments and returns it.
-**
-**	# <expr> [expr...]
-*/
-Expr::register('_#', function ($parts, $data)
-{
-    $s = new Arry();
-
-    for ($i = 1; $i < $parts->length(); $i++)
-        $s->push(Expr::expand($parts->get($i), $data, 'arg'));
-
-    return $s;
-});
-
-/**
-**	Constructs a non-expanded list from the given arguments and returns it.
-**
-**	## <expr> [expr...]
-*/
-Expr::register('_##', function ($parts, $data)
-{
-    $s = new Arry();
-
-    for ($i = 1; $i < $parts->length(); $i++)
-        $s->push($parts->get($i));
-
-    return $s;
-});
-
-/**
-**	Constructs an object.
-**
-**	& <name> <expr> [name expr...]
-**	& <name>: <expr> [name: expr...]
-**	& :<name> <expr> [:name expr...]
-*/
-Expr::register('_&', function ($parts, $data)
-{
-    return Expr::getNamedValues ($parts, $data, 1, true);
-});
-
-/**
- **	Constructs a non-expanded associative array (dictionary) and returns it.
- **
- **	&& <name> <expr> [name <expr>...]
- **	&& <name>: <expr> [name: <expr>...]
- **	&& :<name> <expr> [:<name> <expr>...]
+ * Maps each value in the array/map to a new value returned by the block.
+ * @code (`map` [key-var:val-var | val-var] [`in`] <iterable> <block>)
+ * @example
+ * (map [1 2 3] (* (i) 1.5))
+ * ; [1.5, 3, 4.5]
+ *
+ * (map x [1 2 3] (pow 2 (x)))
+ * ; [2, 4, 8]
+ *
+ * (map key:val { "a" 1 "b" 2 "c" 3 } (concat (key) "=" (val)) )
+ * ; ["a=1", "b=2", "c=3"]
  */
-Expr::register('_&&', function ($parts, $data)
-{
-    return Expr::getNamedValues ($parts, $data, 1, false);
-});
-
-/**
-**	Returns true if the specified map contains all the specified keys. If it fails the global variable `err` will contain an error message.
-**
-**	contains <expr> <name> [name...]
-*/
-Expr::register('contains', function ($args, $parts, $data)
-{
-    $value = $args->get(1);
-
-    if (typeOf($value) !== 'Rose\\Map')
-    {
-        $data->err = 'Argument is not a Map';
-        return false;
-    }
-
-    $s = '';
-
-    for ($i = 2; $i < $args->length; $i++)
-    {
-        if (!$value->has($args->get($i), true))
-            $s .= ', '.$args->get($i);
-    }
-
-    if ($s !== '') {
-        $data->err = Text::substring($s, 1);
-        return false;
-    }
-
-    return true;
-});
-
-/**
-**	Returns true if a map has some key, or if a list has some value. Returns boolean.
-**
-**	has <name> <map-expr>
-**	has <value> <array-expr>
-**  has <value> <string-expr>
-*/
-Expr::register('has', function ($args, $parts, $data)
-{
-    $value = $args->get(2);
-    $typeOf = typeOf($value);
-
-    if ($typeOf === 'Rose\\Map')
-        return $value->has($args->get(1), true);
-
-    if ($typeOf === 'Rose\\Arry')
-        return $value->indexOf($args->get(1)) !== null;
-
-    if ($typeOf === 'primitive')
-        return Text::indexOf($value, $args->get(1)) !== false;
-
-    return false;
-});
-
-/**
-**	map [varname] <array-expr> <block>
-*/
 Expr::register('_map', function ($parts, $data)
 {
     $i = 1;
     Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
+    if (Expr::isIdentifier($parts, $i, 'in'))
+        $i++;
+
     $list = Expr::expand($parts->get($i), $data, 'arg');
+    $type = \Rose\typeOf($list, true);
+    if ($type !== 'Rose\Arry' && $type !== 'Rose\Map')
+        throw new Error('invalid iterable type \''.$type.'\' for `map` operation');
 
-    if (!$list || (\Rose\typeOf($list) !== 'Rose\Arry' && \Rose\typeOf($list) !== 'Rose\Map'))
-        return $list;
-
-    $arrayMode = \Rose\typeOf($list) === 'Rose\\Arry' ? true : false;
+    $arrayMode = $type === 'Rose\\Arry' ? true : false;
     $output = $arrayMode ? new Arry() : new Map();
     $j = 0;
 
@@ -3014,19 +3951,29 @@ Expr::register('_map', function ($parts, $data)
 });
 
 /**
-**	filter [varname] <array-expr> <block>
-*/
+ * Returns a new array/map with the values that pass the test implemented by the block.
+ * @code (`filter` [key-var:val-var | val-var] [`in`] <iterable> <block>)
+ * @example
+ * (filter [1 2 3 4 5] (lt? (i) 3))
+ * ; [1, 2]
+ *
+ * (filter x in [1 2 3 4 5] (odd? (x)))
+ * ; [1, 3, 5]
+ */
 Expr::register('_filter', function ($parts, $data)
 {
     $i = 1;
     Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
+    if (Expr::isIdentifier($parts, $i, 'in'))
+        $i++;
+
     $list = Expr::expand($parts->get($i), $data, 'arg');
+    $type = \Rose\typeOf($list, true);
+    if ($type !== 'Rose\Arry' && $type !== 'Rose\Map')
+        throw new Error('invalid iterable type \''.$type.'\' for `filter` operation');
 
-    if (!$list || (\Rose\typeOf($list) !== 'Rose\Arry' && \Rose\typeOf($list) !== 'Rose\Map'))
-        return $list;
-
-    $arrayMode = typeOf($list) === 'Rose\\Arry' ? true : false;
+    $arrayMode = $type === 'Rose\\Arry' ? true : false;
     $output = $arrayMode ? new Arry() : new Map();
     $j = 0;
 
@@ -3053,18 +4000,32 @@ Expr::register('_filter', function ($parts, $data)
     return $output;
 });
 
+
 /**
-**	every [varname] <array-expr> <block>
-*/
-Expr::register('_every', function ($parts, $data)
+ * Returns `true` if all the values in the array/map pass the test implemented by the block.
+ * @code (`all` [key-var:val-var | val-var] [`in`] <iterable> <block>)
+ * @example
+ * (all [1 2 3 4 5] (lt? (i) 6))
+ * ; true
+ *
+ * (all x in [1 2 3 4 5] (odd? (x)))
+ * ; false
+ *
+ * (all key:val { "a" 1 "b" 2 "c" 3 } (lt? (val) 4))
+ * ; true
+ */
+Expr::register('_all', function ($parts, $data)
 {
     $i = 1;
     Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
-    $list = Expr::expand($parts->get($i), $data, 'arg');
+    if (Expr::isIdentifier($parts, $i, 'in'))
+        $i++;
 
-    if (!$list || (\Rose\typeOf($list) !== 'Rose\Arry' && \Rose\typeOf($list) !== 'Rose\Map'))
-        return $list;
+    $list = Expr::expand($parts->get($i), $data, 'arg');
+    $type = \Rose\typeOf($list, true);
+    if ($type !== 'Rose\Arry' && $type !== 'Rose\Map')
+        throw new Error('invalid iterable type \''.$type.'\' for `all` operation');
 
     $output = true;
     $j = 0;
@@ -3091,17 +4052,27 @@ Expr::register('_every', function ($parts, $data)
 });
 
 /**
-**	some [varname] <array-expr> <block>
-*/
-Expr::register('_some', function ($parts, $data)
+ * Returns `true` if at least one of the values in the array/map pass the test implemented by the block.
+ * @code (`any` [key-var:val-var | val-var] [`in`] <iterable> <block>)
+ * @example
+ * (any [1 2 3 4 5] (lt? (i) 2))
+ * ; true
+ *
+ * (any x in [2 4 16] (odd? (x)))
+ * ; false
+ */
+Expr::register('_any', function ($parts, $data)
 {
     $i = 1;
     Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
-    $list = Expr::expand($parts->get($i), $data, 'arg');
+    if (Expr::isIdentifier($parts, $i, 'in'))
+        $i++;
 
-    if (!$list || (\Rose\typeOf($list) !== 'Rose\Arry' && \Rose\typeOf($list) !== 'Rose\Map'))
-        return $list;
+    $list = Expr::expand($parts->get($i), $data, 'arg');
+    $type = \Rose\typeOf($list, true);
+    if ($type !== 'Rose\Arry' && $type !== 'Rose\Map')
+        throw new Error('invalid iterable type \''.$type.'\' for `any` operation');
 
     $output = false;
     $j = 0;
@@ -3128,17 +4099,30 @@ Expr::register('_some', function ($parts, $data)
 });
 
 /**
-**	find [varname] <array-expr> <block>
-*/
+ * Returns the first value in the array/map that passes the test implemented by the block or `null` if none found.
+ * @code (`find` [key-var:val-var | val-var] [`in`] <iterable> <block>)
+ * @example
+ * (find [1 2 3 4 5] (gt? (i) 3))
+ * ; 4
+ *
+ * (find x in [2 4 16] (odd? (x)))
+ * ; null
+ *
+ * (find key:val { "a" 1 "b" 2 "c" 3 } (eq? (key) "c"))
+ * ; 3
+ */
 Expr::register('_find', function ($parts, $data)
 {
     $i = 1;
     Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
-    $list = Expr::expand($parts->get($i), $data, 'arg');
+    if (Expr::isIdentifier($parts, $i, 'in'))
+        $i++;
 
-    if (!$list || (\Rose\typeOf($list) !== 'Rose\Arry' && \Rose\typeOf($list) !== 'Rose\Map'))
-        return $list;
+    $list = Expr::expand($parts->get($i), $data, 'arg');
+    $type = \Rose\typeOf($list, true);
+    if ($type !== 'Rose\Arry' && $type !== 'Rose\Map')
+        throw new Error('invalid iterable type \''.$type.'\' for `find` operation');
 
     $output = null;
     $j = 0;
@@ -3165,17 +4149,30 @@ Expr::register('_find', function ($parts, $data)
 });
 
 /**
-**	findIndex [varname] <array-expr> <block>
-*/
-Expr::register('_findIndex', function ($parts, $data)
+ * Returns the index of the first value in the array/map that passes the test implemented by the block or `null` if none found.
+ * @code (`find-index` [key-var:val-var | val-var] [`in`] <iterable> <block>)
+ * @example
+ * (find-index [1 2 3 4 5] (gt? (i) 3))
+ * ; 3
+ *
+ * (find-index x in [2 4 16] (odd? (x)))
+ * ; null
+ *
+ * (find-index key:val { "a" 1 "b" 2 "c" 3 } (eq? (key) "c"))
+ * ; 2
+ */
+Expr::register('_find-index', function ($parts, $data)
 {
     $i = 1;
     Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
-    $list = Expr::expand($parts->get($i), $data, 'arg');
+    if (Expr::isIdentifier($parts, $i, 'in'))
+        $i++;
 
-    if (!$list || (\Rose\typeOf($list) !== 'Rose\Arry' && \Rose\typeOf($list) !== 'Rose\Map'))
-        return $list;
+    $list = Expr::expand($parts->get($i), $data, 'arg');
+    $type = \Rose\typeOf($list, true);
+    if ($type !== 'Rose\Arry' && $type !== 'Rose\Map')
+        throw new Error('invalid iterable type \''.$type.'\' for `find` operation');
 
     $output = null;
     $j = 0;
@@ -3202,27 +4199,79 @@ Expr::register('_findIndex', function ($parts, $data)
 });
 
 /**
-**	reduce [iter-var] [init-var] <initial> <array-expr> <block>
-*/
+ * Reduces the array/map to a single value using the block to process each value. An accumulator and iteration values are
+ * passed to the block.
+ * @code (`reduce` [key-var:val-var | val-var] [accum-var='s'] [accum-initial=0] [`in`] <iterable> <block>)
+ * @example
+ * (reduce x in [1 2 3 4 5] (+ (s) (x)))
+ * ; 15
+ *
+ * (reduce key:val in { "a" 1 "b" 2 "c" 3 } (+ (s) (val)))
+ * ; 6
+ *
+ * (reduce x accum 0 [1 7 15] (+ (accum) (x)))
+ * ; 23
+ */
 Expr::register('_reduce', function ($parts, $data)
 {
     $i = 1;
-    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name, 'a');
+    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name, 'i');
 
-    $initial_name = 'b';
-    Expr::takeIdentifier($parts, $data, $i, $initial_name);
+    if (Expr::isIdentifier($parts, $i, 'in'))
+    {
+        $accum_name = 's';
+        $initial = 0;
+        $i++;
 
-    $initial = Expr::expand($parts->get($i++), $data, 'arg');
-    $list = Expr::expand($parts->get($i++), $data, 'arg');
-    if (!$list || (\Rose\typeOf($list) !== 'Rose\Arry' && \Rose\typeOf($list) !== 'Rose\Map'))
-        return $list;
+        $list = Expr::expand($parts->get($i++), $data, 'arg');
+        $type = \Rose\typeOf($list);
+        if ($type !== 'Rose\Arry' && $type !== 'Rose\Map')
+            throw new Error('invalid iterable type \''.$type.'\' for `reduce` operation');
+    }
+    else
+    {
+        $accum_name = 's';
+        Expr::takeIdentifier($parts, $data, $i, $accum_name);
+
+        if (Expr::isIdentifier($parts, $i, 'in'))
+        {
+            $initial = 0;
+            $i++;
+
+            $list = Expr::expand($parts->get($i++), $data, 'arg');
+            $type = \Rose\typeOf($list);
+            if ($type !== 'Rose\Arry' && $type !== 'Rose\Map')
+                throw new Error('invalid iterable type \''.$type.'\' for `reduce` operation');
+        }
+        else
+        {
+            $initial = Expr::expand($parts->get($i++), $data, 'arg');
+
+            $type = \Rose\typeOf($initial);
+            if ($type === 'Rose\Arry' || $type === 'Rose\Map')
+            {
+                $list = $initial;
+                $initial = 0;
+            }
+            else
+            {
+                if (Expr::isIdentifier($parts, $i, 'in'))
+                    $i++;
+
+                $list = Expr::expand($parts->get($i++), $data, 'arg');
+                $type = \Rose\typeOf($list);
+                if ($type !== 'Rose\Arry' && $type !== 'Rose\Map')
+                    throw new Error('invalid iterable type \''.$type.'\' for `reduce` operation');
+            }
+        }
+    }
 
     $j = 0;
 
     $block = $parts->slice($i);
-    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$initial_name, &$initial, &$j, &$data, &$block)
+    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$accum_name, &$initial, &$j, &$data, &$block)
     {
-        $data->set($initial_name, $initial);
+        $data->set($accum_name, $initial);
         $data->set($var_name, $item);
         $data->set($index_name, $j++);
         $data->set($key_name, $key);
@@ -3230,7 +4279,7 @@ Expr::register('_reduce', function ($parts, $data)
         $initial = Expr::blockValue($block, $data);
     });
 
-    $data->remove($initial_name);
+    $data->remove($accum_name);
     $data->remove($var_name);
     $data->remove($index_name);
     $data->remove($key_name);
@@ -3239,36 +4288,47 @@ Expr::register('_reduce', function ($parts, $data)
 });
 
 /**
-**	select [varname] <condition> <array-expr>
-*/
-Expr::register('_select', function ($parts, $data)
+ * Returns a new map created with the specified key-expression and value-expression.
+ * @code (`mapify` [key-var:val-var | val-var] [`in`] <iterable> <key-expr> [value-expr])
+ * @example
+ * (mapify i [1 2 3] (concat "K" (i)) (pow 2 (i)))
+ * ; {"K1":2,"K2":4,"K3":8}
+ *
+ * (mapify idx:val in [1 2 3] (* (idx) (val)))
+ * ; {0:1,2:2,6:3}
+ */
+Expr::register('_mapify', function ($parts, $data)
 {
     $i = 1;
     Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
-    $list = $parts->has($i+1) ? Expr::expand($parts->get($i+1), $data, 'arg') : Expr::$context->defaultValue;
+    if (Expr::isIdentifier($parts, $i, 'in'))
+        $i++;
 
-    if (!$list || (\Rose\typeOf($list) !== 'Rose\Arry' && \Rose\typeOf($list) !== 'Rose\Map'))
-        return $list;
+    $list = Expr::expand($parts->get($i), $data, 'arg');
+    $type = \Rose\typeOf($list, true);
+    if ($type !== 'Rose\Arry' && $type !== 'Rose\Map')
+        throw new Error('invalid iterable type \''.$type.'\' for `mapify` operation');
 
-    $arrayMode = typeOf($list) === 'Rose\\Arry' ? true : false;
-    $output = $arrayMode ? new Arry() : new Map();
+    $output = new Map();
     $j = 0;
 
-    $condition = $parts->get($i);
-    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$arrayMode, &$data, &$condition)
+    $key_expr = $parts->get($i+1);
+    $val_expr = $parts->has($i+2) ? $parts->get($i+2) : null;
+
+    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$arrayMode, &$data, &$key_expr, &$val_expr)
     {
         $data->set($var_name, $item);
         $data->set($index_name, $j++);
         $data->set($key_name, $key);
 
-        if (!!Expr::value($condition, $data))
-        {
-            if ($arrayMode)
-                $output->push($item);
-            else
-                $output->set($key, $item);
-        }
+        $key = Expr::expand($key_expr, $data, 'arg');
+        $value = $item;
+
+        if ($val_expr != null)
+            $value = Expr::expand($val_expr, $data, 'arg');
+
+        $output->set($key, $value);
     });
 
     $data->remove($var_name);
@@ -3279,59 +4339,57 @@ Expr::register('_select', function ($parts, $data)
 });
 
 /**
-**	pipe <expression>+
-*/
-Expr::register('_pipe', function ($parts, $data)
+ * Returns a new map created by grouping all values having the same key-expression.
+ * @code (`groupify` [key-var:val-var | val-var] [`in`] <iterable> <key-expr> [value-expr])
+ * @example
+ * (groupify i [1 2 3 4 5 6 7 8 9 10] (mod (i) 3))
+ * ; {"1":[1,4,7,10],"2":[2,5,8],"0":[3,6,9]}
+ *
+ * (groupify i [1 2 3 4] (mod (i) 2) (* 3 (i)))
+ * ; {"1":[3,9],"0":[6,12]}
+ */
+Expr::register('_groupify', function ($parts, $data)
 {
     $i = 1;
+    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
 
-    Expr::takeIdentifier($parts, $data, $i, $var_name);
+    if (Expr::isIdentifier($parts, $i, 'in'))
+        $i++;
 
-    Expr::$context->defaultValue = null;
+    $list = Expr::expand($parts->get($i), $data, 'arg');
+    $type = \Rose\typeOf($list, true);
+    if ($type !== 'Rose\Arry' && $type !== 'Rose\Map')
+        throw new Error('invalid iterable type \''.$type.'\' for `groupify` operation');
 
-    for (; $i < $parts->length; $i++)
+    $output = new Map();
+    $j = 0;
+
+    $key_expr = $parts->get($i+1);
+    $val_expr = $parts->has($i+2) ? $parts->get($i+2) : null;
+
+    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$arrayMode, &$data, &$key_expr, &$val_expr)
     {
-        Expr::$context->defaultValue = $value = Expr::value($parts->get($i), $data);
-    }
+        $data->set($var_name, $item);
+        $data->set($index_name, $j++);
+        $data->set($key_name, $key);
 
-    return $value;
-});
+        $key = (string)Expr::expand($key_expr, $data, 'arg');
+        $value = $item;
 
-/**
-**	expand <template> <data>
-*/
-Expr::register('expand', function ($args, $parts, $data)
-{
-    if (typeOf($args->get(1)) === 'Rose\\Arry')
-        return Expr::expand ($args->get(1), $args->length == 3 ? $args->get(2) : $data);
-    else
-        return Expr::expand (Expr::parseTemplate (Expr::clean($args->get(1)), '{', '}', false, 1, false), $args->length == 3 ? $args->get(2) : $data);
-});
+        if ($val_expr != null)
+            $value = Expr::expand($val_expr, $data, 'arg');
 
-/**
-**	eval <expression-string> [data]
-*/
-Expr::register('eval', function ($args, $parts, $data)
-{
-    try {
-        if (typeOf($args->get(1)) === 'Rose\\Arry')
-            return Expr::expand(Expr::clean($args->get(1)), $args->length == 3 ? $args->get(2) : $data, 'last');
-        else
-            return Expr::expand(Expr::clean(Expr::parseTemplate (Expr::clean($args->get(1)), '(', ')', false, 1, true)), $args->length == 3 ? $args->get(2) : $data, 'last');
-    }
-    catch (MetaError $e)
-    {
-        switch ($e->isForMe(-1) ? $e->code : null)
-        {
-            case 'EXPR_YIELD':
-                return $e->value;
+        if (!$output->has($key))
+            $output->set($key, new Arry());
 
-            case 'FN_RET':
-                return $e->value;
-        }
+        $output->get($key)->push($value);
+    });
 
-        throw $e;
-    }
+    $data->remove($var_name);
+    $data->remove($index_name);
+    $data->remove($key_name);
+
+    return $output;
 });
 
 /**
@@ -3481,59 +4539,133 @@ Expr::register('throw', function ($args, $parts, $data)
  * @example
  * (assert (eq 1 2) "1 is not equal to 2")
  * ; Error: 1 is not equal to 2
- * 
+ *
  * (assert false)
  * ; Error: Assertion failed
  */
 Expr::register('_assert', function ($parts, $data)
 {
-    if (Expr::expand($parts->get(1), $data, 'arg'))
+    if (Expr::value($parts->get(1), $data))
         return null;
 
-    throw new \Exception ($parts->has(2) ? Expr::expand($parts->get(2), $data) : 'Assertion failed');
+    throw new \Exception ($parts->has(2) ? Expr::value($parts->get(2), $data) : 'Assertion failed');
 });
 
 /**
-**	yield <level> <value>
-**	yield [value]
-*/
-Expr::register('yield', function($args) {
-    
-    if ($args->length == 3)
-        throw new MetaError('EXPR_YIELD', $args->get(2), Math::max(1, $args->get(1)));
-    else
-        throw new MetaError('EXPR_YIELD', $args->has(1) ? $args->get(1) : null, 1);
+ * Throws an error if the specified values are not equal.
+ * @code (`assert-eq` <value1> <value2> [message])
+ * @example
+ * (assert-eq 1 2 "Oh no!")
+ * ; Error: Oh no! => 1 != 2
+ */
+Expr::register('_assert-eq', function ($parts, $data)
+{
+    $value1 = Expr::value($parts->get(1), $data);
+    $value2 = Expr::value($parts->get(2), $data);
+
+    if ($value1 == $value2)
+        return null;
+
+    $err = $value1 . ' != ' . $value2;
+    throw new \Exception (($parts->has(3) ? Expr::expand($parts->get(3), $data) : 'Assertion failed') . ' => ' . $err);
 });
 
 /**
-**	exit <level>
-*/
-Expr::register('exit', function($args) {
-    
-    throw new MetaError('EXPR_YIELD', null, Math::max(1, $args->get(1)));
+ * Executes one or more expressions and makes the result of each available to the next via the internal `_` variable.
+ * @code (`pipe` <expr...>)
+ * @example
+ * (pipe
+ *     10
+ *     (+ 2 _)
+ *     (pow _ 2)
+ * )
+ * ; 144
+ */
+Expr::register('_pipe', function ($parts, $data)
+{
+    $i = 1;
+
+    Expr::takeIdentifier($parts, $data, $i, $var_name);
+    Expr::$context->defaultValue = null;
+
+    for (; $i < $parts->length; $i++)
+        Expr::$context->defaultValue = $value = Expr::value($parts->get($i), $data);
+
+    return $value;
 });
 
 /**
-**	with <varname> <value> <block>
-*/
+ * Expands the specified template string using the given data. The result will always be a string. The s-expression enclosing
+ * symbols will be '{' and '}' respectively instead of the usual parenthesis. If no data is provided, the current context will be used.
+ * @code (`expand` <template> [data])
+ * @example
+ * (expand "Hello {name}!" (& name "John"))
+ * ; Hello John!
+ *
+ * (expand "Hello {upper {name}}!" (& name "Jane"))
+ * ; Hello JANE!
+ */
+Expr::register('expand', function ($args, $parts, $data) {
+    return Expr::expand (Expr::parseTemplate (Expr::clean($args->get(1)), '{', '}', false, 1, false), $args->length == 3 ? $args->get(2) : $data);
+});
+
+/**
+ * Evaluates the specified template string using the given data. If no data is provided, the current context will be used.
+ * @code (`eval` <template> [data])
+ * @example
+ * (eval `(eq? 1 1)`)
+ * ; true
+ * 
+ * (eval `(concat (upper (name)) ' ' Doe)` (& name "John"))
+ * ; JOHN Doe
+ */
+Expr::register('eval', function ($args, $parts, $data)
+{
+    try {
+        return Expr::expand(Expr::clean(Expr::parseTemplate (Expr::clean($args->get(1), true), '(', ')', false, 1, true), true), $args->length == 3 ? $args->get(2) : $data, 'last');
+    }
+    catch (MetaError $e)
+    {
+        switch ($e->isForMe(-1) ? $e->code : null)
+        {
+            case 'EXPR_YIELD':
+                return $e->value;
+
+            case 'FN_RET':
+                return $e->value;
+        }
+
+        throw $e;
+    }
+});
+
+/**
+ * Introduces a new temporal variable with the specified value to be used in the block, the variable will be returned to its original
+ * state (or removed) once the `with` block is completed. Returns the value returned by the block.
+ * @code (`with` [var='i'] <value> <block>)
+ * @example
+ * (with a 12
+ *     (echo (a))
+ * )
+ * (echo (a))
+ * ; 12
+ * ; Error: Function `a` not found.
+ */
 Expr::register('_with', function($parts, $data)
 {
     $var_name = 'i';
     $i = 1;
-
     Expr::takeIdentifier($parts, $data, $i, $var_name);
 
     $old_value_present = false;
     $old_value = null;
 
-    if ($data->has($var_name))
-    {
+    if ($data->has($var_name)) {
         $old_value_present = true;
         $old_value = $data->{$var_name};
     }
 
     $data->{$var_name} = Expr::expand($parts->get($i), $data, 'arg');
-
     $value = Expr::blockValue($parts->slice($i+1), $data);
 
     if ($old_value_present)
@@ -3545,15 +4677,112 @@ Expr::register('_with', function($parts, $data)
 });
 
 /**
-**	ret [value]
-*/
-Expr::register('ret', function($args) {
-    throw new MetaError ('FN_RET', $args->has(1) ? $args->get(1) : null);
+ * Yields a value to an inner block at a desired level to force the result to be the specified value, thus efectively
+ * exiting all the way to that block. If no level is specified, the current block will be used.
+ * Note: The inner-most block is level-1.
+ * @code (`yield` [level] <value>)
+ * @example
+ * (echo
+ *     (block ;@3
+ *         (echo "@3-start")
+ *         (block ;@2
+ *             (echo "@2-start")
+ *             (block ;@1
+ *                 (echo "@1-start")
+ *                 (yield 3 "Value-3")
+ *                 (echo "@1-end")
+ *             )
+ *             (echo "@2-end")
+ *             "Value-2"
+ *         )
+ *         (echo "@3-end")
+ *         "Value-1"
+ *     )
+ * )
+ * ; @3-start
+ * ; @2-start
+ * ; @1-start
+ * ; Value-3
+ */
+// TODO: Should this be removed?
+Expr::register('yield', function($args) {
+    if ($args->length == 3)
+        throw new MetaError('EXPR_YIELD', $args->get(2), Math::max(1, $args->get(1)));
+    else
+        throw new MetaError('EXPR_YIELD', $args->has(1) ? $args->get(1) : null, 1);
 });
 
-/*
-**	fn <param-name>* <block>
-*/
+/**
+ * Yields a `null` value to an inner block at a desired level, efectively exiting all the way to that block. If no
+ * level is specified, the current block will be used.
+ * Note: The inner-most block is level-1.
+ * @code (`exit` [level])
+ * @example
+ * (echo (dump
+ *     (block ;@3
+ *         (echo "@3-start")
+ *         (block ;@2
+ *             (echo "@2-start")
+ *             (exit 2)
+ *             (echo "@2-end")
+ *         )
+ *         (echo "@3-end")
+ *         "Value-1"
+ *     )
+ * ))
+ * ; @3-start
+ * ; @2-start
+ * ; null
+ */
+// TODO: Should this be removed?
+Expr::register('exit', function($args) {
+    throw new MetaError('EXPR_YIELD', null, Math::max(1, $args->get(1)));
+});
+
+/**
+ * Sets the active namespace for any `def-*` statements.
+ * @code (`ns` [public|private] name)
+ * @example
+ * (ns math)
+ * (def PI 3.141592)
+ *
+ * (echo (math:PI))
+ * ; 3.141592
+ */
+Expr::register('ns', function($args, $parts, $data)
+{
+    $scope = 'public';
+    $i = 1;
+
+    while ($i < $args->length)
+    {
+        if ($args->get($i) === 'public' || $args->get($i) === 'private')
+        {
+            $scope = $args->get($i);
+            $i++;
+            continue;
+        }
+
+        break;
+    }
+
+    Expr::$context->currentScope = $scope;
+    Expr::$context->currentNamespace = $args->has($i) ? (string)$args->get($i) : '';
+
+    return null;
+});
+
+/**
+ * Creates a function with the specified parameters and function body. Returns the function object.
+ * @code (`fn` [param...] <block>)
+ * @example
+ * (set sum (fn a b
+ *     (+ (a) (b))
+ * ))
+ *
+ * ((sum) 5 7)
+ * ; 12
+ */
 Expr::register('_fn', function($parts, $data)
 {
     $params = new Arry();
@@ -3574,14 +4803,11 @@ Expr::register('_fn', function($parts, $data)
             $block = $parts->slice($i);
             $fn = function ($args, $parts, $data) use (&$params, &$restParam, &$block, &$name, &$context, &$contextData, &$rootData, &$minParams, &$defValues)
             {
-                global $_glb_object;
-
                 if ($args->length-1 < $params->length)
                     throw new Error ("invalid number of parameters, expected ".($params->length)." got ".($args->length-1));
 
                 $newData = new Map();
                 $newData->set('local', $contextData);
-                $newData->set('global', $_glb_object);
                 $newData->set('self', $rootData);
 
                 $params->forEach(function ($param, $index) use (&$newData, &$args, &$data, &$defValues)
@@ -3687,10 +4913,101 @@ Expr::register('_fn', function($parts, $data)
     return $fn;
 });
 
+/**
+ * Defines a constant variable in the current scope. The variable can only be changed by overriding it with another `def`.
+ * @code (`def` [private|public] <var-name> <value>)
+ * @example
+ * (def a "Hello")
+ *
+ * (def-fn x
+ *     (concat (a) " World"))
+ *
+ * (x)
+ * ; Hello World
+ */
+Expr::register('_def', function($parts, $data)
+{
+    $scope = Expr::$context->currentScope;
+    $i = 1;
 
-/*
-**	def-fn [private|public] <fn-name> <param-name>* <block>
-*/
+    while (true)
+    {
+        if ($parts->get($i)->get(0)->data === 'private') {
+            $scope = 'private';
+            $i++;
+            continue;
+        }
+    
+        if ($parts->get($i)->get(0)->data === 'public') {
+            $scope = 'public';
+            $i++;
+            continue;
+        }
+    
+        break;
+    }
+
+    $name = Expr::value($parts->get($i++), $data);
+    $value = Expr::value($parts->get($i), $data);
+
+    $fn = function() use (&$value) {
+        return $value;
+    };
+
+    $ns = Expr::$context->currentNamespace;
+    $flag = false;
+
+    if ($ns && Text::startsWith($name, $ns.NS_OPERATOR)) {
+        $name = Text::substring($name, Text::length($ns)+2);
+        $flag = true;
+    }
+
+    $isPrivate = $scope === 'private';
+
+    if (Text::startsWith($name, NS_OPERATOR)) {
+        $name = Text::substring($name, 2);
+        Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
+    }
+    else if (Text::indexOf($name, NS_OPERATOR) !== false && !$flag) {
+        if ($isPrivate)
+            Expr::$context->registerFunction($name, new ExprFn ($name, $fn, Expr::$context), true);
+        else
+            Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
+    }
+    else {
+        if ($ns) {
+            if (!$isPrivate)
+                Expr::$context->registerFunction($ns.NS_OPERATOR.$name, new ExprFn ($ns.NS_OPERATOR.$name, $fn, Expr::$context));
+            else
+                Expr::$context->registerFunction($ns.NS_OPERATOR.$name, new ExprFn ($ns.NS_OPERATOR.$name, $fn, Expr::$context), true);
+        }
+        else
+            Expr::$context->registerFunction($name, new ExprFn ($name, $fn, Expr::$context), $isPrivate);
+    }
+    
+    return null;
+});
+
+/**
+ * Defines a function with the given name, parameters and body block. Functions are isolated and do not have access to any of the
+ * outer scopes (except definitions created with `def` or `def-fn`), however the `local` object can be used to access the main
+ * scope (file where the function is defined), and `global` can be used to access the global scope.
+ * @code (`def-fn` [private|public] <fn-name> [param-name...] <block>)
+ * @example
+ * (set a 12)
+ *
+ * (def-fn add_value x
+ *     (+ (x) (a)))
+ *
+ * (def-fn add_value_2 x
+ *     (+ (x) (local.a)))
+ *
+ * (add_value 10)
+ * ; Error: Function `a` not found.
+ *
+ * (add_value_2 10)
+ * ; 22
+ */
 Expr::register('_def-fn', function($parts, $data)
 {
     $scope = Expr::$context->currentScope;
@@ -3737,14 +5054,11 @@ Expr::register('_def-fn', function($parts, $data)
             $block = $parts->slice($i);
             $fn = function ($args, $parts, $data) use (&$params, &$restParam, &$block, &$name, &$context, &$contextData, &$rootData, &$minParams, &$defValues)
             {
-                global $_glb_object;
-
                 if ($args->length-1 < $minParams)
                     throw new Error ("(".$name.") expects ".($minParams)." parameters got ".($args->length-1));
 
                 $newData = new Map();
                 $newData->set('local', $contextData);
-                $newData->set('global', $_glb_object);
                 // self is only available to anonymous functions to capture the outer scope
                 //$newData->set('self', $rootData);
 
@@ -3851,25 +5165,25 @@ Expr::register('_def-fn', function($parts, $data)
     $ns = Expr::$context->currentNamespace;
     $isPrivate = $scope === 'private';
     $flag = false;
-    if ($ns && Text::startsWith($name, $ns.'::')) {
+    if ($ns && Text::startsWith($name, $ns.NS_OPERATOR)) {
         $name = Text::substring($name, Text::length($ns)+2);
         $flag = true;
     }
 
-    if (Text::startsWith($name, '::')) {
+    if (Text::startsWith($name, NS_OPERATOR)) {
         $name = Text::substring($name, 2);
         Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
     }
-    else if (Text::indexOf($name, '::') !== false && !$flag) {
+    else if (Text::indexOf($name, NS_OPERATOR) !== false && !$flag) {
         if ($ns)
-            Expr::$context->registerFunction($ns.'::'.$name, new ExprFn ($ns.'::'.$name, $fn, Expr::$context), $isPrivate);
+            Expr::$context->registerFunction($ns.NS_OPERATOR.$name, new ExprFn ($ns.NS_OPERATOR.$name, $fn, Expr::$context), $isPrivate);
         else
             Expr::$context->registerFunction($name, new ExprFn ($name, $fn, Expr::$context), $isPrivate);
         //VIOLET??? Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
     }
     else {
         if ($ns)
-            Expr::$context->registerFunction($ns.'::'.$name, new ExprFn ($ns.'::'.$name, $fn, Expr::$context), $isPrivate);
+            Expr::$context->registerFunction($ns.NS_OPERATOR.$name, new ExprFn ($ns.NS_OPERATOR.$name, $fn, Expr::$context), $isPrivate);
         else
             Expr::$context->registerFunction($name, new ExprFn ($name, $fn, Expr::$context), $isPrivate);
     }
@@ -3877,307 +5191,37 @@ Expr::register('_def-fn', function($parts, $data)
     return null;
 });
 
-
-/*
-**	def [public|private] <varname> <value>
-*/
-Expr::register('_def', function($parts, $data)
-{
-    $scope = Expr::$context->currentScope;
-
-    $i = 1;
-
-    while (true)
-    {
-        if ($parts->get($i)->get(0)->data === 'private') {
-            $scope = 'private';
-            $i++;
-            continue;
-        }
-    
-        if ($parts->get($i)->get(0)->data === 'public') {
-            $scope = 'public';
-            $i++;
-            continue;
-        }
-    
-        break;
-    }
-
-    $name = Expr::value($parts->get($i++), $data);
-    $value = Expr::value($parts->get($i), $data);
-
-    $fn = function () use (&$value) {
-        return $value;
-    };
-
-    $ns = Expr::$context->currentNamespace;
-    $flag = false;
-
-    if ($ns && Text::startsWith($name, $ns.'::'))
-    {
-        $name = Text::substring($name, Text::length($ns)+2);
-        $flag = true;
-    }
-
-    $isPrivate = $scope === 'private';
-
-    if (Text::startsWith($name, '::'))
-    {
-        $name = Text::substring($name, 2);
-        Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
-    }
-    else if (Text::indexOf($name, '::') !== false && !$flag)
-    {
-        if ($isPrivate)
-            Expr::$context->registerFunction($name, new ExprFn ($name, $fn, Expr::$context), true);
-        else
-            Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
-    }
-    else
-    {
-        if ($ns)
-        {
-            if (!$isPrivate)
-                Expr::$context->registerFunction($ns.'::'.$name, new ExprFn ($ns.'::'.$name, $fn, Expr::$context));
-            else
-                Expr::$context->registerFunction($ns.'::'.$name, new ExprFn ($ns.'::'.$name, $fn, Expr::$context), true);
-        }
-        else
-            Expr::$context->registerFunction($name, new ExprFn ($name, $fn, Expr::$context), $isPrivate);
-    }
-    
-    return null;
+/**
+ * Returns from a function with the specified value (or `null` if none specified).
+ * @code (`ret` [value])
+ * @example
+ * (def-fn getval
+ *     (ret 3)
+ * )
+ * (getval)
+ * ; 3
+ */
+Expr::register('ret', function($args) {
+    throw new MetaError ('FN_RET', $args->has(1) ? $args->get(1) : null);
 });
 
-
-/*
-**	ns [public|private] [str-expr]
-*/
-Expr::register('ns', function($args, $parts, $data)
-{
-    $scope = 'public';
-    $i = 1;
-
-    while ($i < $args->length)
-    {
-        if ($args->get($i) === 'public' || $args->get($i) === 'private')
-        {
-            $scope = $args->get($i);
-            $i++;
-            continue;
-        }
-
-        break;
-    }
-
-    Expr::$context->currentScope = $scope;
-    Expr::$context->currentNamespace = $args->has($i) ? (string)$args->get($i) : '';
-
-    return null;
-});
-
-/*
-**	include <source-path>+
-*/
-Expr::register('include', function($args, $parts, $data)
-{
-    for ($i = 1; $i < $args->length; $i++)
-    {
-        $path = $args->get($i);
-
-        if (Text::startsWith($path, './'))
-            $path = Path::append(Expr::$context->currentPath, Text::substring($path, 2));
-        else if (!Text::startsWith($path, '/'))
-            $path = Path::append(Expr::$importPath, $path);
-
-        if (!Text::endsWith($path, '.fn'))
-            $path .= '.fn';
-
-        $path = Path::resolve($_path = $path);
-        if (!Path::exists($path))
-            throw new Error ("source does not exist: " . $_path);
-
-        $expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', '', File::getContents($path)));
-
-        for ($j = 0; $j < $expr->length; $j++)
-        {
-            if ($expr->get($j)->type !== 'template')
-            {
-                $expr->remove($j);
-                $j--;
-            }
-        }
-
-        MetaError::incBaseLevel();
-
-        try {
-            Expr::expand ($expr, Expr::$context->data, 'void');
-        }
-        catch (MetaError $e)
-        {
-            if (!$e->isForMe(-1)) throw $e;
-
-            switch ($e->code)
-            {
-                case 'EXPR_YIELD':
-                    break;
-
-                case 'FN_RET':
-                    break;
-
-                default:
-                    throw $e;
-            }
-        }
-        finally
-        {
-            MetaError::decBaseLevel();
-        }
-    }
-
-    return null;
-});
-
-
-/*
-**	import (<source-path> [as <namespace-name>])+
-*/
-Expr::register('import', function($args, $parts, $data)
-{
-    for ($i = 1; $i < $args->length; $i++)
-    {
-        $path = $args->get($i);
-        $ns = '';
-
-        if ($i+1 < $args->length && $args->get($i+1) === 'as') {
-            $ns = $args->get($i+2);
-            $i += 2;
-        }
-
-        if (Text::startsWith($path, './'))
-            $path = Path::append(Expr::$context->currentPath, Text::substring($path, 2));
-        else if (!Text::startsWith($path, '/'))
-            $path = Path::append(Expr::$importPath, $path);
-
-        if (!Text::endsWith($path, '.fn'))
-        {
-            if (!Path::exists(Path::resolve($path.'.fn'))) {
-                $env = Configuration::getInstance()->env;
-                if ($env && Path::exists(Path::resolve($path.'.'.$env.'.fn')))
-                    $path .= '.'.$env;
-            }
-            $path .= '.fn';
-        }
-
-        $path = Path::resolve($_path = $path);
-        $path_cache = null;
-
-        if (Expr::$cachePath && Text::startsWith($path, Expr::$importPath))
-            $path_cache = Path::append(Expr::$cachePath, Text::replace('/', '-', Text::substring($path, 1+Text::length(Expr::$importPath))));
-
-        if (!Path::exists($path))
-            throw new Error ("source does not exist: " . $_path);
-
-        if (Expr::$importedTime->get($path) == File::mtime($path, true))
-        {
-            Expr::$context->linkContext (Expr::$importedContext->get($path), $ns);
-            continue;
-        }
-
-        Expr::$importedTime->set($path, File::mtime($path, true));
-
-        if ($path_cache && Path::exists($path_cache) && File::mtime($path_cache, true) == File::mtime($path, true))
-        {
-            $expr = unserialize(File::getContents($path_cache));
-        }
-        else
-        {
-            $expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', '', File::getContents($path)));
-
-            for ($j = 0; $j < $expr->length; $j++)
-            {
-                if ($expr->get($j)->type !== 'template')
-                {
-                    $expr->remove($j);
-                    $j--;
-                }
-            }
-
-            if ($path_cache) {
-                File::setContents($path_cache, serialize($expr));
-                File::touch($path_cache, File::mtime($path, true));
-            }
-        }
-
-        Expr::$contextStack->push(Expr::$context);
-
-        Expr::$context = new Context();
-        Expr::$context->currentPath = Path::dirname($path);
-
-        Expr::$importedContext->set($path, Expr::$context);
-
-        MetaError::incBaseLevel();
-
-        try {
-            Expr::expand ($expr, Expr::$context->data, 'void');
-        }
-        catch (MetaError $e)
-        {
-            if (!$e->isForMe(-1)) throw $e;
-
-            switch ($e->code)
-            {
-                case 'EXPR_YIELD':
-                    break;
-
-                case 'FN_RET':
-                    break;
-
-                default:
-                    throw $e;
-            }
-        }
-        finally
-        {
-            $context = Expr::$context;
-            Expr::$context = Expr::$contextStack->pop();
-            Expr::$context->linkContext ($context, $ns);
-
-            MetaError::decBaseLevel();
-        }
-    }
-
-    return null;
-});
-
-/*
-**	zipmap <key-name...> <array-expr>
-**	zipmap <array-expr> <array-expr>
-*/
+/**
+ * Creates a new map by zipping the respective keys and values together.
+ * @code (`zipmap` <keys> <values>)
+ * @example
+ * (zipmap ["a" "b" "c"] [1 2 3])
+ * ; {"a":1,"b":2,"c":3}
+ */
 Expr::register('zipmap', function($args, $parts, $data)
 {
     $map = new Map();
+    $keys = $args->get(1);
+    $values = $args->get(2);
 
-    if (\Rose\typeOf($args->get(1)) === 'Rose\Arry')
-    {
-        $keys = $args->get(1);
-        $values = $args->get(2);
+    $n = Math::min($keys->length, $values->length);
 
-        $n = Math::min($keys->length, $values->length);
-
-        for ($i = 0; $i < $n; $i++)
-            $map->set($keys->get($i), $values->get($i));
-    }
-    else
-    {
-        $values = $args->last();
-
-        $n = Math::min($args->length-2, $values->length);
-
-        for ($i = 0; $i < $n; $i++)
-            $map->set($args->get($i+1), $values->get($i));
-    }
+    for ($i = 0; $i < $n; $i++)
+        $map->set($keys->get($i), $values->get($i));
 
     return $map;
 });
@@ -4186,113 +5230,26 @@ Expr::register('zipmap', function($args, $parts, $data)
 **	map-get <key-name...> <map-expr>
 **	map-get <arr-expr> <map-expr>
 */
+
+/**
+ * Extracts the specified keys from a given map and returns a new map.
+ * @code (`map-get` <keys> <map>)
+ * @example
+ * (map-get ["a" "b"] {"a" 1 "b" 2 "c" 3})
+ * ; {"a":1,"b":2}
+ */
 Expr::register('map-get', function($args, $parts, $data)
 {
     $map = new Map();
+    $keys = $args->get(1);
+    $values = $args->get(2);
 
-    if (\Rose\typeOf($args->get(1)) === 'Rose\Arry')
-    {
-        $keys = $args->get(1);
-        $values = $args->get(2);
-    }
-    else
-    {
-        $keys = $args->slice(1, $args->length-2);
-        $values = $args->get($args->length-1);
-    }
-
-    $keys->forEach(function ($key) use (&$map, &$values)
-    {
+    $keys->forEach(function ($key) use (&$map, &$values) {
         if ($values->has($key))
             $map->set ($key, $values->get($key));
     });
 
     return $map;
-});
-
-/**
-**	mapify [varname] <array-expr> <key-expr> [value-expr]
-*/
-Expr::register('_mapify', function ($parts, $data)
-{
-    $i = 1;
-    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
-
-    $list = Expr::expand($parts->get($i), $data, 'arg');
-
-    if (!$list || (\Rose\typeOf($list) !== 'Rose\Arry' && \Rose\typeOf($list) !== 'Rose\Map'))
-        return $list;
-
-    $output = new Map();
-    $j = 0;
-
-    $key_expr = $parts->get($i+1);
-    $val_expr = $parts->has($i+2) ? $parts->get($i+2) : null;
-
-    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$arrayMode, &$data, &$key_expr, &$val_expr)
-    {
-        $data->set($var_name, $item);
-        $data->set($index_name, $j++);
-        $data->set($key_name, $key);
-
-        $key = Expr::expand($key_expr, $data, 'arg');
-        $value = $item;
-
-        if ($val_expr != null)
-            $value = Expr::expand($val_expr, $data, 'arg');
-
-        $output->set($key, $value);
-    });
-
-    $data->remove($var_name);
-    $data->remove($index_name);
-    $data->remove($key_name);
-
-    return $output;
-});
-
-/**
-**	groupify [varname] <array-expr> <key-expr> [value-expr]
-*/
-Expr::register('_groupify', function ($parts, $data)
-{
-    $i = 1;
-    Expr::getIteratorName($parts, $data, $i, $var_name, $key_name, $index_name);
-
-    $list = Expr::expand($parts->get($i), $data, 'arg');
-
-    if (!$list || (\Rose\typeOf($list) !== 'Rose\Arry' && \Rose\typeOf($list) !== 'Rose\Map'))
-        return $list;
-
-    $output = new Map();
-    $j = 0;
-
-    $key_expr = $parts->get($i+1);
-    $val_expr = $parts->has($i+2) ? $parts->get($i+2) : null;
-
-    $list->forEach(function($item, $key) use(&$var_name, &$key_name, &$index_name, &$output, &$j, &$arrayMode, &$data, &$key_expr, &$val_expr)
-    {
-        $data->set($var_name, $item);
-        $data->set($index_name, $j++);
-        $data->set($key_name, $key);
-
-        $key = (string)Expr::expand($key_expr, $data, 'arg');
-        $value = $item;
-
-        if ($val_expr != null)
-            $value = Expr::expand($val_expr, $data, 'arg');
-
-        if (!$output->has($key))
-            $output->set($key, new Arry());
-
-        $output->get($key)->push($value);
-    });
-
-    $data->remove($var_name);
-    $data->remove($index_name);
-    $data->remove($key_name);
-
-    return $output;
 });
 
 /**

@@ -1,5 +1,4 @@
 # Available Functions
-- [Core](./00-Core.md)
 - [Array](./Array.md)
 - [Configuration](./Configuration.md)
 - [Cookies](./Cookies.md)

@@ -1,4 +1,4 @@
-[&laquo; Go Back](./Expr.md)
+[&laquo; Go Back](./README.md)
 # Text
 Utility functions to manipulate text strings.
 
@@ -68,17 +68,17 @@ Removes white space (or any of the given chars) and returns the result.
 ; "hello"
 ```
 
-### (`starts-with` \<value> \<text>)
+### (`starts-with?` \<value> \<text> [value-true=true] [value-false=false])
 Returns boolean indicating if the given text starts with the given value.
 ```lisp
-(starts-with "hello" "hello world")
+(starts-with? "hello" "hello world")
 ; true
 ```
 
-### (`ends-with` \<value> \<text>)
+### (`ends-with?` \<value> \<text> [value-true=true] [value-false=false])
 Returns boolean indicating if the given text ends with the given value.
 ```lisp
-(ends-with "world" "hello world")
+(ends-with? "world" "hello world")
 ; true
 ```
 

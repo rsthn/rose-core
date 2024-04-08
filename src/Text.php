@@ -308,24 +308,30 @@ Expr::register('trim', function ($args) {
 
 /**
  * Returns boolean indicating if the given text starts with the given value.
- * @code (`starts-with` <value> <text>)
+ * @code (`starts-with?` <value> <text> [value-true=true] [value-false=false])
  * @example
- * (starts-with "hello" "hello world")
+ * (starts-with? "hello" "hello world")
  * ; true
  */
-Expr::register('starts-with', function($args) {
-    return Text::startsWith($args->get(2), $args->get(1));
+Expr::register('_starts-with?', function($parts, $data) {
+    return Text::startsWith(Expr::value($parts->get(2), $data), Expr::value($parts->get(1), $data))
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
 });
 
 /**
  * Returns boolean indicating if the given text ends with the given value.
- * @code (`ends-with` <value> <text>)
+ * @code (`ends-with?` <value> <text> [value-true=true] [value-false=false])
  * @example
- * (ends-with "world" "hello world")
+ * (ends-with? "world" "hello world")
  * ; true
  */
-Expr::register('ends-with', function($args) {
-    return Text::endsWith($args->get(2), $args->get(1));
+Expr::register('_ends-with?', function($parts, $data) {
+    return Text::endsWith(Expr::value($parts->get(2), $data), Expr::value($parts->get(1), $data))
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+        ;
 });
 
 /**

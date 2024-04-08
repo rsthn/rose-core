@@ -1,9 +1,9 @@
-[&laquo; Go Back](./Expr.md)
+[&laquo; Go Back](./README.md)
 # Configuration
 
 
 ### (`config`)
-Object containing the currently loaded system configuration fields.
+Object containing the currently loaded system configuration.
 ```lisp
 (config)
 ; {"General": {"version": "1.0.0"}}

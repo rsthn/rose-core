@@ -7,15 +7,15 @@ use Rose\Gateway;
 use Rose\Text;
 use Rose\DateTime;
 
-/*
-**	Stores and retrieves persistent system parameters (cookies).
-*/
+/**
+ * Stores and retrieves persistent system parameters (cookies).
+ */
 
 class Cookies
 {
-    /*
-    **	Sets a cookie with optional expiration value (TTL, time-to-live, delta from current time).
-    */
+    /**
+     * Sets a cookie with optional expiration value (TTL, time-to-live, delta from current time).
+     */
     private static function setCookieHeader ($name, $value, $ttl=null, $domain=null, $path=null)
     {
         $path = $path == null ? Gateway::getInstance()->root.'/' : $path;
@@ -53,25 +53,25 @@ class Cookies
         Gateway::header('Set-Cookie: '.$header);
     }
 
-    /*
-    **	Returns true if the given cookie name exists.
-    */
+    /**
+     * Returns true if the given cookie name exists.
+     */
     public static function has ($name)
     {
         return Gateway::getInstance()->cookies->has($name);
     }
 
-    /*
-    **	Returns the cookie value matching the given name or null if not found.
-    */
+    /**
+     * Returns the cookie value matching the given name or null if not found.
+     */
     public static function get ($name)
     {
         return Gateway::getInstance()->cookies->get($name);
     }
 
-    /*
-    **	Sets a cookie with optional TTL value.
-    */
+    /**
+     * Sets a cookie with optional TTL value.
+     */
     public static function set ($name, $value, $ttl=null, $domain=null)
     {
         if ($ttl !== null)
@@ -80,9 +80,9 @@ class Cookies
             self::setCookieHeader ($name, $value, 0, $domain);
     }
 
-    /*
-    **	Removes a cookie given its name.
-    */
+    /**
+     * Removes a cookie given its name.
+     */
     public static function remove ($name, $domain=null)
     {
         self::setCookieHeader ($name, null, 0, $domain);

@@ -227,7 +227,7 @@ class Configuration extends Map
 };
 
 /**
- * Object containing the currently loaded system configuration fields.
+ * Object containing the currently loaded system configuration.
  * @code (`config`)
  * @example
  * (config)
