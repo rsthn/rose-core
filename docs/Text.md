@@ -153,3 +153,53 @@ Returns the string corresponding to the given binary values.
 (str:from-bytes (# 237 140 140 235 158 128 236 131 137))
 ; 파란색
 ```
+
+### (`str:uint8` \<value>)<br/>(`str:uint8` \<string-value> [offset=0])
+Returns a string representation of the given 8-bit unsigned integer or reads an 8-bit unsigned integer from the string.
+```lisp
+(str:uint8 0x40)
+; "@"
+
+(str:uint8 "@")
+; 0x40
+```
+
+### (`str:uint16` \<int-value>)<br/>(`str:uint16` \<string-value> [offset=0])
+Returns a string representation of the given 16-bit unsigned integer (little endian) or reads a 16-bit unsigned integer from the string.
+```lisp
+(str:uint16 0x4041)
+; "A@"
+
+(str:uint16 "A@")
+; 0x4041
+```
+
+### (`str:uint16be` \<int-value>)<br/>(`str:uint16be` \<string-value> [offset=0])
+Returns a string representation of the given 16-bit unsigned integer (big endian) or reads a 16-bit unsigned integer from the string.
+```lisp
+(str:uint16b 0x4041)
+; "@A"
+
+(str:uint16be "@A")
+; 0x4041
+```
+
+### (`str:uint32` \<int-value>)<br/>(`str:uint32` \<string-value> [offset=0])
+Returns a string representation of the given 32-bit unsigned integer (little endian) or reads a 32-bit unsigned integer from the string.
+```lisp
+(str:uint32 0x40414243)
+; "CBA@"
+
+(str:uint32 "CBA@")
+; 0x40414243
+```
+
+### (`str:uint32be` \<int-value>)<br/>(`str:uint32be` \<string-value> [offset=0])
+Returns a string representation of the given 32-bit unsigned integer (big endian) or reads a 32-bit unsigned integer from the string.
+```lisp
+(str:uint32be 0x40414243)
+; "@ABC"
+
+(str:uint32be "@ABC")
+; 0x40414243
+```

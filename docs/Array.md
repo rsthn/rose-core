@@ -2,11 +2,17 @@
 # Array
 
 
-### (`array` [values...])
-Create a new array with the given values (optional).
+### (`array` [values...])<br/>(`#` [values...])<br/>[ values... ]
+Constructs an array. Note that the second form (#) is legacy from previous syntax.
 ```lisp
 (array 1 2 3)
-; [1, 2, 3]
+; [1,2,3]
+
+(# 1 2 3)
+; [1,2,3]
+
+[1 2 3]
+; [1,2,3]
 ```
 
 ### (`array:sort` \<var-a> \<var-b> \<array> \<block>)

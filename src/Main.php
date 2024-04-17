@@ -317,7 +317,7 @@ class Main
      * Returns the version of the framework.
      */
     static function version() {
-        return '5.0.0'; //@version
+        return '5.0.1'; //@version
     }
 
     /**

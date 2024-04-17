@@ -30,20 +30,20 @@ Imports definitions from a source file into a namespace, or the current namespac
 Constructs an array. Note that the first form (#) is legacy from previous syntax.
 ```lisp
 (# 1 2 3 4 5)
-; [1, 2, 3, 4, 5]
+; [1,2,3,4,5]
 
 ["a" "b" "c"]
-; ["a", "b", "c"]
+; ["a","b","c"]
 ```
 
 ### (`&` [key value...])<br/>{ key value... }
-Constructs a map. Note that the first form (&) is legacy from previous syntax.
+Constructs a map with the given key-value pairs. Note that the first form (&) is legacy from previous syntax.
 ```lisp
 (& "name" "Jenny" "age" 25)
-; { "name": "Jenny", "age": 25 }
+; {"name":"Jenny","age":25}
 
-{ "name" "Jenny" "age" 25 }
-; { "name": "Jenny", "age": 25 }
+{ name "Jon" age 36 }
+; {"name":"Jon","age":36}
 ```
 
 ### (`echo` \<value...>)
@@ -681,6 +681,20 @@ Returns the maximum value of the given values.
 ; 3
 ```
 
+### (`shl` \<values...>)
+Returns the result of shifting the bits of the first value to the left by the second value.
+```lisp
+(shl 3 2)
+; 12
+```
+
+### (`shr` \<values...>)
+Returns the result of shifting the bits of the first value to the right by the second value.
+```lisp
+(shr 16 2)
+; 4
+```
+
 ### (`join` [glue] \<array>)
 Joins the array into a string. If `glue` is provided, it will be used as separator.
 ```lisp
@@ -1062,7 +1076,7 @@ Evaluates the specified template string using the given data. If no data is prov
 ; JOHN Doe
 ```
 
-### (`with` [var='i'] \<value> \<block>)
+### (`with` [var='i'] [`as`] \<value> \<block>)
 Introduces a new temporal variable with the specified value to be used in the block, the variable will be returned to its original
 state (or removed) once the `with` block is completed. Returns the value returned by the block.
 ```lisp

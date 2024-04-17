@@ -1,3 +1,47 @@
+# v5.0.1 - Apr 17 2024
+
+#### JSON
+- Fixed bug when using json:dump causing wrong formatting.
+
+#### General
+- Minor bug fixes
+
+#### Expr
+- Functions `inc` and `dec` now return the final value.
+- Fixed minor bug with namespace operator.
+- Updated `reply` function in Wind to log errors if content was already flushed and still echo it anyway as well.
+- Added `shl` and `shr` functions for bit shifting.
+- Fixed bug in parser causing comments to be parsed when inside a string.
+
+#### Crypto
+- Added `crypto:equals` a timing-attack safe string comparison.
+- Added `crypto:random-bytes` and removed `utils:random-bytes`
+
+#### OpenSSL
+- Added functions to sign, verify and encrypt using public/private key.
+- Improved documentation.
+- Added functions `der:parse`, `der:get` and `der:extract`
+- Added function `openssl:ciphers`
+
+#### Database
+- Normalized names of all functions.
+
+#### Request
+- Added functions `request:response-headers`, `request:headers`, and `request:status`
+
+#### Session
+- Added functions `session:load` and `session:save`
+
+#### Math
+- Added extra option to all transforming functions (i.e. `math:to-dec`) to specify number of alignment digits.
+- Added `math:align` function.
+
+#### Text
+- Added support to read/write binary integers from/to a string.
+- Added functions `str:uint8`, `str:uint16`, `str:uint16be`, `str:uint32` and `str:uint32be`
+
+<br/>
+
 # v5.0.0 - Apr 08 2024
 
 - Refactored to comply with latest v5 syntax guide.

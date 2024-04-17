@@ -44,17 +44,17 @@ Executes a query and returns an array with the first row, values only.
 ; ["Jack", "O'Neill"]
 ```
 
-### (`db:table` \<query> [...params])
+### (`db:rows` \<query> [...params])
 Executes a query and returns an array with all the resulting rows.
 ```lisp
-(db:table `SELECT name FROM super_users WHERE age >= ?` 18)
+(db:rows `SELECT name FROM super_users WHERE age >= ?` 18)
 ; [{"name": "Jack"}, {"name": "Daniel"}, {"name": "Samantha"}]
 ```
 
-### (`db:table-values` \<query> [...params])
+### (`db:rows-values` \<query> [...params])
 Executes a query and returns an array with row values.
 ```lisp
-(db:table-values `SELECT name, last_name FROM super_users WHERE status=?` "active")
+(db:rows-values `SELECT name, last_name FROM super_users WHERE status=?` "active")
 ; [["Jack", "O'Neill"], ["Daniel", "Jackson"], ["Samantha", "Carter"]]
 ```
 
@@ -126,25 +126,25 @@ Deletes one or more rows from a table and returns a boolean indicating success o
 ; true
 ```
 
-### (`db:lastInsertId`)
+### (`db:last-insert-id`)
 Returns the ID of the row created by the last insert operation.
 ```lisp
-(db:lastInsertId)
+(db:last-insert-id)
 ; 3
 ```
 
-### (`db:affectedRows`)
+### (`db:affected-rows`)
 Returns the number of affected rows by the last update operation.
 ```lisp
-(db:affectedRows)
+(db:affected-rows)
 ; 45
 ```
 
 ### (`db:open` \<config>)
-Opens a new connection and returns the database handle, use it only when managing multiple connections to different
-database servers because if only one is used (the default one) this is not necessary.
+Opens a new connection, sets it as active and returns the database handle, use it only when managing multiple
+connections to different database servers. If only one is used (the default one) this is not necessary.
 ```lisp
-(db:open (& server "localhost" user "main" password "mypwd" database "test" driver "mysql" trace false ))
+(db:open { server "localhost" user "main" password "mypwd" database "test" driver "mysql" trace false })
 ; [Rose\Data\Connection]
 ```
 

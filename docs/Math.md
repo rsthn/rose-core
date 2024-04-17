@@ -53,21 +53,28 @@ Clamps the given value to the range defined by [a, b].
 ; 10
 ```
 
-### (`math:to-hex` \<value>)
+### (`math:align` \<value> \<size>)
+Aligns the given value to the nearest multiple of the given size.
+```lisp
+(math:align 5 3)
+; 6
+```
+
+### (`math:to-hex` \<value> [size=2])
 Converts a number to a hexadecimal string.
 ```lisp
 (math:to-hex 255)
 ; ff
 ```
 
-### (`math:to-bin` \<value>)
+### (`math:to-bin` \<value> [size=8])
 Converts a number to a binary string.
 ```lisp
 (math:to-bin 129)
 ; 10000001
 ```
 
-### (`math:to-oct` \<value>)
+### (`math:to-oct` \<value> [size=3])
 Converts a number to an octal string.
 ```lisp
 (math:to-oct 15)

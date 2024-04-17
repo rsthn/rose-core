@@ -2,11 +2,17 @@
 # Map
 
 
-### (`map:new` [key value...])
-Create a new map with the given key-value pairs (optional).
+### (`map:new` [key value...])<br/>(`&` [key value...])<br/>{ key value... }
+Constructs a map with the given key-value pairs. Note that the second form (&) is legacy from previous syntax.
 ```lisp
 (map:new 'a' 1 'b' 2)
-; {'a': 1, 'b': 2}
+; {"a":1,"b":2}
+
+(& "name" "Jenny" "age" 25)
+; {"name":"Jenny","age":25}
+
+{ name "Jon" age 36 }
+; {"name":"Jon","age":36}
 ```
 
 ### (`map:sort-asc` \<map>)

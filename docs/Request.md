@@ -10,7 +10,7 @@ Executes a GET request and returns the response data.
 ```
 
 ### (`request:head` \<url> [fields...])
-Executes a HEAD request and returns the HTTP status code. Response headers will be available using `request:headers`.
+Executes a HEAD request and returns the HTTP status code. Response headers will be available using `request:response-headers`.
 ```lisp
 (request:head "http://example.com/api/currentTime")
 ; 200
@@ -51,20 +51,22 @@ Executes a fetch request using the specified method and returns a parsed JSON re
 ; { "currentTime": "2024-12-31T23:59:59" }
 ```
 
-### (`request:header` \<header...>)
-Sets one or more headers for the next request.
+### (`request:headers` [header-line|array])
+Returns the current headers or sets one or more headers for the next request.
 ```lisp
-(request:header "Authorization: Bearer MyToken")
+(request:headers "Authorization: Bearer MyToken")
 ; true
+(request:headers)
+; ["Authorization: Bearer MyToken"]
 ```
 
-### (`request:headers` [header])
+### (`request:response-headers` [header])
 Returns the response headers of the last request or a single header (if exists).
 ```lisp
-(request:headers)
+(request:response-headers)
 ; { "content-type": "application/json", "content-length": "123" }
 
-(request:headers "content-type")
+(request:response-headers "content-type")
 ; application/json
 ```
 
@@ -89,10 +91,10 @@ Sets the HTTP Authorization header for the next request.
 ; true
 ```
 
-### (`request:code`)
+### (`request:status`)
 Returns the HTTP status code of the last request.
 ```lisp
-(request:code)
+(request:status)
 ; 200
 ```
 

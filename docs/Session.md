@@ -21,6 +21,21 @@ configuration fields are obtained from the `Session` configuration section.
 Closes the current session and writes the session data to permanent storage (file system or database). If the `activityOnly` 
 parameter is `true` only the session's last activity field will be written to storage.
 
+### (`session:load` [createSession=true])
+Attempts to open an existing session and if exists its data will be loaded, the session will be immediately closed afterwards and only the
+`last_activity` field will be updated. This is useful to prevent session blocking. Use `session:save` to save the session data.
+```lisp
+(session:load)
+; true
+```
+
+### (`session:save`)
+Attempts to save the data to the session if it exists.
+```lisp
+(session:save)
+; true
+```
+
 ### (`session:destroy`)
 Destroys the current session, removes all session data including the session's cookie.
 

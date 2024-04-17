@@ -149,13 +149,6 @@ Parses a JSON string and returns the value.
 ; [1,2,3]
 ```
 
-### (`utils:random-bytes` \<length>)
-Generates a pseudo-random string of bytes.
-```lisp
-(utils:random-bytes 16)
-; (binary data)
-```
-
 ### (`utils:uuid`)
 Generates a random UUID (Universally Unique Identifier) version 4.
 ```lisp

@@ -46,3 +46,17 @@ Generates a unique code using a cryptographically secure random number generator
 (crypto:unique 16 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@$")
 ; QjE5SbH8z1OBliBS
 ```
+
+### (`crypto:equals` \<known-string> \<user-string>)
+Timing attack safe string comparison.
+```lisp
+(crypto:equals "Hello, World!" "Hello, World!")
+; true
+```
+
+### (`crypto:random-bytes` \<length>)
+Generates a pseudo-random string of bytes.
+```lisp
+(crypto:random-bytes 16)
+; (binary data)
+```
