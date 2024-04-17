@@ -450,3 +450,123 @@ Expr::register('str:from-bytes', function($args) {
         return chr($value);
     })->join('');
 });
+
+/**
+ * Returns a string representation of the given 8-bit unsigned integer or reads an 8-bit unsigned integer from the string.
+ * @code (`str:uint8` <value>)
+ * @code (`str:uint8` <string-value> [offset=0])
+ * @example
+ * (str:uint8 0x40)
+ * ; "@"
+ * 
+ * (str:uint8 "@")
+ * ; 0x40
+ */
+Expr::register('str:uint8', function($args) {
+    $value = $args->get(1);
+    if (!\Rose\isString($value)) {
+        $value = (int)$value;
+        return chr($value & 0xFF);
+    }
+
+    $value = Text::substring($value, $args->{2} ?? 0, 1);
+    if (Text::length($value) != 1)
+        throw new Error('Invalid string length for uint8');
+    return ord($value);
+});
+
+/**
+ * Returns a string representation of the given 16-bit unsigned integer (little endian) or reads a 16-bit unsigned integer from the string.
+ * @code (`str:uint16` <int-value>)
+ * @code (`str:uint16` <string-value> [offset=0])
+ * @example
+ * (str:uint16 0x4041)
+ * ; "A@"
+ * 
+ * (str:uint16 "A@")
+ * ; 0x4041
+ */
+Expr::register('str:uint16', function($args) {
+    $value = $args->get(1);
+    if (!\Rose\isString($value)) {
+        $value = (int)$value;
+        return chr($value & 0xFF) . chr($value >> 8);
+    }
+
+    $value = Text::substring($value, $args->{2} ?? 0, 2);
+    if (Text::length($value) != 2)
+        throw new Error('Invalid string length for uint16');
+    return ord($value[1]) << 8 | ord($value[0]);
+});
+
+/**
+ * Returns a string representation of the given 16-bit unsigned integer (big endian) or reads a 16-bit unsigned integer from the string.
+ * @code (`str:uint16be` <int-value>)
+ * @code (`str:uint16be` <string-value> [offset=0])
+ * @examplee
+ * (str:uint16b 0x4041)
+ * ; "@A"
+ * 
+ * (str:uint16be "@A")
+ * ; 0x4041
+ */
+Expr::register('str:uint16be', function($args) {
+    $value = $args->get(1);
+    if (!\Rose\isString($value)) {
+        $value = (int)$value;
+        return chr($value >> 8) . chr($value & 0xFF);
+    }
+
+    $value = Text::substring($value, $args->{2} ?? 0, 2);
+    if (Text::length($value) != 2)
+        throw new Error('Invalid string length for uint16be');
+    return ord($value[0]) << 8 | ord($value[1]);
+});
+
+/**
+ * Returns a string representation of the given 32-bit unsigned integer (little endian) or reads a 32-bit unsigned integer from the string.
+ * @code (`str:uint32` <int-value>)
+ * @code (`str:uint32` <string-value> [offset=0])
+ * @example
+ * (str:uint32 0x40414243)
+ * ; "CBA@"
+ * 
+ * (str:uint32 "CBA@")
+ * ; 0x40414243
+ */
+Expr::register('str:uint32', function($args) {
+    $value = $args->get(1);
+    if (!\Rose\isString($value)) {
+        $value = (int)$value;
+        return chr($value & 0xFF) . chr(($value >> 8) & 0xFF) . chr(($value >> 16) & 0xFF) . chr($value >> 24);
+    }
+
+    $value = Text::substring($value, $args->{2} ?? 0, 4);
+    if (Text::length($value) != 4)
+        throw new Error('Invalid string length for uint32');
+    return ord($value[3]) << 24 | ord($value[2]) << 16 | ord($value[1]) << 8 | ord($value[0]);
+});
+
+/**
+ * Returns a string representation of the given 32-bit unsigned integer (big endian) or reads a 32-bit unsigned integer from the string.
+ * @code (`str:uint32be` <int-value>)
+ * @code (`str:uint32be` <string-value> [offset=0])
+ * @example
+ * (str:uint32be 0x40414243)
+ * ; "@ABC"
+ * 
+ * (str:uint32be "@ABC")
+ * ; 0x40414243
+ */
+Expr::register('str:uint32be', function($args) {
+    $value = $args->get(1);
+    if (!\Rose\isString($value)) {
+        $value = (int)$value;
+        return chr($value >> 24) . chr(($value >> 16) & 0xFF) . chr(($value >> 8) & 0xFF) . chr($value & 0xFF);
+    }
+
+    $value = Text::substring($value, $args->{2} ?? 0, 4);
+    if (Text::length($value) != 4)
+        throw new Error('Invalid string length for uint32be');
+    return ord($value[0]) << 24 | ord($value[1]) << 16 | ord($value[2]) << 8 | ord($value[3]);
+});

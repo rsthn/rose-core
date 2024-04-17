@@ -38,6 +38,32 @@ Expr::register('session:close', function ($args) {
 });
 
 /**
+ * Attempts to open an existing session and if exists its data will be loaded, the session will be immediately closed afterwards and only the
+ * `last_activity` field will be updated. This is useful to prevent session blocking. Use `session:save` to save the session data.
+ * @code (`session:load` [createSession=true])
+ * @example
+ * (session:load)
+ * ; true
+ */
+Expr::register('session:load', function ($args) {
+    $result = Session::open($args->length == 2 ? \Rose\bool($args->get(1)) : true);
+    Session::close(true);
+    return $result;
+});
+
+/**
+ * Attempts to save the data to the session if it exists.
+ * @code (`session:save`)
+ * @example
+ * (session:save)
+ * ; true
+ */
+Expr::register('session:save', function ($args) {
+    Session::write(false);
+    return true;
+});
+
+/**
  * Destroys the current session, removes all session data including the session's cookie.
  * @code (`session:destroy`)
  */

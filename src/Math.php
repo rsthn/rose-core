@@ -79,24 +79,38 @@ abstract class Math
     }
 
     /**
+     * Aligns the given value to the nearest multiple of the given size.
+     */
+    public static function align ($value, $size)
+    {
+        $m = (int)($value / $size);
+        if ($value % $size)
+            $m++;
+        return $m * $size;
+    }
+
+    /**
      * Converts a number to a hexadecimal string.
      */
-    public static function toHex ($value) {
-        return dechex($value);
+    public static function toHex ($value, $size=2) {
+        $value = dechex($value);
+        return str_pad($value, self::align(Text::length($value), $size), '0', STR_PAD_LEFT);
     }
 
     /**
      * Converts a number to a binary string.
      */
-    public static function toBin ($value) {
-        return decbin($value);
+    public static function toBin ($value, $size=8) {
+        $value = decbin($value);
+        return str_pad($value, self::align(Text::length($value), $size), '0', STR_PAD_LEFT);
     }
 
     /**
      * Converts a number to an octal string.
      */
-    public static function toOct ($value) {
-        return decoct($value);
+    public static function toOct ($value, $size=3) {
+        $value = decoct($value);
+        return str_pad($value, self::align(Text::length($value), $size), '0', STR_PAD_LEFT);
     }
 
     /**
@@ -204,38 +218,50 @@ Expr::register('math:clamp', function($args) {
 
 
 /**
+ * Aligns the given value to the nearest multiple of the given size.
+ * @code (`math:align` <value> <size>)
+ * @example
+ * (math:align 5 3)
+ * ; 6
+ */
+Expr::register('math:align', function($args) {
+    return Math::align($args->get(1), $args->get(2));
+});
+
+
+/**
  * Converts a number to a hexadecimal string.
- * @code (`math:to-hex` <value>)
+ * @code (`math:to-hex` <value> [size=2])
  * @example
  * (math:to-hex 255)
  * ; ff
  */
 Expr::register('math:to-hex', function ($args) {
-    return Math::toHex($args->get(1));
+    return Math::toHex($args->get(1), $args->{2} ?? 2);
 });
 
 
 /**
  * Converts a number to a binary string.
- * @code (`math:to-bin` <value>)
+ * @code (`math:to-bin` <value> [size=8])
  * @example
  * (math:to-bin 129)
  * ; 10000001
  */
 Expr::register('math:to-bin', function ($args) {
-    return Math::toBin($args->get(1));
+    return Math::toBin($args->get(1), $args->{2} ?? 8);
 });
 
 
 /**
  * Converts a number to an octal string.
- * @code (`math:to-oct` <value>)
+ * @code (`math:to-oct` <value> [size=3])
  * @example
  * (math:to-oct 15)
  * ; 17
  */
 Expr::register('math:to-oct', function ($args) {
-    return Math::toOct($args->get(1));
+    return Math::toOct($args->get(1), $args->{2} ?? 3);
 });
 
 

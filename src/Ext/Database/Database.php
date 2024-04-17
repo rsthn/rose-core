@@ -96,27 +96,27 @@ Expr::register('db:row-values', function ($args) {
 
 /**
  * Executes a query and returns an array with all the resulting rows.
- * @code (`db:table` <query> [...params])
+ * @code (`db:rows` <query> [...params])
  * @example
- * (db:table `SELECT name FROM super_users WHERE age >= ?` 18)
+ * (db:rows `SELECT name FROM super_users WHERE age >= ?` 18)
  * ; [{"name": "Jack"}, {"name": "Daniel"}, {"name": "Samantha"}]
  */
-Expr::register('db:table', function ($args) {
+Expr::register('db:rows', function ($args) {
     if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
-        throw new ArgumentError('(db:table) expected scalar value');
+        throw new ArgumentError('(db:rows) expected scalar value');
     return Resources::getInstance()->Database->execQuery($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
 /**
  * Executes a query and returns an array with row values.
- * @code (`db:table-values` <query> [...params])
+ * @code (`db:rows-values` <query> [...params])
  * @example
- * (db:table-values `SELECT name, last_name FROM super_users WHERE status=?` "active")
+ * (db:rows-values `SELECT name, last_name FROM super_users WHERE status=?` "active")
  * ; [["Jack", "O'Neill"], ["Daniel", "Jackson"], ["Samantha", "Carter"]]
  */
-Expr::register('db:table-values', function ($args) {
+Expr::register('db:rows-values', function ($args) {
     if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
-        throw new ArgumentError('(db:table-values) expected scalar value');
+        throw new ArgumentError('(db:rows-values) expected scalar value');
     return Resources::getInstance()->Database->execArray($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
@@ -277,36 +277,43 @@ Expr::register('db:delete', function ($args)
 
 /**
  * Returns the ID of the row created by the last insert operation.
- * @code (`db:lastInsertId`)
+ * @code (`db:last-insert-id`)
  * @example
- * (db:lastInsertId)
+ * (db:last-insert-id)
  * ; 3
  */
-Expr::register('db:lastInsertId', function ($args) {
+Expr::register('db:last-insert-id', function ($args) {
     return Resources::getInstance()->Database->getLastInsertId();
 });
 
 /**
  * Returns the number of affected rows by the last update operation.
- * @code (`db:affectedRows`)
+ * @code (`db:affected-rows`)
  * @example
- * (db:affectedRows)
+ * (db:affected-rows)
  * ; 45
  */
-Expr::register('db:affectedRows', function ($args) {
+Expr::register('db:affected-rows', function ($args) {
     return Resources::getInstance()->Database->getAffectedRows();
 });
 
 /**
- * Opens a new connection and returns the database handle, use it only when managing multiple connections to different
- * database servers because if only one is used (the default one) this is not necessary.
+ * Opens a new connection, sets it as active and returns the database handle, use it only when managing multiple
+ * connections to different database servers. If only one is used (the default one) this is not necessary.
  * @code (`db:open` <config>)
  * @example
- * (db:open (& server "localhost" user "main" password "mypwd" database "test" driver "mysql" trace false ))
+ * (db:open { server "localhost" user "main" password "mypwd" database "test" driver "mysql" trace false })
  * ; [Rose\Data\Connection]
  */
 Expr::register('db:open', function ($args) {
-    return Connection::fromConfig($args->get(1));
+    global $mainConn;
+    $conn = Connection::fromConfig($args->get(1));
+
+    if (!$mainConn)
+        $mainConn = Resources::getInstance()->exists('Database', true) ? Resources::getInstance()->Database : null;
+
+    Resources::getInstance()->Database = $conn;
+    return $conn;
 });
 
 /**
@@ -318,10 +325,12 @@ Expr::register('db:close', function ($args)
 {
     global $mainConn;
 
-    if ((Resources::getInstance()->exists('Database', true) ? Resources::getInstance()->Database : null) === $args->get(1))
+    $conn = $args->get(1);
+
+    if ((Resources::getInstance()->exists('Database', true) ? Resources::getInstance()->Database : null) === $conn)
         Resources::getInstance()->Database = $mainConn;
 
-    $args->get(1)->close();
+    $conn->close();
     return null;
 });
 

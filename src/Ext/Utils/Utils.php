@@ -255,17 +255,6 @@ Expr::register('json:parse', function($args) {
 
 
 /**
- * Generates a pseudo-random string of bytes.
- * @code (`utils:random-bytes` <length>)
- * @example
- * (utils:random-bytes 16)
- * ; (binary data)
- */
-Expr::register('utils:random-bytes', function($args) {
-    return random_bytes((int)$args->get(1));
-});
-
-/**
  * Generates a random UUID (Universally Unique Identifier) version 4.
  * @code (`utils:uuid`)
  * @example

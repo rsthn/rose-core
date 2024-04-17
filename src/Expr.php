@@ -2,6 +2,7 @@
 
 namespace Rose;
 
+use Rose\Errors\FalseError;
 use Rose\Errors\Error;
 use Rose\Errors\MetaError;
 use Rose\Data\Connection;
@@ -38,7 +39,7 @@ class LinkedContext
             return $name;
 
         if (Text::startsWith($name, $this->ns . NS_OPERATOR))
-            return Text::substring($name, Text::length($this->ns)+2);
+            return Text::substring($name, Text::length($this->ns.NS_OPERATOR));
 
         return null;
     }
@@ -441,11 +442,11 @@ class Expr
             }
             else if ($type === 'parse-merge-no-special')
             {
-                $data = Expr::parseTemplate ($data, $sym_open, $sym_close, false, 0, $remove_comments, false);
+                $data = Expr::parseTemplate ($data, $sym_open, $sym_close, false, 0, false, false);
             }
             else if ($type === 'parse-merge-alt')
             {
-                $data = Expr::parseTemplate ($data, '{', '}', false, 0, $remove_comments, $allow_special);
+                $data = Expr::parseTemplate ($data, '{', '}', false, 0, false, $allow_special);
             }
             else if ($type === 'integer')
             {
@@ -464,7 +465,8 @@ class Expr
                     case '_': $data = self::SYM_UNDERSCORE; break;
                 }
             }
-            //else if ($type === 'string') { }
+            //else if ($type === 'string') {
+            //}
 
             if ($type === 'parse-merge' || $type === 'parse-merge-alt' || $type === 'parse-trim-merge' || $type === 'parse-merge-no-special')
             {
@@ -483,6 +485,7 @@ class Expr
 
         for ($i = 0; $i < Text::length($template); $i++)
         {
+            // Process escape sequence.
             if ($template[$i] === "\\") {
                 $str .= "\\";
                 $str .= $template[++$i];
@@ -496,12 +499,12 @@ class Expr
                     {
                         $flush = 'string';
                     }
-                    else if ($template[$i] === $sym_open && $template[$i+1] === '<')
-                    {
-                        $state = 1; $sym_stack[] = $sym_close;
-                        $flush = 'string';
-                        $nflush = 'parse-merge';
-                    }
+                    //else if ($template[$i] === $sym_open && $template[$i+1] === '<')
+                    //{
+                    //    $state = 1; $sym_stack[] = $sym_close;
+                    //    $flush = 'string';
+                    //    $nflush = 'parse-merge';
+                    //}
                     else if ($template[$i] === $sym_open && $template[$i+1] === '@')
                     {
                         $state = 1; $sym_stack[] = $sym_close;
@@ -536,6 +539,7 @@ class Expr
                         $flush = 'string';
                         $nflush = 'template';
                     }
+                    // comment outside an expression, or inside a single, double or back-tick string
                     else if ($template[$i] === ';' && $remove_comments && Text::trim($str) === '')
                     {
                         $state = 20;
@@ -633,8 +637,7 @@ class Expr
                     }
                     else if (Regex::_matches('/^(([-+][0-9])|([0-9]))/', $template[$i].$template[$i+1]) && $str === '')
                     {
-                        if ($flush && $str)
-                        {
+                        if ($flush && $str) {
                             $emit ($flush, $str);
                             $flush = $str = '';
                         }
@@ -657,6 +660,7 @@ class Expr
                         {
                             while ($i < $n && Regex::_matches('/[\t\n\r\f\v ]/', $template[$i])) $i++;
 
+                            // comment inside an expression, wait until end of line.
                             if ($template[$i] === ';') {
                                 while ($i < $n && $template[$i] !== "\n") $i++;
                             }
@@ -664,8 +668,7 @@ class Expr
                                 $keep = false;
                         }
 
-                        if ($template[$i] === "\0")
-                        {
+                        if ($template[$i] === "\0") {
                             $nflush = '';
                             $nparts = false;
                         }
@@ -673,12 +676,12 @@ class Expr
                         $i--;
                         break;
                     }
-                    else if ($template[$i] === $sym_open && $template[$i+1] === '<')
-                    {
-                        if ($str) $flush = $nflush;
-                        $state = 11; $sym_stack[] = $sym_close; $nflush = 'parse-merge';
-                        break;
-                    }
+                    //else if ($template[$i] === $sym_open && $template[$i+1] === '<')
+                    //{
+                    //    if ($str) $flush = $nflush;
+                    //    $state = 11; $sym_stack[] = $sym_close; $nflush = 'parse-merge';
+                    //    break;
+                    //}
                     else if ($template[$i] === $sym_open && $template[$i+1] === '@')
                     {
                         if ($str) $flush = $nflush;
@@ -725,6 +728,7 @@ class Expr
                         $str .= $template[$i];
                         break;
                     }
+                    // comment at the start of an expression
                     else if ($template[$i] === ';' && $remove_comments)
                     {
                         $state = 21;
@@ -940,10 +944,17 @@ class Expr
                     break;
 
                 case 21:
-                    if ($template[$i] === "\0" || $template[$i] === "\n")
-                    {
-                        $state = 10; $i--;
+                    if ($template[$i] === "\0") {
+                        $state = 10;
+                        $i--;
                         break;
+                    }
+
+                    if ($template[$i] === "\n") {
+                        $n = Text::length($template)-1;
+                        while ($i < $n && Regex::_matches('/[\t\n\r\f\v ]/', $template[$i])) $i++;
+                        $state = 10;
+                        $i--;
                     }
 
                     break;
@@ -964,6 +975,7 @@ class Expr
                     break;
 
                 case 23:
+                    die('Unexpected reach of state 23');
                     if ($template[$i] === "\0")
                         throw new Error ("parse error: unexpected end of template ($state)");
 
@@ -972,7 +984,6 @@ class Expr
                         array_pop($sym_stack);
                         $state = 0;
                         $flush = $nflush;
-                        die('str='.$str);
                     }
                     else
                         $str .= $template[$i];
@@ -1035,7 +1046,7 @@ class Expr
         {
             Expr::postprocess($mparts);
 
-            // TODO: remove this dead code
+            // Do not remove this, useful to debug parsed structures.
             if (false) {
                 echo "<pre>";
                 $s = (string)$mparts;
@@ -2249,7 +2260,9 @@ Expr::register('_inc', function ($parts, $data)
         throw new Error('unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join(''));
 
     $value = $parts->has(2) ? Expr::value($parts->get(2), $data) : 1;
-    Expr::accessSet($ref[0], $ref[1], Expr::accessGet($ref[0], $ref[1]) + $value);
+    $value = Expr::accessGet($ref[0], $ref[1]) + $value;
+    Expr::accessSet($ref[0], $ref[1], $value);
+    return $value;
 });
 
 /**
@@ -2270,7 +2283,9 @@ Expr::register('_dec', function ($parts, $data)
         throw new Error('unable to assign: ' . $parts->get(1)->map(function($i) { return $i->data; })->join(''));
 
     $value = $parts->has(2) ? Expr::value($parts->get(2), $data) : 1;
-    Expr::accessSet($ref[0], $ref[1], Expr::accessGet($ref[0], $ref[1]) - $value);
+    $value = Expr::accessGet($ref[0], $ref[1]) - $value;
+    Expr::accessSet($ref[0], $ref[1], $value);
+    return $value;
 });
 
 /**
@@ -3218,6 +3233,28 @@ Expr::register('min', function($args) {
  */
 Expr::register('max', function($args) {
     return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return Math::max($accum, $value); });
+});
+
+/**
+ * Returns the result of shifting the bits of the first value to the left by the second value.
+ * @code (`shl` <values...>)
+ * @example
+ * (shl 3 2)
+ * ; 12
+ */
+Expr::register('shl', function($args) {
+    return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum << $value; });
+});
+
+/**
+ * Returns the result of shifting the bits of the first value to the right by the second value.
+ * @code (`shr` <values...>)
+ * @example
+ * (shr 16 2)
+ * ; 4
+ */
+Expr::register('shr', function($args) {
+    return Expr::reduce($args->get(1), $args, 2, function($accum, $value) { return $accum >> $value; });
 });
 
 /**
@@ -4624,6 +4661,9 @@ Expr::register('eval', function ($args, $parts, $data)
     try {
         return Expr::expand(Expr::clean(Expr::parseTemplate (Expr::clean($args->get(1), true), '(', ')', false, 1, true), true), $args->length == 3 ? $args->get(2) : $data, 'last');
     }
+    catch (FalseError $e) {
+        return null;
+    }
     catch (MetaError $e)
     {
         switch ($e->isForMe(-1) ? $e->code : null)
@@ -4642,7 +4682,7 @@ Expr::register('eval', function ($args, $parts, $data)
 /**
  * Introduces a new temporal variable with the specified value to be used in the block, the variable will be returned to its original
  * state (or removed) once the `with` block is completed. Returns the value returned by the block.
- * @code (`with` [var='i'] <value> <block>)
+ * @code (`with` [var='i'] [`as`] <value> <block>)
  * @example
  * (with a 12
  *     (echo (a))
@@ -4656,6 +4696,9 @@ Expr::register('_with', function($parts, $data)
     $var_name = 'i';
     $i = 1;
     Expr::takeIdentifier($parts, $data, $i, $var_name);
+
+    if (Expr::isIdentifier($parts, $i, 'as'))
+        $i++;
 
     $old_value_present = false;
     $old_value = null;
@@ -4958,14 +5001,14 @@ Expr::register('_def', function($parts, $data)
     $flag = false;
 
     if ($ns && Text::startsWith($name, $ns.NS_OPERATOR)) {
-        $name = Text::substring($name, Text::length($ns)+2);
+        $name = Text::substring($name, Text::length($ns.NS_OPERATOR));
         $flag = true;
     }
 
     $isPrivate = $scope === 'private';
 
     if (Text::startsWith($name, NS_OPERATOR)) {
-        $name = Text::substring($name, 2);
+        $name = Text::substring($name, Text::length(NS_OPERATOR));
         Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
     }
     else if (Text::indexOf($name, NS_OPERATOR) !== false && !$flag) {
@@ -5166,12 +5209,12 @@ Expr::register('_def-fn', function($parts, $data)
     $isPrivate = $scope === 'private';
     $flag = false;
     if ($ns && Text::startsWith($name, $ns.NS_OPERATOR)) {
-        $name = Text::substring($name, Text::length($ns)+2);
+        $name = Text::substring($name, Text::length($ns.NS_OPERATOR));
         $flag = true;
     }
 
     if (Text::startsWith($name, NS_OPERATOR)) {
-        $name = Text::substring($name, 2);
+        $name = Text::substring($name, Text::length(NS_OPERATOR));
         Context::getContext(0)->registerFunction($name, new ExprFn ($name, $fn, Expr::$context));
     }
     else if (Text::indexOf($name, NS_OPERATOR) !== false && !$flag) {

@@ -32,7 +32,7 @@ class Http
     /**
      * 	HTTP request headers.
      */
-    private static $headers = null;
+    public static $headers = null;
 
     /**
      * 	HTTP response headers.
@@ -88,14 +88,14 @@ class Http
      * Returns the HTTP code of the last request.
      */
     public static function getCode() {
-        return self::$curl_last_info['http_code'];
+        return !self::$curl_last_info ? 0 : self::$curl_last_info['http_code'];
     }
 
     /**
      * Returns the content-type of the last request.
      */
     public static function getContentType() {
-        return self::$curl_last_info['content_type'];
+        return !self::$curl_last_info ? null : self::$curl_last_info['content_type'];
     }
 
     /**
@@ -435,7 +435,7 @@ Expr::register('request:get', function ($args) {
 });
 
 /**
- * Executes a HEAD request and returns the HTTP status code. Response headers will be available using `request:headers`.
+ * Executes a HEAD request and returns the HTTP status code. Response headers will be available using `request:response-headers`.
  * @code (`request:head` <url> [fields...])
  * @example
  * (request:head "http://example.com/api/currentTime")
@@ -512,30 +512,38 @@ Expr::register('request:fetch', function ($args)
 });
 
 /**
- * Sets one or more headers for the next request.
- * @code (`request:header` <header...>)
+ * Returns the current headers or sets one or more headers for the next request.
+ * @code (`request:headers` [header-line|array])
  * @example
- * (request:header "Authorization: Bearer MyToken")
+ * (request:headers "Authorization: Bearer MyToken")
  * ; true
+ * (request:headers)
+ * ; ["Authorization: Bearer MyToken"]
  */
-Expr::register('request:header', function ($args)
+Expr::register('request:headers', function ($args)
 {
-    for ($i = 1; $i < $args->length; $i++)
-        Http::header($args->get($i));
+    $value = $args->{1};
+    if ($value === null)
+        return Http::$headers->values();
+
+    if (\Rose\typeOf($value) === 'Rose\Arry')
+        $value->forEach(function($header) { Http::header($header); });
+    else
+        Http::header($value);
     return true;
 });
 
 /**
  * Returns the response headers of the last request or a single header (if exists).
- * @code (`request:headers` [header])
+ * @code (`request:response-headers` [header])
  * @example
- * (request:headers)
+ * (request:response-headers)
  * ; { "content-type": "application/json", "content-length": "123" }
  *
- * (request:headers "content-type")
+ * (request:response-headers "content-type")
  * ; application/json
  */
-Expr::register('request:headers', function ($args)
+Expr::register('request:response-headers', function ($args)
 {
     if ($args->length === 2)
         return Http::$responseHeaders->get($args->get(1));
@@ -599,12 +607,12 @@ Expr::register('request:auth', function ($args)
 
 /**
  * Returns the HTTP status code of the last request.
- * @code (`request:code`)
+ * @code (`request:status`)
  * @example
- * (request:code)
+ * (request:status)
  * ; 200
  */
-Expr::register('request:code', function ($args) {
+Expr::register('request:status', function ($args) {
     return Http::getCode();
 });
 

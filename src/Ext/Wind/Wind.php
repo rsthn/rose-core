@@ -96,7 +96,7 @@ class Wind
         return $response;
     }
 
-    public static function reply ($response)
+    public static function reply ($response, $isError=false)
     {
         if (self::$data->internal_call != 0) {
             self::$response = $response;
@@ -104,7 +104,14 @@ class Wind
         }
 
         if (Gateway::$contentFlushed)
+        {
+            if ($isError) {
+                $response = self::prepare($response);
+                \Rose\trace('[ERROR] ['.(new DateTime()).'] ['.Gateway::getInstance()->remoteAddress.'] '.$response);
+                echo $response;
+            }
             Gateway::exit();
+        }
 
         $response = self::prepare($response);
 
@@ -314,7 +321,7 @@ class Wind
         catch (FalseError $e) {
         }
         catch (WindError $e) {
-            self::reply ($e->getResponse());
+            self::reply ($e->getResponse(), true);
         }
         catch (MetaError $e)
         {
@@ -330,7 +337,7 @@ class Wind
             }
         }
         catch (\Throwable $e) {
-            self::reply ([ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
+            self::reply ([ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ], true);
         }
     }
 

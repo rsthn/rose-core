@@ -3,6 +3,7 @@
 namespace Rose;
 
 use Rose\Errors\Error;
+use Rose\Errors\FalseError;
 
 use Rose\Data\Connection;
 
@@ -16,9 +17,9 @@ use Rose\Gateway;
 use Rose\Cookies;
 use Rose\Regex;
 
-/*
-**	Stores and retrieves persistent session information. Data is stored on the database or on the session, controlled by Configuration.Session.database.
-*/
+/**
+ * Stores and retrieves persistent session information. Data is stored on the database or on the session, controlled by Configuration.Session.database.
+ */
 
 class Session
 {
@@ -141,25 +142,27 @@ class Session
         // Load session data from regular PHP session storage.
         else
         {
-            session_name(Session::$sessionName);
+            if (session_name() !== Session::$sessionName)
+                session_name(Session::$sessionName);
+
             if (Session::$sessionId)
                 session_id(Session::$sessionId);
 
+            session_cache_limiter(null);
+
             try {
                 if (!Session::$sessionId)
-                    throw new \Exception();
+                    throw new FalseError();
 
-                session_cache_limiter(false);
-                session_start(['use_cookies' => 0]);
+                session_start(['use_cookies' => 0, 'use_only_cookies' => 0]);
             }
-            catch (\Exception $e)
+            catch (\FalseError $e)
             {
                 if (!$createSession)
                     return false;
 
                 session_id(Session::generateId(48));
-                session_cache_limiter(false);
-                session_start(['use_cookies' => 0]);
+                session_start(['use_cookies' => 0, 'use_only_cookies' => 0]);
             }
 
             if (!isset($_SESSION['session']))
@@ -194,9 +197,9 @@ class Session
         return true;
     }
 
-    /*
-    **	Closes the session and flushes the data to storage. If shallow is true, only internal fields of the session will be saved.
-    */
+    /**
+     * Closes the session and flushes the data to storage. If shallow is true, only internal fields of the session will be saved.
+     */
     public static function close ($shallow=false)
     {
         if (Session::$sessionOpen == false)
@@ -211,6 +214,20 @@ class Session
         }
 
         Session::$sessionOpen = false;
+    }
+
+    /**
+     * Writes the session data to persistent storage, does not require the session to be open but the session ID must be valid.
+     */
+    public static function write ($shallow=false)
+    {
+        if (Configuration::getInstance()->Session->database !== 'true')
+            throw new Error ('Immediate session write is available only with database storage');
+
+        if (!Session::$sessionId)
+            throw new Error ('Session ID is not set');
+
+        Session::dbSessionSave($shallow);
     }
 
     /*

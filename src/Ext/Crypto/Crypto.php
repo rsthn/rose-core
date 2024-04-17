@@ -109,3 +109,25 @@ Expr::register('crypto:unique', function($args)
 
     return $tmp;
 });
+
+/**
+ * Timing attack safe string comparison.
+ * @code (`crypto:equals` <known-string> <user-string>)
+ * @example
+ * (crypto:equals "Hello, World!" "Hello, World!")
+ * ; true
+ */
+Expr::register('crypto:equals', function($args) {
+    return hash_equals($args->get(1), $args->get(2));
+});
+
+/**
+ * Generates a pseudo-random string of bytes.
+ * @code (`crypto:random-bytes` <length>)
+ * @example
+ * (crypto:random-bytes 16)
+ * ; (binary data)
+ */
+Expr::register('crypto:random-bytes', function($args) {
+    return random_bytes((int)$args->get(1));
+});
