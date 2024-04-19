@@ -10,6 +10,7 @@ use Rose\Expr;
 use Rose\Arry;
 use Rose\Map;
 use Rose\Text;
+use Rose\JSON;
 
 // @title HTTP Requests
 // @short Request

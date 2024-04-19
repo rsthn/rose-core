@@ -486,6 +486,17 @@ Expr::register('html:encode', function($args)
 
 
 /**
+ * Returns the version of the framework.
+ * @code (`sys:version`)
+ * @example
+ * (sys:version)
+ * ; 5.0.1
+ */
+Expr::register('sys:version', function($args) {
+    return \Rose\Main::version();
+});
+
+/**
  * Sleeps for the given number of seconds.
  * @code (`sys:sleep` <seconds>)
  * @example

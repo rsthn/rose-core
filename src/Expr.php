@@ -2668,6 +2668,41 @@ Expr::register('_in?', function ($parts, $data)
 });
 
 /**
+ * Checks if an iterable (map, array or string) does NOT have a value.
+ * @code (`not-in?` <iterable> <value> [val-true=true] [val-false=false])
+ * @example
+ * (not-in? [1 2 3] 2)
+ * ; false
+ * 
+ * (not-in? {name "John"} "name")
+ * ; false
+ * 
+ * (not-in? "Hello" "p")
+ * ; true
+ */
+Expr::register('_not-in?', function ($parts, $data)
+{
+    $iterable = Expr::value($parts->get(1), $data);
+    $value = Expr::value($parts->get(2), $data);
+    $result = false;
+    $type = \Rose\typeOf($iterable, true);
+
+    if ($type === 'Rose\\Map')
+        $result = $iterable->has($value, true);
+    else if ($type === 'Rose\\Arry')
+        $result = $iterable->indexOf($value) !== null;
+    else if ($type === 'string')
+        $result = Text::indexOf($iterable, $value) !== false;
+    else
+        throw new Error('invalid iterable type \''.$type.'\' for `in?` operation');
+
+    return !$result
+        ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
+        : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
+    ;
+});
+
+/**
  * Checks if `value1` is equal to `value2`, returns `val-true` or `val-false` (loose type comparison).
  * @code (`eq?` <value1> <value2> [val-true=true] [val-false=false])
  * @example
@@ -2936,6 +2971,30 @@ Expr::register('_not-null?', function($parts, $data) {
 Expr::register('_zero?', function($parts, $data) {
     $value = Expr::value($parts->get(1), $data);
     return $value === 0 || $value === 0.0
+        ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
+        : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
+        ;
+});
+
+/**
+ * Checks if the value is NOT zero, returns `val-true` or `val-false`.
+ * @code (`not-zero?` <value> [val-true=true] [val-false=false])
+ * @example
+ * (not-zero? 0)
+ * ; false
+ *
+ * (not-zero? 1)
+ * ; true
+ *
+ * (not-zero? null)
+ * ; true
+ *
+ * (not-zero? 0.0)
+ * ; false
+ */
+Expr::register('_not-zero?', function($parts, $data) {
+    $value = Expr::value($parts->get(1), $data);
+    return !($value === 0 || $value === 0.0)
         ? ($parts->has(2) ? Expr::value($parts->get(2), $data) : true)
         : ($parts->has(3) ? Expr::value($parts->get(3), $data) : false)
         ;
