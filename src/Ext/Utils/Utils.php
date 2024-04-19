@@ -500,11 +500,15 @@ Expr::register('sys:version', function($args) {
  * Sleeps for the given number of seconds.
  * @code (`sys:sleep` <seconds>)
  * @example
- * (sys:sleep 1)
+ * (sys:sleep 0.5)
  * ; true
  */
 Expr::register('sys:sleep', function($args) {
-    sleep($args->get(1));
+    $value = $args->get(1);
+    if (\Rose\isInteger($value))
+        sleep($args->get(1));
+    else
+        usleep($args->get(1) * 1e6);
     return true;
 });
 
