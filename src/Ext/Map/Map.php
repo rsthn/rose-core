@@ -146,12 +146,12 @@ Expr::register('map:has', function($args) {
 
 /**
  * Removes the given key from the map and returns the removed value.
- * @code (`map:remove` <map> <key>)
+ * @code (`map:del` <map> <key>)
  * @example
- * (map:remove (map:new 'a' 1 'b' 112) 'b')
+ * (map:del (map:new 'a' 1 'b' 112) 'b')
  * ; 112
  */
-Expr::register('map:remove', function($args) {
+Expr::register('map:del', function($args) {
     return $args->get(1)->remove((string)$args->get(2));
 });
 
@@ -168,12 +168,12 @@ Expr::register('map:key', function($args) {
 
 /**
  * Returns the length of the Map.
- * @code (`map:length` <map>)
+ * @code (`map:len` <map>)
  * @example
  * (map:length (map:new 'a' 1 'b' 2))
  * ; 2
  */
-Expr::register('map:length', function($args) {
+Expr::register('map:len', function($args) {
     return $args->get(1)->length();
 });
 

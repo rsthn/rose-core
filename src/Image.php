@@ -219,9 +219,9 @@ class Image
         }
 
         $data = ob_get_clean();
-        if ($mode === 0) return $data;
+        if ($mode === 'BINARY') return $data;
 
-        if ($mode === 1)
+        if ($mode === 'DATA_URI')
             return 'data:image/'.$type.';base64,'.base64_encode($data);
 
         return base64_encode($data);

@@ -31,6 +31,20 @@ Expr::register('db:escape', function ($args) {
 });
 
 /**
+ * Sets or returns the current debug flag of the connection.
+ * @code (`db:debug` [value])
+ * @example
+ * (db:debug true)
+ * ; true
+ *
+ * (db:debug)
+ * ; true
+ */
+Expr::register('db:debug', function ($args) {
+    return Resources::getInstance()->Database->tracing($args->{1});
+});
+
+/**
  * Uses the connection's driver to escape the given value considering it to be a column/table name.
  * @code (`db:escape-name` <value>)
  * @example

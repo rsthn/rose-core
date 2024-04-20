@@ -1637,6 +1637,7 @@ class Expr
     /**
      * Applies a function to a given input. The input can be a single-value, a sequence, an array or a map.
      */
+    // REMOVE: DEPRECATED
     public static function apply ($list, $fn)
     {
         if ($list->length == 1)

@@ -585,3 +585,17 @@ Expr::register('strings:lang', function ($args)
 
     return null;
 });
+
+/**
+ * Returns a string given the path. If the target string is not found then the given path will be returned as a placeholder.
+ * @code (`strings:lang` [lang])
+ * @example
+ * (strings:get "messages.welcome")
+ * ; "Welcome!"
+ *
+ * (strings:get "@messages.welcome")
+ * ; "@messages.welcome"
+ */
+Expr::register('strings:get', function ($args) {
+    return Strings::getInstance()->get($args->get(1));
+});

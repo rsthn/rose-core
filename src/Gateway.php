@@ -567,7 +567,8 @@ Expr::register('gateway:return', function ($args)
 });
 
 /**
- * Sends a response to the client and continues execution.
+ * Sends a response to the client, closes the connection and continues execution. Further output
+ * for the client will be ignored.
  * @code (`gateway:continue` [<status>] [<response>])
  * @example
  * (gateway:continue 200 "Hello, World!")

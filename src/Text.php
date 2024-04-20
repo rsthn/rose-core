@@ -360,10 +360,7 @@ Expr::register('str:replace', function ($args)
 {
     $search = $args->get(1);
     $replacement = $args->get(2);
-
-    return Expr::apply($args->slice(3), function($value) use(&$search, &$replacement) {
-        return Text::replace($search, $replacement, $value);
-    });
+    return Text::replace($search, $replacement, $args->get(3));
 });
 
 

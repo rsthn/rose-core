@@ -27,7 +27,7 @@ Expr::register('image:load', function ($args) {
  * @code (`image:save` <image> [path=null] [format=JPG|GIF|PNG] [quality=95])
  */
 Expr::register('image:save', function ($args) {
-    getImage($args)->save($args->{2}, $args->{3}, $args->{4} || 95);
+    getImage($args)->save($args->{2}, $args->{3}, $args->{4} ?? 95);
     return null;
 });
 
@@ -37,7 +37,7 @@ Expr::register('image:save', function ($args) {
  * @code (`image:dump` <image> [format=JPG|GIF|PNG] [quality=95])
  */
 Expr::register('image:dump', function ($args) {
-    getImage($args)->output($args->{2}, $args->{3} || 95);
+    getImage($args)->output($args->{2}, $args->{3} ?? 95);
     return null;
 });
 
@@ -46,7 +46,7 @@ Expr::register('image:dump', function ($args) {
  * @code (`image:data` <image> [format=JPG|GIF|PNG] [mode=BINARY|DATA_URI|BASE64] [quality=95])
  */
 Expr::register('image:data', function ($args) {
-    return getImage($args)->data($args->{2}, $args->{3} || 'BINARY', $args->{4} || 95);
+    return getImage($args)->data($args->{2}, $args->{3} ?? 'BINARY', $args->{4} ?? 95);
 });
 
 /**
