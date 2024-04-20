@@ -78,10 +78,10 @@ Returns `true` if the map has the given key, `false` otherwise.
 ; true
 ```
 
-### (`map:remove` \<map> \<key>)
+### (`map:del` \<map> \<key>)
 Removes the given key from the map and returns the removed value.
 ```lisp
-(map:remove (map:new 'a' 1 'b' 112) 'b')
+(map:del (map:new 'a' 1 'b' 112) 'b')
 ; 112
 ```
 
@@ -92,7 +92,7 @@ Returns the key of the element whose value matches or `null` if not found.
 ; 'b'
 ```
 
-### (`map:length` \<map>)
+### (`map:len` \<map>)
 Returns the length of the Map.
 ```lisp
 (map:length (map:new 'a' 1 'b' 2))

@@ -145,7 +145,8 @@ Sends a response to the client and exits immediately.
 ```
 
 ### (`gateway:continue` [\<status>] [\<response>])
-Sends a response to the client and continues execution.
+Sends a response to the client, closes the connection and continues execution. Further output
+for the client will be ignored.
 ```lisp
 (gateway:continue 200 "Hello, World!")
 ; Client will receive:

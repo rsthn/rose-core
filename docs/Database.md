@@ -9,6 +9,16 @@ Escapes a value to be used in SQL queries. Uses the connection's driver escape f
 ; 'Jack O''Neill'
 ```
 
+### (`db:debug` [value])
+Sets or returns the current debug flag of the connection.
+```lisp
+(db:debug true)
+; true
+
+(db:debug)
+; true
+```
+
 ### (`db:escape-name` \<value>)
 Uses the connection's driver to escape the given value considering it to be a column/table name.
 ```lisp

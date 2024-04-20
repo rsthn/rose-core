@@ -212,10 +212,17 @@ Converts an array or map into an HTML table.
 ; HTML table with two rows and two columns
 ```
 
+### (`sys:version`)
+Returns the version of the framework.
+```lisp
+(sys:version)
+; 5.0.1
+```
+
 ### (`sys:sleep` \<seconds>)
 Sleeps for the given number of seconds.
 ```lisp
-(sys:sleep 1)
+(sys:sleep 0.5)
 ; true
 ```
 
@@ -261,4 +268,14 @@ otherwise an error will be thrown.
 ; "en"
 (strings:lang "xx")
 ; Error: Language code `xx` is not supported
+```
+
+### (`strings:lang` [lang])
+Returns a string given the path. If the target string is not found then the given path will be returned as a placeholder.
+```lisp
+(strings:get "messages.welcome")
+; "Welcome!"
+
+(strings:get "@messages.welcome")
+; "@messages.welcome"
 ```

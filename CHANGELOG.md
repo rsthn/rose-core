@@ -1,3 +1,27 @@
+# v5.0.2 - Apr 20 2024
+
+#### Sys
+- Added `sys:version` which returns the framework's version.
+
+#### Expr
+- Added functions `not-zero?`, and `not-in?`.
+- Function `sys:sleep` now allows fractional (i.e. 0.5) values of seconds.
+
+#### Database
+- Added function `db:debug` to turn on/off tracing on demand.
+
+#### Image
+- Fixed bug in `image:save` causing wrong output format (base64).
+
+#### Map
+- Added function `map:del` to delete a key.
+- Updated `map:length` to just `map:len`
+
+#### Utils
+- Added `strings:get` to replace old `s` function.
+
+<br/>
+
 # v5.0.1 - Apr 17 2024
 
 #### JSON

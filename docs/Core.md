@@ -353,6 +353,19 @@ Checks if an iterable (map, array or string) has a value.
 ; true
 ```
 
+### (`not-in?` \<iterable> \<value> [val-true=true] [val-false=false])
+Checks if an iterable (map, array or string) does NOT have a value.
+```lisp
+(not-in? [1 2 3] 2)
+; false
+
+(not-in? {name "John"} "name")
+; false
+
+(not-in? "Hello" "p")
+; true
+```
+
 ### (`eq?` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` is equal to `value2`, returns `val-true` or `val-false` (loose type comparison).
 ```lisp
@@ -505,6 +518,22 @@ Checks if the value is zero, returns `val-true` or `val-false`.
 
 (zero? 0.0)
 ; true
+```
+
+### (`not-zero?` \<value> [val-true=true] [val-false=false])
+Checks if the value is NOT zero, returns `val-true` or `val-false`.
+```lisp
+(not-zero? 0)
+; false
+
+(not-zero? 1)
+; true
+
+(not-zero? null)
+; true
+
+(not-zero? 0.0)
+; false
 ```
 
 ### (`even?` \<value> [val-true=true] [val-false=false])
