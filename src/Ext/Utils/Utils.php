@@ -44,13 +44,13 @@ Expr::register('env:get', function($args) {
 
 /**
  * Sets an environment variable.
- * @code (`env:set` <name> <value>)
+ * @code (`env:set` <value>)
  * @example
- * (env:set "HOME" "/home/user")
+ * (env:set "HOME=/home/user")
  * ; true
  */
 Expr::register('env:set', function($args) {
-    return putenv($args->slice(1)->join(''));
+    return putenv($args->get(1));
 });
 
 
