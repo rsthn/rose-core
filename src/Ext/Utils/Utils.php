@@ -548,6 +548,17 @@ Expr::register('sys:gc', function() {
 });
 
 /**
+ * Returns the memory peak usage in megabytes.
+ * @code (`sys:peak-memory`)
+ * @example
+ * (sys:peak-memory)
+ * ; 4.58
+ */
+Expr::register('sys:peak-memory', function() {
+    return Math::fixed(memory_get_peak_usage() / 1048576, 2);
+});
+
+/**
  * Object used to access language strings. The strings are stored in the `strings` directory in the root of the project.
  * @code (`strings`)
  * @example

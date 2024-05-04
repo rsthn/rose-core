@@ -11,14 +11,20 @@ use Rose\Arry;
 use Rose\Map;
 use Rose\Text;
 use Rose\JSON;
+use Rose\Math;
 
 // @title HTTP Requests
 // @short Request
 
 class Http
 {
+    private static $curl_last_error = null;
     private static $curl_last_info = null;
     private static $curl_last_data = null;
+
+    public static $output_handler = null;
+    public static $input_handler = null;
+    public static $progress_handler = null;
 
     /**
      * 	Indicates if request data should be output to the log file.
@@ -97,6 +103,13 @@ class Http
      */
     public static function getContentType() {
         return !self::$curl_last_info ? null : self::$curl_last_info['content_type'];
+    }
+
+    /**
+     * Returns the last error message.
+     */
+    public static function getError() {
+        return self::$curl_last_error;
     }
 
     /**
@@ -201,16 +214,74 @@ class Http
             curl_setopt ($c, CURLOPT_SSL_VERIFYPEER, 0);
         }
 
+        $output_handler = self::$output_handler;
+        $output_handler_params = null;
+        $output_ready = null;
+        if ($output_handler)
+        {
+            self::$output_handler = null;
+            $output_handler_params = new Arry([null, null]);
+            curl_setopt($c, CURLOPT_WRITEFUNCTION, function($curl, $data) use(&$output_handler, &$output_handler_params, &$output_ready)
+            {
+                if ($output_ready === null)
+                    $output_ready = curl_getinfo($curl)['http_code'] == 200;
+
+                if (!$output_ready)
+                    return strlen($data);
+
+                $output_handler_params->set(1, $data);
+                $output_handler($output_handler_params, null, null);
+                return strlen($data);
+            });
+        }
+
+        if (self::$progress_handler)
+        {
+            $progress_handler = self::$progress_handler;
+            $progress_handler_params = new Arry([null, null, null]);
+            self::$progress_handler = null;
+            curl_setopt($c, CURLOPT_NOPROGRESS, false);
+            curl_setopt($c, CURLOPT_XFERINFOFUNCTION, function($curl, $down_total, $down_curr) use (&$progress_handler, &$progress_handler_params) {
+                if (!$down_total) return;
+                $progress_handler_params->set(1, Math::fixed(100.0 * $down_curr / $down_total, 2));
+                $progress_handler_params->set(2, $down_total);
+                $progress_handler($progress_handler_params, null, null);
+            });
+        }
+
         $data = curl_exec($c);
+
+        if ($output_handler) {
+            $data = $output_ready;
+            if ($data) {
+                $output_handler_params->set(1, '');
+                $output_handler($output_handler_params, null, null);
+            }
+        }
+
+        self::$curl_last_error = curl_error($c);
+        self::$curl_last_info = curl_getinfo($c);
+        self::$curl_last_data = $data;
 
         if (self::$debug)
         {
             \Rose\trace($method . ' ' . $url);
-            \Rose\trace(Text::split("\n", curl_getinfo($c, CURLINFO_HEADER_OUT))->forEach(function(&$value) { $value = '> ' . Text::trim($value); })->removeAll("/^> $/")->slice(1)->join("\n"));
-        }
+            \Rose\trace('HTTP ' . json_encode(self::$curl_last_info['http_code']));
 
-        self::$curl_last_info = curl_getinfo($c);
-        self::$curl_last_data = $data;
+            \Rose\trace(Text::split("\n", curl_getinfo($c, CURLINFO_HEADER_OUT))
+                ->forEach(function(&$value) { $value = '> ' . Text::trim($value); })
+                ->removeAll("/^> $/")->slice(1)->join("\n"))
+                ;
+            \Rose\trace('');
+
+            \Rose\trace(self::$responseHeaders->values()
+                ->forEach(function(&$value) { $value = '< ' . Text::trim($value); })
+                ->removeAll("/^< $/")->slice(1)->join("\n"))
+                ;
+            \Rose\trace('');
+
+            try { \Rose\trace("RESPONSE-DATA\n" . $data); } catch (\Throwable $e) { }
+        }
 
         curl_close($c);
         return $data;
@@ -346,23 +417,85 @@ class Http
             curl_setopt ($c, CURLOPT_SSL_VERIFYPEER, 0);
         }
 
+        $output_handler = self::$output_handler;
+        $output_handler_params = null;
+        $output_ready = null;
+        if ($output_handler)
+        {
+            self::$output_handler = null;
+            $output_handler_params = new Arry([null, null]);
+
+            curl_setopt($c, CURLOPT_WRITEFUNCTION, function($curl, $data) use(&$output_handler, &$output_handler_params, &$output_ready)
+            {
+                if ($output_ready === null)
+                    $output_ready = curl_getinfo($curl)['http_code'] == 200;
+
+                if (!$output_ready)
+                    return strlen($data);
+
+                $output_handler_params->set(1, $data);
+                $output_handler($output_handler_params, null, null);
+                return strlen($data);
+            });
+        }
+
+        $input_handler = self::$input_handler;
+        $input_handler_params = null;
+        if ($input_handler)
+        {
+            self::$input_handler = null;
+            $input_handler_params = new Arry([null, null]);
+
+            curl_setopt($c, CURLOPT_UPLOAD, true);
+            curl_setopt($c, CURLOPT_READFUNCTION, function($curl, $_, $max_bytes) use(&$input_handler, &$input_handler_params) {
+                $input_handler_params->set(1, $max_bytes);
+                return $input_handler($input_handler_params, null, null);
+            });
+        }
+
         $data = curl_exec($c);
+
+        if ($output_handler) {
+            $data = $output_ready;
+            if ($data) {
+                $output_handler_params->set(1, '');
+                $output_handler($output_handler_params, null, null);
+            }
+        }
+
+        if ($input_handler) {
+            $input_handler_params->set(1, 0);
+            $input_handler($input_handler_params, null, null);
+        }
+
+        self::$curl_last_error = curl_error($c);
+        self::$curl_last_info = curl_getinfo($c);
+        self::$curl_last_data = $data;
 
         if (self::$debug)
         {
             \Rose\trace($method . ' ' . $url);
-            \Rose\trace(Text::split("\n", curl_getinfo($c, CURLINFO_HEADER_OUT))->forEach(function(&$value) { $value = '> ' . Text::trim($value); })->removeAll("/^> $/")->slice(1)->join("\n"));
-            \Rose\trace("DATA\n" . (\Rose\isArray($fields) ? $debugFields : $fields));
-            try { \Rose\trace("RESPONSE\n" . $data); } catch (\Throwable $e) { }
+            \Rose\trace('HTTP ' . json_encode(self::$curl_last_info['http_code']));
+
+            \Rose\trace(Text::split("\n", curl_getinfo($c, CURLINFO_HEADER_OUT))
+                ->forEach(function(&$value) { $value = '> ' . Text::trim($value); })
+                ->removeAll("/^> $/")->slice(1)->join("\n"))
+                ;
+            \Rose\trace('');
+
+            \Rose\trace(self::$responseHeaders->values()
+                ->forEach(function(&$value) { $value = '< ' . Text::trim($value); })
+                ->removeAll("/^< $/")->slice(1)->join("\n"))
+                ;
+            \Rose\trace('');
+
+            \Rose\trace("REQUEST-DATA\n" . (\Rose\isArray($fields) ? $debugFields : $fields));
+            try { \Rose\trace("RESPONSE-DATA\n" . $data); } catch (\Throwable $e) { }
         }
 
         $tempFiles->forEach(function($path) { File::remove($path); });
 
-        self::$curl_last_info = curl_getinfo($c);
-        self::$curl_last_data = $data;
-
         curl_close($c);
-
         return $data;
     }
 
@@ -618,6 +751,17 @@ Expr::register('request:status', function ($args) {
 });
 
 /**
+ * Returns the last error message.
+ * @code (`request:error`)
+ * @example
+ * (request:error)
+ * ; Could not resolve host
+ */
+Expr::register('request:error', function ($args) {
+    return Http::getError();
+});
+
+/**
  * Returns the content-type of the last request. Shorthand for `(request:headers "content-type")` without the charset.
  * @code (`request:content-type`)
  * @example
@@ -646,4 +790,92 @@ Expr::register('request:data', function ($args) {
 Expr::register('request:clear', function ($args) {
     Http::clear();
     return null;
+});
+
+/**
+ * Sets the output handler for the next request.
+ * @code (`request:output-handler` <func>)
+ * @example
+ * (request:output-handler (fn data (echo (data))))
+ * ; true
+ */
+Expr::register('request:output-handler', function ($args) {
+    Http::$output_handler = $args->get(1);
+    return true;
+});
+
+/**
+ * Sets the output file for the next request.
+ * @code (`request:output-file` <file-path>)
+ * @example
+ * (request:output-file "output.txt")
+ * ; true
+ */
+Expr::register('request:output-file', function ($args) {
+    $fp = $args->get(1);
+    Http::$output_handler = function($data, $_, $__) use(&$fp)
+    {
+        if (\Rose\isString($fp)) $fp = fopen($fp, 'w');
+        if (!$fp) return;
+
+        $data = $data->get(1);
+        if ($data === '') {
+            fclose($fp);
+            return;
+        }
+
+        fwrite($fp, $data);
+    };
+
+    return true;
+});
+
+/**
+ * Sets the input handler for the next request.
+ * @code (`request:input-handler` <func>)
+ * @example
+ * (request:input-handler (fn max_bytes (ret "....")))
+ * ; true
+ */
+Expr::register('request:input-handler', function ($args) {
+    Http::$input_handler = $args->get(1);
+    return true;
+});
+
+/**
+ * Sets the input file for the next request.
+ * @code (`request:input-file` <file-path>)
+ * @example
+ * (request:input-file "sample.jpg")
+ * ; true
+ */
+Expr::register('request:input-file', function ($args) {
+    $fp = $args->get(1);
+    Http::$input_handler = function($data, $_, $__) use(&$fp)
+    {
+        if (\Rose\isString($fp)) $fp = fopen($fp, 'r');
+        if (!$fp) return '';
+
+        $count = $data->get(1);
+        if (!$count) {
+            fclose($fp);
+            return '';
+        }
+
+        return fread($fp, $count);
+    };
+
+    return true;
+});
+
+/**
+ * Sets the progress handler for the next request.
+ * @code (`request:progress-handler` <func>)
+ * @example
+ * (request:progress-handler (fn total_bytes curr_bytes ...))
+ * ; true
+ */
+Expr::register('request:progress-handler', function ($args) {
+    Http::$progress_handler = $args->get(1);
+    return true;
 });

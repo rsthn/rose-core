@@ -94,6 +94,7 @@ class File
 	/*
 	**	Opens the file and returns a data stream.
 	*/
+    //VIOLET: Remove this if not used anymore
     public static function open (string $filepath, string $openMode='wb', $context=null)
     {
 		$_handle = null;
@@ -305,4 +306,49 @@ Expr::register('file:copy', function ($args) {
  */
 Expr::register('file:create', function ($args) {
     return File::create($args->get(1));
+});
+
+/**
+ * Opens a file for reading, writing or appending, and returns a data stream.
+ * @code (`stream:open` <path> [mode='r'])
+ * @example
+ * (stream:open "test.txt" "w")
+ * ; (data-stream)
+ */
+Expr::register('stream:open', function ($args) {
+    return fopen($args->get(1), $args->{2} ?? 'r');
+});
+
+/**
+ * Close a file data stream.
+ * @code (`stream:close` <data-stream>)
+ * @example
+ * (stream:close (stream:open "test.txt" "w"))
+ * ; true
+ */
+Expr::register('stream:close', function ($args) {
+    return fclose($args->get(1));
+});
+
+/**
+ * Writes data to a file data stream.
+ * @code (`stream:write` <data-stream> <data>)
+ * @example
+ * (stream:write (fh) "Hello, World!")
+ * ; true
+ */
+Expr::register('stream:write', function ($args) {
+    return fwrite($args->get(1), $args->get(2)) !== false;
+});
+
+/**
+ * Reads and returns up to length bytes from the file data stream. Returns `null` if an error occurred.
+ * @code (`stream:read` <data-stream> <length>)
+ * @example
+ * (stream:read (fh) 1024)
+ * ; "Hello, World!"
+ */
+Expr::register('stream:read', function ($args) {
+    $data = fread($args->get(1), $args->get(2));
+    return $data !== false ? $data : null;
 });

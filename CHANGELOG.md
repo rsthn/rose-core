@@ -1,3 +1,28 @@
+# v5.0.3 - May 04 2024
+
+#### Utils
+- Fixed bug in `env:set` function.
+
+#### Expr
+- Added escape sequence `\b` to specify ASCII 8.
+- Added functions `range`, `sys:peak-memory`.
+
+#### Request
+- Added `request:error` which returns the last error string.
+- Support for input, output and progress handlers completed.
+- Added `request:input-file` and `request:output-file` for direct I/O.
+
+#### File
+- Added stream support with `stream:open`, `stream:close`, `stream:read` and `stream:write`.
+
+#### Locale
+- When number/integer format is not provided ".2," will be used by default.
+
+#### Math
+- Added `math:fixed` to round a number to a fixed number of decimals.
+
+<br/>
+
 # v5.0.2 - Apr 20 2024
 
 #### Sys

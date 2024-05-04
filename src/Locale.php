@@ -78,11 +78,13 @@ class Locale
             case 'NUMBER':
                 if (!$format) $format = 'numeric';
                 if ($config && $config->has($format)) $format = $config->get($format);
+                if ($format === 'numeric') $format = '.2,';
                 return number_format((double)$value, $format[1], $format[0], $format[2]);
 
             case 'INTEGER':
                 if (!$format) $format = 'numeric';
                 if ($config && $config->has($format)) $format = $config->get($format);
+                if ($format === 'numeric') $format = '.2,';
                 return number_format((double)$value, 0, 0, $format[2]);
 
             case 'TIME':

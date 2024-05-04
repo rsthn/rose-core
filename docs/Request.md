@@ -98,6 +98,13 @@ Returns the HTTP status code of the last request.
 ; 200
 ```
 
+### (`request:error`)
+Returns the last error message.
+```lisp
+(request:error)
+; Could not resolve host
+```
+
 ### (`request:content-type`)
 Returns the content-type of the last request. Shorthand for `(request:headers "content-type")` without the charset.
 ```lisp
@@ -114,3 +121,38 @@ Returns the raw data returned by the last request.
 
 ### (`request:clear`)
 Clears the current headers, response headers and response data.
+
+### (`request:output-handler` \<func>)
+Sets the output handler for the next request.
+```lisp
+(request:output-handler (fn data (echo (data))))
+; true
+```
+
+### (`request:output-file` \<file-path>)
+Sets the output file for the next request.
+```lisp
+(request:output-file "output.txt")
+; true
+```
+
+### (`request:input-handler` \<func>)
+Sets the input handler for the next request.
+```lisp
+(request:input-handler (fn max_bytes (ret "....")))
+; true
+```
+
+### (`request:input-file` \<file-path>)
+Sets the input file for the next request.
+```lisp
+(request:input-file "sample.jpg")
+; true
+```
+
+### (`request:progress-handler` \<func>)
+Sets the progress handler for the next request.
+```lisp
+(request:progress-handler (fn total_bytes curr_bytes ...))
+; true
+```

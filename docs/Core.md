@@ -1000,6 +1000,16 @@ passed to the block.
 ; 23
 ```
 
+### (`range` \<start> \<end> [step=1])
+Returns a sequence of integer numbers for the specified range (end-exclusive).
+```lisp
+(range 1 10)
+; [1,2,3,4,5,6,7,8,9]
+
+(range 1 10 2)
+; [1,3,5,7,9]
+```
+
 ### (`mapify` [key-var:val-var | val-var] [`in`] \<iterable> \<key-expr> [value-expr])
 Returns a new map created with the specified key-expression and value-expression.
 ```lisp

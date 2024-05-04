@@ -364,6 +364,7 @@ class Expr
                 switch ($r)
                 {
                     case '0': $r = "\0"; break;
+                    case 'b': $r = "\x08"; break;
                     case 'n': $r = "\n"; break;
                     case 'r': $r = "\r"; break;
                     case 'f': $r = "\f"; break;
@@ -4385,6 +4386,43 @@ Expr::register('_reduce', function ($parts, $data)
 });
 
 /**
+ * Returns a sequence of integer numbers for the specified range (end-exclusive).
+ * @code (`range` <start> <end> [step=1])
+ * @example
+ * (range 1 10)
+ * ; [1,2,3,4,5,6,7,8,9]
+ *
+ * (range 1 10 2)
+ * ; [1,3,5,7,9]
+ */
+Expr::register('range', function ($args, $parts, $data)
+{
+    $start = (int)$args->get(1);
+    $end = (int)$args->get(2);
+    $step = $args->has(3) ? (int)$args->get(3) : ($start < $end ? 1 : -1);
+
+    if ($step == 0)
+        throw new Error('range step cannot be zero');
+
+    if ($step < 0 && $start < $end)
+        throw new Error('range step must be positive when start < end');
+
+    if ($step > 0 && $start > $end)
+        throw new Error('range step must be negative when start > end');
+
+    $output = new Arry();
+    if ($step > 0) {
+        for ($i = $start; $i < $end; $i += $step)
+            $output->push($i);
+    } else if ($step < 0) {
+        for ($i = $start; $i > $end; $i += $step)
+            $output->push($i);
+    }
+
+    return $output;
+});
+
+/**
  * Returns a new map created with the specified key-expression and value-expression.
  * @code (`mapify` [key-var:val-var | val-var] [`in`] <iterable> <key-expr> [value-expr])
  * @example
@@ -4630,6 +4668,7 @@ Expr::register('throw', function ($args, $parts, $data)
     throw new \Exception ($data->get('err') ?? '');
 });
 
+// todo: move this to unit testing?
 /**
  * Throws an error if the specified condition is not `true`.
  * @code (`assert` <condition> [message])

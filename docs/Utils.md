@@ -16,10 +16,10 @@ Returns an environment variable or `null` if not found.
 ; "/home/user"
 ```
 
-### (`env:set` \<name> \<value>)
+### (`env:set` \<value>)
 Sets an environment variable.
 ```lisp
-(env:set "HOME" "/home/user")
+(env:set "HOME=/home/user")
 ; true
 ```
 
@@ -245,6 +245,13 @@ Runs the garbage collector.
 ```lisp
 (sys:gc)
 ; 1
+```
+
+### (`sys:peak-memory`)
+Returns the memory peak usage in megabytes.
+```lisp
+(sys:peak-memory)
+; 4.58
 ```
 
 ### (`strings`)

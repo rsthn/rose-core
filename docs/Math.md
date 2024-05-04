@@ -26,6 +26,16 @@ Returns the number rounded up to the nearest integer.
 ; 5
 ```
 
+### (`math:fixed` \<value> [decimals=2])
+Returns the number rounded to the specified number of decimals.
+```lisp
+(math:fixed 5.5112)
+; 5.51
+
+(math:fixed 5.4782)
+; 5.48
+```
+
 ### (`math:ceil` \<value>)
 Returns the ceiling value of a given number.
 ```lisp

@@ -85,3 +85,31 @@ Creates a file, returns `true` if the file was created, or `false` if an error o
 (file:create "/var/www/test.txt")
 ; true
 ```
+
+### (`stream:open` \<path> [mode='r'])
+Opens a file for reading, writing or appending, and returns a data stream.
+```lisp
+(stream:open "test.txt" "w")
+; (data-stream)
+```
+
+### (`stream:close` \<data-stream>)
+Close a file data stream.
+```lisp
+(stream:close (stream:open "test.txt" "w"))
+; true
+```
+
+### (`stream:write` \<data-stream> \<data>)
+Writes data to a file data stream.
+```lisp
+(stream:write (fh) "Hello, World!")
+; true
+```
+
+### (`stream:read` \<data-stream> \<length>)
+Reads and returns up to length bytes from the file data stream. Returns `null` if an error occurred.
+```lisp
+(stream:read (fh) 1024)
+; "Hello, World!"
+```

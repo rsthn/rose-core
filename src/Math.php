@@ -44,6 +44,13 @@ abstract class Math
     }
 
     /**
+     * Returns the number rounded to the specified number of decimals.
+     */
+    public static function fixed ($value, $decimals) {
+        return round($value, $decimals);
+    }
+
+    /**
      * Returns the ceiling value of a given number.
      */
     public static function ceil ($value) {
@@ -172,6 +179,21 @@ Expr::register('math:abs', function($args) {
  */
 Expr::register('math:round', function($args) {
     return Math::round($args->get(1));
+});
+
+
+/**
+ * Returns the number rounded to the specified number of decimals.
+ * @code (`math:fixed` <value> [decimals=2])
+ * @example
+ * (math:fixed 5.5112)
+ * ; 5.51
+ *
+ * (math:fixed 5.4782)
+ * ; 5.48
+ */
+Expr::register('math:fixed', function($args) {
+    return Math::fixed($args->get(1), $args->{2} ?? 2);
 });
 
 
