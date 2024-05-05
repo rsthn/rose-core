@@ -19,7 +19,7 @@ class File
 	*/
     public static function size (string $filepath)
     {
-        return filesize ($filepath);
+        return file_exists($filepath) ? filesize($filepath) : null;
     }
 
 	/*
@@ -174,7 +174,7 @@ class File
 };
 
 /**
- * Returns the size of the file.
+ * Returns the size of the file or `null` if the file does not exist.
  * @code (`file:size` <path>)
  * @example
  * (file:size "/var/www/image.jpg")

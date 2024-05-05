@@ -241,7 +241,7 @@ class Http
             $progress_handler_params = new Arry([null, null, null]);
             self::$progress_handler = null;
             curl_setopt($c, CURLOPT_NOPROGRESS, false);
-            curl_setopt($c, CURLOPT_XFERINFOFUNCTION, function($curl, $down_total, $down_curr) use (&$progress_handler, &$progress_handler_params) {
+            curl_setopt($c, CURLOPT_PROGRESSFUNCTION, function($curl, $down_total, $down_curr) use (&$progress_handler, &$progress_handler_params) {
                 if (!$down_total) return;
                 $progress_handler_params->set(1, Math::fixed(100.0 * $down_curr / $down_total, 2));
                 $progress_handler_params->set(2, $down_total);
