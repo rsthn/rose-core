@@ -599,7 +599,7 @@ Expr::register('strings:lang', function ($args)
 
 /**
  * Returns a string given the path. If the target string is not found then the given path will be returned as a placeholder.
- * @code (`strings:lang` [lang])
+ * @code (`strings:get` [lang])
  * @example
  * (strings:get "messages.welcome")
  * ; "Welcome!"
