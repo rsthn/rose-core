@@ -7,16 +7,18 @@ use Rose\Map;
 
 class WindError extends Error
 {
-    private $response;
+    public $data;
 
-    public function __construct ($response)
-    {
-        parent::__construct ('WindError');
-        $this->response = $response;
+    public function __construct ($name, $data=null) {
+        if ($data === null) {
+            $data = $name;
+            $name = 'WindError';
+        }
+        parent::__construct($name);
+        $this->data = $data;
     }
 
-    public function getResponse ()
-    {
-        return $this->response;
+    public function getData() {
+        return $this->data;
     }
 };

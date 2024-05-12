@@ -3,7 +3,7 @@
 
 
 ### (`file:size` \<path>)
-Returns the size of the file.
+Returns the size of the file or `null` if the file does not exist.
 ```lisp
 (file:size "/var/www/image.jpg")
 ; 1024

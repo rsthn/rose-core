@@ -4665,6 +4665,9 @@ Expr::register('throw', function ($args, $parts, $data)
     if ($args->length > 1)
         throw new \Exception ($args->get(1) ?? '');
 
+    if ($data->has('ex'))
+        throw $data->get('ex');
+
     throw new \Exception ($data->get('err') ?? '');
 });
 

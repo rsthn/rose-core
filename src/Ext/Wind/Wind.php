@@ -168,7 +168,7 @@ class Wind
             File::touch($path2, File::mtime($path1, true));
         }
         else
-            throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'error' => Strings::get('@messages.function_not_found') . ': ' . $path ]);
+            throw new WindError ('NotFoundError', [ 'response' => self::R_FUNCTION_NOT_FOUND, 'error' => Strings::get('@messages.function_not_found') . ': ' . $path ]);
 
         $tmp = Text::split('.', $path);
         $tmp->pop();
@@ -262,9 +262,9 @@ class Wind
                     $f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $gateway->request->f);
                     if (!$f) {
                         if (!$gateway->request->has('f'))
-                            throw new WindError ([ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
+                            throw new WindError ('Response', [ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
                         else
-                            throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $gateway->request->f ]);
+                            throw new WindError ('NotFoundError', [ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $gateway->request->f ]);
                     }
 
                     self::process($f);
@@ -272,7 +272,7 @@ class Wind
                 catch (FalseError $e) {
                 }
                 catch (WindError $e) {
-                    self::$response = self::prepare($e->getResponse());
+                    self::$response = self::prepare($e->getData());
                 }
                 catch (MetaError $e)
                 {
@@ -311,9 +311,9 @@ class Wind
             $f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $params->f);
             if (!$f) {
                 if (!$params->has('f'))
-                    throw new WindError ([ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
+                    throw new WindError ('Response', [ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
                 else
-                    throw new WindError ([ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $params->f ]);
+                    throw new WindError ('NotFoundError', [ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $params->f ]);
             }
 
             self::process($f);
@@ -321,7 +321,7 @@ class Wind
         catch (FalseError $e) {
         }
         catch (WindError $e) {
-            self::reply ($e->getResponse(), true);
+            self::reply ($e->getData(), true);
         }
         catch (MetaError $e)
         {
@@ -409,7 +409,7 @@ class Wind
         {
             self::$data->internal_call = self::$data->internal_call - 1;
             self::$data->args = $p_args;
-            throw new WindError ([ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
+            throw new WindError ('Error', [ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
         }
 
         self::$data->internal_call = self::$data->internal_call - 1;
@@ -463,7 +463,7 @@ class Wind
         {
             self::$data = $p_data;
             self::$data->internal_call = self::$data->internal_call - 1;
-            throw new WindError ([ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
+            throw new WindError ('Error', [ 'response' => Wind::R_CUSTOM_ERROR, 'error' => $e->getMessage() ]);
         }
 
         self::$data = $p_data;

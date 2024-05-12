@@ -235,15 +235,16 @@ Expr::register('openssl:random-bytes', function($args) {
 });
 
 /**
- * Creates a new private key using the specified curve (see `openssl:curves`) and private key type. Returns `pkey` object.
- * @code (`openssl:create` <curve-name> <DSA|DH|RSA|EC> [bits])
+ * Creates a new private key of the specified type. Returns `pkey` object. Note that when using EC keys, the curve name is
+ * required, see `openssl:curves` for a list of supported curves.
+ * @code (`openssl:create` <DSA|DH|RSA|EC> [curve-name] [bits])
  * @example
- * (openssl:create "prime256v1" "EC")
+ * (openssl:create "EC" "prime256v1")
  * ; (pkey)
  */
 Expr::register('openssl:create', function($args)
 {
-    $type = $args->get(2);
+    $type = $args->get(1);
          if ($type === 'DSA') $type = OPENSSL_KEYTYPE_DSA;
     else if ($type === 'DH')  $type = OPENSSL_KEYTYPE_DH;
     else if ($type === 'RSA') $type = OPENSSL_KEYTYPE_RSA;
@@ -251,12 +252,22 @@ Expr::register('openssl:create', function($args)
     else throw new Error('Invalid key type: ' . $type);
 
     $config = [
-        'curve_name' => $args->get(1),
-        'private_key_type' => $type,
+        'private_key_type' => $type
     ];
 
-    if ($args->has(3))
-        $config['private_key_bits'] = $args->get(3);
+    $val = $args->{2};
+    if ($type === OPENSSL_KEYTYPE_EC) {
+        if ($val === null)
+            throw new Error('Curve name is required for EC keys');
+        $config['curve_name'] = $val;
+    }
+    else {
+        if ($val !== null && !\Rose\isInteger($val))
+            throw new Error('Invalid key size: ' . $val);
+
+        if ($val !== null)
+            $config['private_key_bits'] = $val;
+    }
 
     $key = openssl_pkey_new($config);
     if ($key === false)

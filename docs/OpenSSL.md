@@ -26,10 +26,11 @@ Generates a pseudo-random string of bytes.
 ; (binary data)
 ```
 
-### (`openssl:create` \<curve-name> \<DSA|DH|RSA|EC> [bits])
-Creates a new private key using the specified curve (see `openssl:curves`) and private key type. Returns `pkey` object.
+### (`openssl:create` \<DSA|DH|RSA|EC> [curve-name] [bits])
+Creates a new private key of the specified type. Returns `pkey` object. Note that when using EC keys, the curve name is
+required, see `openssl:curves` for a list of supported curves.
 ```lisp
-(openssl:create "prime256v1" "EC")
+(openssl:create "EC" "prime256v1")
 ; (pkey)
 ```
 

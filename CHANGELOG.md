@@ -1,3 +1,19 @@
+# v5.0.4 - May 11 2024
+
+#### File
+- Function `file:size` now returns `null` if the file doesn't exist.
+
+#### OpenSSL
+- Fixed parameter requirements and parameter order for the `openssl:create` function.
+
+#### Wind
+- Updated WindError to expose 'data' field.
+
+#### Expr
+- Fixed behavior of 'throw' to respectfully throw an exception instead of a string.
+
+<br/>
+
 # v5.0.3 - May 04 2024
 
 #### Utils
