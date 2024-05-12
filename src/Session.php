@@ -156,7 +156,7 @@ class Session
 
                 session_start(['use_cookies' => 0, 'use_only_cookies' => 0]);
             }
-            catch (\FalseError $e)
+            catch (FalseError $e)
             {
                 if (!$createSession)
                     return false;

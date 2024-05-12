@@ -439,6 +439,13 @@ public $body;
     }
 
     /**
+     * Sets the HTTP status code to be sent to the client.
+     */
+    public static function status ($code) {
+        http_response_code(~~$code);
+    }
+
+    /**
      * Returns the string representation of this object.
      */
     public function __toString() {
@@ -463,7 +470,7 @@ Expr::register('gateway', function ($args) {
  * ; true
  */
 Expr::register('gateway:status', function($args) {
-    http_response_code(~~$args->get(1));
+    Gateway::status($args->get(1));
     return true;
 });
 

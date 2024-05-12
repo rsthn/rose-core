@@ -277,7 +277,7 @@ otherwise an error will be thrown.
 ; Error: Language code `xx` is not supported
 ```
 
-### (`strings:lang` [lang])
+### (`strings:get` [lang])
 Returns a string given the path. If the target string is not found then the given path will be returned as a placeholder.
 ```lisp
 (strings:get "messages.welcome")

@@ -21,11 +21,12 @@ Responses are always in JSON format (unless otherwise explicitly specified) with
 |Response Code|Short Name|Details|
 |-------------|----------|-----------|
 |200|OK|Request completed without errors.
-|400|FUNCTION_NOT_FOUND|The respective file for the function name in parameter `f` was not found.
-|403|PRIVILEGE_REQUIRED|Function requires the invoker to have certain privilege (i.e. `admin`).
+|400|BAD_REQUEST|The respective handler for the function name in parameter `f` was not found.
+|401|UNAUTHORIZED|Function requires the invoker to be an authenticated user.
+|403|FORBIDDEN|Function requires the invoker to have certain privilege (i.e. `admin`).
 |404|NOT_FOUND|A requested resource could not be found.
-|407|VALIDATION_ERROR|One or more request fields did not pass validation checks. A field named `fields` will be found in the response, this is an object with the offending request parameter name(s) and their respective error message.
-|408|NOT_AUTHENTICATED|Function requires the invoker to be an authenticated user.
+|405|METHOD_NOT_ALLOWED|The HTTP method used is not allowed by the function.
+|422|VALIDATION_ERROR|One or more request fields did not pass validation checks. A field named `fields` might be found in the response, this is an object with the offending request parameter name(s) and their respective validation error message.
 |409|CUSTOM_ERROR|A field named `error` in the response will have the complete error message.
 
 <br/>

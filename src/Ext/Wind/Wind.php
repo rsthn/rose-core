@@ -46,17 +46,13 @@ class Wind
 
     public static $callStack;
 
-    public const R_OK 						= 200;
-    public const R_FUNCTION_NOT_FOUND 		= 400;
-    public const R_DATABASE_ERROR			= 401;
-    public const R_FORBIDDEN 				= 402;
-    public const R_PRIVILEGE_REQUIRED		= 403;
-    public const R_NOT_FOUND				= 404;
-
-    public const R_VALIDATION_ERROR			= 407;
-    public const R_NOT_AUTHENTICATED		= 408;
-    public const R_CUSTOM_ERROR				= 409;
-    public const R_INVALID_DATA				= 410;
+    public const R_OK                       = 200; // OK
+    public const R_BAD_REQUEST              = 400; // Bad Request
+    public const R_UNAUTHORIZED             = 401; // Unauthorized
+    public const R_FORBIDDEN                = 403; // Forbidden
+    public const R_NOT_FOUND                = 404; // Not Found
+    public const R_VALIDATION_ERROR         = 422; // Unprocessable Content
+    public const R_CUSTOM_ERROR             = 409; // Conflict
 
     public static function init()
     {
@@ -68,14 +64,26 @@ class Wind
         self::$multiResponseMode = 0;
     }
 
+    public static function flush ($response)
+    {
+        if (\Rose\typeOf($response) === 'Rose\\Map')
+        {
+            if ($response->has('response')) {
+                Gateway::status($response->get('response'));
+            }
+        }
+
+        echo (string)$response;
+    }
+
     public static function prepare ($response)
     {
         if (\Rose\isArray($response))
             $response = new Map ($response);
 
-        if (\Rose\typeOf($response) == 'Rose\\Map' || \Rose\typeOf($response) == 'Rose\\Arry')
+        if (\Rose\typeOf($response) === 'Rose\\Map' || \Rose\typeOf($response) === 'Rose\\Arry')
         {
-            if (\Rose\typeOf($response) == 'Rose\\Arry') {
+            if (\Rose\typeOf($response) === 'Rose\\Arry') {
                 $response = new Map([ 'response' => Wind::R_OK, 'data' => $response ], false);
             }
             else
@@ -108,14 +116,15 @@ class Wind
             if ($isError) {
                 $response = self::prepare($response);
                 \Rose\trace('[ERROR] ['.(new DateTime()).'] ['.Gateway::getInstance()->remoteAddress.'] '.$response);
-                echo $response;
+                self::flush($response);
             }
+
             Gateway::exit();
         }
 
         $response = self::prepare($response);
 
-        if (\Rose\typeOf($response) == 'Rose\Map' || \Rose\typeOf($response) == 'Rose\Arry') {
+        if (\Rose\typeOf($response) === 'Rose\Map' || \Rose\typeOf($response) === 'Rose\Arry') {
             if (Gateway::$contentType == null)
                 Gateway::$contentType = 'Content-Type: application/json; charset=utf-8';
         }
@@ -131,7 +140,7 @@ class Wind
 
         if ($response != null) {
             Gateway::header(Gateway::$contentType);
-            echo (string)$response;
+            self::flush($response);
         }
 
         if (self::$data->internal_call != 0)
@@ -148,7 +157,7 @@ class Wind
 
     public static function process ($path)
     {
-        if ($path[0] == '@')
+        if ($path[0] === '@')
             $path = self::$callStack->get(self::$callStack->length-1)[0].$path;
 
         $path1 = Path::append(self::$base, Text::replace('.', '/', $path) . '.fn');
@@ -168,7 +177,7 @@ class Wind
             File::touch($path2, File::mtime($path1, true));
         }
         else
-            throw new WindError ('NotFoundError', [ 'response' => self::R_FUNCTION_NOT_FOUND, 'error' => Strings::get('@messages.function_not_found') . ': ' . $path ]);
+            throw new WindError ('NotFoundError', [ 'response' => self::R_BAD_REQUEST, 'error' => Strings::get('@messages.function_not_found') . ': ' . $path ]);
 
         $tmp = Text::split('.', $path);
         $tmp->pop();
@@ -208,7 +217,7 @@ class Wind
         catch (SubReturn $e)
         {
             if (!Gateway::$contentFlushed)
-                echo self::$response;
+                self::flush(self::$response);
         }
         catch (FalseError $e) {
         }
@@ -264,7 +273,7 @@ class Wind
                         if (!$gateway->request->has('f'))
                             throw new WindError ('Response', [ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
                         else
-                            throw new WindError ('NotFoundError', [ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $gateway->request->f ]);
+                            throw new WindError ('NotFoundError', [ 'response' => self::R_BAD_REQUEST, 'message' => Strings::get('@messages.function_not_found') . ': ' . $gateway->request->f ]);
                     }
 
                     self::process($f);
@@ -313,7 +322,7 @@ class Wind
                 if (!$params->has('f'))
                     throw new WindError ('Response', [ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
                 else
-                    throw new WindError ('NotFoundError', [ 'response' => self::R_FUNCTION_NOT_FOUND, 'message' => Strings::get('@messages.function_not_found') . ': ' . $params->f ]);
+                    throw new WindError ('NotFoundError', [ 'response' => self::R_BAD_REQUEST, 'message' => Strings::get('@messages.function_not_found') . ': ' . $params->f ]);
             }
 
             self::process($f);
@@ -516,7 +525,7 @@ class Wind
 
         $i = $args->get($i);
 
-        if (\Rose\typeOf($i) == 'Rose\\Arry' || \Rose\typeOf($i) == 'Rose\\Map')
+        if (\Rose\typeOf($i) === 'Rose\\Arry' || \Rose\typeOf($i) === 'Rose\\Map')
             $i = (string)$i;
 
         $s .= "data: " . $i . "\n\n";

@@ -1,3 +1,14 @@
+# v5.0.5 - May 11 2024
+
+#### Wind
+- Updated error codes to match 1:1 the HTTP status codes.
+- The `response` field is now mirrored into the HTTP response code.
+
+#### Session
+- Fixed bug causing a FalseError to be uncatched when using cookie-based sessions.
+
+<br/>
+
 # v5.0.4 - May 11 2024
 
 #### File
