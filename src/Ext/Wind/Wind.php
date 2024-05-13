@@ -30,8 +30,13 @@ use Rose\Ext\Wind\WindError;
 use Rose\Main;
 
 class WindProxy {
+    private $version;
+    public function __construct($version) {
+        $this->version = $version;
+    }
+
     public function main() {
-        Wind::main();
+        Wind::main($this->version);
     }
 };
 
@@ -45,6 +50,7 @@ class Wind
     public static $response;
 
     public static $callStack;
+    private static $version;
 
     public const R_OK                       = 200; // OK
     public const R_BAD_REQUEST              = 400; // Bad Request
@@ -56,7 +62,9 @@ class Wind
 
     public static function init()
     {
-        Gateway::registerService ('wind', new WindProxy());
+        Gateway::registerService ('wind', new WindProxy(1));
+        Gateway::registerService ('wind-2', new WindProxy(2));
+        Gateway::registerService ('wind-3', new WindProxy(3));
 
         self::$base = Main::$CORE_DIR.'/fn';
         self::$cache = 'volatile/wind';
@@ -66,10 +74,12 @@ class Wind
 
     public static function flush ($response)
     {
-        if (\Rose\typeOf($response) === 'Rose\\Map')
+        if (self::$version >= 2 && \Rose\typeOf($response) === 'Rose\\Map')
         {
             if ($response->has('response')) {
                 Gateway::status($response->get('response'));
+                if (self::$version >= 3)
+                    $response->remove('response');
             }
         }
 
@@ -223,8 +233,10 @@ class Wind
         }
     }
 
-    public static function main ()
+    public static function main ($version)
     {
+        self::$version = $version;
+
         $gateway = Gateway::getInstance();
         $params = $gateway->request;
 
