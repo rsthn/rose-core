@@ -46,7 +46,7 @@ class Image
             case 'TOP': return Image::TOP;
             case 'BOTTOM': return Image::BOTTOM;
         }
-        throw new Error ('Invalid position name: '.$name);
+        throw new Error ('Valid positions for smartcut are: CENTER, LEFT, RIGHT, TOP, BOTTOM');
     }
 
     /*

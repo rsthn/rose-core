@@ -1,3 +1,23 @@
+# v5.0.6 - May 13 2024
+
+#### Wind
+- Added service `wind-2` which returns the 'response' in the HTTP response status code and also in the response body.
+- Added service `wind-3` which NO LONGER returns a 'response' field in the response body, only as the HTTP status code.
+
+#### PostgreSQL
+- Updated query processor to allow '?' as parameter placeholder, internally will be replaced by $1, $2, etc.
+
+#### Expr
+- Added support for mapped imports using the 'imports' configuration section.
+
+#### Image
+- Improved error message when position code is invalid for smartcut.
+
+#### Regex
+- Added parameter 'limit' to specify max number of occurrences to replace when using the `re:replace` function.
+
+<br/>
+
 # v5.0.5 - May 11 2024
 
 #### Wind

@@ -137,19 +137,19 @@ class Regex
     /**
      * Replaces all the strings that match the pattern by the given replacement.
      */
-    public function replace ($text, $replacement='')
+    public function replace ($text, $replacement='', $limit=-1)
     {
         $text = Text::toString($text);
-        return preg_replace ($this->pattern, $replacement, $text);
+        return preg_replace ($this->pattern, $replacement, $text, $limit);
     }
 
     /**
      * Replaces all the strings that match the pattern by the given replacement.
      */
-    public static function _replace ($pattern, $replacement, $text)
+    public static function _replace ($pattern, $replacement, $text, $limit=-1)
     {
         $text = Text::toString($text);
-        return preg_replace ($pattern, $replacement, $text);
+        return preg_replace ($pattern, $replacement, $text, $limit);
     }
 
     /**
@@ -229,13 +229,16 @@ Expr::register('re:split', function($args) {
 
 /**
  * Replaces all the strings that match the pattern by the given replacement.
- * @code (`re:replace` <pattern> <replacement> <text>)
+ * @code (`re:replace` <pattern> <replacement> <text> [limit=-1])
  * @example
  * (re:replace "/\d/" "X" "a123b")
  * ; "aXXXb"
+ *
+ * (re:replace "/\d/" "X" "a123b" 1)
+ * ; "aX23b"
  */
 Expr::register('re:replace', function($args) {
-    return Regex::_replace($args->get(1), $args->get(2), $args->get(3));
+    return Regex::_replace($args->get(1), $args->get(2), $args->get(3), $args->{4} ?? -1);
 });
 
 /**

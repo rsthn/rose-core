@@ -30,11 +30,14 @@ Splits the given string using the pattern as the delimiter, returns an array con
 ; ["1", "2", "3"]
 ```
 
-### (`re:replace` \<pattern> \<replacement> \<text>)
+### (`re:replace` \<pattern> \<replacement> \<text> [limit=-1])
 Replaces all the strings that match the pattern by the given replacement.
 ```lisp
 (re:replace "/\d/" "X" "a123b")
 ; "aXXXb"
+
+(re:replace "/\d/" "X" "a123b" 1)
+; "aX23b"
 ```
 
 ### (`re:extract` \<pattern> \<text>)

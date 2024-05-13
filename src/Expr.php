@@ -1901,7 +1901,7 @@ Expr::register('import', function($args, $parts, $data)
 {
     for ($i = 1; $i < $args->length; $i++)
     {
-        $path = $args->get($i);
+        $path = $original_path = $args->get($i);
         $ns = '';
 
         if ($i+1 < $args->length && $args->get($i+1) === 'as') {
@@ -1916,12 +1916,14 @@ Expr::register('import', function($args, $parts, $data)
 
         if (!Text::endsWith($path, '.fn'))
         {
-            if (!Path::exists(Path::resolve($path.'.fn'))) {
-                $env = Configuration::getInstance()->env;
-                if ($env && Path::exists(Path::resolve($path.'.'.$env.'.fn')))
-                    $path .= '.'.$env;
+            if (!Path::exists(Path::resolve($path.'.fn')))
+            {
+                $imports = Configuration::getInstance()->imports;
+                if ($imports && $imports->has($original_path))
+                    $path = Expr::eval($imports->get($original_path));
             }
-            $path .= '.fn';
+            else
+                $path .= '.fn';
         }
 
         $path = Path::resolve($_path = $path);
@@ -1931,7 +1933,7 @@ Expr::register('import', function($args, $parts, $data)
             $path_cache = Path::append(Expr::$cachePath, Text::replace('/', '-', Text::substring($path, 1+Text::length(Expr::$importPath))));
 
         if (!Path::exists($path))
-            throw new Error ("source does not exist: " . $_path);
+            throw new Error ("source does not exist: " . $original_path);
 
         if (Expr::$importedTime->get($path) == File::mtime($path, true))
         {

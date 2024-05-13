@@ -60,6 +60,12 @@ class PostgreSQL extends Driver
             return $rs;
         }
 
+        $arg_num = 1;
+        foreach ($params->__nativeArray as $param) {
+            $query = preg_replace('/\?/', '\$'.$arg_num, $query, 1);
+            $arg_num++;
+        }
+
         $rs = pg_query_params($conn, $query, $params->__nativeArray);
         if ($rs === false) return false;
 
