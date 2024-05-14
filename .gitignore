@@ -1,14 +1,9 @@
 --*
 @*
 vendor/
-test/
-.svn/
 .git/
 *.log
 *.tmp
 volatile/
 composer.lock
-TODO.md
-test.php
-scripts/
 *.code-workspace

@@ -1,0 +1,100 @@
+
+;; Get package version.
+(set tmp (path:append (path:cwd) "composer.json"))
+
+(when-not (path:exists (tmp))
+    (throw "File does not exist: (tmp)"))
+
+(set version (trim (array:last (split "v" (array:first (split "-" (array:first (split "\n" (file:read "CHANGELOG.md")))))))))
+(assert (version) "Version value not found in CHANGELOG")
+
+;; Check if this is the first run to create the CHANGELOG.md file.
+(set first false)
+(echo "Last version is v(version)")
+
+(when (eq? (args.1) "first")
+    (array:remove (args) 1)
+    (set first true)
+)
+
+;; Get SVN changelog up to last publish.
+(when (not (path:exists "changes.txt"))
+    (sys:exec "svn up >nul")
+    (sys:exec "svn log -l 20 >changes.txt")
+)
+
+(set data (file:read "changes.txt"))
+(set found false)
+
+(set blocks (#))
+(set changes null)
+
+(for (split "\n" (data))
+    (set i (trim (i)))
+
+    (when (eq? (i) "v(version)")
+        (set found true)
+        (break))
+
+    (when (starts-with? "--------" (i))
+        (set changes (#))
+        (array:unshift (blocks) (changes))
+        (continue)
+    )
+
+    (set tmp (re:match `/^- \\[([^\\]]+)\] (.+)$/` (i)))
+    (when-not (tmp.0) (continue))
+
+    (array:push (changes) (& name (tmp.1) text (tmp.2)))
+)
+
+(set changes (#))
+
+(for (blocks) (for (i) (array:push (changes) (i))))
+
+(when (and (not (first)) (not (found)))
+    (throw "Previous version mark not found. Try increasing number of log messages to fetch."))
+
+(when (zero? (changes.length))
+    (throw "Found no changes to record."))
+
+(echo "")
+
+;; Increase version number.
+(set version (split "." (version)))
+(inc version.(- (version.length) 1))
+(set version (join "." (version)))
+
+;; Group by class.
+(set list (&))
+
+(for (changes)
+    (when-not (in? (list) (i.name))
+        (set list.(i.name) (#)))
+
+    (array:push (list.(i.name)) (i.text))
+)
+
+;; Generate markdown output.
+(append out (concat "# v" (version) " - " (datetime:format (datetime:now "-6") "%b %d %Y") "\n\n"))
+
+(for (list)
+    (echo "\x1B[97m#### (i#)\x1B[0m")
+    (append out "#### (i#)\n")
+
+    (for (i)
+        (echo "\x1B[90m- (i)\x1B[0m")
+        (append out "- (i)\n"))
+
+    (append out "\n")
+)
+
+(append out "<br/>\n\n")
+
+;; Prepend changes to change log file.
+(when-not (eq? (args.1) "view")
+    (file:write "CHANGELOG.md" (concat (out) (file:read "CHANGELOG.md"))))
+
+(file:remove "changes.txt")
+
+(echo "\n\x1B[92mDone\x1B[0m")

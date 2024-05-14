@@ -1,0 +1,35 @@
+BEGIN
+    ;; Load version from CHANGELOG.md file.
+    (set version (re:get "/v\([0-9.]+\)/" (file:read "CHANGELOG.md") 1))
+    (assert (version) "Could not find version in CHANGELOG.md")
+    (assert (le? (len (version)) 11) "Version is too long")
+    (assert (ge? (len (version)) 5) "Version is too short")
+
+    ;; Check if there are no changes to deploy.
+    (assert (ne? (version) (file:read "VERSION.txt")) "(clr 97)No new version found to deploy(clr 0)")
+    (set-var NEW_VERSION (version))
+
+    ;; Patch version.
+    (file:write "src/Main.php"
+        (re:replace "/return '.+'; \/\/@version/" "return '(version)'; //@version" (file:read "src/Main.php"))
+    )
+END
+
+ECHO {clr 92}Running tests ...{clr 0}
+    RUN test\\run.bat
+    ECHO
+
+ECHO {clr 92}Generating documentation ...{clr 0}
+    RUN rose scripts/docs
+
+ECHO {clr 92}Commiting ...{clr 0}
+    r0 {NEW_VERSION}
+    WRITE VERSION.txt
+    RUN git add .
+    RUN git commit -m "v{NEW_VERSION}"
+
+ECHO {clr 92}Pushing ...{clr 0}
+    RUN git push
+    RUN git push --tags
+
+ECHO {clr 92}Deployment completed.{clr 0}

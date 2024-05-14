@@ -1,3 +1,10 @@
+# v5.0.7 - May 14 2024
+
+### General
+- Updated documentation and added new deployment file.
+
+<br/>
+
 # v5.0.6 - May 13 2024
 
 #### Wind

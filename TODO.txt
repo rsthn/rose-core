@@ -1,0 +1,57 @@
+FIX `exit` and `yield` when using `for` and `switch`
+ADD SLICE SUPPORT FOR STRINGS AND ARRAYS PROPERLY WITH EXCLUSIVE END
+
+SUPPORT HEX NUMBERS!!!
+ALLOW FORMAT LIKE ".2" OMITING THE "," IN LOCALE
+
+Add info how to properly enable SSE config apache/php
+
+[ADD] Add month support to DateTime
+
+[QoL] ADD WARNINGS WHEN PARAMETERS ARE NAMED AS A RESERVED WORD/FUNCTION
+[QoL] REPLACE "base-string" by a much better name
+[QoL] Refactor: __nativeArray -> data ?
+[QoL] Remove references to dummy functions located on Main
+[TEST] Add tests for all Expr functions
+[QoL] Add File data streams (search violet in File.php)
+
+// RCO-004: TODO: Add some sort of limit of content-length to avoid loading huge files into memory.
+Ensure "Wind" multi request mode is refactored
+Test quality parameter in image functions
+FIX "(data)" optimizations causing it not to evaluate to string.
+SUPPORT HEIF!!!
+
+Add recursive chmod to Path.
+Load 'rose-env' from environment variables.
+
+[QoL] Refactor: PrimitiveType -> native
+[QoL] Ensure all try/catch using "Exception" actually use \Exception
+[QoL] Ensure all string stuff uses Text class.
+[QoL] Remove unnecessary getInstance() on classes that will never be used with Text.format, and just use plain static methods/variables
+
+Modifications to Expr:
+
+- POSSIBLY: Ensure strings are actually strings, not re-evaluated templates.
+- Function chaining issues.
+
+** Add multi-query exec
+
+# Bugs
+
+[FIX] Fix bug interpreting `0.1` in `data.0.1` as number. (echo (x."1"."0"."Code"))
+
+[QoL] Add url::encode that supports maps and arrays
+[DOC] Document wind::evt stuff for EventSource
+
+	let evtSource = new EventSource (apiUrl + '?f=remote.subscribe&scope=t9');
+	evtSource.onmessage = async function (event) {
+		if (!event.data) return;
+		let data = JSON.parse(event.data);
+	};
+
+	evtSource.addEventListener('customEvent', function (event) {
+        event.data
+	});
+
+Fix issues with exported functions!!
+Seems need a way to prevent gateway to be closed twice.
