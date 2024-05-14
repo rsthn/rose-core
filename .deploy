@@ -30,6 +30,7 @@ ECHO {clr 92}Commiting ...{clr 0}
 
 ECHO {clr 92}Pushing ...{clr 0}
     RUN git push
+    RUN git tag v{NEW_VERSION}
     RUN git push --tags
 
 ECHO {clr 92}* Completed deployment: v{NEW_VERSION}{clr 0}
