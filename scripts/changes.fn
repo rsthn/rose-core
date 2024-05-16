@@ -35,7 +35,7 @@
         (set found true)
         (break))
 
-    (when (starts-with? "--------" (i))
+    (when (starts-with? "commit " (i))
         (set changes (#))
         (array:unshift (blocks) (changes))
         (continue)

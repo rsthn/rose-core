@@ -1,3 +1,12 @@
+# v5.0.8 - May 16 2024
+
+#### General
+- Updated PostgreSQL error message handler to provide more friendly messages.
+- Fixed bug causing importing from "./" or "../" to not resolve to the correct folder.
+- Updated deployment scripts.
+
+<br/>
+
 # v5.0.7 - May 14 2024
 
 ### General
