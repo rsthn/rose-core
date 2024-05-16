@@ -1836,8 +1836,8 @@ Expr::register('include', function($args, $parts, $data)
     {
         $path = $args->get($i);
 
-        if (Text::startsWith($path, './'))
-            $path = Path::append(Expr::$context->currentPath, Text::substring($path, 2));
+        if (Text::startsWith($path, './') || Text::startsWith($path, '../'))
+            $path = Path::append(Expr::$context->currentPath, $path);
         else if (!Text::startsWith($path, '/'))
             $path = Path::append(Expr::$importPath, $path);
 
@@ -1909,8 +1909,8 @@ Expr::register('import', function($args, $parts, $data)
             $i += 2;
         }
 
-        if (Text::startsWith($path, './'))
-            $path = Path::append(Expr::$context->currentPath, Text::substring($path, 2));
+        if (Text::startsWith($path, './') || Text::startsWith($path, '../'))
+            $path = Path::append(Expr::$context->currentPath, $path);
         else if (!Text::startsWith($path, '/'))
             $path = Path::append(Expr::$importPath, $path);
 

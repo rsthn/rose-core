@@ -195,6 +195,7 @@ class Wind
 
         self::$callStack->push([ $tmp, $path, $path1 ]);
 
+        Expr::$context->currentPath = Path::resolve(Path::dirname($path1));
         $response = Expr::expand($expr, self::$data, 'last');
 
         self::$callStack->pop();
@@ -219,6 +220,7 @@ class Wind
             throw new Error (Strings::get('@messages.file_not_found') . ': ' . $path);
 
         try {
+            Expr::$context->currentPath = Path::resolve(Path::dirname($path));
             $response = Expr::expand($expr, self::$data, 'last');
 
             if ($response != null)

@@ -1,4 +1,4 @@
-# Available Functions
+# Functions
 - [Array](./Array.md)
 - [Configuration](./Configuration.md)
 - [Cookies](./Cookies.md)

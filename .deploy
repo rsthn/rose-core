@@ -19,8 +19,8 @@ ECHO {clr 92}Running tests ...{clr 0}
     RUN test\\run.bat
     ECHO
 
-ECHO {clr 92}Generating documentation ...{clr 0}
-    RUN rose scripts/docs
+ECHO {clr 92}Updating documentation ...{clr 0}
+    RUN rose :vdocs src
 
 ECHO {clr 92}Commiting ...{clr 0}
     r0 {NEW_VERSION}

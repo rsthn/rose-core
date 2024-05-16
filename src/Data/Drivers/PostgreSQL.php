@@ -2,6 +2,10 @@
 
 namespace Rose\Data\Drivers;
 
+use Rose\Text;
+use Rose\Regex;
+use Rose\Strings;
+
 use Rose\Errors\Error;
 use Rose\Data\Driver;
 use Rose\Data\Connection;
@@ -23,8 +27,19 @@ class PostgreSQL extends Driver
         return pg_close ($conn);
     }
 
+    private static function process_error ($error)
+    {
+        if (Text::indexOf($error, 'not-null constraint') !== false)
+            return Strings::get('@messages.not_null').': '.Regex::_getString('/&quot;(.+?)&quot;/', $error, 1);
+
+        if (Text::indexOf($error, 'constraint') !== false)
+            return Strings::get('@messages.'.Regex::_getString('/&quot;(.+?)&quot;/', $error, 1));
+
+        return $error;
+    }
+
     public function getLastError ($conn) {
-        return $conn ? pg_last_error($conn) : '(Undefined)';
+        return $conn ? self::process_error(pg_last_error($conn)) : '(Undefined)';
     }
 
     public function getLastInsertId ($conn) {
@@ -53,8 +68,13 @@ class PostgreSQL extends Driver
         $this->affected_rows = 0;
 
         if ($params === null) {
-            $rs = pg_query ($conn, $query);
-            if ($rs === false) return false;
+            try {
+                $rs = pg_query ($conn, $query);
+                if ($rs === false) return false;
+            }
+            catch (\Exception $e) {
+                throw new Error (self::process_error($e->getMessage()));
+            }
             $this->affected_rows = pg_affected_rows($rs);
             if (pg_num_fields($rs) == 0) return true;
             return $rs;
@@ -66,8 +86,13 @@ class PostgreSQL extends Driver
             $arg_num++;
         }
 
-        $rs = pg_query_params($conn, $query, $params->__nativeArray);
-        if ($rs === false) return false;
+        try {
+            $rs = pg_query_params($conn, $query, $params->__nativeArray);
+            if ($rs === false) return false;
+        }
+        catch (\Exception $e) {
+            throw new Error (self::process_error($e->getMessage()));
+        }
 
         $this->affected_rows = pg_affected_rows($rs);
         if (pg_num_fields($rs) == 0) return true;

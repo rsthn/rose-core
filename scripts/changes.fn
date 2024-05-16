@@ -17,10 +17,9 @@
     (set first true)
 )
 
-;; Get SVN changelog up to last publish.
+;; Get git changelog up to last publish.
 (when (not (path:exists "changes.txt"))
-    (sys:exec "svn up >nul")
-    (sys:exec "svn log -l 20 >changes.txt")
+    (sys:exec "git log -n 20 >changes.txt")
 )
 
 (set data (file:read "changes.txt"))
