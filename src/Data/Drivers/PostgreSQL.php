@@ -29,11 +29,14 @@ class PostgreSQL extends Driver
 
     private static function process_error ($error)
     {
+        $code = Regex::_getString('/&quot;(.+?)&quot;/', $error, 1);
+        if (!$code) return $error;
+
         if (Text::indexOf($error, 'not-null constraint') !== false)
-            return Strings::get('@messages.not_null').': '.Regex::_getString('/&quot;(.+?)&quot;/', $error, 1);
+            return Strings::get('@messages.not_null').': '.$code;
 
         if (Text::indexOf($error, 'constraint') !== false)
-            return Strings::get('@messages.'.Regex::_getString('/&quot;(.+?)&quot;/', $error, 1));
+            return Strings::get('@messages.'.$code);
 
         return $error;
     }
