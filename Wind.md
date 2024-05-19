@@ -23,7 +23,7 @@ Responses are always in JSON format (unless otherwise explicitly specified) with
 |200|OK|Request completed without errors.
 |400|BAD_REQUEST|The respective handler for the function name in parameter `f` was not found.
 |401|UNAUTHORIZED|Function requires the invoker to be an authenticated user.
-|403|FORBIDDEN|Function requires the invoker to have certain privilege (i.e. `admin`).
+|403|FORBIDDEN|Function requires the invoker to have certain permission (i.e. `admin`).
 |404|NOT_FOUND|A requested resource could not be found.
 |405|METHOD_NOT_ALLOWED|The HTTP method used is not allowed by the function.
 |422|VALIDATION_ERROR|One or more request fields did not pass validation checks. A field named `fields` might be found in the response, this is an object with the offending request parameter name(s) and their respective validation error message.

@@ -29,11 +29,19 @@ class PostgreSQL extends Driver
 
     private static function process_error ($error)
     {
+        if (Text::indexOf($error, 'check constraint') !== false) {
+            $code = Regex::_getString('/check constraint &quot;(.+?)&quot;/', $error, 1);
+            return Strings::get('@messages.'.$code);
+        }
+
         $code = Regex::_getString('/&quot;(.+?)&quot;/', $error, 1);
         if (!$code) return $error;
 
         if (Text::indexOf($error, 'not-null constraint') !== false)
-            return Strings::get('@messages.not_null').': '.$code;
+            return Strings::get('@messages.not_null_'.$code);
+
+        if (Text::indexOf($error, 'unique constraint') !== false)
+            return Strings::get('@messages.unique_'.$code);
 
         if (Text::indexOf($error, 'constraint') !== false)
             return Strings::get('@messages.'.$code);
@@ -84,13 +92,22 @@ class PostgreSQL extends Driver
         }
 
         $arg_num = 1;
-        foreach ($params->__nativeArray as $param) {
-            $query = preg_replace('/\?/', '\$'.$arg_num, $query, 1);
-            $arg_num++;
+        $_params = [];
+        foreach ($params->__nativeArray as $param)
+        {
+            $type = \Rose\typeOf($param);
+            if ($type === 'Rose\Arry') {
+                $query = preg_replace('/\?/', $param->join(','), $query, 1);
+            }
+            else {
+                $_params[] = $param;
+                $query = preg_replace('/\?/', '\$'.$arg_num, $query, 1);
+                $arg_num++;
+            }
         }
 
         try {
-            $rs = pg_query_params($conn, $query, $params->__nativeArray);
+            $rs = pg_query_params($conn, $query, $_params);
             if ($rs === false) return false;
         }
         catch (\Exception $e) {

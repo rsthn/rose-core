@@ -63,8 +63,6 @@ Expr::register('db:escape-name', function ($args) {
  * ; 3
  */
 Expr::register('db:scalar', function ($args) {
-    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
-        throw new ArgumentError('(db:scalar) expected scalar value');
     return Resources::getInstance()->Database->execScalar($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
@@ -76,8 +74,6 @@ Expr::register('db:scalar', function ($args) {
  * ; ["Jack", "Daniel", "Samantha"]
  */
 Expr::register('db:scalars', function ($args) {
-    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
-        throw new ArgumentError('(db:scalars) expected scalar value');
     return Resources::getInstance()->Database->execQuery($args->get(1), $args->length() > 2 ? $args->slice(2) : null)
         ->map(function($i) { return $i->values()->get(0); });
 });
@@ -90,8 +86,6 @@ Expr::register('db:scalars', function ($args) {
  * ; {"name": "Jack", "last_name": "O'Neill"}
  */
 Expr::register('db:row', function ($args) {
-    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
-        throw new ArgumentError('(db:row) expected scalar value');
     return Resources::getInstance()->Database->execAssoc($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
@@ -103,8 +97,6 @@ Expr::register('db:row', function ($args) {
  * ; ["Jack", "O'Neill"]
  */
 Expr::register('db:row-values', function ($args) {
-    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
-        throw new ArgumentError('(db:row-values) expected scalar value');
     return Resources::getInstance()->Database->execArray($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
@@ -116,8 +108,6 @@ Expr::register('db:row-values', function ($args) {
  * ; [{"name": "Jack"}, {"name": "Daniel"}, {"name": "Samantha"}]
  */
 Expr::register('db:rows', function ($args) {
-    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
-        throw new ArgumentError('(db:rows) expected scalar value');
     return Resources::getInstance()->Database->execQuery($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
@@ -129,8 +119,6 @@ Expr::register('db:rows', function ($args) {
  * ; [["Jack", "O'Neill"], ["Daniel", "Jackson"], ["Samantha", "Carter"]]
  */
 Expr::register('db:rows-values', function ($args) {
-    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
-        throw new ArgumentError('(db:rows-values) expected scalar value');
     return Resources::getInstance()->Database->execArray($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
@@ -142,8 +130,6 @@ Expr::register('db:rows-values', function ($args) {
  * ; {"count": 3, "fields":["name", "last_name"]}
  */
 Expr::register('db:header', function ($args) {
-    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
-        throw new ArgumentError('(db:header) expected scalar value');
     return Resources::getInstance()->Database->execHeader($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
@@ -165,8 +151,6 @@ Expr::register('db:header', function ($args) {
  * (reader.close)
  */
 Expr::register('db:reader', function ($args) {
-    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
-        throw new ArgumentError('(db:reader) expected scalar value');
     return Resources::getInstance()->Database->execReader($args->get(1), $args->length() > 2 ? $args->slice(2) : null);
 });
 
@@ -178,8 +162,6 @@ Expr::register('db:reader', function ($args) {
  * ; true
  */
 Expr::register('db:exec', function ($args) {
-    if ($args->length > 2 && \Rose\typeOf($args->get(2)) === 'Rose\\Arry')
-        throw new ArgumentError('(db:exec) expected scalar value');
     $query = trim($args->get(1));
     if (!$query) return true;
     return Resources::getInstance()->Database->execQuery($query, $args->length() > 2 ? $args->slice(2) : null) === true ? true : false;
