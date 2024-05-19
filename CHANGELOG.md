@@ -1,3 +1,15 @@
+# v5.0.9 - May 19 2024
+
+#### PostgreSQL
+- Improved error messages for not-null constraints.
+- Improved error messages for unique constraints.
+- Prepared statements now support arrays of values.
+
+#### General
+- Database functions updated to accept arrays in prepared statements.
+
+<br/>
+
 # v5.0.8 - May 16 2024
 
 #### General
