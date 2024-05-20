@@ -287,13 +287,29 @@ Expr::register('file:unlink', function ($args) {
 });
 
 /**
- * Copies a file (overwrites if exists) to the given target, which can be directory or file.
- * @code (`file:copy` <source> <target>)
+ * Copies a file (overwrites if exists) to the given target, which can be directory or file. Use the `stream` flag
+ * to copy the file using manual streaming.
+ * @code (`file:copy` <source> <target> [stream=false])
  * @example
  * (file:copy "/var/www/image.jpg" "/var/www/images")
  * ; true
  */
-Expr::register('file:copy', function ($args) {
+Expr::register('file:copy', function ($args)
+{
+    if ($args->{3} === true)
+    {
+        $source = fopen($args->get(1), 'rb');
+        $target = fopen($args->get(2), 'wb');
+
+        if (!($source && $target))
+            return false;
+
+        stream_copy_to_stream($source, $target);
+        fclose($source);
+        fclose($target);
+        return true;
+    }
+
     return File::copy($args->get(1), $args->get(2));
 });
 
@@ -342,7 +358,7 @@ Expr::register('stream:write', function ($args) {
 });
 
 /**
- * Reads and returns up to length bytes from the file data stream. Returns `null` if an error occurred.
+ * Reads and returns up to length bytes from the file data stream. Returns empty string at EOF or `null` on error.
  * @code (`stream:read` <data-stream> <length>)
  * @example
  * (stream:read (fh) 1024)
