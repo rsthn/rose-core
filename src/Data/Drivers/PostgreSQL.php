@@ -30,7 +30,12 @@ class PostgreSQL extends Driver
     private static function process_error ($error)
     {
         if (Text::indexOf($error, 'check constraint') !== false) {
-            $code = Regex::_getString('/check constraint &quot;(.+?)&quot;/', $error, 1);
+            $code = Regex::_getString('/constraint &quot;(.+?)&quot;/', $error, 1);
+            return Strings::get('@messages.'.$code);
+        }
+
+        if (Text::indexOf($error, 'foreign key constraint') !== false) {
+            $code = Regex::_getString('/constraint &quot;(.+?)&quot;/', $error, 1);
             return Strings::get('@messages.'.$code);
         }
 
@@ -42,9 +47,6 @@ class PostgreSQL extends Driver
 
         if (Text::indexOf($error, 'unique constraint') !== false)
             return Strings::get('@messages.unique_'.$code);
-
-        if (Text::indexOf($error, 'constraint') !== false)
-            return Strings::get('@messages.'.$code);
 
         return $error;
     }
