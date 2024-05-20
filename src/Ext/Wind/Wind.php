@@ -23,6 +23,7 @@ use Rose\Resources;
 use Rose\Session;
 use Rose\Strings;
 use Rose\Configuration;
+use Rose\JSON;
 
 use Rose\Ext\Wind\SubReturn;
 use Rose\Ext\Wind\WindError;
@@ -333,8 +334,13 @@ class Wind
 
             $f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $params->f);
             if (!$f) {
-                if (!$params->has('f'))
-                    throw new WindError ('Response', [ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
+                if (!$params->has('f')) {
+                    $banner = Configuration::getInstance()?->Gateway?->banner;
+                    if ($banner)
+                        self::reply(Expr::eval($banner, null, 'arg'));
+                    else
+                        throw new WindError ('Response', [ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
+                }
                 else
                     throw new WindError ('NotFoundError', [ 'response' => self::R_BAD_REQUEST, 'message' => Strings::get('@messages.function_not_found') . ': ' . $params->f ]);
             }
