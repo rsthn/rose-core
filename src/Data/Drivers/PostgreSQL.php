@@ -39,6 +39,13 @@ class PostgreSQL extends Driver
             return Strings::get('@messages.'.$code);
         }
 
+        $msg = Regex::_getString('/ERROR:(.+?)CONTEXT:.+RAISE/s', $error, 1);
+        if ($msg) {
+            $msg = Text::trim($msg);
+            if (Text::startsWith($msg, '@messages')) $msg = Strings::get($msg);
+            return $msg;
+        }
+
         $code = Regex::_getString('/&quot;(.+?)&quot;/', $error, 1);
         if (!$code) return $error;
 
