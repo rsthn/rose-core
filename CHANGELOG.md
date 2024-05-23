@@ -1,3 +1,20 @@
+# v5.0.10 - May 22 2024
+
+#### PostgreSQL
+- Improved messages for foreign-key constraint errors.
+- Added support for well formatted errors from "raise" statements.
+
+#### File
+- Function `file:copy` now supports streaming copy.
+
+#### Wind
+- Added support for a banner string (evaluated) in [Gateway.banner] to be shown as entry point when "f" is not provided.
+
+#### Gateway
+- Fixed bug in `gateway:continue` causing no output for the client.
+
+<br/>
+
 # v5.0.9 - May 19 2024
 
 #### PostgreSQL

@@ -72,8 +72,9 @@ Deletes a file. Does not check anything.
 ; true
 ```
 
-### (`file:copy` \<source> \<target>)
-Copies a file (overwrites if exists) to the given target, which can be directory or file.
+### (`file:copy` \<source> \<target> [stream=false])
+Copies a file (overwrites if exists) to the given target, which can be directory or file. Use the `stream` flag
+to copy the file using manual streaming.
 ```lisp
 (file:copy "/var/www/image.jpg" "/var/www/images")
 ; true
@@ -108,7 +109,7 @@ Writes data to a file data stream.
 ```
 
 ### (`stream:read` \<data-stream> \<length>)
-Reads and returns up to length bytes from the file data stream. Returns `null` if an error occurred.
+Reads and returns up to length bytes from the file data stream. Returns empty string at EOF or `null` on error.
 ```lisp
 (stream:read (fh) 1024)
 ; "Hello, World!"
