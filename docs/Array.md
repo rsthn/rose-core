@@ -50,6 +50,13 @@ Sorts the array in place by the length of its elements in descending order.
 ; ["barsss", "fooo", "baz", "qx"]
 ```
 
+### (`array:at` \<index> \<array>)
+Returns the item at the specified index. Negative indices refer to the end of the array.
+```lisp
+(array:at 1 (array 1 2 3))
+; 2
+```
+
 ### (`array:push` \<array> \<value...>)
 Adds one or more values to the end of the array.
 ```lisp
@@ -76,6 +83,16 @@ Removes the first element from the array and returns it.
 ```lisp
 (array:shift (array 1 2 3))
 ; 1
+```
+
+### (`array:insert` \<index> \<value> \<array>)
+Inserts an item at the given index and shifts the rest of the items to the right. Negative indices refer to the end of the array.
+```lisp
+(array:insert 1 10 (array 1 2 3))
+; [1, 10, 2, 3]
+
+(array:insert -2 10 (array 1 2 3))
+; [1, 2, 10, 3]
 ```
 
 ### (`array:first` \<array>)
@@ -191,4 +208,11 @@ if the length is not specified the rest of items after the index (inclusive) wil
 
 (array:slice 1 -1 (array 1 2 3 4 5))
 ; [2, 3, 4]
+```
+
+### (`array:slices` \<size> \<array>)
+Slices the array in blocks of the given size and returns an array with the resulting slices.
+```lisp
+(array:slices 4 (array 1 2 3 4 5 6 7 8 9))
+; [[1, 2, 3, 4], [5, 6, 7, 8], [9]]
 ```

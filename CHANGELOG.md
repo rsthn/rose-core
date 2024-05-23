@@ -1,3 +1,10 @@
+# v5.0.11 - May 22 2024
+
+#### Array
+- Added functions `array:at`, `array:insert`, and `array:slices`.
+
+<br/>
+
 # v5.0.10 - May 22 2024
 
 #### PostgreSQL
