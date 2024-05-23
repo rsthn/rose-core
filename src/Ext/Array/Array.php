@@ -137,6 +137,17 @@ Expr::register('array:lsort-desc', function($args)
 });
 
 /**
+ * Returns the item at the specified index. Negative indices refer to the end of the array.
+ * @code (`array:at` <index> <array>)
+ * @example
+ * (array:at 1 (array 1 2 3))
+ * ; 2
+ */
+Expr::register('array:at', function($args) {
+    return $args->get(2)->at($args->get(1));
+});
+
+/**
  * Adds one or more values to the end of the array.
  * @code (`array:push` <array> <value...>)
  * @example
@@ -184,6 +195,21 @@ Expr::register('array:pop', function($args) {
  */
 Expr::register('array:shift', function($args) {
     return $args->get(1)->shift();
+});
+
+/**
+ * Inserts an item at the given index and shifts the rest of the items to the right. Negative indices refer to the end of the array.
+ * @code (`array:insert` <index> <value> <array>)
+ * @example
+ * (array:insert 1 10 (array 1 2 3))
+ * ; [1, 10, 2, 3]
+ * 
+ * (array:insert -2 10 (array 1 2 3))
+ * ; [1, 2, 10, 3]
+ */
+Expr::register('array:insert', function($args)
+{
+    return $args->get(3)->insertAt($args->get(1), $args->get(2));
 });
 
 /**
@@ -325,11 +351,6 @@ Expr::register('array:clone', function($args) {
 });
 
 /**
- * 	array:flatten <depth> <array>
- * 	array:flatten <array>
- */
-
-/**
  * Returns a flattened array up to the specified depth.
  * @code (`array:flatten` [depth] <array>)
  * @example
@@ -370,4 +391,16 @@ Expr::register('array:slice', function($args)
         return $args->get(3)->slice($args->get(1), $args->get(2));
     else
         return $args->get(2)->slice($args->get(1));
+});
+
+/**
+ * Slices the array in blocks of the given size and returns an array with the resulting slices.
+ * @code (`array:slices` <size> <array>)
+ * @example
+ * (array:slices 4 (array 1 2 3 4 5 6 7 8 9))
+ * ; [[1, 2, 3, 4], [5, 6, 7, 8], [9]]
+ */
+Expr::register('array:slices', function($args)
+{
+    return $args->get(2)->slices($args->get(1));
 });

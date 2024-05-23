@@ -159,7 +159,7 @@ class Arry
     }
 
     /*
-    **	Returns the  item at the specified index. Negative indices refer to the end of the array.
+    **	Returns the item at the specified index. Negative indices refer to the end of the array.
     */
     public function at ($index)
     {
