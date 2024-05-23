@@ -26,7 +26,7 @@ ECHO {clr 92}Commiting ...{clr 0}
     r0 {NEW_VERSION}
     WRITE VERSION.txt
     RUN git add .
-    RUN git commit -m "v{NEW_VERSION}"
+    RUN git commit -m "{coalesce {args.0} 'v{NEW_VERSION}'}"
 
 ECHO {clr 92}Pushing ...{clr 0}
     RUN git push

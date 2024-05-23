@@ -607,6 +607,7 @@ Expr::register('gateway:continue', function ($args)
         }
     }
 
+    $response = (string)$response;
     Gateway::header("Connection: close");
     Gateway::header("Content-Length: " . Text::length($response));
     Gateway::header("Cache-Control: no-store");
@@ -615,8 +616,9 @@ Expr::register('gateway:continue', function ($args)
     if (Gateway::$contentType)
         Gateway::header(Gateway::$contentType);
 
-    echo Text::rpad((string)$response, 8192);
     Gateway::persistent();
     Gateway::flush();
+
+    echo Text::rpad($response, 8192);
     return true;
 });
