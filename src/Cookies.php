@@ -45,8 +45,8 @@ class Cookies
         if (Configuration::getInstance()?->Gateway?->allow_origin /*&& Gateway::getInstance()->server->has('HTTP_ORIGIN')*/)
             $header .= '; SameSite='.$sameSite;
 
-        if (Text::toLowerCase($sameSite) == 'none' && Gateway::getInstance()->secure)
-            $header .= '; Secure';
+        if (Text::toLowerCase($sameSite) === 'none' && Gateway::getInstance()->secure)
+            $header .= '; Secure; Partitioned';
 
         $header .= '; HttpOnly';
 
