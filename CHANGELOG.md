@@ -1,3 +1,11 @@
+# v5.0.13 - Jun 23 2024
+
+#### General
+- Added `sys:exit` to terminate the execution with an errorlevel / exit code.
+- Patched `include` to no longer use import path.
+
+<br/>
+
 # v5.0.12 - Jun 23 2024
 
 #### Cookies

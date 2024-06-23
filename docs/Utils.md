@@ -219,6 +219,12 @@ Returns the version of the framework.
 ; 5.0.1
 ```
 
+### (`sys:exit` [errorlevel])
+Exits the program with the given error level.
+```lisp
+(sys:exit 0)
+```
+
 ### (`sys:sleep` \<seconds>)
 Sleeps for the given number of seconds.
 ```lisp
