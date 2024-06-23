@@ -1838,8 +1838,6 @@ Expr::register('include', function($args, $parts, $data)
 
         if (Text::startsWith($path, './') || Text::startsWith($path, '../'))
             $path = Path::append(Expr::$context->currentPath, $path);
-        else if (!Text::startsWith($path, '/'))
-            $path = Path::append(Expr::$importPath, $path);
 
         if (!Text::endsWith($path, '.fn'))
             $path .= '.fn';

@@ -497,6 +497,16 @@ Expr::register('sys:version', function($args) {
 });
 
 /**
+ * Exits the program with the given error level.
+ * @code (`sys:exit` [errorlevel])
+ * @example
+ * (sys:exit 0)
+ */
+Expr::register('sys:exit', function($args) {
+    exit($args->get(1) ?? 0);
+});
+
+/**
  * Sleeps for the given number of seconds.
  * @code (`sys:sleep` <seconds>)
  * @example
