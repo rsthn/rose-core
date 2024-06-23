@@ -1,3 +1,10 @@
+# v5.0.12 - Jun 23 2024
+
+#### Cookies
+- Added new attribute 'Partitioned' for cookies with SameSite=None
+
+<br/>
+
 # v5.0.11 - May 22 2024
 
 #### Array
