@@ -14,24 +14,30 @@ use Rose\Text;
 class DateTime
 {
     /**
-     * Periods of time expressed in seconds.
+     * Periods of time.
      */
-    public const SECOND = 1;
-    public const MINUTE = 60*DateTime::SECOND;
-    public const HOUR = 60*DateTime::MINUTE;
-    public const DAY = 24*DateTime::HOUR;
-    public const WEEK = 7*DateTime::DAY;
-    public const YEAR = 365*DateTime::DAY;
+    public const SECOND = 'second';
+    public const MINUTE = 'minute';
+    public const HOUR = 'hour';
+    public const DAY = 'day';
+    public const WEEK = 'week';
+    public const MONTH = 'month';
+    public const YEAR = 'year';
 
     /**
      * Date components.
      */
-    private $year, $month, $day;
+    public $year, $month, $day;
 
     /**
      * Time components
      */
-    private $hour, $minute, $second;
+    public $hour, $minute, $second;
+
+    /**
+     * Descriptive components.
+     */
+    public $week, $weekday;
 
     /**
      * UNIX Timestamp.
@@ -155,6 +161,8 @@ class DateTime
         $this->year = (int)DateTime::strftime('%Y', $timestamp);
         $this->month = (int)DateTime::strftime('%m', $timestamp);
         $this->day = (int)DateTime::strftime('%d', $timestamp);
+        $this->week = (int)DateTime::strftime('%W', $timestamp);
+        $this->weekday = (int)DateTime::strftime('%w', $timestamp);
 
         $this->hour = (int)DateTime::strftime('%H', $timestamp);
         $this->minute = (int)DateTime::strftime('%M', $timestamp);
@@ -188,26 +196,123 @@ class DateTime
     }
 
     /**
-     * Returns the time span expressed in seconds given a time period name (i.e. SECOND, MINUTE, etc).
-     * @param mixed $name
-     * @return int
+     * Returns the time span expressed in seconds given a time period name (i.e. SECOND, MINUTE, etc). If the
+     * name cannot be converted to seconds, the string representation of the name will be returned.
+     * @param string $name
+     * @return string
      */
-    public static function getUnit ($name)
+    public static function getUnit (string $name)
     {
-        if (\Rose\isNumeric($name))
-            return (int)$name;
-
         switch (Text::toUpperCase($name))
         {
-            case 'SECOND': return DateTime::SECOND;
-            case 'MINUTE': return DateTime::MINUTE;
-            case 'HOUR': return DateTime::HOUR;
-            case 'DAY': return DateTime::DAY;
-            case 'WEEK': return DateTime::WEEK;
+            case 'SECOND': return 1;
+            case 'MINUTE': return 60;
+            case 'HOUR': return 3600;
+            case 'DAY': return 86400;
+            case 'WEEK': return 604800;
+            case 'MONTH': return DateTime::MONTH;
             case 'YEAR': return DateTime::YEAR;
         }
 
-        return 1;
+        return null;
+    }
+
+    /**
+     * Returns boolean if the specified year is a leap year.
+     */
+    public static function isLeapYear ($year)
+    {
+        return ($year % 4 == 0 && ($year % 100 != 0 || $year % 400 == 0));
+    }
+
+    /**
+     * Returns the last day of the specified month (1..12).
+     */
+    public static function monthLastDay ($month, $year)
+    {
+        if ($month == 2)
+            return self::isLeapYear($year) ? 29 : 28;
+
+        if ($month == 4 || $month == 6 || $month == 9 || $month == 11)
+            return 30;
+
+        return 31;
+    }
+
+    /**
+     * Updates the DateTime object to reflect the separate date and time components.
+     * @return DateTime
+     */
+    private function update()
+    {
+        // Process out of range seconds.
+        while ($this->second >= 60) {
+            $this->second -= 60;
+            $this->minute++;
+        }
+
+        while ($this->second < 0) {
+            $this->second += 60;
+            $this->minute--;
+        }
+
+        // Process out of range minutes.
+        while ($this->minute >= 60) {
+            $this->minute -= 60;
+            $this->hour++;
+        }
+
+        while ($this->minute < 0) {
+            $this->minute += 60;
+            $this->hour--;
+        }
+
+        // Process out of range hours.
+        while ($this->hour >= 24) {
+            $this->hour -= 24;
+            $this->day++;
+        }
+
+        while ($this->hour < 0) {
+            $this->hour += 24;
+            $this->day--;
+        }
+
+        // Process out of range month.
+        while ($this->month > 12) {
+            $this->month -= 12;
+            $this->year++;
+        }
+
+        while ($this->month < 1) {
+            $this->month += 12;
+            $this->year--;
+        }
+
+        // Process out of range day.
+        while ($this->day > ($lastDay = self::monthLastDay($this->month, $this->year)))
+        {
+            $this->day -= $lastDay;
+            $this->month++;
+
+            if ($this->month > 12) {
+                $this->month -= 12;
+                $this->year++;
+            }
+        }
+
+        while ($this->day < 1)
+        {
+            $this->month--;
+            if ($this->month < 1) {
+                $this->month += 12;
+                $this->year--;
+            }
+
+            $this->day += self::monthLastDay($this->month, $this->year);
+        }
+
+        return $this;
     }
 
     /**
@@ -215,8 +320,23 @@ class DateTime
      * @param mixed $datetime
      * @param string $unit
      */
-    public function sub ($datetime, $unit=DateTime::SECOND) {
-        return (int)floor(($this->timestamp - DateTime::getUnixTimestamp($datetime)) / DateTime::getUnit($unit));
+    public function sub ($datetime, $unit=DateTime::SECOND)
+    {
+        $code = DateTime::getUnit($unit);
+        if ($code === null)
+            throw new \Exception ("Invalid unit specified: " . $unit);
+
+        if ($code === DateTime::MONTH) {
+            $datetime = new DateTime($datetime);
+            return ($this->year*12 + $this->month) - ($datetime->year*12 + $datetime->month);
+        }
+
+        if ($code === DateTime::YEAR) {
+            $datetime = new DateTime($datetime);
+            return $this->year - $datetime->year;
+        }
+
+        return (int)floor(($this->timestamp - DateTime::getUnixTimestamp($datetime)) / $code);
     }
 
     /**
@@ -224,8 +344,21 @@ class DateTime
      * @param int $span
      * @param string $unit
      */
-    public function add ($span, $unit=DateTime::SECOND) {
-        return $this->setTimestamp ($this->timestamp + $span * DateTime::getUnit($unit));
+    public function add ($span, $unit=DateTime::SECOND)
+    {
+        $val = DateTime::getUnit($unit);
+        if ($val === null)
+            throw new \Exception ("Invalid unit specified: " . $unit);
+
+        if (\Rose\isInteger($val))
+            return $this->setTimestamp($this->timestamp + $val * $span);
+
+        if ($val === DateTime::MONTH)
+            $this->month += $span;
+        else if ($val === DateTime::YEAR)
+            $this->year += $span;
+
+        return $this->update();
     }
 
     /**
@@ -252,9 +385,9 @@ class DateTime
         }
     }
 
-    /*
-    **	Formats the date time and returns a string using strftime-like modifiers.
-    */
+    /**
+     * Formats the date time and returns a string using strftime-like modifiers.
+     */
     public static function strftime ($format, $timestamp)
     {
         $n = Text::length($format);
@@ -303,13 +436,6 @@ class DateTime
     }
 
     /**
-     * Returns a property of the DateTime.
-     */
-    public function __get ($name) {
-        return $this->{$name};
-    }
-
-    /**
      * Returns the string representation of the DateTime object (YYYY-MM-DD HH:II:SS);
      */
     public function __toString () {
@@ -317,7 +443,7 @@ class DateTime
     }
 };
 
-/*
-**	Initialize DateTime class.
-*/	
+/**
+ * Initialize DateTime class.
+ */
 DateTime::init();

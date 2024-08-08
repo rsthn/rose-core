@@ -5,6 +5,7 @@ namespace Rose;
 use Rose\Configuration;
 use Rose\Text;
 use Rose\Expr;
+use Rose\DateTime;
 
 // @title Locale
 // @desc Provides locale-related information and formatting functions.

@@ -86,7 +86,7 @@ function title ($value)
 		exit(0);
 	}
 
-	echo "\x1B[97mClass: ${value}\x1B[0m\n";
+	echo "\x1B[97mClass: ".$value."\x1B[0m\n";
 }
 
 function mustThrow ($callback)
@@ -190,7 +190,7 @@ test( 45, false === Text::endsWith($text, 'LD') );
 test( 46, '' === Text::reverse($text) );
 test( 47, '' === Text::replace('L', '', $text) );
 test( 48, '' === Text::truncate($text, 5) );
-test( 49, '[""]' === (string)Text::split('', $text) );
+test( 49, '[]' === (string)Text::split('', $text) );
 test( 50, '[""]' === (string)Text::split('L', $text) );
 
 $text = '0';
@@ -219,6 +219,7 @@ test( 72, '0' === Text::replace('L', '', $text) );
 test( 73, '0' === Text::truncate($text, 5) );
 test( 74, '["0"]' === (string)Text::split('', $text) );
 test( 75, '["0"]' === (string)Text::split('L', $text) );
+test( 76, '[]' === (string)Text::split('', '') );
 
 // *****************************************************************************
 title('DateTime');
@@ -243,7 +244,7 @@ test( 10, 32 === $b->second );
 test( 11, 0 === $a->getTimestamp() );
 test( 12, 0 === $c->getTimestamp() );
 test( 13, -16200 === DateTime::getUnixTimestamp('1970-01-01 00:00:00') );
-test( 14, 7*24*60*DateTime::MINUTE === DateTime::getUnit('WEEK') );
+test( 14, 7*24*60*60 === DateTime::getUnit('WEEK') );
 test( 15, '1970-01-09 04:15:00' === (string)$a->add(4, DateTime::HOUR)->add(15, DateTime::MINUTE)->add(15, DateTime::DAY)->add(-1, DateTime::WEEK) );
 test( 16, 270 === $a->sub('1970-01-09 04:15:00', DateTime::MINUTE) );
 test( 17, '1970-01-09 04:15:00' === $a->format('DATETIME') );

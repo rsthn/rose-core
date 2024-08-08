@@ -57,10 +57,13 @@ Expr::register('datetime:millis', function ($args) {
  * (datetime:parse "2024-03-23 02:19:49")
  * ; 2024-03-23 02:19:49
  *
- * (datetime:parse "2024-03-23 02:19:49" "America/New_York")
+ * (datetime "2024-03-23 02:19:49" "America/New_York")
  * ; 2024-03-23 04:19:49
  */
 Expr::register('datetime:parse', function ($args) {
+    return new DateTime($args->get(1), $args->length >= 3 ? $args->get(2) : null, $args->length >= 4 ? $args->get(3) : null);
+});
+Expr::register('datetime', function ($args) {
     return new DateTime($args->get(1), $args->length >= 3 ? $args->get(2) : null, $args->length >= 4 ? $args->get(3) : null);
 });
 
@@ -135,13 +138,15 @@ Expr::register('datetime:date', function ($args) {
 
 /**
  * Returns the time part of a datetime (only hours and minutes).
- * @code (`datetime:time` <input>)
+ * @code (`datetime:time` <input> [seconds=false])
  * @example
  * (datetime:time "2024-03-23 02:19:49")
  * ; 02:19
  */
 Expr::register('datetime:time', function ($args) {
     $a = (string)(new DateTime ($args->get(1)));
+    if ($args->length == 3 && $args->get(2) === true)
+        return Text::substring($a, 11, 8);
     return Text::substring($a, 11, 5);
 });
 
@@ -156,4 +161,17 @@ Expr::register('datetime:format', function ($args) {
     $value = $args->get(1);
     $value = $value === null ? null : (\Rose\isInteger($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
     return $value ? DateTime::strftime($args->get(2), $value + DateTime::$offset) : null;
+});
+
+/**
+ * Returns or sets the global timezone.
+ * @code (`datetime:tz` [timezone])
+ * @example
+ * (datetime:tz)
+ * ; America/New_York
+ */
+Expr::register('datetime:tz', function ($args) {
+    if ($args->length == 2)
+        DateTime::setTimezone($args->get(1));
+    return DateTime::$timezone;
 });

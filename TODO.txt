@@ -1,3 +1,5 @@
+CHOOSE EITHER MAP OR OBJECT, BUT BE CONSISTENT WITH THE NAMES (ie. typeof and map? and object?)
+
 Important: Check if Shield's overriding "parts" causes any issues when re-running the code.
 
 FIX `exit` and `yield` when using `for` and `switch`
