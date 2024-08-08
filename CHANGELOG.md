@@ -1,3 +1,16 @@
+# v5.0.14 - Aug 08 2024
+
+#### DateTime
+- Added correct month support to DateTime `add` and `sub` functions.
+- Added function `datetime` as alias of `datetime:parse`.
+- Added `datetime:tz` to get/set the current timezone.
+- Function `datetime:time` now allows optional parameter "seconds" to get the seconds as well.
+
+#### General
+- Added "test-datetime" unit tests.
+
+<br/>
+
 # v5.0.13 - Jun 23 2024
 
 #### General

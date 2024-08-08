@@ -36,7 +36,7 @@ default `targetTimezone` is the one configured in the `timezone` setting of the 
 (datetime:parse "2024-03-23 02:19:49")
 ; 2024-03-23 02:19:49
 
-(datetime:parse "2024-03-23 02:19:49" "America/New_York")
+(datetime "2024-03-23 02:19:49" "America/New_York")
 ; 2024-03-23 04:19:49
 ```
 
@@ -78,7 +78,7 @@ Returns the date part of a datetime.
 ; 2024-03-23
 ```
 
-### (`datetime:time` \<input>)
+### (`datetime:time` \<input> [seconds=false])
 Returns the time part of a datetime (only hours and minutes).
 ```lisp
 (datetime:time "2024-03-23 02:19:49")
@@ -90,4 +90,11 @@ Formats a date and time string.
 ```lisp
 (datetime:format "2024-03-23 02:19:49" "Year: %Y, Month: %m, Day: %d & Time: %H:%M:%S")
 ; Year: 2024, Month: 03, Day: 23 & Time: 02:19:49
+```
+
+### (`datetime:tz` [timezone])
+Returns or sets the global timezone.
+```lisp
+(datetime:tz)
+; America/New_York
 ```
