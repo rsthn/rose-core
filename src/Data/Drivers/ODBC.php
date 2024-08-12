@@ -14,7 +14,8 @@ class ODBC extends Driver
         Connection::registerDriver ('odbc', new ODBC());
     }
 
-    public function open ($server, $user, $password, $database) {
+    public function open ($server, $port, $user, $password, $database) {
+        if ($port !== null) throw new Error('ODBC driver does not support port number');
         return odbc_connect ($server, $user, $password);
     }
 

@@ -18,8 +18,11 @@ class PostgreSQL extends Driver
         Connection::registerDriver ('postgres', new PostgreSQL());
     }
 
-    public function open ($server, $user, $password, $database) {
-        $conn = pg_connect('host='.$server.' dbname='.$database.' user='.$user.' password='.$password);
+    public function open ($server, $port, $user, $password, $database) {
+        if ($port !== null)
+            $conn = pg_connect('host='.$server.' port='.$port.' dbname='.$database.' user='.$user.' password='.$password);
+        else
+            $conn = pg_connect('host='.$server.' dbname='.$database.' user='.$user.' password='.$password);
         return $conn;
     }
 

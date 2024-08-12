@@ -7,7 +7,7 @@ namespace Rose\Data;
  */
 abstract class Driver
 {
-	public abstract function open ($server, $user, $password, $name);
+	public abstract function open ($server, $port, $user, $password, $name);
 	public abstract function close ($conn);
 
 	public abstract function getLastError ($conn);

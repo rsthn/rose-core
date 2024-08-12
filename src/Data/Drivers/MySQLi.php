@@ -14,12 +14,12 @@ class MySQLi extends Driver
 		Connection::registerDriver('mysqli', new MySQLi());
 	}
 
-    public function open ($server, $user, $password, $database)
+    public function open ($server, $port, $user, $password, $database)
     {
 		$conn = mysqli_init();
 		if (!$conn) return null;
 
-		if (!mysqli_real_connect ($conn, $server, $user, $password, $database))
+		if (!mysqli_real_connect ($conn, $server, $user, $password, $database, $port))
 			throw new Error (mysqli_connect_error());
 
 		if ($conn == null) return null;

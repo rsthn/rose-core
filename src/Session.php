@@ -99,9 +99,6 @@ class Session
         if (Configuration::getInstance()->Session && Configuration::getInstance()->Session->database === 'true') {
             Session::dbSessionDelete();
         }
-        else {
-            session_destroy();
-        }
 
         Cookies::remove(Session::$sessionName);
 
@@ -169,7 +166,6 @@ class Session
             {
                 if (!$createSession) {
                     Cookies::remove(Session::$sessionName);
-                    session_destroy();
                     return false;
                 }
 

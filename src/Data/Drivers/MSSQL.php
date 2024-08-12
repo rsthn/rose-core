@@ -15,8 +15,10 @@ class MSSQL extends Driver
 		Connection::registerDriver ('mssql', new MSSQL());
 	}
 
-    public function open ($server, $user, $password, $database)
+    public function open ($server, $port, $user, $password, $database)
     {
+        if ($port !== null) throw new Error('MSSQL driver does not support port number');
+
 		$conn = mssql_connect($server, $user, $password);
 		if ($conn == null) return null;
 

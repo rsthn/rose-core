@@ -31,8 +31,11 @@ class SQLServer extends Driver
         Connection::registerDriver ('sqlserver', new SQLServer());
     }
 
-    public function open ($server, $user, $password, $database)
+    public function open ($server, $port, $user, $password, $database)
     {
+        if ($port !== null)
+            $server .= ','.$port;
+
         $conn = sqlsrv_connect ($server, array(
             'Database' => $database, 
             'UID' => $user, 

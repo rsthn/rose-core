@@ -32,6 +32,9 @@ class Connection
     // Database host.
     private $dbHost;
 
+    // Database port.
+    private $dbPort;
+
     // Username for the database.
     private $dbUser;
 
@@ -63,6 +66,7 @@ class Connection
     /**
      * Constructs a database connection using the given configuration.
      * @param string $host Database host.
+     * @param string $port Database port (NULL for default).
      * @param string $user Database user.
      * @param string $password Database password.
      * @param string $database Database name.
@@ -70,9 +74,10 @@ class Connection
      * @param string $prefix Prefix for all tables in the database, all instances of the symbol ## in a query will be replaced with this prefix.
      * @param string $driver Name of the driver to use.
      */
-    public function __construct ($host=null, $user=null, $password=null, $database=null, $tracing=false, $prefix=null, $driver=null)
+    public function __construct ($host=null, $port=null, $user=null, $password=null, $database=null, $tracing=false, $prefix=null, $driver=null)
     {
         $this->dbHost = $host;
+        $this->dbPort = $port;
         $this->dbUser = $user;
         $this->dbPassword = $password;
         $this->dbName = $database;
@@ -122,7 +127,7 @@ class Connection
      * @return Connection Connection instance.
      */
     public static function fromConfig ($config, $autoConnect=true) {
-        $conn = new Connection ($config->server, $config->user, $config->password, $config->database, $config->trace == 'true', $config->prefix, $config->driver);
+        $conn = new Connection ($config->server, $config->port, $config->user, $config->password, $config->database, $config->trace == 'true', $config->prefix, $config->driver);
         if ($autoConnect) $conn->open();
         return $conn;
     }
@@ -135,7 +140,7 @@ class Connection
         if ($this->conn != null) return;
 
         try {
-            $this->conn = $this->driver->open ($this->dbHost, $this->dbUser, $this->dbPassword, $this->dbName);
+            $this->conn = $this->driver->open ($this->dbHost, $this->dbPort, $this->dbUser, $this->dbPassword, $this->dbName);
         }
         catch (\Throwable $e) {
             throw new Error ('Unable to open connection to '.$this->dbUser.'@'.$this->dbHost.': '.$e->getMessage());
@@ -501,6 +506,7 @@ ODBC::register();
 /*
     [Database]
     server=
+    port=
     database=
     user=
     password=

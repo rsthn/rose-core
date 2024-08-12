@@ -1605,7 +1605,7 @@ class Expr
 
         for (; $i < $parts->length(); $i += 2)
         {
-            $key = Expr::expand($parts->get($i), $data, 'arg');
+            $key = (string)Expr::expand($parts->get($i), $data, 'arg');
 
             if (!$mode) {
                 if ($key[0] === ':') $mode = 1; else $mode = Text::substring($key, -1) === ':' ? 2 : 3;
