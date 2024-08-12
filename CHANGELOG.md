@@ -1,3 +1,13 @@
+# v5.0.15 - Aug 12 2024
+
+#### Database
+- Updated connection and drivers to allow port to be specified.
+
+#### General
+- Fixed minor bugs to increase compat with PHP 8.3.10
+
+<br/>
+
 # v5.0.14 - Aug 08 2024
 
 #### DateTime
