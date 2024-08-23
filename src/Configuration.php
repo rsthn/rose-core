@@ -80,7 +80,7 @@ class Configuration extends Map
      */
     public static function loadFrom ($source, $target=null, $merge=false)
     {
-        if (Text::position($source, '//') !== false)
+        if (Text::indexOf($source, '//') !== false)
             throw new Error ('Blocked attempt to load configuration from a remote address: ' . $source);
 
         return Configuration::loadFromBuffer(Path::exists($source) ? File::getContents($source) : '', $target, $merge);
@@ -141,7 +141,7 @@ class Configuration extends Map
                 continue;
             }
 
-            $tmp = Text::position($line, '=');
+            $tmp = Text::indexOf($line, '=');
             if ($tmp === false) continue;
 
             $name = Text::trim(Text::substring($line, 0, $tmp));

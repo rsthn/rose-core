@@ -1,0 +1,164 @@
+
+; (substr <start> [count] <value>)
+(def-fn test_substr
+    (expect:eq (substr 1 2 "hello") "el")
+    (expect:eq (substr -4 2 "world") "or")
+    (expect:eq (substr -3 "hello") "llo")
+    (expect:eq (substr 2 -2 "Привет!") "иве")
+    (expect:eq (substr 3 "Привет!") "вет!")
+)
+
+; (lpad <length> [pad] <string>)
+(def-fn test_lpad
+    (expect:eq (lpad 5 "0" "123") "00123")
+    (expect:eq (lpad 5 "0" "12345") "12345")
+    (expect:eq (lpad 5 "0" "123456") "123456")
+)
+
+; (rpad <length> [pad] <string>)
+(def-fn test_rpad
+    (expect:eq (rpad 5 "0" "123") "12300")
+    (expect:eq (rpad 5 "0" "12345") "12345")
+    (expect:eq (rpad 5 "0" "123456") "123456")
+)
+
+; (upper <value>)
+(def-fn test_upper
+    (expect:eq (upper "hello") "HELLO")
+    (expect:eq (upper "Привет!") "ПРИВЕТ!")
+)
+
+; (lower <value>)
+(def-fn test_lower
+    (expect:eq (lower "HELLO") "hello")
+    (expect:eq (lower "ПРИВЕТ!") "привет!")
+)
+
+; (trim [chars] <value>)
+(def-fn test_trim
+    (expect:eq (trim " \t\n\r" "  hello  ") "hello")
+    (expect:eq (trim " \t\n\r" "\n\r  hello  ") "hello")
+    (expect:eq (trim " \t\n\r" "  привет  \n\r") "привет")
+)
+
+; (starts-with? <value> <text> [value-true=true] [value-false=false])
+(def-fn test_starts_with
+    (expect:eq (starts-with? "hello" "hello world") true)
+    (expect:eq (starts-with? "пр" "привет") true)
+    (expect:eq (starts-with? "world" "hello world") false)
+
+    (expect:eq (starts-with? "hello" "hello world" "yes") "yes")
+    (expect:eq (starts-with? "пр" "привет" "yes") "yes")
+    (expect:eq (starts-with? "world" "hello world" "yes" "no") "no")
+)
+
+; (ends-with? <value> <text> [value-true=true] [value-false=false])
+(def-fn test_ends_with
+    (expect:eq (ends-with? "world" "hello world") true)
+    (expect:eq (ends-with? "вет" "привет") true)
+    (expect:eq (ends-with? "hello" "hello world") false)
+
+    (expect:eq (ends-with? "world" "hello world" "yes") "yes")
+    (expect:eq (ends-with? "вет" "привет" "yes") "yes")
+    (expect:eq (ends-with? "hello" "hello world" "yes" "no") "no")
+)
+
+; (str:len <value>)
+(def-fn test_str_len
+    (expect:eq (str:len "hello") 5)
+    (expect:eq (str:len "привет") 6)
+)
+
+; (str:replace <search> <replacement> <value>)
+(def-fn test_str_replace
+    (expect:eq (str:replace "world" "planet" "привет world") "привет planet")
+    (expect:eq (str:replace "world" "青" "привет world world") "привет 青 青")
+)
+
+; (str:index <search> <value>)
+(def-fn test_str_index
+    (expect:eq (str:index "world" "hello world") 6)
+    (expect:eq (str:index "world" "привет world") 7)
+    (expect:eq (str:index "world" "привет") -1)
+)
+
+; (str:last-index <search> <value>)
+(def-fn test_str_last_index
+    (expect:eq (str:last-index "world" "hello world") 6)
+    (expect:eq (str:last-index "world" "голубое озеро world") 14)
+    (expect:eq (str:last-index "бое" "голубое") 4)
+    (expect:eq (str:last-index "world" "привет") -1)
+)
+
+
+; (str:compare <a> <b>)
+(def-fn test_str_compare
+    (expect:eq (str:compare "hello" "hello") 0)
+    (expect:eq (str:compare "голубо" "голубое") -1)
+    (expect:eq (str:compare "world" "hello") 1)
+)
+
+; (str:tr <source-set> <replacement-set> <value>)
+(def-fn test_str_tr
+    (expect:eq (str:tr "aeiou" "12345" "hello world") "h2ll4 w4rld")
+    (expect:eq (str:tr "aие" "123" "привет мир") "пр2в3т м2р")
+)
+
+; (str:bytes <value>)
+(def-fn test_str_bytes
+    (expect:eq (str:bytes "hello") [104 101 108 108 111])
+    (expect:eq (str:bytes "Любовь") [208 155 209 142 208 177 208 190 208 178 209 140])
+)
+
+; (str:from-bytes <octet-list>)
+(def-fn test_str_from_bytes
+    (expect:eq (str:from-bytes [104 101 108 108 111]) "hello")
+    (expect:eq (str:from-bytes [208 155 209 142 208 177 208 190 208 178 209 140]) "Любовь")
+)
+
+; (str:uint8 <int-value> [offset=0])
+(def-fn test_str_uint8
+    (expect:eq (str:uint8 255) "\xFF")
+    (expect:eq (str:uint8 "255") 50)
+    (expect:eq (str:uint8 0) "\0")
+    (expect:eq (str:uint8 "0") 48)
+
+    (expect:eq (str:uint8 "\xFF\xFF\x40\xFF" 2) 64)
+    (expect:eq (str:uint8 "\xFF\xFF\x40\xFF" 3) 255)
+
+    (expect:error "Invalid string length for uint8" (fn
+        (str:uint8 "\xFF\xFF" 2)
+    ))
+)
+
+; (str:uint16 <int-value> [offset=0])
+(def-fn test_str_uint16
+    (expect:eq (str:uint16 65535) "\xFF\xFF")
+    (expect:eq (str:uint16 "012") 12592)
+    (expect:eq (str:uint16 0) "\x00\x00")
+    (expect:eq (str:uint16 "0123" 2) 13106)
+)
+
+; (str:uint16be <string-value> [offset=0])
+(def-fn test_str_uint16be
+    (expect:eq (str:uint16be "\xFF\xFF") 65535)
+    (expect:eq (str:uint16be 12592) "\x31\x30")
+    (expect:eq (str:uint16be "\x00\x00") 0)
+    (expect:eq (str:uint16be 13106) "32")
+)
+
+; (str:uint32 <string-value> [offset=0])
+(def-fn test_str_uint32
+    (expect:eq (str:uint32 "\xFF\xFF\xFF\xFF") 4294967295)
+    (expect:eq (str:uint32 "0123") 858927408)
+    (expect:eq (str:uint32 "\x00\x00\x00\x00") 0)
+    (expect:eq (str:uint32 13106) "23\0\0")
+)
+
+; (str:uint32be <string-value> [offset=0])
+(def-fn test_str_uint32be
+    (expect:eq (str:uint32be "\xFF\xFF\xFF\xFF") 4294967295)
+    (expect:eq (str:uint32be 858927408) "3210")
+    (expect:eq (str:uint32be "\x00\x00\x00\x00") 0)
+    (expect:eq (str:uint32be 13106) "\0\032")
+)

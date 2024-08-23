@@ -347,6 +347,7 @@ class Main
         error_reporting (E_ALL & ~E_NOTICE & ~E_DEPRECATED);
         mt_srand ((int)(((double)microtime ()) * 10000));
         set_time_limit ($cliMode ? 0 : 300);
+        mb_internal_encoding('UTF-8');
 
         // Set global error handlers and disable PHP error output.
         if (!$cliMode) {

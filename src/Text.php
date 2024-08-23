@@ -26,69 +26,60 @@ class Text
     /**
      * Returns a substring of a given string. Negative values in 'start' indicate to start from the end of the string.
      */
-    public static function substring ($text, $start, $length=null)
+    public static function substring ($text, $start, $length=null, $unicode=false)
     {
         $text = self::str($text);
-        $n = Text::length($text);
+        $n = Text::length($text, $unicode);
 
         if ($start < 0) $start += $n;
         if ($length < 0) $length = $length + $n - $start;
         if ($length === null) $length = $n - $start;
 
-        $text = substr($text, $start, $length);
+        $text = $unicode ? mb_substr($text, $start, $length, 'utf-8') : substr($text, $start, $length);
         return $text === false ? '' : $text;
     }
 
     /**
      * Converts the string to upper case.
      */
-    public static function toUpperCase ($text, $encoding=null) {
+    public static function toUpperCase ($text, $unicode=false) {
         $text = self::str($text);
-        return !$encoding ? strtoupper($text) : mb_strtoupper($text, $encoding);
+        return !$unicode ? strtoupper($text) : mb_strtoupper($text, 'utf-8');
     }
 
     /**
      * Converts the string to lower case.
      */
-    public static function toLowerCase ($text, $encoding=null) {
+    public static function toLowerCase ($text, $unicode=false) {
         $text = self::str($text);
-        return !$encoding ? strtolower($text) : mb_strtolower($text, $encoding);
-    }
-
-    /**
-     * Converts the first letter in the word to upper case.
-     */
-    public static function upperCaseFirst ($text) {
-        $text = self::str($text);
-        return ucfirst($text);
+        return !$unicode ? strtolower($text) : mb_strtolower($text, 'utf-8');
     }
 
     /**
      * Returns the position of a sub-string in the given text. Returns `false` when not found.
      */
-    public static function position ($text, $needle, $offset=0) {
+    public static function indexOf ($text, $needle, $offset=0, $unicode=false) {
         $text = self::str($text);
-        $n = self::length($text);
-        return Math::abs($offset) > $n ? false : strpos($text, $needle, $offset);
+        $n = self::length($text, $unicode);
+        return Math::abs($offset) > $n ? false : (
+            !$unicode ? strpos($text, $needle, $offset) : mb_strpos($text, $needle, $offset, 'utf-8')
+        );
     }
 
-    public static function indexOf ($text, $value) {
+    public static function lastIndexOf ($text, $value, $offset=0, $unicode=false) {
         $text = self::str($text);
-        return strpos($text, $value);
-    }
-
-    public static function revIndexOf ($text, $value, $offset=0) {
-        $text = self::str($text);
-        $n = self::length($text);
-        return Math::abs($offset) > $n ? false : strrpos($text, $value, $offset);
+        $n = self::length($text, $unicode);
+        return Math::abs($offset) > $n ? false : (
+            !$unicode ? strrpos($text, $value, $offset) : mb_strrpos($text, $value, $offset, 'utf-8')
+        );
     }
 
     /**
      * Returns the length of the given text.
      */
-    public static function length ($text, $encoding=null) {
+    public static function length ($text, $unicode=null) {
         $text = self::str($text);
-        return !$encoding ? strlen($text) : mb_strlen($text, $encoding);
+        return !$unicode ? strlen($text) : mb_strlen($text, 'utf-8');
     }
 
     /**
@@ -105,15 +96,15 @@ class Text
     /**
      * Returns boolean indicating if the given text starts with the given value.
      */
-    public static function startsWith ($text, $value) {
-        return Text::substring($text, 0, Text::length($value)) == $value;
+    public static function startsWith ($text, $value, $unicode=false) {
+        return Text::substring($text, 0, Text::length($value, $unicode), $unicode) === $value;
     }
 
     /**
      * Returns boolean indicating if the given text ends with the given value.
      */
-    public static function endsWith ($text, $value) {
-        return Text::substring($text, -Text::length($value)) == $value;
+    public static function endsWith ($text, $value, $unicode=false) {
+        return Text::substring($text, -Text::length($value, $unicode), null, $unicode) === $value;
     }
 
     /**
@@ -121,7 +112,7 @@ class Text
      */
     public static function reverse ($text) {
         $text = self::str($text);
-        return strrev ($text);
+        return strrev($text);
     }
 
     /**
@@ -133,24 +124,13 @@ class Text
     }
 
     /**
-     * Truncates a string and adds ellipsis if its length is greater than the specified maximum.
-     */
-    public static function truncate ($value, $maxLength) {
-        $value = self::str($value);
-        if (Text::length($value) > $maxLength)
-            return Text::substring ($value, 0, $maxLength-3) . '...';
-        return $value;
-    }
-
-    /**
      * Splits a string and returns the slices.
      */
-    public static function split ($delimiter, $text)
+    public static function split ($delimiter, $text, $unicode=false)
     {
         $text = self::str($text);
-
         if ($delimiter != '')
-            return Arry::fromNativeArray(\explode ($delimiter, $text));
+            return Arry::fromNativeArray(\explode($delimiter, $text));
         else
             return Arry::fromNativeArray(str_split($text));
     }
@@ -187,6 +167,25 @@ class Text
     public static function compare ($a, $b) {
         return strcmp ($a, $b);
     }
+
+    public static function translate ($str, $from, $to, $unicode=false)
+    {
+        if (!$unicode)
+            return strtr($str, $from, $to);
+
+        if (mb_strlen($from, 'utf-8') !== mb_strlen($to, 'utf-8'))
+            throw new InvalidArgumentException('[str:tr] the `from` and `to` strings must have the same length');
+    
+        for ($i = 0; $i < mb_strlen($from, 'utf-8'); $i++) {
+            $str = mb_ereg_replace(
+                mb_substr($from, $i, 1, 'utf-8'),
+                mb_substr($to, $i, 1, 'utf-8'),
+                $str
+            );
+        }
+    
+        return $str;
+    }
 };
 
 
@@ -203,8 +202,8 @@ class Text
  * (substr -3 "hello")
  * ; "llo"
  *
- * (substr 2 -2 "goodbye")
- * ; "odb"
+ * (substr 2 -2 "Привет!")
+ * ; "иве"
  */
 Expr::register('substr', function ($args)
 {
@@ -221,7 +220,7 @@ Expr::register('substr', function ($args)
         $count = null;
     }
 
-    return Text::substring($s, $start, $count);
+    return Text::substring($s, $start, $count, true);
 });
 
 /**
@@ -268,7 +267,7 @@ Expr::register('rpad', function($args) {
  * ; "HELLO"
  */
 Expr::register('upper', function ($args) {
-    return Text::toUpperCase($args->get(1), 'utf8');
+    return Text::toUpperCase($args->get(1), true);
 });
 
 /**
@@ -279,18 +278,7 @@ Expr::register('upper', function ($args) {
  * ; "hello"
  */
 Expr::register('lower', function ($args) {
-    return Text::toLowerCase($args->get(1), 'utf8');
-});
-
-/**
- * Converts the first letter in the word to upper case.
- * @code (`upper-first` <value>)
- * @example
- * (upper-first "hello")
- * ; "Hello"
- */
-Expr::register('upper-first', function ($args) {
-    return Text::upperCaseFirst($args->get(1));
+    return Text::toLowerCase($args->get(1), true);
 });
 
 /**
@@ -314,7 +302,7 @@ Expr::register('trim', function ($args) {
  * ; true
  */
 Expr::register('_starts-with?', function($parts, $data) {
-    return Text::startsWith(Expr::value($parts->get(2), $data), Expr::value($parts->get(1), $data))
+    return Text::startsWith(Expr::value($parts->get(2), $data), Expr::value($parts->get(1), $data), true)
         ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
         : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
         ;
@@ -328,7 +316,7 @@ Expr::register('_starts-with?', function($parts, $data) {
  * ; true
  */
 Expr::register('_ends-with?', function($parts, $data) {
-    return Text::endsWith(Expr::value($parts->get(2), $data), Expr::value($parts->get(1), $data))
+    return Text::endsWith(Expr::value($parts->get(2), $data), Expr::value($parts->get(1), $data), true)
         ? ($parts->has(3) ? Expr::value($parts->get(3), $data) : true)
         : ($parts->has(4) ? Expr::value($parts->get(4), $data) : false)
         ;
@@ -346,7 +334,7 @@ Expr::register('_ends-with?', function($parts, $data) {
  * ; 7
  */
 Expr::register('str:len', function($args) {
-    return Text::length((string)$args->get(1), 'utf8');
+    return Text::length((string)$args->get(1), true);
 });
 
 /**
@@ -372,7 +360,7 @@ Expr::register('str:replace', function ($args)
  * ; 6
  */
 Expr::register('str:index', function ($args) {
-    $i = Text::indexOf($args->get(2), $args->get(1));
+    $i = Text::indexOf($args->get(2), $args->get(1), 0, true);
     return $i === false ? -1 : $i;
 });
 
@@ -384,7 +372,7 @@ Expr::register('str:index', function ($args) {
  * ; 12
  */
 Expr::register('str:last-index', function ($args) {
-    $i = Text::revIndexOf($args->get(2), $args->get(1));
+    $i = Text::lastIndexOf($args->get(2), $args->get(1), 0, true);
     return $i === false ? -1 : $i;
 });
 
@@ -413,7 +401,7 @@ Expr::register('str:compare', function ($args) {
  * ; 3123
  */
 Expr::register('str:tr', function($args) {
-    return strtr ($args->get(3), $args->get(1), $args->get(2));
+    return Text::translate ($args->get(3), $args->get(1), $args->get(2), true);
 });
 
 /**
@@ -450,7 +438,7 @@ Expr::register('str:from-bytes', function($args) {
 
 /**
  * Returns a string representation of the given 8-bit unsigned integer or reads an 8-bit unsigned integer from the string.
- * @code (`str:uint8` <value>)
+ * @code (`str:uint8` <int-value>)
  * @code (`str:uint8` <string-value> [offset=0])
  * @example
  * (str:uint8 0x40)
@@ -469,6 +457,7 @@ Expr::register('str:uint8', function($args) {
     $value = Text::substring($value, $args->{2} ?? 0, 1);
     if (Text::length($value) != 1)
         throw new Error('Invalid string length for uint8');
+
     return ord($value);
 });
 

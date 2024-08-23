@@ -1,5 +1,10 @@
 CHOOSE EITHER MAP OR OBJECT, BUT BE CONSISTENT WITH THE NAMES (ie. typeof and map? and object?)
 
+*** CHECK if Text::replace is unicode safe.
+*** CHECK if Text::split is unicode safe.
+*** ADD "as_string=true" option to expand to allow set it to false for literal eval.
+*** Make floats passed to image:* be converted to integers.
+
 Important: Check if Shield's overriding "parts" causes any issues when re-running the code.
 
 FIX `exit` and `yield` when using `for` and `switch`
@@ -9,8 +14,6 @@ SUPPORT HEX NUMBERS!!!
 ALLOW FORMAT LIKE ".2" OMITING THE "," IN LOCALE
 
 Add info how to properly enable SSE config apache/php
-
-[ADD] Add month support to DateTime
 
 [QoL] ADD WARNINGS WHEN PARAMETERS ARE NAMED AS A RESERVED WORD/FUNCTION
 [QoL] REPLACE "base-string" by a much better name

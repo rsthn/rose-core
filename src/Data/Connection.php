@@ -77,7 +77,7 @@ class Connection
     public function __construct ($host=null, $port=null, $user=null, $password=null, $database=null, $tracing=false, $prefix=null, $driver=null)
     {
         $this->dbHost = $host;
-        $this->dbPort = $port;
+        $this->dbPort = $port ? (int)$port : null;
         $this->dbUser = $user;
         $this->dbPassword = $password;
         $this->dbName = $database;
