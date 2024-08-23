@@ -1,3 +1,15 @@
+# v5.0.16 - Aug 22 2024
+
+#### QoL
+- Fixed bug in Database\Connection when port is not specified.
+- Added test/test-text.fn covering all text functions.
+
+#### Text
+- Refactored to ensure `unicode` is an optional parameter to most text functions.
+- Updated functions to use unicode by default when called from Expr.
+
+<br/>
+
 # v5.0.15 - Aug 12 2024
 
 #### Database

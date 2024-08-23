@@ -14,8 +14,8 @@ Returns a substring of a given string. Negative values in `start` indicate to st
 (substr -3 "hello")
 ; "llo"
 
-(substr 2 -2 "goodbye")
-; "odb"
+(substr 2 -2 "Привет!")
+; "иве"
 ```
 
 ### (`lpad` \<length> [pad] \<string>)
@@ -52,13 +52,6 @@ Converts the value to lower case.
 ```lisp
 (lower "HELLO")
 ; "hello"
-```
-
-### (`upper-first` \<value>)
-Converts the first letter in the word to upper case.
-```lisp
-(upper-first "hello")
-; "Hello"
 ```
 
 ### (`trim` [chars] \<value>)
@@ -154,7 +147,7 @@ Returns the string corresponding to the given binary values.
 ; 파란색
 ```
 
-### (`str:uint8` \<value>)<br/>(`str:uint8` \<string-value> [offset=0])
+### (`str:uint8` \<int-value>)<br/>(`str:uint8` \<string-value> [offset=0])
 Returns a string representation of the given 8-bit unsigned integer or reads an 8-bit unsigned integer from the string.
 ```lisp
 (str:uint8 0x40)
