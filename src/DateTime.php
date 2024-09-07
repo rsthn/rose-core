@@ -32,7 +32,7 @@ class DateTime
     /**
      * Time components
      */
-    public $hour, $minute, $second;
+    public $hour, $minute, $second, $millisecond;
 
     /**
      * Descriptive components.
@@ -40,7 +40,7 @@ class DateTime
     public $week, $weekday;
 
     /**
-     * UNIX Timestamp.
+     * UNIX Timestamp (float).
      */
     private $timestamp;
 
@@ -129,7 +129,10 @@ class DateTime
         }
 
         $tmp = new \DateTime ($datetime, self::$utc);
-        $tmp = mktime ($tmp->format('H'), $tmp->format('i'), $tmp->format('s'), $tmp->format('m'), $tmp->format('d'), $tmp->format('Y'));
+        $tmp = mktime(
+                $tmp->format('H'), $tmp->format('i'), $tmp->format('s'),
+                $tmp->format('m'), $tmp->format('d'), $tmp->format('Y')
+               ) + ($tmp->format('v') / 1000.0);
 
         $this->targetTimezone = $targetTimezone;
         $this->setTimestamp($tmp, $targetTimezone, $fromTimezone);
@@ -137,7 +140,7 @@ class DateTime
 
     /**
      * Returns the DateTime in UNIX timestamp format (UTC).
-     * @return int
+     * @return float
      */
     public function getTimestamp() {
         return $this->timestamp;
@@ -145,7 +148,7 @@ class DateTime
 
     /**
      * Sets the DateTime from the specified UNIX timestamp (UTC).
-     * @param int $timestamp
+     * @param float $timestamp
      * @param string $targetTimezone - Defaults to the object's target timezone.
      * @param string $fromTimezone - Defaults to UTC.
      * @return DateTime
@@ -167,16 +170,17 @@ class DateTime
         $this->hour = (int)DateTime::strftime('%H', $timestamp);
         $this->minute = (int)DateTime::strftime('%M', $timestamp);
         $this->second = (int)DateTime::strftime('%S', $timestamp);
+        $this->millisecond = (int)DateTime::strftime('%v', $timestamp);
 
         return $this;
     }
 
     /**
-     * Returns the UNIX timestamp of the specified argument, can be a string date, a DateTime or an integer. If null
-     * is specified, null will be returned. And if true is specified the current time will be returned.
+     * Returns the UNIX timestamp of the specified argument, can be a string date, a DateTime or a float. If null
+     * is specified, null will be returned. And if `true` is specified the current time will be returned.
      *
      * @param mixed $value
-     * @return int
+     * @return float
      */
     public static function getUnixTimestamp ($value=true)
     {
@@ -184,15 +188,15 @@ class DateTime
             return null;
 
         if ($value === true)
-            return time();
+            return \Rose\mstime() / 1000.0;
 
         if (\Rose\isNumeric($value))
-            return (int)$value;
+            return (float)$value;
 
         if ($value instanceof \DateTime || $value instanceof DateTime)
             return $value->timestamp;
 
-        return (new DateTime ($value))->getTimestamp();
+        return (new DateTime($value))->getTimestamp();
     }
 
     /**
@@ -319,6 +323,7 @@ class DateTime
      * Returns the difference in the specified unit between the current DateTime and the given one.
      * @param mixed $datetime
      * @param string $unit
+     * @return int
      */
     public function sub ($datetime, $unit=DateTime::SECOND)
     {
@@ -343,6 +348,7 @@ class DateTime
      * Adds the specified time span to the DateTime, negative values are allowed.
      * @param int $span
      * @param string $unit
+     * @return DateTime
      */
     public function add ($span, $unit=DateTime::SECOND)
     {
@@ -366,10 +372,14 @@ class DateTime
      */
     public function format ($format)
     {
+        // TODO: Check possibly dead code here.
         switch (Text::toUpperCase($format))
         {
             case 'DATETIME':
-                return sprintf("%4d-%02d-%02d %02d:%02d:%02d", $this->year, $this->month, $this->day, $this->hour, $this->minute, $this->second);
+                if (Locale::getInstance()->includeMillis)
+                    return sprintf("%4d-%02d-%02d %02d:%02d:%02d.%03d", $this->year, $this->month, $this->day, $this->hour, $this->minute, $this->second, $this->millisecond);
+                else
+                    return sprintf("%4d-%02d-%02d %02d:%02d:%02d", $this->year, $this->month, $this->day, $this->hour, $this->minute, $this->second);
 
             case 'UTC':
                 return DateTime::strftime("%a, %d %b %Y %H:%M:%S GMT", $this->getTimestamp());
@@ -429,6 +439,7 @@ class DateTime
                 case 's': $str .= date('S', $timestamp); break; // English ordinal suffix for the day of the month, 2 characters - st, nd, rd or th. Works well with j.
                 case 'p': $str .= date('A', $timestamp); break; // Uppercase Ante meridiem and Post meridiem - AM or PM.
                 case 'P': $str .= date('a', $timestamp); break; // Lowercase Ante meridiem and Post meridiem - am or pm.
+                case 'v': $str .= sprintf('%.3f', ($timestamp*1000)%1000); break; // Milliseconds with leading zeros - 000 through 999.
             }
         }
 

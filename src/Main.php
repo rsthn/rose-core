@@ -188,8 +188,8 @@ function isSubTypeOf ($object, $className) {
  * Returns the current time in milliseconds.
  */
 function mstime() {
-    $t = explode (' ', microtime ());
-    return (int) (($t[0] + $t[1]) * 1000);
+    $t = explode(' ', microtime());
+    return (int)(($t[0] + $t[1]) * 1000);
 }
 
 /**

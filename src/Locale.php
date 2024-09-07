@@ -23,6 +23,11 @@ class Locale
     public $timezone;
 
     /**
+     * Indicates if by default time values should include milliseconds.
+     */
+    public $includeMillis;
+
+    /**
      * Initializes the instance of the class. Similar to calling getInstance().
      */
     public static function init() {
@@ -54,6 +59,8 @@ class Locale
     private function initialize()
     {
         $config = Configuration::getInstance()->Locale;
+
+        $this->includeMillis = $config ? $config->include_millis == 'true' : false;
 
         $this->timezone = $config ? $config->timezone : null;
         if (!$this->timezone) return;
@@ -146,6 +153,18 @@ class Locale
         }
     }
 };
+
+/**
+ * Sets the datetime format to include milliseconds.
+ * @code (`locale:include-millis` <value>)
+ * @example
+ * (locale:include-millis true)
+ * ; true
+ */
+Expr::register('locale:include-millis', function ($args) {
+    Locale::getInstance()->includeMillis = \Rose\bool($args->get(1));
+    return true;
+});
 
 /**
  * Formats a value as a number with the specified format or uses [Locale.numeric] if no format is specified.

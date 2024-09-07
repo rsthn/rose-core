@@ -28,6 +28,7 @@ Expr::register('datetime:now', function ($args) {
 });
 
 /**
+ * @deprecated Use `datetime:int` or `datetime:float` instead.
  * Returns the current date and time as a UNIX timestamp in UTC.
  * @code (`datetime:now-int`)
  * @example
@@ -68,14 +69,25 @@ Expr::register('datetime', function ($args) {
 });
 
 /**
- * Parses a date and time string and returns a UNIX timestamp.
- * @code (`datetime:int` <input>)
+ * Parses a date and time string (or uses current time is none provided) and returns a UNIX timestamp.
+ * @code (`datetime:int` [<input>])
  * @example
  * (datetime:int "2024-03-23 02:19:49")
  * ; 1711181989
  */
 Expr::register('datetime:int', function ($args) {
-    return DateTime::getUnixTimestamp($args->get(1));
+    return $args->has(1) ? (int)DateTime::getUnixTimestamp($args->get(1)) : (int)DateTime::getUnixTimestamp();
+});
+
+/**
+ * Parses a date and time string (or uses current time is none provided) and returns a UNIX timestamp.
+ * @code (`datetime:float` [<input>])
+ * @example
+ * (datetime:float "2024-03-23 02:19:49.500")
+ * ; 1711181989.5
+ */
+Expr::register('datetime:float', function ($args) {
+    return $args->has(1) ? (float)DateTime::getUnixTimestamp($args->get(1)) : (float)DateTime::getUnixTimestamp();
 });
 
 /**
