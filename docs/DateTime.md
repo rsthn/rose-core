@@ -16,7 +16,8 @@ Returns the current date and time.
 ```
 
 ### (`datetime:now-int`)
-Returns the current date and time as a UNIX timestamp in UTC.
+@deprecated Use `datetime:int` or `datetime:float` instead.
+<br/>Returns the current date and time as a UNIX timestamp in UTC.
 ```lisp
 (datetime:now-int)
 ; 1711182138
@@ -40,11 +41,18 @@ default `targetTimezone` is the one configured in the `timezone` setting of the 
 ; 2024-03-23 04:19:49
 ```
 
-### (`datetime:int` \<input>)
-Parses a date and time string and returns a UNIX timestamp.
+### (`datetime:int` [\<input>])
+Parses a date and time string (or uses current time is none provided) and returns a UNIX timestamp.
 ```lisp
 (datetime:int "2024-03-23 02:19:49")
 ; 1711181989
+```
+
+### (`datetime:float` [\<input>])
+Parses a date and time string (or uses current time is none provided) and returns a UNIX timestamp.
+```lisp
+(datetime:float "2024-03-23 02:19:49.500")
+; 1711181989.5
 ```
 
 ### (`datetime:sub` \<value-A> \<value-B> [unit])

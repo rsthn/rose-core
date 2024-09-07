@@ -1,3 +1,17 @@
+# v5.0.17 - Sep 07 2024
+
+#### DateTime
+- Added support for milliseconds in datetime objects.
+- Added option `include_millis` to DateTime section of system.conf to control default usage of milliseconds.
+- Added option `%v` to show milliseconds (3 digits) in string formats.
+- Added function `datetime:float` that returns UNIX time including milliseconds.
+- Value is now optional in call to function `datetime:int`, when omited current datetime will be used.
+
+#### Locale
+- Added function `locale:include-millis` to control default usage of milliseconds in DateTime objects.
+
+<br/>
+
 # v5.0.16 - Aug 22 2024
 
 #### QoL

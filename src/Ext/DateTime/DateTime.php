@@ -36,7 +36,7 @@ Expr::register('datetime:now', function ($args) {
  * ; 1711182138
  */
 Expr::register('datetime:now-int', function ($args) {
-    return (new DateTime('now', $args->length == 2 ? $args->get(1) : null))->getTimestamp();
+    return (int)(new DateTime('now', $args->length == 2 ? $args->get(1) : null))->getTimestamp();
 });
 
 /**

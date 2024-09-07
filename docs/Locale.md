@@ -2,6 +2,13 @@
 # Locale
 Provides locale-related information and formatting functions.
 
+### (`locale:include-millis` \<value>)
+Sets the datetime format to include milliseconds.
+```lisp
+(locale:include-millis true)
+; true
+```
+
 ### (`locale:number` \<format> \<value>)<br/>(`locale:number` \<value>)
 Formats a value as a number with the specified format or uses [Locale.numeric] if no format is specified.
 ```lisp
