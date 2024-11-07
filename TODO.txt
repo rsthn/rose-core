@@ -1,3 +1,10 @@
+!!!!!!!!!!!!!!!!!!! Ensure everything in public API (Expr) is understore naming convention
+!!!!!! NORMALIZE `append` in arrays and strings
+!!!!! MAKE buff: calls for binary strings, and keep str: for UTF-8 strings
+
+FIX FALSEY FOR `OR` and `AND` and `BOOL` operations such that the following are FALSEY:
+    0, 0.00, [], {}, false, ""
+
 CHOOSE EITHER MAP OR OBJECT, BUT BE CONSISTENT WITH THE NAMES (ie. typeof and map? and object?)
 
 *** CHECK if Text::replace is unicode safe.

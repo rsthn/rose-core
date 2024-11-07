@@ -4706,7 +4706,7 @@ Expr::register('_assert-eq', function ($parts, $data)
         return null;
 
     $err = $value1 . ' != ' . $value2;
-    throw new \Exception (($parts->has(3) ? Expr::expand($parts->get(3), $data) : 'Assertion failed') . ' => ' . $err);
+    throw new \Exception ('Assertion failed: ' . $err . ($parts->has(3) ? ' => ' . Expr::expand($parts->get(3), $data) : ''));
 });
 
 /**

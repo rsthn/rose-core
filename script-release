@@ -1,3 +1,5 @@
+#!rose :deploy
+
 BEGIN
     ;; Load version from CHANGELOG.md file.
     (set version (re:get "/v\([0-9.]+\)/" (file:read "CHANGELOG.md") 1))

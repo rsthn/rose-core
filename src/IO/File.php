@@ -52,7 +52,7 @@ class File
 	*/
     public static function touch (string $filepath, $time=null)
     {
-        return \touch ($filepath, $time === null ? DateTime::getUnixTimestamp(true) : (\Rose\isObject($time) ? $time->getTimestamp() : (\Rose\isInteger($time) ? (int)$time : DateTime::getUnixTimestamp($time))));
+        return \touch ($filepath, $time === null ? (int)DateTime::getUnixTimestamp(true) : (\Rose\isObject($time) ? (int)$time->getTimestamp() : (\Rose\isInteger($time) ? (int)$time : (int)DateTime::getUnixTimestamp($time))));
     }
 
 	/*
@@ -88,7 +88,7 @@ class File
         fwrite ($fp, $contents);
 		fclose ($fp);
 
-		\touch ($filepath, DateTime::getUnixTimestamp(true));
+		\touch ($filepath, (int)DateTime::getUnixTimestamp(true));
     }
 
 	/*

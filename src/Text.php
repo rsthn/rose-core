@@ -149,6 +149,17 @@ class Text
         return \str_pad($value, $len, $char, STR_PAD_RIGHT);
     }
 
+
+    /**
+     * Returns the number of occurrences of the given value in the string.
+     */
+    public static function substr_count ($str, $value, $unicode=false) {
+        if (!$unicode)
+            return \substr_count($str, $value);
+        else
+            return mb_substr_count($str, $value, 'utf-8');
+    }
+
     /**
      * Converts the specified value to a string representation.
      */
@@ -222,6 +233,30 @@ Expr::register('substr', function ($args)
 
     return Text::substring($s, $start, $count, true);
 });
+
+/**
+ * Returns the number of occurrences of the given value in the string.
+ * @code (`str:count` <value|array> <string>)
+ * @example
+ * (str:count "l" "hello")
+ * ; 2
+ *
+ * (str:count ["l" "h"] "hello")
+ * ; 3
+ */
+Expr::register('str:count', function($args)
+{
+    $value = $args->get(1);
+    $type = \Rose\typeOf($value);
+    if ($type !== 'Rose\\Arry')
+        return Text::substr_count($args->get(2), $args->get(1), true);
+
+    $n = 0;
+    foreach ($value->__nativeArray as $val)
+        $n += Text::substr_count($args->get(2), $val, true);
+    return $n;
+});
+
 
 /**
  * Pads a value by adding a character to the left until it reaches the desired length. If no padding character
