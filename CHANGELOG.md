@@ -1,3 +1,16 @@
+# v5.0.18 - Nov 07 2024
+
+#### QoL
+- Fixed bug in DateTime when the timestamp is not provided as an integer.
+- Updated error message of `assert` to be more verbose.
+- Patched related code that uses `DateTime::getTimestamp` as integer to cast first.
+- Fixed bug in `Path::extname` causing symbols in the extension not to be detected.
+
+#### Text
+- Added `str:count` to count the occurrences of a substring.
+
+<br/>
+
 # v5.0.17 - Sep 07 2024
 
 #### DateTime

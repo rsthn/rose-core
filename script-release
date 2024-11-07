@@ -22,7 +22,7 @@ ECHO {clr 92}Running tests ...{clr 0}
     ECHO
 
 ECHO {clr 92}Updating documentation ...{clr 0}
-    RUN rose :vdocs src
+    RUN rose :vdocs src --single
 
 ECHO {clr 92}Commiting ...{clr 0}
     r0 {NEW_VERSION}
