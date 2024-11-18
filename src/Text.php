@@ -40,6 +40,25 @@ class Text
     }
 
     /**
+     * Returns a substring of a given string. Negative values in 'start' or 'end' are treated as offsets from the end of the string.
+     */
+    public static function slice ($text, $start, $end=null, $unicode=false)
+    {
+        $text = self::str($text);
+        $n = Text::length($text, $unicode);
+
+        if ($start < 0) $start += $n;
+        if ($end < 0) $end += $n;
+        if ($end === null) $end = $n;
+
+        if ($end <= $start)
+            return '';
+
+        $text = $unicode ? mb_substr($text, $start, $end-$start, 'utf-8') : substr($text, $start, $end-$start);
+        return $text === false ? '' : $text;
+    }
+
+    /**
      * Converts the string to upper case.
      */
     public static function toUpperCase ($text, $unicode=false) {
@@ -218,22 +237,43 @@ class Text
 
 
 /**
- * Returns a substring of a given string. Negative values in `start` indicate to start from the end of the string.
+ * @deprecated Use `str:sub` or `str:slice` instead.
+ * Returns a substring of a given string. Negative values in `start` are treated as offsets from the end of the string.
+ * @code (`str:sub` <start> [count] <value>)
  * @code (`substr` <start> [count] <value>)
  * @example
- * (substr 1 2 "hello")
+ * (str:sub 1 2 "hello")
  * ; "el"
  *
- * (substr -4 2 "world")
+ * (str:sub -4 2 "world")
  * ; "or"
  *
- * (substr -3 "hello")
+ * (str:sub -3 "hello")
  * ; "llo"
  *
- * (substr 2 -2 "Привет!")
+ * (str:sub 2 -2 "Привет!")
  * ; "иве"
  */
 Expr::register('substr', function ($args)
+{
+    \Rose\trace('[WARN] Using `substr` is deprecated. Use `str:sub` instead.');
+    $s = (string)$args->get($args->length-1);
+    $start = 0;
+    $count = null;
+
+    if ($args->length == 4) {
+        $start = (int)($args->get(1));
+        $count = (int)($args->get(2));
+    }
+    else {
+        $start = (int)($args->get(1));
+        $count = null;
+    }
+
+    return Text::substring($s, $start, $count, true);
+});
+
+Expr::register('str:sub', function ($args)
 {
     $s = (string)$args->get($args->length-1);
     $start = 0;
@@ -249,6 +289,37 @@ Expr::register('substr', function ($args)
     }
 
     return Text::substring($s, $start, $count, true);
+});
+
+/**
+ * Returns a substring of a given string. Negative values in `start` or `end` are treated as offsets from the end of the string.
+ * @code (`str:slice` <start> [end] <value>)
+ * @example
+ * (str:slice 1 2 "hello")
+ * ; "e"
+ *
+ * (str:slice -4 3 "world")
+ * ; "or"
+ *
+ * (str:slice 2 -1 "Привеt!")
+ * ; "ивеt"
+ */
+Expr::register('str:slice', function ($args)
+{
+    $s = (string)$args->get($args->length-1);
+    $start = 0;
+    $end = null;
+
+    if ($args->length == 4) {
+        $start = (int)($args->get(1));
+        $end = (int)($args->get(2));
+    }
+    else {
+        $start = (int)($args->get(1));
+        $end = null;
+    }
+
+    return Text::slice($s, $start, $end, true);
 });
 
 /**
@@ -475,16 +546,16 @@ Expr::register('buf:len', function ($args)
 });
 
 /**
- * Returns a slice of a binary buffer. Negative values in `start` indicate to start from the end of the buffer.
- * @code (`buf:slice` <start> [count] <value>)
+ * Returns a substring of a binary string. Negative values in `start` are treated as offsets from the end of the string.
+ * @code (`buf:sub` <start> [count] <value>)
  * @example
- * (buf:slice 1 2 "hello")
+ * (buf:sub 1 2 "hello")
  * ; "el"
  *
- * (buf:slice -4 2 "world")
+ * (buf:sub -4 2 "world")
  * ; "or"
  */
-Expr::register('buf:slice', function ($args)
+Expr::register('buf:sub', function ($args)
 {
     $s = (string)$args->get($args->length-1);
     $start = 0;
@@ -503,19 +574,51 @@ Expr::register('buf:slice', function ($args)
 });
 
 /**
- * Compares two binary strings and returns negative if a < b, zero (0) if a == b, and positive if a > b.
- * @code (`buf:cmp` <a> <b>)
+ * Returns a slice of a binary buffer. Negative values in `start` or `end` are treated as offsets from the end of the string.
+ * @code (`buf:slice` <start> [end] <value>)
  * @example
- * (str:cmp "a" "b")
+ * (buf:slice 1 2 "hello")
+ * ; "e"
+ *
+ * (buf:slice -4 3 "world")
+ * ; "or"
+ *
+ * (buf:slice 1 (+ 1 4) "universe")
+ * ; "nive"
+ * 
+ */
+Expr::register('buf:slice', function ($args)
+{
+    $s = (string)$args->get($args->length-1);
+    $start = 0;
+    $end = null;
+
+    if ($args->length == 4) {
+        $start = (int)($args->get(1));
+        $end = (int)($args->get(2));
+    }
+    else {
+        $start = (int)($args->get(1));
+        $end = null;
+    }
+
+    return Text::slice($s, $start, $end, false);
+});
+
+/**
+ * Compares two binary strings and returns negative if a < b, zero (0) if a == b, and positive if a > b.
+ * @code (`buf:compare` <a> <b>)
+ * @example
+ * (buf:compare "a" "b")
  * ; -1
  *
- * (str:cmp "b" "a")
+ * (buf:compare "b" "a")
  * ; 1
  *
- * (str:cmp "a" "a")
+ * (buf:compare "a" "a")
  * ; 0
  */
-Expr::register('buf:cmp', function ($args) {
+Expr::register('buf:compare', function ($args) {
     return strcmp($args->get(1), $args->get(2));
 });
 

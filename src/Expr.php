@@ -1636,65 +1636,6 @@ class Expr
     }
 
     /**
-     * Applies a function to a given input. The input can be a single-value, a sequence, an array or a map.
-     */
-    // REMOVE: DEPRECATED
-    public static function apply ($list, $fn)
-    {
-        if ($list->length == 1)
-        {
-            $list = $list->get(0);
-
-            if (\Rose\typeOf($list) === 'Rose\Arry')
-            {
-                $output = new Arry();
-    
-                for ($i = 0; $i < $list->length(); $i++)
-                    $output->push( $fn ($list->get($i)) );
-            }
-            else if (\Rose\typeOf($list) === 'Rose\Map')
-            {
-                $output = new Map();
-    
-                foreach ($list->__nativeArray as $name => $value)
-                    $output->set($name, $fn ($value));
-            }
-            else
-                $output = $fn ($list);
-        }
-        else
-        {
-            $_output = new Arry();
-
-            $list->forEach(function($list) use (&$_output, &$fn)
-            {
-                if (\Rose\typeOf($list) === 'Rose\Arry')
-                {
-                    $output = new Arry();
-        
-                    for ($i = 0; $i < $list->length(); $i++)
-                        $output->push( $fn ($list->get($i)) );
-                }
-                else if (\Rose\typeOf($list) === 'Rose\Map')
-                {
-                    $output = new Map();
-        
-                    foreach ($list->__nativeArray as $name => $value)
-                        $output->set($name, $fn ($value));
-                }
-                else
-                    $output = $fn ($list);
-
-                $_output->push($output);
-            });
-
-            $output = $_output;
-        }
-
-        return $output;
-    }
-
-    /**
      * Evaluates a block of expressions, returns the last value.
      */
     public static function blockValue ($parts, $data)

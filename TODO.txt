@@ -1,3 +1,5 @@
+!!!! Ensure array:slice behaves like any other "slice" method (having start and end)
+!!! Add array:sub
 !!!!!!!!!!!!!!!!!!! Ensure everything in public API (Expr) is understore naming convention
 !!!!!! NORMALIZE `append` in arrays and strings
 !!!!! MAKE buff: calls for binary strings, and keep str: for UTF-8 strings

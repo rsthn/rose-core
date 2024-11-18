@@ -223,8 +223,8 @@ Decreases the value of a variable by the given value (or `1` if none provided).
 Appends the given value(s) to the variable.
 ```lisp
 (append name "John")
-(append name " Doe")
-; John Doe
+(append name " Doe" "!")
+; John Doe!
 ```
 
 ### (`unset` \<target...>)
@@ -3632,20 +3632,34 @@ Matches one text string and returns it. Returns `null` if no match found.
 # Text
 Utility functions to manipulate text strings.
 
-### (`substr` \<start> [count] \<value>)
-Returns a substring of a given string. Negative values in `start` indicate to start from the end of the string.
+### (`str:sub` \<start> [count] \<value>)<br/>(`substr` \<start> [count] \<value>)
+@deprecated Use `str:sub` or `str:slice` instead.
+<br/>Returns a substring of a given string. Negative values in `start` are treated as offsets from the end of the string.
 ```lisp
-(substr 1 2 "hello")
+(str:sub 1 2 "hello")
 ; "el"
 
-(substr -4 2 "world")
+(str:sub -4 2 "world")
 ; "or"
 
-(substr -3 "hello")
+(str:sub -3 "hello")
 ; "llo"
 
-(substr 2 -2 "Привет!")
+(str:sub 2 -2 "Привет!")
 ; "иве"
+```
+
+### (`str:slice` \<start> [end] \<value>)
+Returns a substring of a given string. Negative values in `start` or `end` are treated as offsets from the end of the string.
+```lisp
+(str:slice 1 2 "hello")
+; "e"
+
+(str:slice -4 3 "world")
+; "or"
+
+(str:slice 2 -1 "Привеt!")
+; "ивеt"
 ```
 
 ### (`str:count` \<value|array> \<string>)
@@ -3767,72 +3781,118 @@ Translates characters in the given string.
 ; 3123
 ```
 
-### (`str:bytes` \<value>)
-Returns the octet values of the characters in the given string.
+### (`buf:len` \<value>)
+Returns the length of the given binary buffer.
 ```lisp
-(str:bytes "ABC")
+(buf:len "hello")
+; 5
+
+(buf:len "Привет!")
+; 13
+```
+
+### (`buf:sub` \<start> [count] \<value>)
+Returns a substring of a binary string. Negative values in `start` are treated as offsets from the end of the string.
+```lisp
+(buf:sub 1 2 "hello")
+; "el"
+
+(buf:sub -4 2 "world")
+; "or"
+```
+
+### (`buf:slice` \<start> [end] \<value>)
+Returns a slice of a binary buffer. Negative values in `start` or `end` are treated as offsets from the end of the string.
+```lisp
+(buf:slice 1 2 "hello")
+; "e"
+
+(buf:slice -4 3 "world")
+; "or"
+
+(buf:slice 1 (+ 1 4) "universe")
+; "nive"
+```
+
+### (`buf:compare` \<a> \<b>)
+Compares two binary strings and returns negative if a \< b, zero (0) if a == b, and positive if a > b.
+```lisp
+(buf:compare "a" "b")
+; -1
+
+(buf:compare "b" "a")
+; 1
+
+(buf:compare "a" "a")
+; 0
+```
+
+### (`buf:bytes` \<value>)
+Returns the octet values of the characters in the given binary string.
+```lisp
+(buf:bytes "ABC")
 ; [65,66,67]
 
-(str:bytes "Любовь")
+(buf:bytes "Любовь")
 ; [208,155,209,142,208,177,208,190,208,178,209,140]
 ```
 
-### (`str:from-bytes` \<octet-list>)
-Returns the string corresponding to the given binary values.
+### (`buf:from-bytes` \<octet-list>)
+Returns the binary string corresponding to the given bytes.
 ```lisp
-(str:from-bytes (# 65 66 67))
+(buf:from-bytes (# 65 66 67))
 ; ABC
 
-(str:from-bytes (# 237 140 140 235 158 128 236 131 137))
+(buf:from-bytes (# 237 140 140 235 158 128 236 131 137))
 ; 파란색
 ```
 
-### (`str:uint8` \<int-value>)<br/>(`str:uint8` \<string-value> [offset=0])
-Returns a string representation of the given 8-bit unsigned integer or reads an 8-bit unsigned integer from the string.
+### (`buf:uint8` \<int-value>)<br/>(`buf:uint8` \<string-value> [offset=0])
+Returns the binary representation of the given 8-bit unsigned integer or reads an 8-bit unsigned integer from the binary string.
 ```lisp
-(str:uint8 0x40)
+(buf:uint8 0x40)
 ; "@"
 
-(str:uint8 "@")
+(buf:uint8 "@")
 ; 0x40
 ```
 
-### (`str:uint16` \<int-value>)<br/>(`str:uint16` \<string-value> [offset=0])
-Returns a string representation of the given 16-bit unsigned integer (little endian) or reads a 16-bit unsigned integer from the string.
+### (`buf:uint16` \<int-value>)<br/>(`buf:uint16` \<string-value> [offset=0])
+Returns the binary representation of the given 16-bit unsigned integer (little endian) or reads a 16-bit unsigned integer from the binary string.
 ```lisp
-(str:uint16 0x4041)
+(buf:uint16 0x4041)
 ; "A@"
 
-(str:uint16 "A@")
+(buf:uint16 "A@")
 ; 0x4041
 ```
 
-### (`str:uint16be` \<int-value>)<br/>(`str:uint16be` \<string-value> [offset=0])
-Returns a string representation of the given 16-bit unsigned integer (big endian) or reads a 16-bit unsigned integer from the string.
+### (`buf:uint16be` \<int-value>)<br/>(`buf:uint16be` \<string-value> [offset=0])
+Returns the binary representation of the given 16-bit unsigned integer (big endian) or reads a 16-bit unsigned integer from the binary string.
 ```lisp
-(str:uint16b 0x4041)
+(buf:uint16b 0x4041)
 ; "@A"
 
-(str:uint16be "@A")
+(buf:uint16be "@A")
 ; 0x4041
 ```
 
-### (`str:uint32` \<int-value>)<br/>(`str:uint32` \<string-value> [offset=0])
-Returns a string representation of the given 32-bit unsigned integer (little endian) or reads a 32-bit unsigned integer from the string.
+### (`buf:uint32` \<int-value>)<br/>(`buf:uint32` \<string-value> [offset=0])
+Returns the binary representation of the given 32-bit unsigned integer (little endian) or reads a 32-bit unsigned integer from the binary string.
 ```lisp
-(str:uint32 0x40414243)
+(buf:uint32 0x40414243)
 ; "CBA@"
 
-(str:uint32 "CBA@")
+(buf:uint32 "CBA@")
 ; 0x40414243
 ```
 
-### (`str:uint32be` \<int-value>)<br/>(`str:uint32be` \<string-value> [offset=0])
-Returns a string representation of the given 32-bit unsigned integer (big endian) or reads a 32-bit unsigned integer from the string.
+### (`buf:uint32be` \<int-value>)<br/>(`buf:uint32be` \<string-value> [offset=0])
+Returns the binary representation of the given 32-bit unsigned integer (big endian) or reads a 32-bit unsigned integer from the binary string.
 ```lisp
-(str:uint32be 0x40414243)
+(buf:uint32be 0x40414243)
 ; "@ABC"
 
-(str:uint32be "@ABC")
+(buf:uint32be "@ABC")
 ; 0x40414243
 ```
