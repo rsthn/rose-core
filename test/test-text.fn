@@ -1,11 +1,11 @@
 
-; (substr <start> [count] <value>)
-(def-fn test_substr
-    (expect:eq (substr 1 2 "hello") "el")
-    (expect:eq (substr -4 2 "world") "or")
-    (expect:eq (substr -3 "hello") "llo")
-    (expect:eq (substr 2 -2 "Привет!") "иве")
-    (expect:eq (substr 3 "Привет!") "вет!")
+; (str:sub <start> [count] <value>)
+(def-fn test_str_sub
+    (expect:eq (str:sub 1 2 "hello") "el")
+    (expect:eq (str:sub -4 2 "world") "or")
+    (expect:eq (str:sub -3 "hello") "llo")
+    (expect:eq (str:sub 2 -2 "Привет!") "иве")
+    (expect:eq (str:sub 3 "Привет!") "вет!")
 )
 
 ; (lpad <length> [pad] <string>)
@@ -104,61 +104,64 @@
     (expect:eq (str:tr "aие" "123" "привет мир") "пр2в3т м2р")
 )
 
-; (str:bytes <value>)
-(def-fn test_str_bytes
-    (expect:eq (str:bytes "hello") [104 101 108 108 111])
-    (expect:eq (str:bytes "Любовь") [208 155 209 142 208 177 208 190 208 178 209 140])
+
+
+
+; (buf:bytes <value>)
+(def-fn test_buf_bytes
+    (expect:eq (buf:bytes "hello") [104 101 108 108 111])
+    (expect:eq (buf:bytes "Любовь") [208 155 209 142 208 177 208 190 208 178 209 140])
 )
 
-; (str:from-bytes <octet-list>)
-(def-fn test_str_from_bytes
-    (expect:eq (str:from-bytes [104 101 108 108 111]) "hello")
-    (expect:eq (str:from-bytes [208 155 209 142 208 177 208 190 208 178 209 140]) "Любовь")
+; (buf:from-bytes <octet-list>)
+(def-fn test_buf_from_bytes
+    (expect:eq (buf:from-bytes [104 101 108 108 111]) "hello")
+    (expect:eq (buf:from-bytes [208 155 209 142 208 177 208 190 208 178 209 140]) "Любовь")
 )
 
-; (str:uint8 <int-value> [offset=0])
-(def-fn test_str_uint8
-    (expect:eq (str:uint8 255) "\xFF")
-    (expect:eq (str:uint8 "255") 50)
-    (expect:eq (str:uint8 0) "\0")
-    (expect:eq (str:uint8 "0") 48)
+; (buf:uint8 <int-value> [offset=0])
+(def-fn test_buf_uint8
+    (expect:eq (buf:uint8 255) "\xFF")
+    (expect:eq (buf:uint8 "255") 50)
+    (expect:eq (buf:uint8 0) "\0")
+    (expect:eq (buf:uint8 "0") 48)
 
-    (expect:eq (str:uint8 "\xFF\xFF\x40\xFF" 2) 64)
-    (expect:eq (str:uint8 "\xFF\xFF\x40\xFF" 3) 255)
+    (expect:eq (buf:uint8 "\xFF\xFF\x40\xFF" 2) 64)
+    (expect:eq (buf:uint8 "\xFF\xFF\x40\xFF" 3) 255)
 
     (expect:error "Invalid string length for uint8" (fn
-        (str:uint8 "\xFF\xFF" 2)
+        (buf:uint8 "\xFF\xFF" 2)
     ))
 )
 
-; (str:uint16 <int-value> [offset=0])
-(def-fn test_str_uint16
-    (expect:eq (str:uint16 65535) "\xFF\xFF")
-    (expect:eq (str:uint16 "012") 12592)
-    (expect:eq (str:uint16 0) "\x00\x00")
-    (expect:eq (str:uint16 "0123" 2) 13106)
+; (buf:uint16 <int-value> [offset=0])
+(def-fn test_buf_uint16
+    (expect:eq (buf:uint16 65535) "\xFF\xFF")
+    (expect:eq (buf:uint16 "012") 12592)
+    (expect:eq (buf:uint16 0) "\x00\x00")
+    (expect:eq (buf:uint16 "0123" 2) 13106)
 )
 
-; (str:uint16be <string-value> [offset=0])
-(def-fn test_str_uint16be
-    (expect:eq (str:uint16be "\xFF\xFF") 65535)
-    (expect:eq (str:uint16be 12592) "\x31\x30")
-    (expect:eq (str:uint16be "\x00\x00") 0)
-    (expect:eq (str:uint16be 13106) "32")
+; (buf:uint16be <string-value> [offset=0])
+(def-fn test_buf_uint16be
+    (expect:eq (buf:uint16be "\xFF\xFF") 65535)
+    (expect:eq (buf:uint16be 12592) "\x31\x30")
+    (expect:eq (buf:uint16be "\x00\x00") 0)
+    (expect:eq (buf:uint16be 13106) "32")
 )
 
-; (str:uint32 <string-value> [offset=0])
-(def-fn test_str_uint32
-    (expect:eq (str:uint32 "\xFF\xFF\xFF\xFF") 4294967295)
-    (expect:eq (str:uint32 "0123") 858927408)
-    (expect:eq (str:uint32 "\x00\x00\x00\x00") 0)
-    (expect:eq (str:uint32 13106) "23\0\0")
+; (buf:uint32 <string-value> [offset=0])
+(def-fn test_buf_uint32
+    (expect:eq (buf:uint32 "\xFF\xFF\xFF\xFF") 4294967295)
+    (expect:eq (buf:uint32 "0123") 858927408)
+    (expect:eq (buf:uint32 "\x00\x00\x00\x00") 0)
+    (expect:eq (buf:uint32 13106) "23\0\0")
 )
 
-; (str:uint32be <string-value> [offset=0])
-(def-fn test_str_uint32be
-    (expect:eq (str:uint32be "\xFF\xFF\xFF\xFF") 4294967295)
-    (expect:eq (str:uint32be 858927408) "3210")
-    (expect:eq (str:uint32be "\x00\x00\x00\x00") 0)
-    (expect:eq (str:uint32be 13106) "\0\032")
+; (buf:uint32be <string-value> [offset=0])
+(def-fn test_buf_uint32be
+    (expect:eq (buf:uint32be "\xFF\xFF\xFF\xFF") 4294967295)
+    (expect:eq (buf:uint32be 858927408) "3210")
+    (expect:eq (buf:uint32be "\x00\x00\x00\x00") 0)
+    (expect:eq (buf:uint32be 13106) "\0\032")
 )

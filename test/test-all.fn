@@ -1,0 +1,3 @@
+
+(include "test/test-text.fn")
+(include "test/test-datetime.fn")
