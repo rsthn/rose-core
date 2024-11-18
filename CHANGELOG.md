@@ -1,3 +1,19 @@
+# v5.0.19 - Nov 18 2024
+
+#### QoL
+- Calling deprecated functions will issue a warning in the log file.
+- Removed internal non-expr functions that were marked deprecated.
+
+#### Text
+- Moved all binary string manipulation functions to "buf:" prefix
+- Added function `buf:cmp` and changed behavior of `str:compare` to be utf-8.
+- Added function `buf:slice` to return a slice of a binary string.
+- Added `str:sub` and `str:slice` functions.
+- Deprecated `substr` function.
+- Added `buf:slice` and renamed `buf:cmp` to `buf:compare` for consistency.
+
+<br/>
+
 # v5.0.18 - Nov 07 2024
 
 #### QoL
