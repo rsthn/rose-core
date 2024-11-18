@@ -176,7 +176,24 @@ class Text
      * Compares two strings and returns negative if a < b, zero (0) if a == b, and positive if a > b.
      */
     public static function compare ($a, $b) {
-        return strcmp ($a, $b);
+
+        /* function mb_strcmp($str1, $str2, $encoding = 'UTF-8') {
+            $len1 = mb_strlen($str1, $encoding);
+            $len2 = mb_strlen($str2, $encoding);
+        
+            $minLen = min($len1, $len2);
+            for ($i = 0; $i < $minLen; $i++) {
+                $char1 = mb_substr($str1, $i, 1, $encoding);
+                $char2 = mb_substr($str2, $i, 1, $encoding);
+        
+                $diff = strcmp($char1, $char2);
+                if ($diff !== 0) {
+                    return $diff;
+                }
+            }
+            return $len1 - $len2;
+        } */
+        return strcmp($a, $b);
     }
 
     public static function translate ($str, $from, $to, $unicode=false)
@@ -439,50 +456,113 @@ Expr::register('str:tr', function($args) {
     return Text::translate ($args->get(3), $args->get(1), $args->get(2), true);
 });
 
+
+
+
 /**
- * Returns the octet values of the characters in the given string.
- * @code (`str:bytes` <value>)
+ * Returns the length of the given binary buffer.
+ * @code (`buf:len` <value>)
  * @example
- * (str:bytes "ABC")
+ * (buf:len "hello")
+ * ; 5
+ *
+ * (buf:len "Привет!")
+ * ; 13
+ */
+Expr::register('buf:len', function ($args)
+{
+    return Text::length((string)$args->get(1), false);
+});
+
+/**
+ * Returns a slice of a binary buffer. Negative values in `start` indicate to start from the end of the buffer.
+ * @code (`buf:slice` <start> [count] <value>)
+ * @example
+ * (buf:slice 1 2 "hello")
+ * ; "el"
+ *
+ * (buf:slice -4 2 "world")
+ * ; "or"
+ */
+Expr::register('buf:slice', function ($args)
+{
+    $s = (string)$args->get($args->length-1);
+    $start = 0;
+    $count = null;
+
+    if ($args->length == 4) {
+        $start = (int)($args->get(1));
+        $count = (int)($args->get(2));
+    }
+    else {
+        $start = (int)($args->get(1));
+        $count = null;
+    }
+
+    return Text::substring($s, $start, $count, false);
+});
+
+/**
+ * Compares two binary strings and returns negative if a < b, zero (0) if a == b, and positive if a > b.
+ * @code (`buf:cmp` <a> <b>)
+ * @example
+ * (str:cmp "a" "b")
+ * ; -1
+ *
+ * (str:cmp "b" "a")
+ * ; 1
+ *
+ * (str:cmp "a" "a")
+ * ; 0
+ */
+Expr::register('buf:cmp', function ($args) {
+    return strcmp($args->get(1), $args->get(2));
+});
+
+/**
+ * Returns the octet values of the characters in the given binary string.
+ * @code (`buf:bytes` <value>)
+ * @example
+ * (buf:bytes "ABC")
  * ; [65,66,67]
  *
- * (str:bytes "Любовь")
+ * (buf:bytes "Любовь")
  * ; [208,155,209,142,208,177,208,190,208,178,209,140]
  */
-Expr::register('str:bytes', function($args) {
+Expr::register('buf:bytes', function($args) {
     return Text::split('', $args->get(1))->map(function($value) {
         return ord($value);
     });
 });
 
 /**
- * Returns the string corresponding to the given binary values.
- * @code (`str:from-bytes` <octet-list>)
+ * Returns the binary string corresponding to the given bytes.
+ * @code (`buf:from-bytes` <octet-list>)
  * @example
- * (str:from-bytes (# 65 66 67))
+ * (buf:from-bytes (# 65 66 67))
  * ; ABC
  *
- * (str:from-bytes (# 237 140 140 235 158 128 236 131 137))
+ * (buf:from-bytes (# 237 140 140 235 158 128 236 131 137))
  * ; 파란색
  */
-Expr::register('str:from-bytes', function($args) {
+Expr::register('buf:from-bytes', function($args) {
     return $args->get(1)->map(function($value) {
         return chr($value);
     })->join('');
 });
 
 /**
- * Returns a string representation of the given 8-bit unsigned integer or reads an 8-bit unsigned integer from the string.
- * @code (`str:uint8` <int-value>)
- * @code (`str:uint8` <string-value> [offset=0])
+ * Returns the binary representation of the given 8-bit unsigned integer or reads an 8-bit unsigned integer from the binary string.
+ * @code (`buf:uint8` <int-value>)
+ * @code (`buf:uint8` <string-value> [offset=0])
  * @example
- * (str:uint8 0x40)
+ * (buf:uint8 0x40)
  * ; "@"
  * 
- * (str:uint8 "@")
+ * (buf:uint8 "@")
  * ; 0x40
  */
-Expr::register('str:uint8', function($args) {
+Expr::register('buf:uint8', function($args) {
     $value = $args->get(1);
     if (!\Rose\isString($value)) {
         $value = (int)$value;
@@ -497,17 +577,17 @@ Expr::register('str:uint8', function($args) {
 });
 
 /**
- * Returns a string representation of the given 16-bit unsigned integer (little endian) or reads a 16-bit unsigned integer from the string.
- * @code (`str:uint16` <int-value>)
- * @code (`str:uint16` <string-value> [offset=0])
+ * Returns the binary representation of the given 16-bit unsigned integer (little endian) or reads a 16-bit unsigned integer from the binary string.
+ * @code (`buf:uint16` <int-value>)
+ * @code (`buf:uint16` <string-value> [offset=0])
  * @example
- * (str:uint16 0x4041)
+ * (buf:uint16 0x4041)
  * ; "A@"
  * 
- * (str:uint16 "A@")
+ * (buf:uint16 "A@")
  * ; 0x4041
  */
-Expr::register('str:uint16', function($args) {
+Expr::register('buf:uint16', function($args) {
     $value = $args->get(1);
     if (!\Rose\isString($value)) {
         $value = (int)$value;
@@ -521,17 +601,17 @@ Expr::register('str:uint16', function($args) {
 });
 
 /**
- * Returns a string representation of the given 16-bit unsigned integer (big endian) or reads a 16-bit unsigned integer from the string.
- * @code (`str:uint16be` <int-value>)
- * @code (`str:uint16be` <string-value> [offset=0])
+ * Returns the binary representation of the given 16-bit unsigned integer (big endian) or reads a 16-bit unsigned integer from the binary string.
+ * @code (`buf:uint16be` <int-value>)
+ * @code (`buf:uint16be` <string-value> [offset=0])
  * @examplee
- * (str:uint16b 0x4041)
+ * (buf:uint16b 0x4041)
  * ; "@A"
  * 
- * (str:uint16be "@A")
+ * (buf:uint16be "@A")
  * ; 0x4041
  */
-Expr::register('str:uint16be', function($args) {
+Expr::register('buf:uint16be', function($args) {
     $value = $args->get(1);
     if (!\Rose\isString($value)) {
         $value = (int)$value;
@@ -545,17 +625,17 @@ Expr::register('str:uint16be', function($args) {
 });
 
 /**
- * Returns a string representation of the given 32-bit unsigned integer (little endian) or reads a 32-bit unsigned integer from the string.
- * @code (`str:uint32` <int-value>)
- * @code (`str:uint32` <string-value> [offset=0])
+ * Returns the binary representation of the given 32-bit unsigned integer (little endian) or reads a 32-bit unsigned integer from the binary string.
+ * @code (`buf:uint32` <int-value>)
+ * @code (`buf:uint32` <string-value> [offset=0])
  * @example
- * (str:uint32 0x40414243)
+ * (buf:uint32 0x40414243)
  * ; "CBA@"
  * 
- * (str:uint32 "CBA@")
+ * (buf:uint32 "CBA@")
  * ; 0x40414243
  */
-Expr::register('str:uint32', function($args) {
+Expr::register('buf:uint32', function($args) {
     $value = $args->get(1);
     if (!\Rose\isString($value)) {
         $value = (int)$value;
@@ -569,17 +649,17 @@ Expr::register('str:uint32', function($args) {
 });
 
 /**
- * Returns a string representation of the given 32-bit unsigned integer (big endian) or reads a 32-bit unsigned integer from the string.
- * @code (`str:uint32be` <int-value>)
- * @code (`str:uint32be` <string-value> [offset=0])
+ * Returns the binary representation of the given 32-bit unsigned integer (big endian) or reads a 32-bit unsigned integer from the binary string.
+ * @code (`buf:uint32be` <int-value>)
+ * @code (`buf:uint32be` <string-value> [offset=0])
  * @example
- * (str:uint32be 0x40414243)
+ * (buf:uint32be 0x40414243)
  * ; "@ABC"
  * 
- * (str:uint32be "@ABC")
+ * (buf:uint32be "@ABC")
  * ; 0x40414243
  */
-Expr::register('str:uint32be', function($args) {
+Expr::register('buf:uint32be', function($args) {
     $value = $args->get(1);
     if (!\Rose\isString($value)) {
         $value = (int)$value;

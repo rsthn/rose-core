@@ -2295,8 +2295,8 @@ Expr::register('_dec', function ($parts, $data)
  * @code (`append` <target> <value...>)
  * @example
  * (append name "John")
- * (append name " Doe")
- * ; John Doe
+ * (append name " Doe" "!")
+ * ; John Doe!
  */
 Expr::register('_append', function ($parts, $data)
 {
