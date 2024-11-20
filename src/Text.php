@@ -107,9 +107,25 @@ class Text
     public static function trim ($text, $chars=null) {
         $text = self::str($text);
         if ($chars != null)
-            return \trim ($text, $chars);
+            return \trim($text, $chars);
         else
-            return \trim ($text, " \n\r\f\t\v\x00");
+            return \trim($text, " \n\r\f\t\v\x00");
+    }
+
+    public static function ltrim ($text, $chars=null) {
+        $text = self::str($text);
+        if ($chars != null)
+            return \ltrim($text, $chars);
+        else
+            return \ltrim($text, " \n\r\f\t\v\x00");
+    }
+
+    public static function rtrim ($text, $chars=null) {
+        $text = self::str($text);
+        if ($chars != null)
+            return \rtrim($text, $chars);
+        else
+            return \rtrim($text, " \n\r\f\t\v\x00");
     }
 
     /**
@@ -415,6 +431,32 @@ Expr::register('trim', function ($args) {
     $chars = $args->length > 2 ? $args->get(1) : null;
     $val = $args->get($args->length-1);
     return Text::trim($val, $chars);
+});
+
+/**
+ * Removes white space (or any of the given chars) from the left and returns the result.
+ * @code (`ltrim` [chars] <value>)
+ * @example
+ * (ltrim "  hello  ")
+ * ; "hello  "
+ */
+Expr::register('ltrim', function ($args) {
+    $chars = $args->length > 2 ? $args->get(1) : null;
+    $val = $args->get($args->length-1);
+    return Text::ltrim($val, $chars);
+});
+
+/**
+ * Removes white space (or any of the given chars) from the right and returns the result.
+ * @code (`rtrim` [chars] <value>)
+ * @example
+ * (rtrim "  hello  ")
+ * ; "  hello"
+ */
+Expr::register('rtrim', function ($args) {
+    $chars = $args->length > 2 ? $args->get(1) : null;
+    $val = $args->get($args->length-1);
+    return Text::rtrim($val, $chars);
 });
 
 /**

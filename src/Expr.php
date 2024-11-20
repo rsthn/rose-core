@@ -3991,13 +3991,16 @@ Expr::register('_map', function ($parts, $data)
 
 /**
  * Returns a new array/map with the values that pass the test implemented by the block.
- * @code (`filter` [key-var:val-var | val-var] [`in`] <iterable> <block>)
+ * @code (`filter` [key-var:val-var | val-var] [`in`] <iterable> [block])
  * @example
  * (filter [1 2 3 4 5] (lt? (i) 3))
  * ; [1, 2]
  *
  * (filter x in [1 2 3 4 5] (odd? (x)))
  * ; [1, 3, 5]
+ *
+ * (filter x in [0 2 0 4 5])
+ * ; [2, 4, 5]
  */
 Expr::register('_filter', function ($parts, $data)
 {
@@ -4023,7 +4026,7 @@ Expr::register('_filter', function ($parts, $data)
         $data->set($index_name, $j++);
         $data->set($key_name, $key);
 
-        if (!!Expr::blockValue($block, $data))
+        if (($block->length > 0 && !!Expr::blockValue($block, $data)) || ($block->length == 0 && !!$item))
         {
             if ($arrayMode)
                 $output->push($item);
@@ -4042,7 +4045,7 @@ Expr::register('_filter', function ($parts, $data)
 
 /**
  * Returns `true` if all the values in the array/map pass the test implemented by the block.
- * @code (`all` [key-var:val-var | val-var] [`in`] <iterable> <block>)
+ * @code (`all` [key-var:val-var | val-var] [`in`] <iterable> [block])
  * @example
  * (all [1 2 3 4 5] (lt? (i) 6))
  * ; true
@@ -4052,6 +4055,9 @@ Expr::register('_filter', function ($parts, $data)
  *
  * (all key:val { "a" 1 "b" 2 "c" 3 } (lt? (val) 4))
  * ; true
+ *
+ * (all [1 0 3])
+ * ; false
  */
 Expr::register('_all', function ($parts, $data)
 {
@@ -4076,7 +4082,7 @@ Expr::register('_all', function ($parts, $data)
         $data->set($index_name, $j++);
         $data->set($key_name, $key);
 
-        if (!Expr::blockValue($block, $data))
+        if (($block->length > 0 && !Expr::blockValue($block, $data)) || ($block->length == 0 && !$item))
         {
             $output = false;
             return false;
@@ -4092,13 +4098,16 @@ Expr::register('_all', function ($parts, $data)
 
 /**
  * Returns `true` if at least one of the values in the array/map pass the test implemented by the block.
- * @code (`any` [key-var:val-var | val-var] [`in`] <iterable> <block>)
+ * @code (`any` [key-var:val-var | val-var] [`in`] <iterable> [block])
  * @example
  * (any [1 2 3 4 5] (lt? (i) 2))
  * ; true
  *
  * (any x in [2 4 16] (odd? (x)))
  * ; false
+ *
+ * (any [0 0 1])
+ * ; true
  */
 Expr::register('_any', function ($parts, $data)
 {
@@ -4123,7 +4132,7 @@ Expr::register('_any', function ($parts, $data)
         $data->set($index_name, $j++);
         $data->set($key_name, $key);
 
-        if (!!Expr::blockValue($block, $data))
+        if (($block->length > 0 && !!Expr::blockValue($block, $data)) || ($block->length == 0 && !!$item))
         {
             $output = true;
             return false;
@@ -4139,7 +4148,7 @@ Expr::register('_any', function ($parts, $data)
 
 /**
  * Returns the first value in the array/map that passes the test implemented by the block or `null` if none found.
- * @code (`find` [key-var:val-var | val-var] [`in`] <iterable> <block>)
+ * @code (`find` [key-var:val-var | val-var] [`in`] <iterable> [block])
  * @example
  * (find [1 2 3 4 5] (gt? (i) 3))
  * ; 4
@@ -4149,6 +4158,9 @@ Expr::register('_any', function ($parts, $data)
  *
  * (find key:val { "a" 1 "b" 2 "c" 3 } (eq? (key) "c"))
  * ; 3
+ *
+ * (find [false null 5 false])
+ * ; 5
  */
 Expr::register('_find', function ($parts, $data)
 {
@@ -4173,7 +4185,7 @@ Expr::register('_find', function ($parts, $data)
         $data->set($index_name, $j++);
         $data->set($key_name, $key);
 
-        if (!!Expr::blockValue($block, $data))
+        if (($block->length > 0 && !!Expr::blockValue($block, $data)) || ($block->length == 0 && !!$item))
         {
             $output = $item;
             return false;
@@ -4199,6 +4211,9 @@ Expr::register('_find', function ($parts, $data)
  *
  * (find-index key:val { "a" 1 "b" 2 "c" 3 } (eq? (key) "c"))
  * ; 2
+ *
+ * (find-index [null false 'Ok'])
+ * ; 2
  */
 Expr::register('_find-index', function ($parts, $data)
 {
@@ -4223,7 +4238,7 @@ Expr::register('_find-index', function ($parts, $data)
         $data->set($index_name, $j++);
         $data->set($key_name, $key);
 
-        if (!!Expr::blockValue($block, $data))
+        if (($block->length > 0 && !!Expr::blockValue($block, $data)) || ($block->length == 0 && !!$item))
         {
             $output = $key;
             return false;
@@ -4328,19 +4343,28 @@ Expr::register('_reduce', function ($parts, $data)
 
 /**
  * Returns a sequence of integer numbers for the specified range (end-exclusive).
- * @code (`range` <start> <end> [step=1])
+ * @code (`range` [start=0] <end> [step=1])
  * @example
  * (range 1 10)
  * ; [1,2,3,4,5,6,7,8,9]
+ *
+ * (range 4)
+ * ; [0,1,2,3]
  *
  * (range 1 10 2)
  * ; [1,3,5,7,9]
  */
 Expr::register('range', function ($args, $parts, $data)
 {
-    $start = (int)$args->get(1);
-    $end = (int)$args->get(2);
-    $step = $args->has(3) ? (int)$args->get(3) : ($start < $end ? 1 : -1);
+    if ($args->length > 2) {
+        $start = (int)$args->get(1);
+        $end = (int)$args->get(2);
+        $step = $args->has(3) ? (int)$args->get(3) : ($start < $end ? 1 : -1);
+    } else {
+        $start = 0;
+        $end = (int)$args->get(1);
+        $step = 1;
+    }
 
     if ($step == 0)
         throw new Error('range step cannot be zero');
