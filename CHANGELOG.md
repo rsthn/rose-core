@@ -1,3 +1,14 @@
+# v5.0.20 - Nov 20 2024
+
+#### Text
+- Added functions `ltrim` and `rtrim` finally!
+
+#### Expr
+- Updated `all`, `any`, `filter`, `find` and `find-index` to no longer need a code block.
+- Updated `range` to allow just a single parameter.
+
+<br/>
+
 # v5.0.19 - Nov 18 2024
 
 #### QoL

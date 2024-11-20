@@ -997,7 +997,7 @@ Maps each value in the array/map to a new value returned by the block.
 ; ["a=1", "b=2", "c=3"]
 ```
 
-### (`filter` [key-var:val-var | val-var] [`in`] \<iterable> \<block>)
+### (`filter` [key-var:val-var | val-var] [`in`] \<iterable> [block])
 Returns a new array/map with the values that pass the test implemented by the block.
 ```lisp
 (filter [1 2 3 4 5] (lt? (i) 3))
@@ -1005,9 +1005,12 @@ Returns a new array/map with the values that pass the test implemented by the bl
 
 (filter x in [1 2 3 4 5] (odd? (x)))
 ; [1, 3, 5]
+
+(filter x in [0 2 0 4 5])
+; [2, 4, 5]
 ```
 
-### (`all` [key-var:val-var | val-var] [`in`] \<iterable> \<block>)
+### (`all` [key-var:val-var | val-var] [`in`] \<iterable> [block])
 Returns `true` if all the values in the array/map pass the test implemented by the block.
 ```lisp
 (all [1 2 3 4 5] (lt? (i) 6))
@@ -1018,9 +1021,12 @@ Returns `true` if all the values in the array/map pass the test implemented by t
 
 (all key:val { "a" 1 "b" 2 "c" 3 } (lt? (val) 4))
 ; true
+
+(all [1 0 3])
+; false
 ```
 
-### (`any` [key-var:val-var | val-var] [`in`] \<iterable> \<block>)
+### (`any` [key-var:val-var | val-var] [`in`] \<iterable> [block])
 Returns `true` if at least one of the values in the array/map pass the test implemented by the block.
 ```lisp
 (any [1 2 3 4 5] (lt? (i) 2))
@@ -1028,9 +1034,12 @@ Returns `true` if at least one of the values in the array/map pass the test impl
 
 (any x in [2 4 16] (odd? (x)))
 ; false
+
+(any [0 0 1])
+; true
 ```
 
-### (`find` [key-var:val-var | val-var] [`in`] \<iterable> \<block>)
+### (`find` [key-var:val-var | val-var] [`in`] \<iterable> [block])
 Returns the first value in the array/map that passes the test implemented by the block or `null` if none found.
 ```lisp
 (find [1 2 3 4 5] (gt? (i) 3))
@@ -1041,6 +1050,9 @@ Returns the first value in the array/map that passes the test implemented by the
 
 (find key:val { "a" 1 "b" 2 "c" 3 } (eq? (key) "c"))
 ; 3
+
+(find [false null 5 false])
+; 5
 ```
 
 ### (`find-index` [key-var:val-var | val-var] [`in`] \<iterable> \<block>)
@@ -1053,6 +1065,9 @@ Returns the index of the first value in the array/map that passes the test imple
 ; null
 
 (find-index key:val { "a" 1 "b" 2 "c" 3 } (eq? (key) "c"))
+; 2
+
+(find-index [null false 'Ok'])
 ; 2
 ```
 
@@ -1070,11 +1085,14 @@ passed to the block.
 ; 23
 ```
 
-### (`range` \<start> \<end> [step=1])
+### (`range` [start=0] \<end> [step=1])
 Returns a sequence of integer numbers for the specified range (end-exclusive).
 ```lisp
 (range 1 10)
 ; [1,2,3,4,5,6,7,8,9]
+
+(range 4)
+; [0,1,2,3]
 
 (range 1 10 2)
 ; [1,3,5,7,9]
@@ -3713,6 +3731,20 @@ Removes white space (or any of the given chars) and returns the result.
 ```lisp
 (trim "  hello  ")
 ; "hello"
+```
+
+### (`ltrim` [chars] \<value>)
+Removes white space (or any of the given chars) from the left and returns the result.
+```lisp
+(ltrim "  hello  ")
+; "hello  "
+```
+
+### (`rtrim` [chars] \<value>)
+Removes white space (or any of the given chars) from the right and returns the result.
+```lisp
+(rtrim "  hello  ")
+; "  hello"
 ```
 
 ### (`starts-with?` \<value> \<text> [value-true=true] [value-false=false])
