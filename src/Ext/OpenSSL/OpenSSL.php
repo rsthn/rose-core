@@ -191,6 +191,17 @@ function get_signing_algorithm ($name)
 }
 
 /**
+ * Returns the version of the OpenSSL library.
+ * @code (`openssl:version`)
+ * @example
+ * (openssl:version)
+ * ; "OpenSSL 3.0.13 30 Jan 2024"
+ */
+Expr::register('openssl:version', function($args) {
+    return OPENSSL_VERSION_TEXT;
+});
+
+/**
  * Wraps the given buffer in a PEM encoded block with the specified label.
  * @code (`pem:encode` <label> <data>)
  */
@@ -199,7 +210,6 @@ Expr::register('pem:encode', function($args) {
     $value = base64_encode($args->get(2));
     return "-----BEGIN ".$label."-----\n" . wordwrap($value, 64, "\n", true) . "\n-----END ".$label."-----\n";
 });
-
 
 /**
  * Returns a list of supported curves.
