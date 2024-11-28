@@ -1,3 +1,17 @@
+# v5.0.21 - Nov 28 2024
+
+#### Database
+- Added `tracing` parameter to the Driver class to debug final queries using `log_query` method.
+- Removed deprecated `mssql` driver, use `sqlserver` instead.
+- Added `prepare_param` and `prepare_query` to Driver class to prepare queries with values.
+- Driver now supports placeholders: `?` `?()` `?[]` `?{}` and `?..` for prepared queries.
+- PostgreSQL driver updated to return actual types from the database. Can be turned off by setting `postgres_types` to `false` in the [Database] section.
+
+#### OpenSSL
+- Added 'openssl:version' function.
+
+<br/>
+
 # v5.0.20 - Nov 20 2024
 
 #### Text

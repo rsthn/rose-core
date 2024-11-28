@@ -2164,6 +2164,13 @@ Clears the contents of the map.
 # OpenSSL
 
 
+### (`openssl:version`)
+Returns the version of the OpenSSL library.
+```lisp
+(openssl:version)
+; "OpenSSL 3.0.13 30 Jan 2024"
+```
+
 ### (`pem:encode` \<label> \<data>)
 Wraps the given buffer in a PEM encoded block with the specified label.
 
