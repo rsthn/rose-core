@@ -64,21 +64,46 @@ class MySQLi extends Driver
 		return mysqli_ping($conn);
     }
 
-    public function query ($query, $conn, $params) {
-        if ($params === null)
-            return mysqli_query ($conn, $query, MYSQLI_STORE_RESULT);
+    public function prepare_param (&$value, &$query_part, &$index, &$extra)
+    {
+        $query_part = '?';
 
-        $types = '';
-        foreach ($params->__nativeArray as $value) {
-            if ($value === null) { $types .= 's'; continue; }
-            if ($value === true || $value === false) {  $types .= 'i'; continue; }
-            if (\Rose\isInteger($value)) { $types .= 'i'; continue; }
-            if (\Rose\isNumber($value)) { $types .= 'd'; continue; }
-            if (Text::length($value) > 1024) $types .= 'b'; else $types .= 's';
+        if ($value === null) {
+            $extra['types'] .= 's';
+            return 3;
         }
 
+        if ($value === true || $value === false) {
+            $extra['types'] .= 'i';
+            return 3;
+        }
+
+        if (\Rose\isInteger($value)) {
+            $extra['types'] .= 'i';
+            return 3;
+        }
+
+        if (\Rose\isNumber($value)) {
+            $extra['types'] .= 'd';
+            return 3;
+        }
+
+        if (Text::length($value) >= 1024)
+            $extra['types'] .= 'b';
+        else
+            $extra['types'] .= 's';
+
+        return 3;
+    }
+
+    public function query ($query, $conn, $params)
+    {
+        if ($params === null)
+            return mysqli_query($conn, $this->log_query($query), MYSQLI_STORE_RESULT);
+
+        [$query, $params, $extra] = $this->prepare_query($query, $params, ['types' => '']);
         $stmt = $conn->prepare($query);
-        $stmt->bind_param($types, ...$params->__nativeArray);
+        $stmt->bind_param($extra['types'], ...$params);
 
         try {
             $success = $stmt->execute();
@@ -93,19 +118,11 @@ class MySQLi extends Driver
 
     public function reader ($query, $conn, $params) {
 		if ($params === null)
-            return mysqli_query ($conn, $query, MYSQLI_USE_RESULT);
+            return mysqli_query($conn, $this->log_query($query), MYSQLI_USE_RESULT);
 
-        $types = '';
-        foreach ($params->__nativeArray as $value) {
-            if ($value === null) { $types .= 's'; continue; }
-            if ($value === true || $value === false) {  $types .= 'i'; continue; }
-            if (\Rose\isInteger($value)) { $types .= 'i'; continue; }
-            if (\Rose\isNumber($value)) { $types .= 'd'; continue; }
-            if (Text::length($value) > 1024) $types .= 'b'; else $types .= 's';
-        }
-
+        [$query, $params, $extra] = $this->prepare_query($query, $params, ['types' => '']);
         $stmt = $conn->prepare($query);
-        $stmt->bind_param($types, ...$params->__nativeArray);
+        $stmt->bind_param($extra['types'], ...$params);
 
         $success = $stmt->execute();
         if (!$success) {

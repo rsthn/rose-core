@@ -40,10 +40,16 @@ class ODBC extends Driver
         return true;
     }
 
+    public function prepare_param (&$value, &$query_part, &$index, &$extra)
+    {
+        $query_part = '?';
+        return 3;
+    }
+
     public function query ($query, $conn, $params) {
         $this->affected_rows = 0;
 
-        $rs = odbc_exec($conn, $query);
+        $rs = odbc_exec($conn, $this->log_query($query));
         if ($rs === false) return false;
 
         $this->affected_rows = odbc_num_rows($rs);
@@ -54,7 +60,7 @@ class ODBC extends Driver
     public function reader ($query, $conn, $params) {
         $this->affected_rows = 0;
 
-        $rs = odbc_exec($conn, $query);
+        $rs = odbc_exec($conn, $this->log_query($query));
         if ($rs === false) return false;
 
         $this->affected_rows = odbc_num_rows($rs);

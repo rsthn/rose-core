@@ -106,7 +106,10 @@ class Connection
      * @return boolean Tracing state.
      */
     public function tracing ($state=null) {
-        if ($state !== null) $this->dbTracing = $state;
+        if ($state !== null) {
+            $this->dbTracing = $state;
+            $this->driver->tracing = $state;
+        }
         return $this->dbTracing;
     }
 
@@ -283,8 +286,6 @@ class Connection
             throw new Error ('Connection: Database connection is not open.');
 
         $queryString = $this->filterQuery($queryString);
-        if ($this->dbTracing) \Rose\trace($queryString);
-
         if (!$this->driver->isAlive($this->conn))
             $this->open();
 
@@ -322,8 +323,6 @@ class Connection
             throw new Error ('Connection: Database connection is not open.');
 
         $queryString = $this->filterQuery($queryString);
-        if ($this->dbTracing) \Rose\trace($queryString);
-
         if (!$this->driver->isAlive($this->conn))
             $this->open();
 
@@ -351,8 +350,6 @@ class Connection
             throw new Error ('Connection: Database connection is not open.');
 
         $queryString = $this->filterQuery($queryString);
-        if ($this->dbTracing) \Rose\trace($queryString);
-
         if (!$this->driver->isAlive($this->conn))
             $this->open();
 
@@ -390,8 +387,6 @@ class Connection
             throw new Error ('Connection: Database connection is not open.');
 
         $queryString = $this->filterQuery($queryString);
-        if ($this->dbTracing) \Rose\trace($queryString);
-
         if (!$this->driver->isAlive($this->conn))
             $this->open();
 
@@ -422,8 +417,6 @@ class Connection
             throw new Error ('Connection: Database connection is not open.');
 
         $queryString = $this->filterQuery($queryString);
-        if ($this->dbTracing) \Rose\trace($queryString);
-
         if (!$this->driver->isAlive($this->conn))
             $this->open();
 
@@ -461,8 +454,6 @@ class Connection
             throw new Error ('Connection: Database connection is not open.');
 
         $queryString = $this->filterQuery($queryString);
-        if ($this->dbTracing) \Rose\trace($queryString);
-
         if (!$this->driver->isAlive($this->conn))
             $this->open();
 
@@ -493,13 +484,11 @@ class Connection
 /* ****************** */
 use Rose\Data\Drivers\MySQLi;
 use Rose\Data\Drivers\PostgreSQL;
-use Rose\Data\Drivers\MSSQL;
 use Rose\Data\Drivers\SQLServer;
 use Rose\Data\Drivers\ODBC;
 
 MySQLi::register();
 PostgreSQL::register();
-MSSQL::register();
 SQLServer::register();
 ODBC::register();
 

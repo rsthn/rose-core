@@ -91,6 +91,11 @@ class SQLServer extends Driver
         return null;
     }
 
+    public function prepare_param (&$value, &$query_part, &$index, &$extra) {
+        $query_part = '?';
+        return 3;
+    }
+
     public function query ($query, $conn, $params)
     {
         $this->affected_rows = 0;
@@ -113,7 +118,7 @@ class SQLServer extends Driver
             $options = null;
         }
 
-        $rs = sqlsrv_query ($conn, $query, null, $options);
+        $rs = sqlsrv_query ($conn, $this->log_query($query), null, $options);
         if (!$rs) return $this->loadLastError();
 
         $return = $rs;
@@ -162,7 +167,7 @@ class SQLServer extends Driver
         $this->field_metadata = null;
         $this->last_error = null;
 
-        $rs = sqlsrv_query ($conn, $query, null, $this->options);
+        $rs = sqlsrv_query ($conn, $this->log_query($query), null, $this->options);
         if (!$rs) return $this->loadLastError();
 
         $return = $rs;
