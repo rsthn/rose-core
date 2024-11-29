@@ -35,7 +35,7 @@ Expr::register('map:new', function($args) {
  * @code (`map:sort-asc` <map>)
  * @example
  * (map:sort-asc (map:new 'b' 2 'a' 1))
- * ; {'a': 1, 'b': 2}
+ * ; {"a": 1, "b": 2}
  */
 Expr::register('map:sort-asc', function($args) {
     $map = $args->get(1);
@@ -48,7 +48,7 @@ Expr::register('map:sort-asc', function($args) {
  * @code (`map:sort-desc` <map>)
  * @example
  * (map:sort-desc (map:new 'b' 2 'a' 1))
- * ; {'b': 2, 'a': 1}
+ * ; {"b": 2, "a": 1}
  */
 Expr::register('map:sort-desc', function($args) {
     $map = $args->get(1);
@@ -61,7 +61,7 @@ Expr::register('map:sort-desc', function($args) {
  * @code (`map:ksort-asc` <map>)
  * @example
  * (map:ksort-asc (map:new 'b' 5 'a' 10))
- * ; {'a': 10, 'b': 5}
+ * ; {"a": 10, "b": 5}
  */
 Expr::register('map:ksort-asc', function($args) {
     $map = $args->get(1);
@@ -74,7 +74,7 @@ Expr::register('map:ksort-asc', function($args) {
  * @code (`map:ksort-desc` <map>)
  * @example
  * (map:ksort-desc (map:new 'b' 5 'a' 10))
- * ; {'b': 5, 'a': 10}
+ * ; {"b": 5, "a": 10}
  */
 Expr::register('map:ksort-desc', function($args) {
     $map = $args->get(1);
@@ -87,7 +87,7 @@ Expr::register('map:ksort-desc', function($args) {
  * @code (`map:keys` <map>)
  * @example
  * (map:keys (map:new 'a' 1 'b' 2))
- * ; ['a', 'b']
+ * ; ["a", "b"]
  */
 Expr::register('map:keys', function($args) {
     $map = $args->get(1);
@@ -111,7 +111,7 @@ Expr::register('map:values', function($args) {
  * @code (`map:set` <map> [key value...])
  * @example
  * (map:set (map:new 'a' 1) 'b' 2 'x' 15)
- * ; {'a': 1, 'b': 2, 'x': 15}
+ * ; {"a": 1, "b": 2, "x": 15}
  */
 Expr::register('map:set', function($args) {
     $map = $args->get(1);
@@ -160,7 +160,7 @@ Expr::register('map:del', function($args) {
  * @code (`map:key` <map> <value>)
  * @example
  * (map:key (map:new 'a' 1 'b' 2) 2)
- * ; 'b'
+ * ; b
  */
 Expr::register('map:key', function($args) {
     return $args->get(1)->keyOf($args->get(2));
@@ -182,7 +182,7 @@ Expr::register('map:len', function($args) {
  * @code (`map:assign` <output-map> <map...>)
  * @example
  * (map:assign (map:new 'a' 1) (map:new 'b' 2) (map:new 'c' 3))
- * ; {'a': 1, 'b': 2, 'c': 3}
+ * ; {"a": 1, "b": 2, "c": 3}
  */
 Expr::register('map:assign', function($args) {
     $m = $args->get(1);
@@ -196,7 +196,7 @@ Expr::register('map:assign', function($args) {
  * @code (`map:merge` <map...>)
  * @example
  * (map:merge (map:new 'a' 1) (map:new 'b' 2) (map:new 'c' 3))
- * ; {'a': 1, 'b': 2, 'c': 3}
+ * ; {"a": 1, "b": 2, "c": 3}
  */
 Expr::register('map:merge', function($args) {
     $m = $args->get(1);
@@ -214,4 +214,15 @@ Expr::register('map:merge', function($args) {
  */
 Expr::register('map:clear', function($args) {
     return $args->get(1)->clear();
+});
+
+/**
+ * Returns the difference between two maps.
+ * @code (`map:diff` <map1> <map2>)
+ * @example
+ * (map:diff { a 1 b 2 } { a 2 b 2 c 3 })
+ * ; {"a":[1,2], "c":[null,3]}
+ */
+Expr::register('map:diff', function($args) {
+    return $args->get(1)->diff($args->get(2));
 });

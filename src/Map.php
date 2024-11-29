@@ -391,6 +391,27 @@ class Map
     }
 
     /*
+    **	Returns the difference between the current map and the given map.
+    */
+    public function diff ($map)
+    {
+        $diff = new Map();
+        foreach ($map->__nativeArray as $key => $value)
+        {
+            if (!$this->has($key)) {
+                $diff->set($key, new Arry([null, $value]));
+                continue;
+            }
+
+            $old = $this->get($key);
+            if ($old !== $value)
+                $diff->set($key, new Arry([$old, $value]));
+        }
+
+        return $diff;
+    }
+
+    /*
     **	Definition of the global accessor for items, this will be invoked when the map is used with the arrow operator and
     **	the attribute does not exist in the class definition.
     **
