@@ -2058,35 +2058,35 @@ Constructs a map with the given key-value pairs. Note that the second form (&) i
 Sorts the map in place by value in ascending order.
 ```lisp
 (map:sort-asc (map:new 'b' 2 'a' 1))
-; {'a': 1, 'b': 2}
+; {"a": 1, "b": 2}
 ```
 
 ### (`map:sort-desc` \<map>)
 Sorts the map in place by value in descending order.
 ```lisp
 (map:sort-desc (map:new 'b' 2 'a' 1))
-; {'b': 2, 'a': 1}
+; {"b": 2, "a": 1}
 ```
 
 ### (`map:ksort-asc` \<map>)
 Sorts the map in place by key in ascending order.
 ```lisp
 (map:ksort-asc (map:new 'b' 5 'a' 10))
-; {'a': 10, 'b': 5}
+; {"a": 10, "b": 5}
 ```
 
 ### (`map:ksort-desc` \<map>)
 Sorts the map in place by key in descending order.
 ```lisp
 (map:ksort-desc (map:new 'b' 5 'a' 10))
-; {'b': 5, 'a': 10}
+; {"b": 5, "a": 10}
 ```
 
 ### (`map:keys` \<map>)
 Returns the keys of the map.
 ```lisp
 (map:keys (map:new 'a' 1 'b' 2))
-; ['a', 'b']
+; ["a", "b"]
 ```
 
 ### (`map:values` \<map>)
@@ -2100,7 +2100,7 @@ Returns the values of the map.
 Sets one or more key-value pairs in the map.
 ```lisp
 (map:set (map:new 'a' 1) 'b' 2 'x' 15)
-; {'a': 1, 'b': 2, 'x': 15}
+; {"a": 1, "b": 2, "x": 15}
 ```
 
 ### (`map:get` \<map> \<key>)
@@ -2128,7 +2128,7 @@ Removes the given key from the map and returns the removed value.
 Returns the key of the element whose value matches or `null` if not found.
 ```lisp
 (map:key (map:new 'a' 1 'b' 2) 2)
-; 'b'
+; b
 ```
 
 ### (`map:len` \<map>)
@@ -2142,14 +2142,14 @@ Returns the length of the Map.
 Merges one or more maps into the first.
 ```lisp
 (map:assign (map:new 'a' 1) (map:new 'b' 2) (map:new 'c' 3))
-; {'a': 1, 'b': 2, 'c': 3}
+; {"a": 1, "b": 2, "c": 3}
 ```
 
 ### (`map:merge` \<map...>)
 Merges one or more maps into a new map.
 ```lisp
 (map:merge (map:new 'a' 1) (map:new 'b' 2) (map:new 'c' 3))
-; {'a': 1, 'b': 2, 'c': 3}
+; {"a": 1, "b": 2, "c": 3}
 ```
 
 ### (`map:clear` \<map>)
@@ -2157,6 +2157,13 @@ Clears the contents of the map.
 ```lisp
 (map:clear (map:new 'a' 1 'b' 2))
 ; {}
+```
+
+### (`map:diff` \<map1> \<map2>)
+Returns the difference between two maps.
+```lisp
+(map:diff { a 1 b 2 } { a 2 b 2 c 3 })
+; {"a":[1,2], "c":[null,3]}
 ```
 
 <br/><br/>

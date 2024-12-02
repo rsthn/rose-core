@@ -162,7 +162,7 @@ Expr::register('url-query:str', function($args) {
  * ; "&lt;Hello&gt;"
  */
 Expr::register('html-text:encode', function($args) {
-    return htmlspecialchars ($args->get(1));
+    return htmlspecialchars(Text::str($args->get(1)));
 });
 
 /**
@@ -173,7 +173,7 @@ Expr::register('html-text:encode', function($args) {
  * ; "<Hello>"
  */
 Expr::register('html-text:decode', function($args) {
-    return htmlspecialchars_decode ($args->get(1));
+    return htmlspecialchars_decode(Text::str($args->get(1)));
 });
 
 /**

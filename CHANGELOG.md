@@ -1,3 +1,10 @@
+# v5.0.22 - Dec 02 2024
+
+#### Map
+- Added 'map:diff' function to return differences between two maps.
+
+<br/>
+
 # v5.0.21 - Nov 28 2024
 
 #### Database
