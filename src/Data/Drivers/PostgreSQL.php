@@ -256,6 +256,7 @@ class PostgreSQL extends Driver
             case 'text':
             case 'varchar':
             case 'char':
+            case 'bpchar':
             case 'date':
             case 'timestamp':
             case 'timestamptz':
