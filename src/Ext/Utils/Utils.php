@@ -28,7 +28,7 @@ use Rose\JSON;
  * ; {"HOME":"/home/user","PATH":"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"}
  */
 Expr::register('env:get-all', function($args) {
-    return $args->has(1) ? getenv($args->get(1)) : getenv();
+    return Map::fromNativeArray($args->has(1) ? getenv($args->get(1)) : getenv());
 });
 
 /**
@@ -416,7 +416,6 @@ Expr::register('xml:simplify', function($args)
  */
 Expr::register('html:encode', function($args)
 {
-    Gateway::$contentType = 'text/html';
     $data = $args->get(1);
 
     if (\Rose\typeOf($data) == 'Rose\Data\Reader')
