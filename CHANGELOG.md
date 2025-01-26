@@ -1,3 +1,13 @@
+# v5.0.23 - Jan 26 2025
+
+#### PostgreSQL
+- Added support for 'bpchar'.
+
+#### Utils
+- Fixed bug in `env:get-all` returning wrong container type.
+
+<br/>
+
 # v5.0.22 - Dec 02 2024
 
 #### Map
