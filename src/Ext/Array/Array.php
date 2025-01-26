@@ -291,6 +291,7 @@ Expr::register('array:length', function($args) {
  * ; [1, 2, 3, 4]
  */
 Expr::register('array:append', function($args) {
+    // TODO: Add support for multiple arrays
     return $args->get(1)->append($args->get(2));
 });
 
@@ -302,6 +303,7 @@ Expr::register('array:append', function($args) {
  * ; [1, 2, 3, 4]
  */
 Expr::register('array:merge', function($args) {
+    // TODO: Add support for multiple arrays
     return $args->get(1)->merge($args->get(2));
 });
 

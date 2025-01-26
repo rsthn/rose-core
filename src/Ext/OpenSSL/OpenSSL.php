@@ -476,6 +476,11 @@ Expr::register('der:extract', function($args) {
     $int_size = $args->{3} ?? 0;
     $out = '';
 
+    // TODO: Try to check the authn stuff to add here integer padding appropriately.
+    // https://stackoverflow.com/questions/55357924/asn-1-der-encoding-of-integers
+    // https://luca.ntop.org/Teaching/Appunti/asn1.html
+    // https://www.strozhevsky.com/free_docs/asn1_by_simple_words.pdf
+
     foreach ($value->get($args->get(1))->__nativeArray as $item) {
         if ($int_size != 0)
             $out .= Text::substring($item, -$int_size);
