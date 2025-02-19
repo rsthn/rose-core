@@ -9,6 +9,7 @@ use Rose\IO\DataStream;
 use Rose\IO\StreamDescriptor;
 use Rose\DateTime;
 use Rose\Expr;
+use Rose\Configuration;
 
 // @title File
 

@@ -1,4 +1,4 @@
-# v5.0.24 - Feb 19 2025
+# v5.0.25 - Feb 19 2025
 
 #### QoL
 - Added file_touch_disabled flag
