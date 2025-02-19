@@ -1832,7 +1832,7 @@ Expr::register('include', function($args, $parts, $data)
  * Imports definitions from a source file into a namespace, or the current namespace if none specified.
  * @code (`import` <source-path> [as <namespace-name>])
  * @example
- * (include "lib/math" as "m")
+ * (import "lib/math" as "m")
  * (echo (m:PI))
  * ; 3.141592
  */

@@ -166,7 +166,7 @@ class Wind
         self::$data->internal_call = 0;
     }
 
-    public static function process ($path)
+    public static function process ($path, $custom_endpoints=false)
     {
         if ($path[0] === '@')
             $path = self::$callStack->get(self::$callStack->length-1)[0].$path;
@@ -188,7 +188,52 @@ class Wind
             File::touch($path2, File::mtime($path1, true));
         }
         else
+        {
+            $endpoints = Configuration::getInstance()?->endpoints;
+            $relative_path = Gateway::getInstance()->relativePath;
+            if ($custom_endpoints && $relative_path && $endpoints)
+            {
+                $method = Gateway::getInstance()->method;
+                $ctx = new Map([
+                    'method' => $method,
+                    'query' => Gateway::getInstance()->request,
+                    'body' => Gateway::getInstance()->input->contentType === null ? null : Gateway::getInstance()->input,
+                ]);
+
+                // TODO: Optimize to prevent re-parsing and linear searches.
+                foreach ($endpoints->__nativeArray as $endpoint => $handlers)
+                {
+                    [$endpoint_method, $endpoint_path] = explode(' ', $endpoint);
+                    if ($endpoint_method !== '*' && $endpoint_method !== $method)
+                        continue;
+
+                    $endpoint_path = '|^'.Regex::_replace('/{([A-Za-z0-9_-]+)}/', '(?<$1>[^/]+)', $endpoint_path).'$|';
+                    $vars = Regex::_matchFirst($endpoint_path, $relative_path);
+                    $vars = $vars->removeAll('/^[0-9]/', true);
+                    if (!$vars->length)
+                        continue;
+
+                    foreach (explode(' ', $handlers) as $handler)
+                    {
+                        $handler = explode(':', $handler);
+                        if (count($handler) == 1)
+                            $handler[] = 'main';
+
+                        Expr::call('import', new Arry(['', $handler[0]]));
+                        $response = Expr::call($handler[1], new Arry(['', $ctx, $vars ]));
+                    }
+
+                    if ($response != null)
+                        self::reply($response);
+
+                    exit;
+                }
+
+                throw new WindError ('NotFoundError', [ 'response' => self::R_NOT_FOUND, 'message' => Strings::get('@messages.invalid_endpoint') . ': ' . $method . ' ' . $relative_path ]);
+            }
+
             throw new WindError ('NotFoundError', [ 'response' => self::R_BAD_REQUEST, 'error' => Strings::get('@messages.function_not_found') . ': ' . $path ]);
+        }
 
         $tmp = Text::split('.', $path);
         $tmp->pop();
@@ -202,7 +247,7 @@ class Wind
         self::$callStack->pop();
 
         if ($response != null)
-            self::reply ($response);
+            self::reply($response);
     }
 
     /**
@@ -341,15 +386,16 @@ class Wind
                     else
                         throw new WindError ('Response', [ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
                 }
-                else
-                    throw new WindError ('NotFoundError', [ 'response' => self::R_BAD_REQUEST, 'message' => Strings::get('@messages.function_not_found') . ': ' . $params->f ]);
+
+                throw new WindError ('NotFoundError', [ 'response' => self::R_BAD_REQUEST, 'message' => Strings::get('@messages.function_not_found') . ': ' . $params->f ]);
             }
 
-            self::process($f);
+            self::process($f, true);
         }
         catch (FalseError $e) {
         }
-        catch (WindError $e) {
+        catch (WindError $e)
+        {
             self::reply ($e->getData(), true);
         }
         catch (MetaError $e)
@@ -505,7 +551,7 @@ class Wind
     private static $lastSent = null;
 
     /**
-     * evt::init
+     * sse:init
      */
     public static function enableEvents ()
     {
@@ -528,7 +574,7 @@ class Wind
     }
 
     /**
-     * evt::send [<event-name>] <data>
+     * sse:send [<event-name>] <data>
      */
     public static function sendEvent ($args, $parts, $data)
     {
@@ -556,7 +602,7 @@ class Wind
     }
 
     /**
-     * evt::alive
+     * sse:alive
      */
     public static function eventsAlive ()
     {
