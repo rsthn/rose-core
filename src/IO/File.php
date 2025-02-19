@@ -52,6 +52,10 @@ class File
 	*/
     public static function touch (string $filepath, $time=null)
     {
+        // @conf [flags] file_touch_disabled: boolean (false) - Disables the `touch` function and returns `true` when used.
+        if (Configuration::getInstance()?->flags?->file_touch_disabled === 'true')
+            return true;
+
         return \touch ($filepath, $time === null ? (int)DateTime::getUnixTimestamp(true) : (\Rose\isObject($time) ? (int)$time->getTimestamp() : (\Rose\isInteger($time) ? (int)$time : (int)DateTime::getUnixTimestamp($time))));
     }
 
