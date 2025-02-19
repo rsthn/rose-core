@@ -7,3 +7,4 @@ vendor/
 volatile/
 composer.lock
 *.code-workspace
+TODO.txt
