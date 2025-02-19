@@ -1,3 +1,10 @@
+# v5.0.24 - Feb 19 2025
+
+#### QoL
+- Added file_touch_disabled flag
+
+<br/>
+
 # v5.0.23 - Jan 26 2025
 
 #### PostgreSQL
