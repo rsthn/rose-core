@@ -209,8 +209,9 @@ class Wind
 
                     $endpoint_path = '|^'.Regex::_replace('/{([A-Za-z0-9_-]+)}/', '(?<$1>[^/]+)', $endpoint_path).'$|';
                     $vars = Regex::_matchFirst($endpoint_path, $relative_path);
-                    $vars = $vars->removeAll('/^[0-9]/', true);
-                    if (!$vars->length)
+                    $found = $vars->length > 0;
+                    $vars->removeAll('/^[0-9]/', true);
+                    if (!$found)
                         continue;
 
                     foreach (explode(' ', $handlers) as $handler)
@@ -219,7 +220,12 @@ class Wind
                         if (count($handler) == 1)
                             $handler[] = 'main';
 
-                        Expr::call('import', new Arry(['', $handler[0]]));
+                        if (!Expr::getFunction($handler[1])) {
+                            throw new WindError ('NotFoundError', [
+                                'response' => self::R_NOT_FOUND,
+                                'message' => Strings::get('@messages.function_not_found') . ': ' . $handler[1] . ' in ' . $handler[0]
+                            ]);
+                        }
                         $response = Expr::call($handler[1], new Arry(['', $ctx, $vars ]));
                     }
 

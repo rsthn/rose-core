@@ -264,13 +264,13 @@ public $body;
         $name = Regex::_getString('|.*/(.+)\.php$|', $this->server->SCRIPT_NAME, 1);
 
         /* ** */
-        $n = Text::length(Regex::_getString ('/^(.+)'.$name.'\.php/', $this->server->SCRIPT_NAME, 1));
+        $n = Text::length(Regex::_getString('/^(.+)'.$name.'\.php/', $this->server->SCRIPT_NAME, 1));
 
         $tmp = Text::substring($this->server->REQUEST_URI, $n);
         if (Text::startsWith($tmp, $name.'.php')) $tmp = Text::substring($tmp, Text::length($name)+4);
         if (Text::startsWIth($tmp, '/')) $tmp = Text::substring($tmp, 1);
 
-        $this->relativePath = Regex::_getString ('/^[-\/_A-Za-z0-9.]+/', $tmp);
+        $this->relativePath = Regex::_getString('/^[\/A-Za-z0-9~!@$._-]+/', $tmp);
         if ($this->relativePath) $this->relativePath = '/'.$this->relativePath;
 
         /* ** */
