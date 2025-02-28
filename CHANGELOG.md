@@ -1,3 +1,10 @@
+# v5.0.26 - Feb 28 2025
+
+#### Wind
+- Added support for custom endpoints using the `endpoints` configuration section, each field being of the form `method path = path:function`.
+
+<br/>
+
 # v5.0.25 - Feb 19 2025
 
 #### QoL

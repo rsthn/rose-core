@@ -91,7 +91,7 @@ Includes one or more source files and evaluates them as if they were written in 
 ### (`import` \<source-path> [as \<namespace-name>])
 Imports definitions from a source file into a namespace, or the current namespace if none specified.
 ```lisp
-(include "lib/math" as "m")
+(import "lib/math" as "m")
 (echo (m:PI))
 ; 3.141592
 ```

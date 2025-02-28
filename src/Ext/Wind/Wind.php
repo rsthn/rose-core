@@ -295,8 +295,7 @@ class Wind
         // Handle regular requests.
         if ($params->rpkg != null || $params->mreq != null)
         {
-            $requests = Text::split (';', $params->rpkg != null ? $params->rpkg : $params->mreq);
-
+            $requests = Text::split(';', $params->rpkg != null ? $params->rpkg : $params->mreq);
             self::$multiResponseMode = 1;
 
             $r = new Map ();
@@ -309,7 +308,7 @@ class Wind
                 $i = Text::trim($i);
                 if (!$i) continue;
 
-                $i = Text::split (',', $i);
+                $i = Text::split(',', $i);
                 if ($i->length != 2) continue;
 
                 try {
@@ -328,7 +327,7 @@ class Wind
                 {
                     self::resetContext();
 
-                    $f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $gateway->request->f);
+                    $f = Regex::_extract('/[A-Za-z0-9._-]+/', $gateway->request->f);
                     if (!$f) {
                         if (!$gateway->request->has('f'))
                             throw new WindError ('Response', [ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
@@ -371,13 +370,14 @@ class Wind
         }
 
         if ($gateway->relativePath)
-            $params->f = Text::replace('/', '.', Text::trim($gateway->relativePath, '/'));
+            $params->f = $gateway->relativePath;
+        $params->f = Text::replace('/', '.', Text::trim($params->f, '/'));
 
         try
         {
             self::resetContext();
 
-            $f = Regex::_extract ('/[#A-Za-z0-9.,_-]+/', $params->f);
+            $f = Regex::_extract ('/[A-Za-z0-9._-]+/', $params->f);
             if (!$f) {
                 if (!$params->has('f')) {
                     $banner = Configuration::getInstance()?->Gateway?->banner;
@@ -394,8 +394,7 @@ class Wind
         }
         catch (FalseError $e) {
         }
-        catch (WindError $e)
-        {
+        catch (WindError $e) {
             self::reply ($e->getData(), true);
         }
         catch (MetaError $e)
