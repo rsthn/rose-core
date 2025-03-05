@@ -219,7 +219,8 @@ public $body;
             $this->input = new Map([ 
                 'contentType' => $contentType,
                 'size' => intval($this->server->CONTENT_LENGTH),
-                'path' => 'php://input'
+                'path' => 'php://input',
+                'data' => null
             ]);
         }
 
@@ -229,6 +230,7 @@ public $body;
             if ($this->input->contentType === 'application/json') {
                 $value = file_get_contents($this->input->path);
                 $this->body = !$value ? new Map() : ($value[0] == '[' ? Arry::fromNativeArray(json_decode($value, true)) : ($value[0] == '{' ? Map::fromNativeArray(json_decode($value, true)) : json_decode($value, true)));
+                $this->input->data = $this->body;
             }
             else if ($this->input->contentType === 'application/x-www-form-urlencoded') {
                 $this->input = null;

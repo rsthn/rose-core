@@ -209,10 +209,8 @@ class Wind
 
                     $endpoint_path = '|^'.Regex::_replace('/{([A-Za-z0-9_-]+)}/', '(?<$1>[^/]+)', $endpoint_path).'$|';
                     $vars = Regex::_matchFirst($endpoint_path, $relative_path);
-                    $found = $vars->length > 0;
+                    if (!$vars->length) continue;
                     $vars->removeAll('/^[0-9]/', true);
-                    if (!$found)
-                        continue;
 
                     foreach (explode(' ', $handlers) as $handler)
                     {
@@ -375,8 +373,10 @@ class Wind
             self::reply($r);
         }
 
-        if ($gateway->relativePath)
+        if ($gateway->relativePath) {
+            $gateway->relativePath .= Text::replace('.', '/', $params->f);
             $params->f = $gateway->relativePath;
+        }
         $params->f = Text::replace('/', '.', Text::trim($params->f, '/'));
 
         try
