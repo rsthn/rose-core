@@ -1,3 +1,13 @@
+# v5.0.27 - Mar 22 2025
+
+#### QoL
+- Patched minor bug in Gateway causing relative path not to be detected in full.
+- Improved error messages in Wind when using explicit endpoints.
+- Default content-type is now "text/html".
+- Fixed minor bugs with explicit endpoints.
+
+<br/>
+
 # v5.0.26 - Feb 28 2025
 
 #### Wind

@@ -211,7 +211,7 @@ class Directory
             if (Path::exists($dest) && !$overwrite)
                 return true;
 
-            return File::copy ($source, $dest);
+            return File::copy($source, $dest);
         }
 
         if (!Path::exists($dest))

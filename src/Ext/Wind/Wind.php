@@ -166,7 +166,7 @@ class Wind
         self::$data->internal_call = 0;
     }
 
-    public static function process ($path, $custom_endpoints=false)
+    public static function process ($path, $relative_path=null)
     {
         if ($path[0] === '@')
             $path = self::$callStack->get(self::$callStack->length-1)[0].$path;
@@ -190,8 +190,7 @@ class Wind
         else
         {
             $endpoints = Configuration::getInstance()?->endpoints;
-            $relative_path = Gateway::getInstance()->relativePath;
-            if ($custom_endpoints && $relative_path && $endpoints)
+            if ($relative_path && $endpoints)
             {
                 $method = Gateway::getInstance()->method;
                 $ctx = new Map([
@@ -217,6 +216,8 @@ class Wind
                         $handler = explode(':', $handler);
                         if (count($handler) == 1)
                             $handler[] = 'main';
+
+                        Expr::call('import', new Arry(['', $handler[0]]));
 
                         if (!Expr::getFunction($handler[1])) {
                             throw new WindError ('NotFoundError', [
@@ -331,15 +332,16 @@ class Wind
                 {
                     self::resetContext();
 
-                    $f = Regex::_extract('/[A-Za-z0-9._-]+/', $gateway->request->f);
-                    if (!$f) {
-                        if (!$gateway->request->has('f'))
-                            throw new WindError ('Response', [ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
-                        else
-                            throw new WindError ('NotFoundError', [ 'response' => self::R_BAD_REQUEST, 'message' => Strings::get('@messages.function_not_found') . ': ' . $gateway->request->f ]);
+                    $f = $gateway->request->f;
+                    $relative_path = '';
+                    if ($gateway->relativePath) {
+                        $relative_path = $gateway->relativePath . Text::replace('.', '/', $f);
+                        $f = $relative_path;
                     }
+                    $f = Text::replace('/', '.', Text::trim($f, '/'));
 
-                    self::process($f);
+                    $f = Regex::_extract('/[A-Za-z0-9._-]+/', $f);
+                    self::process($f, $relative_path);
                 }
                 catch (FalseError $e) {
                 }
@@ -396,7 +398,7 @@ class Wind
                 throw new WindError ('NotFoundError', [ 'response' => self::R_BAD_REQUEST, 'message' => Strings::get('@messages.function_not_found') . ': ' . $params->f ]);
             }
 
-            self::process($f, true);
+            self::process($f, $gateway->relativePath);
         }
         catch (FalseError $e) {
         }

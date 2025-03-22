@@ -568,6 +568,9 @@ Expr::register('gateway:return', function ($args)
         else if (\Rose\isString($response) && Text::length($response) != 0) {
             Gateway::$contentType = 'Content-Type: text/plain; charset=utf-8';
         }
+        else {
+            Gateway::$contentType = 'Content-Type: text/html; charset=utf-8';
+        }
     }
 
     Gateway::header(Gateway::$contentType);
