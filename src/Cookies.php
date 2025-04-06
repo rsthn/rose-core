@@ -18,11 +18,10 @@ class Cookies
      */
     private static function setCookieHeader ($name, $value, $ttl=null, $domain=null, $path=null)
     {
-        $path = $path == null ? Gateway::getInstance()->root.'/' : $path;
-        $domain = $domain == null ? Configuration::getInstance()?->Gateway?->server_name : $domain;
+        $path = $path ?? Configuration::getInstance()?->Session?->cookie_path ?? (Gateway::getInstance()->root.'/');
+        $domain = $domain ?? Configuration::getInstance()?->Session?->cookie_domain ?? Configuration::getInstance()?->Gateway?->server_name;
 
-        if ($value === null)
-        {
+        if ($value === null) {
             $ttl = -608400;
             $value = 'deleted';
         }
@@ -77,17 +76,17 @@ class Cookies
     /**
      * Sets a cookie with optional TTL value.
      */
-    public static function set ($name, $value, $ttl=null, $domain=null) {
-        if (!($ttl !== null)) $ttl = 0;
-        self::setCookieHeader($name, $value, $ttl, $domain);
+    public static function set ($name, $value, $ttl=null, $domain=null, $path=null) {
+        if (!$ttl) $ttl = 0;
+        self::setCookieHeader($name, $value, $ttl, $domain, $path);
     }
 
     /**
      * Removes a cookie given its name.
      */
-    public static function remove ($name, $domain=null) {
+    public static function remove ($name, $domain=null, $path=null) {
         $exists = Gateway::getInstance()->cookies->has($name);
-        self::setCookieHeader($name, null, 0, $domain);
+        self::setCookieHeader($name, null, 0, $domain, $path);
         Gateway::getInstance()->cookies->remove($name);
         return $exists;
     }

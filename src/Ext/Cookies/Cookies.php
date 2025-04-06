@@ -21,13 +21,13 @@ Expr::register('cookie:exists', function ($args) {
 /**
  * Sets a cookie with the given name and value. Optionally, you can specify the time to live in seconds and the domain.
  * NOTE: By default the cookie will be set to never expire.
- * @code (`cookie:set` <name> <value> [timeToLive] [domain])
+ * @code (`cookie:set` <name> <value> [timeToLive] [domain] [path])
  * @example
  * (cookie:set "MyCookie" "hello" 3600)
  * ; null
  */
 Expr::register('cookie:set', function ($args) {
-    Cookies::set($args->get(1), $args->get(2), $args->{3}, $args->{4});
+    Cookies::set($args->get(1), $args->get(2), $args->{3}, $args->{4}, $args->{5});
     return null;
 });
 
@@ -47,7 +47,7 @@ Expr::register('cookie:get', function ($args) {
  * @code (`cookie:get-all`)
  * @example
  * (cookie:get-all)
- * ; "hello"
+ * ; { "MyCookie": "hello" }
  */
 Expr::register('cookie:get-all', function ($args) {
     return Cookies::getAll();
@@ -55,11 +55,12 @@ Expr::register('cookie:get-all', function ($args) {
 
 /**
  * Removes the cookie with the specified name.
- * @code (`cookie:remove` <name>)
+ * @code (`cookie:remove` <name> [domain] [path])
  * @example
- * (cookie:remove "MyCookie" [domain])
- * ; true
+ * (cookie:remove "MyCookie")
+ * ; null
  */
 Expr::register('cookie:remove', function ($args) {
-    return Cookies::remove($args->get(1), $args->{2});
+    Cookies::remove($args->get(1), $args->{2}, $args->{3});
+    return null;
 });

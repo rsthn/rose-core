@@ -38,8 +38,8 @@ Expr::register('session:close', function ($args) {
 });
 
 /**
- * Attempts to open an existing session and if exists its data will be loaded, the session will be immediately closed afterwards and only the
- * `last_activity` field will be updated. This is useful to prevent session blocking. Use `session:save` to save the session data.
+ * Attempts to open an existing session and if exists its data will be loaded and then will be immediately closed. Only
+ * the `last_activity` field will be updated. Useful to prevent session blocking. Use `session:save` to save the session data.
  * @code (`session:load` [createSession=true])
  * @example
  * (session:load)
