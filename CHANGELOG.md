@@ -1,3 +1,13 @@
+# v5.0.28 - Apr 06 2025
+
+#### Cookie
+- Added new method `getAll` to return all cookies.
+- Added functions `cookie:get-all` and `cookie:remove`
+- Added support for default cookie_path and cookie_domain from the Session config section.
+- Updated `cookie:set` and `cookie:remove` to allow to specify the cookie path.
+
+<br/>
+
 # v5.0.27 - Mar 22 2025
 
 #### QoL

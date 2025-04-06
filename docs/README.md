@@ -1624,7 +1624,7 @@ Returns `true` if a cookie with the given name exists.
 ; false
 ```
 
-### (`cookie:set` \<name> \<value> [timeToLive] [domain])
+### (`cookie:set` \<name> \<value> [timeToLive] [domain] [path])
 Sets a cookie with the given name and value. Optionally, you can specify the time to live in seconds and the domain.
 <br/>NOTE: By default the cookie will be set to never expire.
 ```lisp
@@ -1637,6 +1637,20 @@ Returns the value of the cookie with the specified name.
 ```lisp
 (cookie:get "MyCookie")
 ; "hello"
+```
+
+### (`cookie:get-all`)
+Returns all available cookies.
+```lisp
+(cookie:get-all)
+; { "MyCookie": "hello" }
+```
+
+### (`cookie:remove` \<name> [domain] [path])
+Removes the cookie with the specified name.
+```lisp
+(cookie:remove "MyCookie")
+; null
 ```
 
 <br/><br/>
@@ -2482,8 +2496,8 @@ Closes the current session and writes the session data to permanent storage (fil
 parameter is `true` only the session's last activity field will be written to storage.
 
 ### (`session:load` [createSession=true])
-Attempts to open an existing session and if exists its data will be loaded, the session will be immediately closed afterwards and only the
-`last_activity` field will be updated. This is useful to prevent session blocking. Use `session:save` to save the session data.
+Attempts to open an existing session and if exists its data will be loaded and then will be immediately closed. Only
+the `last_activity` field will be updated. Useful to prevent session blocking. Use `session:save` to save the session data.
 ```lisp
 (session:load)
 ; true
