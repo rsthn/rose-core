@@ -56,36 +56,39 @@ class Cookies
     /**
      * Returns true if the given cookie name exists.
      */
-    public static function has ($name)
-    {
+    public static function has ($name) {
         return Gateway::getInstance()->cookies->has($name);
     }
 
     /**
      * Returns the cookie value matching the given name or null if not found.
      */
-    public static function get ($name)
-    {
+    public static function get ($name) {
         return Gateway::getInstance()->cookies->get($name);
+    }
+
+    /**
+     * Returns all cookies.
+     */
+    public static function getAll() {
+        return Gateway::getInstance()->cookies;
     }
 
     /**
      * Sets a cookie with optional TTL value.
      */
-    public static function set ($name, $value, $ttl=null, $domain=null)
-    {
-        if ($ttl !== null)
-            self::setCookieHeader ($name, $value, $ttl, $domain);
-        else
-            self::setCookieHeader ($name, $value, 0, $domain);
+    public static function set ($name, $value, $ttl=null, $domain=null) {
+        if (!($ttl !== null)) $ttl = 0;
+        self::setCookieHeader($name, $value, $ttl, $domain);
     }
 
     /**
      * Removes a cookie given its name.
      */
-    public static function remove ($name, $domain=null)
-    {
-        self::setCookieHeader ($name, null, 0, $domain);
+    public static function remove ($name, $domain=null) {
+        $exists = Gateway::getInstance()->cookies->has($name);
+        self::setCookieHeader($name, null, 0, $domain);
         Gateway::getInstance()->cookies->remove($name);
+        return $exists;
     }
 };

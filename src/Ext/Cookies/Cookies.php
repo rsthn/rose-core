@@ -41,3 +41,25 @@ Expr::register('cookie:set', function ($args) {
 Expr::register('cookie:get', function ($args) {
     return Cookies::get($args->get(1));
 });
+
+/**
+ * Returns all available cookies.
+ * @code (`cookie:get-all`)
+ * @example
+ * (cookie:get-all)
+ * ; "hello"
+ */
+Expr::register('cookie:get-all', function ($args) {
+    return Cookies::getAll();
+});
+
+/**
+ * Removes the cookie with the specified name.
+ * @code (`cookie:remove` <name>)
+ * @example
+ * (cookie:remove "MyCookie" [domain])
+ * ; true
+ */
+Expr::register('cookie:remove', function ($args) {
+    return Cookies::remove($args->get(1), $args->{2});
+});
