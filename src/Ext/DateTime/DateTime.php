@@ -24,31 +24,18 @@ use Rose\Math;
  * ; 2024-03-23 01:20:39
  */
 Expr::register('datetime:now', function ($args) {
-    return new DateTime('now', $args->length == 2 ? $args->get(1) : null);
+    return new DateTime('now', $args->{1});
 });
 
 /**
- * @deprecated Use `datetime:int` or `datetime:float` instead.
- * Returns the current date and time as a UNIX timestamp in UTC.
- * @code (`datetime:now-int`)
- * @example
- * (datetime:now-int)
- * ; 1711182138
- */
-Expr::register('datetime:now-int', function ($args) {
-    \Rose\trace('[WARN] Using `datetime:now-int` is deprecated. Use `datetime:int` or `datetime:float` instead.');
-    return (int)(new DateTime('now', $args->length == 2 ? $args->get(1) : null))->getTimestamp();
-});
-
-/**
- * Returns the current datetime as a UNIX timestamp in milliseconds.
- * @code (`datetime:millis`)
+ * Parses a date and time string (or uses current time is none provided) and returns a UNIX timestamp in milliseconds.
+ * @code (`datetime:millis` [<input>])
  * @example
  * (datetime:millis)
  * ; 1711182672943
  */
 Expr::register('datetime:millis', function ($args) {
-    return \Rose\mstime();
+    return (int)(DateTime::getUnixTimestamp($args->{1} ?? true) * 1000);
 });
 
 /**
@@ -63,10 +50,10 @@ Expr::register('datetime:millis', function ($args) {
  * ; 2024-03-23 04:19:49
  */
 Expr::register('datetime:parse', function ($args) {
-    return new DateTime($args->get(1), $args->length >= 3 ? $args->get(2) : null, $args->length >= 4 ? $args->get(3) : null);
+    return new DateTime($args->get(1), $args->{2}, $args->{3});
 });
 Expr::register('datetime', function ($args) {
-    return new DateTime($args->get(1), $args->length >= 3 ? $args->get(2) : null, $args->length >= 4 ? $args->get(3) : null);
+    return new DateTime($args->{1}, $args->{2}, $args->{3});
 });
 
 /**
@@ -77,7 +64,7 @@ Expr::register('datetime', function ($args) {
  * ; 1711181989
  */
 Expr::register('datetime:int', function ($args) {
-    return $args->has(1) ? (int)DateTime::getUnixTimestamp($args->get(1)) : (int)DateTime::getUnixTimestamp();
+    return (int)DateTime::getUnixTimestamp($args->{1} ?? true);
 });
 
 /**
@@ -88,7 +75,7 @@ Expr::register('datetime:int', function ($args) {
  * ; 1711181989.5
  */
 Expr::register('datetime:float', function ($args) {
-    return $args->has(1) ? (float)DateTime::getUnixTimestamp($args->get(1)) : (float)DateTime::getUnixTimestamp();
+    return (float)DateTime::getUnixTimestamp($args->{1} ?? true);
 });
 
 /**
@@ -102,7 +89,7 @@ Expr::register('datetime:float', function ($args) {
 Expr::register('datetime:sub', function ($args) {
     $a = new DateTime ($args->get(1));
     $b = new DateTime ($args->get(2));
-    $unit = $args->length == 4 ? $args->get(3) : 'SECOND';
+    $unit = $args->{3} ?? 'SECOND';
     return $a->sub($b, $unit);
 });
 
@@ -117,7 +104,7 @@ Expr::register('datetime:sub', function ($args) {
 Expr::register('datetime:diff', function ($args) {
     $a = new DateTime ($args->get(1));
     $b = new DateTime ($args->get(2));
-    $unit = $args->length == 4 ? $args->get(3) : 'SECOND';
+    $unit = $args->{3} ?? 'SECOND';
     return Math::abs($a->sub($b, $unit));
 });
 
@@ -132,8 +119,7 @@ Expr::register('datetime:diff', function ($args) {
 Expr::register('datetime:add', function ($args) {
     $a = new DateTime ($args->get(1));
     $b = $args->get(2);
-
-    $unit = $args->length == 4 ? $args->get(3) : 'SECOND';
+    $unit = $args->{3} ?? 'SECOND';
     return $a->add($b, $unit);
 });
 
@@ -145,7 +131,7 @@ Expr::register('datetime:add', function ($args) {
  * ; 2024-03-23
  */
 Expr::register('datetime:date', function ($args) {
-    $a = (string)(new DateTime ($args->get(1)));
+    $a = (string)(new DateTime ($args->{1}));
     return Text::substring($a, 0, 10);
 });
 
@@ -157,8 +143,8 @@ Expr::register('datetime:date', function ($args) {
  * ; 02:19
  */
 Expr::register('datetime:time', function ($args) {
-    $a = (string)(new DateTime ($args->get(1)));
-    if ($args->length == 3 && $args->get(2) === true)
+    $a = (string)(new DateTime ($args->{1}));
+    if ($args->{2} === true)
         return Text::substring($a, 11, 8);
     return Text::substring($a, 11, 5);
 });

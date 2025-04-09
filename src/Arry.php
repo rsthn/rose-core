@@ -621,7 +621,7 @@ class Arry
                 case 'bool':
                     $s[] = $item ? 'true' : 'false';
                     break;
-        
+
                 case 'int':
                 case 'number':
                     $s[] = $item;
@@ -634,7 +634,7 @@ class Arry
                 case 'function':
                     $s[] = '(function)';
                     break;
-    
+
                 default:
                     $s[] = JSON::stringify((string)$item);
                     break;

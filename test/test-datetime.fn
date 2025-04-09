@@ -3,12 +3,20 @@
     (expect:type (datetime:now) "datetime")
 )
 
-(def-fn test_now_int
-    (expect:int (datetime:now-int))
+(def-fn test_millis_type
+    (expect:int (datetime:millis))
 )
 
-(def-fn test_millis
-    (expect:int (datetime:millis))
+(def-fn test_millis_from_int
+    (expect:eq (datetime:millis 1744169016) 1744169016000)
+)
+
+(def-fn test_millis_from_float
+    (expect:eq (datetime:millis 1744169016.999) 1744169016999)
+)
+
+(def-fn test_millis_from_str
+    (expect:eq (datetime:millis "1970-01-01 00:00:00.999") 999)
 )
 
 (def-fn test_tz

@@ -60,11 +60,15 @@ class Configuration extends Map
         }
         catch (\Throwable $e) { }
 
-        // ... And a custom file based on the 'rose-env' file contents.
-        $this->env = 'def';
+        // ... And a custom file based on the 'rose-env' file contents (or environment variable).
         if (Path::exists('rose-env'))
-        {
             $this->env = Text::trim(File::getContents('rose-env'));
+        else if (getenv('ROSE_ENV'))
+            $this->env = Text::trim(getenv('ROSE_ENV'));
+        else
+            $this->env = 'def';
+
+        if ($this->env !== 'def') {
             if (Path::exists($basePath.$this->env.'.conf')) {
                 try {
                     Configuration::loadFrom ($basePath.$this->env.'.conf', $this, true);
