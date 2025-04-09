@@ -1904,16 +1904,8 @@ Returns the current date and time.
 ; 2024-03-23 01:20:39
 ```
 
-### (`datetime:now-int`)
-@deprecated Use `datetime:int` or `datetime:float` instead.
-<br/>Returns the current date and time as a UNIX timestamp in UTC.
-```lisp
-(datetime:now-int)
-; 1711182138
-```
-
-### (`datetime:millis`)
-Returns the current datetime as a UNIX timestamp in milliseconds.
+### (`datetime:millis` [\<input>])
+Parses a date and time string (or uses current time is none provided) and returns a UNIX timestamp in milliseconds.
 ```lisp
 (datetime:millis)
 ; 1711182672943

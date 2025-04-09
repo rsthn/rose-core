@@ -1,3 +1,15 @@
+# v5.0.29 - Apr 09 2025
+
+#### DateTime
+- Function `datetime:millis` now accepts an input parameter.
+- Functions `datetime:date` and `datetime:time` default to the current date and time respectively.
+- Removed deprecated function `datetime:now-int`.
+
+#### Configuration
+- The environment variable ROSE_ENV is now also used to load configuration if present.
+
+<br/>
+
 # v5.0.28 - Apr 06 2025
 
 #### Cookie
