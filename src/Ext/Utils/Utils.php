@@ -28,7 +28,7 @@ use Rose\JSON;
  * ; {"HOME":"/home/user","PATH":"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"}
  */
 Expr::register('env:get-all', function($args) {
-    return Map::fromNativeArray($args->has(1) ? getenv($args->get(1)) : getenv());
+    return Map::fromNativeArray(getenv());
 });
 
 /**
@@ -39,7 +39,8 @@ Expr::register('env:get-all', function($args) {
  * ; "/home/user"
  */
 Expr::register('env:get', function($args) {
-    return getenv($args->get(1));
+    $val = getenv($args->get(1));
+    return $val === false ? null : $val;
 });
 
 /**

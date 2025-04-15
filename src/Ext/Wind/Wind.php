@@ -387,14 +387,13 @@ class Wind
 
             $f = Regex::_extract ('/[A-Za-z0-9._-]+/', $params->f);
             if (!$f) {
-                if (!$params->has('f')) {
+                if (!$params->f) {
                     $banner = Configuration::getInstance()?->Gateway?->banner;
                     if ($banner)
                         self::reply(Expr::eval($banner, null, 'arg'));
                     else
                         throw new WindError ('Response', [ 'response' => self::R_OK, 'framework' => Main::name(), 'version' => Main::version() ]);
                 }
-
                 throw new WindError ('NotFoundError', [ 'response' => self::R_BAD_REQUEST, 'message' => Strings::get('@messages.function_not_found') . ': ' . $params->f ]);
             }
 
