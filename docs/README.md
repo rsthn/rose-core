@@ -3625,10 +3625,13 @@ Returns an array containing the information of the first string that matches the
 ```
 
 ### (`re:match-all` \<pattern> \<text> [\<capture-index>])
-Uses the pattern and tries to match as many items as possible from the given text string. Returns an array with the matched items.
+Uses the pattern and tries to match as many items as possible from the given text string. Returns an array with the capture of the matched items, default capture-index is zero (0). If you want all captures use `true` in `capture-index`.
 ```lisp
 (re:match-all "/\d/" "123")
 ; ["1", "2", "3"]
+
+(re:match-all `/\d(\d)\d/` "123456789" true)
+; [["123","456","789"],["2","5","8"]]
 ```
 
 ### (`re:split` \<pattern> \<text>)

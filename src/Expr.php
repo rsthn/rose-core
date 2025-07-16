@@ -1801,7 +1801,7 @@ Expr::register('include', function($args, $parts, $data)
         MetaError::incBaseLevel();
 
         try {
-            Expr::expand ($expr, Expr::$context->data, 'void');
+            Expr::expand ($expr, $data, 'void');
         }
         catch (MetaError $e)
         {
@@ -4588,7 +4588,7 @@ Expr::register('_try', function ($parts, $data)
                 throw $e;
         }
 
-        $data->err = $e->getMessage();
+        $data->err = (string)$e;
         $data->ex = $e;
 
         if ($catch !== null)

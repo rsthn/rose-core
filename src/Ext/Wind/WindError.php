@@ -21,4 +21,8 @@ class WindError extends Error
     public function getData() {
         return $this->data;
     }
+
+    public function __toString() {
+        return json_encode($this->data);
+    }
 };

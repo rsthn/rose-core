@@ -80,13 +80,15 @@ Expr::register('session:clear', function ($args) {
 });
 
 /**
- * Returns the name of the session cookie, default ones comes from the `Session` configuration section.
+ * Returns or sets the name of the session cookie, default ones comes from the `Session` configuration section.
  * @code (`session:name`)
  * @example
  * (session:name)
  * ; "MySession"
  */
 Expr::register('session:name', function ($args) {
+    if ($args->length == 2)
+        Session::$sessionName = $args->get(1);
     return Session::$sessionName;
 });
 
@@ -101,11 +103,9 @@ Expr::register('session:name', function ($args) {
  * (session:id "newSessionID")
  * ; "newSessionID"
  */
-Expr::register('session:id', function ($args)
-{
+Expr::register('session:id', function ($args) {
     if ($args->length == 2)
         Session::$sessionId = $args->get(1);
-
     return Session::$sessionId;
 });
 
