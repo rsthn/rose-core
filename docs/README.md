@@ -2509,7 +2509,7 @@ Destroys the current session, removes all session data including the session's c
 Clears the session data and keeps the same cookie name.
 
 ### (`session:name`)
-Returns the name of the session cookie, default ones comes from the `Session` configuration section.
+Returns or sets the name of the session cookie, default ones comes from the `Session` configuration section.
 ```lisp
 (session:name)
 ; "MySession"
@@ -3625,13 +3625,10 @@ Returns an array containing the information of the first string that matches the
 ```
 
 ### (`re:match-all` \<pattern> \<text> [\<capture-index>])
-Uses the pattern and tries to match as many items as possible from the given text string. Returns an array with the capture of the matched items, default capture-index is zero (0). If you want all captures use `true` in `capture-index`.
+Uses the pattern and tries to match as many items as possible from the given text string. Returns an array with the matched items.
 ```lisp
 (re:match-all "/\d/" "123")
 ; ["1", "2", "3"]
-
-(re:match-all `/\d(\d)\d/` "123456789" true)
-; [["123","456","789"],["2","5","8"]]
 ```
 
 ### (`re:split` \<pattern> \<text>)

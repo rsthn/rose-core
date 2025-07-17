@@ -1,3 +1,19 @@
+# v5.0.30 - Jul 17 2025
+
+#### Wind
+- Fixed bug causing banner message not to show.
+
+#### Utils
+- Fixed minor bug where `env:get` returned `false` instead of `null` when var didn't exist.
+
+#### Expr
+- Patched behavior of `include` to ensure definitions are added to the caller context.
+
+#### Session
+- Updated `session:name` and `session:id` to also work as setters.
+
+<br/>
+
 # v5.0.29 - Apr 09 2025
 
 #### DateTime
