@@ -1,3 +1,10 @@
+# v5.0.31 - Aug 07 2025
+
+#### Expr
+- Patched function 'try/catch' to remove stack trace from error message.
+
+<br/>
+
 # v5.0.30 - Jul 17 2025
 
 #### Wind
