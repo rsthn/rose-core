@@ -4588,8 +4588,8 @@ Expr::register('_try', function ($parts, $data)
                 throw $e;
         }
 
-        $data->err = (string)$e;
-        $data->ex = $e;
+        $data->err = $e->getMessage();
+        $data->ex = (string)$e;
 
         if ($catch !== null)
             $value = Expr::blockValue($catch, $data);
