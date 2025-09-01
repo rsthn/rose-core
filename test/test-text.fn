@@ -104,6 +104,12 @@
     (expect:eq (str:tr "aие" "123" "привет мир") "пр2в3т м2р")
 )
 
+; (str:escape <value> <wrap>)
+(def-fn test_str_escape
+    (expect:eq (str:escape "hello world") "'hello world'")
+    (expect:eq (str:escape "he\\llo'wo\"rld\0") "'he\\\\llo\\'wo\\\"rld\\0'")
+    (expect:eq (str:escape "nice\n" "|") "|nice\n|")
+)
 
 
 

@@ -569,6 +569,19 @@ Expr::register('str:tr', function($args) {
     return Text::translate ($args->get(3), $args->get(1), $args->get(2), true);
 });
 
+/**
+ * Adds backslashes before characters that need to be escaped. These characters are: single-quote ('),
+ * double-quote ("), backslash (\) and NUL. Wraps the result in the given wrap character.
+ * @code (`str:escape` <value> <wrap="'">)
+ * @example
+ * (str:escape "c'ab\"c")
+ * ; "'c\'ab\\\"c'"
+ */
+Expr::register('str:escape', function($args) {
+    $wrap = $args->has(2) ? $args->get(2) : "'";
+    return $wrap . addslashes($args->get(1)) . $wrap;
+});
+
 
 
 
