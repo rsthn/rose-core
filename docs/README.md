@@ -3833,6 +3833,14 @@ Translates characters in the given string.
 ; 3123
 ```
 
+### (`str:escape` \<value> \<wrap="'">)
+Adds backslashes before characters that need to be escaped. These characters are: single-quote ('),
+double-quote ("), backslash (\) and NUL. Wraps the result in the given wrap character.
+```lisp
+(str:escape "c'ab\"c")
+; "'c\'ab\\\"c'"
+```
+
 ### (`buf:len` \<value>)
 Returns the length of the given binary buffer.
 ```lisp

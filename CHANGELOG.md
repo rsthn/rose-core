@@ -1,3 +1,10 @@
+# v5.0.32 - Sep 01 2025
+
+#### Text
+- Added `str:escape` to add slashes for special characters.
+
+<br/>
+
 # v5.0.31 - Aug 07 2025
 
 #### Expr
