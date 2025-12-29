@@ -1,3 +1,13 @@
+# v5.0.33 - Dec 29 2025
+
+#### QoL
+- Updated 'include' to allow returning its last value.
+- Added new field 'entrypoint' to Wind which indicates the entrypoint of the current (and next!) handler.
+- Added fields 'ctx' and 'params' to global context of handlers called by Wind.
+- Update Wind to no longer throw error if entrypoint is not found as long as it is `main`.
+
+<br/>
+
 # v5.0.32 - Sep 01 2025
 
 #### Text
