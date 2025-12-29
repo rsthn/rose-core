@@ -1773,6 +1773,7 @@ Expr::register('global', function($args) {
  */
 Expr::register('include', function($args, $parts, $data)
 {
+    $response = null;
     for ($i = 1; $i < $args->length; $i++)
     {
         $path = $args->get($i);
@@ -1789,10 +1790,8 @@ Expr::register('include', function($args, $parts, $data)
 
         $expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', '', File::getContents($path)));
 
-        for ($j = 0; $j < $expr->length; $j++)
-        {
-            if ($expr->get($j)->type !== 'template')
-            {
+        for ($j = 0; $j < $expr->length; $j++) {
+            if ($expr->get($j)->type !== 'template') {
                 $expr->remove($j);
                 $j--;
             }
@@ -1801,31 +1800,25 @@ Expr::register('include', function($args, $parts, $data)
         MetaError::incBaseLevel();
 
         try {
-            Expr::expand ($expr, $data, 'void');
+            $response = Expr::expand ($expr, $data, 'last');
         }
-        catch (MetaError $e)
-        {
+        catch (MetaError $e) {
             if (!$e->isForMe(-1)) throw $e;
-
-            switch ($e->code)
-            {
+            switch ($e->code) {
                 case 'EXPR_YIELD':
                     break;
-
                 case 'FN_RET':
                     break;
-
                 default:
                     throw $e;
             }
         }
-        finally
-        {
+        finally {
             MetaError::decBaseLevel();
         }
     }
 
-    return null;
+    return $response;
 });
 
 /**

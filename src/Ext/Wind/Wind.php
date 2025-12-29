@@ -199,6 +199,8 @@ class Wind
                     'body' => Gateway::getInstance()->input->contentType === null ? null : Gateway::getInstance()->input,
                 ]);
 
+                Expr::$context->data->entrypoint = 'main';
+
                 // TODO: Optimize to prevent re-parsing and linear searches.
                 foreach ($endpoints->__nativeArray as $endpoint => $handlers)
                 {
@@ -215,17 +217,22 @@ class Wind
                     {
                         $handler = explode(':', $handler);
                         if (count($handler) == 1)
-                            $handler[] = 'main';
+                            $handler[] = Expr::$context->data->entrypoint;
 
-                        Expr::call('import', new Arry(['', $handler[0]]));
+                        Expr::$context->data->set('ctx', $ctx);
+                        Expr::$context->data->set('params', $vars);
+                        $response = Expr::call('include', new Arry(['', $handler[0]]), Expr::$context->data);
 
                         if (!Expr::getFunction($handler[1])) {
+                            if ($handler[1] === 'main')
+                                continue;
                             throw new WindError ('NotFoundError', [
                                 'response' => self::R_NOT_FOUND,
                                 'message' => Strings::get('@messages.function_not_found') . ': ' . $handler[1] . ' in ' . $handler[0]
                             ]);
                         }
-                        $response = Expr::call($handler[1], new Arry(['', $ctx, $vars ]));
+
+                        $response = Expr::call($handler[1], new Arry(['', $ctx, $vars ]), Expr::$context->data);
                     }
 
                     if ($response != null)
