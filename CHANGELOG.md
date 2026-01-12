@@ -1,3 +1,10 @@
+# v5.0.35 - Jan 12 2026
+
+#### QoL
+- Improved error handling, exceptions catched now include type, message (Error) and details for WindError.
+
+<br/>
+
 # v5.0.34 - Jan 12 2026
 
 #### QoL
