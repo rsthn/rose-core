@@ -1,6 +1,7 @@
-# v5.0.36 - Jan 12 2026
+# v5.0.37 - Jan 12 2026
 
 #### Database
+- Updated behavior of ?"" to use the keys instead of the values if the provided parameter is a Map.
 - Added function `db:mogrify` to convert a prepared query into the closest final query string.
 - Added documentation for query placeholders ?(), ?[] and ?""
 
