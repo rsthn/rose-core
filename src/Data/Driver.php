@@ -70,11 +70,8 @@ abstract class Driver
                 $is_nested = false;
                 $is_name_escape = false;
 
-                if ($type !== 'Rose\Arry')
-                    throw new Error('array expected for ?'.$open_char.$close_char);
-
-                if ($open_char === '"')
-                    $is_name_escape = true;
+                if ($type !== 'Rose\Arry' && $type !== 'Rose\Map')
+                    throw new Error('array/map expected for ?'.$open_char.$close_char);
 
                 if ($param->length() > 0)
                 {
@@ -86,6 +83,13 @@ abstract class Driver
                         throw new Error('single value, array or map expected for values for ?'.$open_char.$close_char);
 
                     $is_nested = $sub_type === 'Rose\Arry' || $sub_type === 'Rose\Map';
+                }
+
+                if ($open_char === '"') {
+                    $is_name_escape = true;
+                    // get column names if parameter is a map
+                    if ($type === 'Rose\Map')
+                        $param = $param->keys();
                 }
 
                 $comma = '';
