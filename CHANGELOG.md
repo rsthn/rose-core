@@ -1,3 +1,11 @@
+# v5.0.36 - Jan 12 2026
+
+#### Database
+- Added function `db:mogrify` to convert a prepared query into the closest final query string.
+- Added documentation for query placeholders ?(), ?[] and ?""
+
+<br/>
+
 # v5.0.35 - Jan 12 2026
 
 #### QoL

@@ -1812,8 +1812,19 @@ Executes a query and returns a reader object from which rows can be read increme
 (reader.close)
 ```
 
+### (`db:mogrify` \<query> [...params])
+Attempts to transmogrify a query into its final form and returns the final query string.
+```lisp
+(db:mogrify `DELETE FROM pending WHERE status IN (?())` ["inactive" "blocked" "cancelled"]))
+; DELETE FROM pending WHERE status IN ('inactive', 'blocked', 'cancelled')
+```
+
 ### (`db:exec` \<query> [...params])
 Executes a query and returns a boolean indicating success or failure.
+<br/>The following placeholders can be used in the query (besides `?`) to pass array of values:
+<br/>    - `?()` with [1 2] → `1,2`, with [[1 2] [3 4]] → `(1,2),(3,4)`
+<br/>    - `?[]` with [1 2] → `1,2`, with [[1 2] [3 4]] → `[1,2],[3,4]`
+<br/>    - `?""` with ["a" "b"] → `"a", "b"`
 ```lisp
 (db:exec `DELETE FROM users WHERE status=?` "inactive"))
 ; true
