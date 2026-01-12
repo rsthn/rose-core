@@ -275,6 +275,24 @@ class Connection
     }
 
     /**
+     * Attempts to transmogrify a query into its final form and returns the final query string.
+     * @param string $queryString Query or statement to execute.
+     * @param array $params Parameters to use in the query.
+     * @return string
+     */
+    public function execMogrify ($queryString, $params=null)
+    {
+        if ($this->conn == null)
+            throw new Error ('Connection: Database connection is not open.');
+
+        $queryString = $this->filterQuery($queryString);
+        if (!$this->driver->isAlive($this->conn))
+            $this->open();
+
+        return $this->driver->mogrify($queryString, $this->conn, $params);
+    }
+
+    /**
      * Executes a query (or an statement) and returns an array (for queries) or a `boolean` (for statements).
      * @param string $queryString Query or statement to execute.
      * @param array $params Parameters to use in the query.

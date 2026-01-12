@@ -96,6 +96,11 @@ class MySQLi extends Driver
         return 3;
     }
 
+    public function mogrify ($query, $conn, $params) {
+        [$query, $params, $extra] = $this->prepare_query($query, $params, ['types' => '']);
+        return $query;
+    }
+
     public function query ($query, $conn, $params)
     {
         if ($params === null)

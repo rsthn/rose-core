@@ -103,12 +103,7 @@ class PostgreSQL extends Driver
             return 1;
         }
 
-        if (\Rose\isInteger($value)) {
-            $query_part = $value;
-            return 1;
-        }
-
-        if (\Rose\isNumber($value)) {
+        if (\Rose\isInteger($value) || \Rose\isNumber($value)) {
             $query_part = $value;
             return 1;
         }
@@ -285,6 +280,11 @@ class PostgreSQL extends Driver
         }
 
         return $column_types;
+    }
+
+    public function mogrify ($query, $conn, $params) {
+        [$query, $params, $extra] = $this->prepare_query($query, $params);
+        return $query;
     }
 
     public function query ($query, $conn, $params)

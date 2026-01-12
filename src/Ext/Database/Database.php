@@ -155,7 +155,25 @@ Expr::register('db:reader', function ($args) {
 });
 
 /**
+ * Attempts to transmogrify a query into its final form and returns the final query string.
+ * @code (`db:mogrify` <query> [...params])
+ * @example
+ * (db:mogrify `DELETE FROM pending WHERE status IN (?())` ["inactive" "blocked" "cancelled"]))
+ * ; DELETE FROM pending WHERE status IN ('inactive', 'blocked', 'cancelled')
+ */
+Expr::register('db:mogrify', function ($args) {
+    $query = trim($args->get(1));
+    if (!$query) return '';
+    return Resources::getInstance()->Database->execMogrify($query, $args->length() > 2 ? $args->slice(2) : null);
+});
+
+/**
  * Executes a query and returns a boolean indicating success or failure.
+ * The following placeholders can be used in the query (besides `?`) to pass array of values:
+ *     - `?()` with [1 2] → `1,2`, with [[1 2] [3 4]] → `(1,2),(3,4)`
+ *     - `?[]` with [1 2] → `1,2`, with [[1 2] [3 4]] → `[1,2],[3,4]`
+ *     - `?""` with ["a" "b"] → `"a", "b"`
+ *
  * @code (`db:exec` <query> [...params])
  * @example
  * (db:exec `DELETE FROM users WHERE status=?` "inactive"))

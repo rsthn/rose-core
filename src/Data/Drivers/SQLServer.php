@@ -96,6 +96,10 @@ class SQLServer extends Driver
         return 3;
     }
 
+    public function mogrify ($query, $conn, $params) {
+        return $query;
+    }
+
     public function query ($query, $conn, $params)
     {
         $this->affected_rows = 0;
