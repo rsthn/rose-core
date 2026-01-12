@@ -1,3 +1,10 @@
+# v5.0.34 - Jan 12 2026
+
+#### QoL
+- Updated 'try-catch' behavior to get data if error detected is WindError.
+
+<br/>
+
 # v5.0.33 - Dec 29 2025
 
 #### QoL
