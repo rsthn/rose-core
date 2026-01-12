@@ -4572,10 +4572,16 @@ Expr::register('_try', function ($parts, $data)
                 break;
         }
     }
+    catch (\Rose\Ext\Wind\WindError $e)
+    {
+        $data->err = $e->getMessage();
+        $data->ex = \Rose\Ext\Wind::prepare($e->getData());
+        if ($catch !== null)
+            $value = Expr::blockValue($catch, $data);
+    }
     catch (\Throwable $e)
     {
-        switch ($e->getMessage())
-        {
+        switch ($e->getMessage()) {
             case 'EXC_BREAK':
             case 'EXC_CONTINUE':
                 throw $e;
@@ -4583,7 +4589,6 @@ Expr::register('_try', function ($parts, $data)
 
         $data->err = $e->getMessage();
         $data->ex = (string)$e;
-
         if ($catch !== null)
             $value = Expr::blockValue($catch, $data);
     }

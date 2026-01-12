@@ -90,7 +90,7 @@ class Wind
     public static function prepare ($response)
     {
         if (\Rose\isArray($response))
-            $response = new Map ($response);
+            $response = new Map($response);
 
         if (\Rose\typeOf($response) === 'Rose\\Map' || \Rose\typeOf($response) === 'Rose\\Arry')
         {
