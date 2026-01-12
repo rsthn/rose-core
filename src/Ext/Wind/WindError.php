@@ -8,6 +8,7 @@ use Rose\Map;
 class WindError extends Error
 {
     public $data;
+    public $_details;
 
     public function __construct ($name, $data=null) {
         if ($data === null) {
@@ -16,6 +17,11 @@ class WindError extends Error
         }
         parent::__construct($name);
         $this->data = $data;
+        $this->_details = null;
+    }
+
+    public function getType() {
+        return 'WindError';
     }
 
     public function getData() {
@@ -24,5 +30,14 @@ class WindError extends Error
 
     public function __toString() {
         return json_encode($this->data);
+    }
+
+    public function __get ($name) {
+        if ($name === 'details') {
+            if (!$this->_details)
+                $this->_details = new Map($this->data);
+            return $this->_details;
+        }
+        return parent::__get($name);
     }
 };

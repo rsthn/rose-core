@@ -9,8 +9,11 @@ use Rose\Errors\Error;
 
 class UndefinedPropertyError extends Error
 {
-    public function __construct ($message)
-    {
+    public function __construct ($message) {
         parent::__construct($message);
+    }
+
+    public function getType() {
+        return 'UndefinedPropertyError';
     }
 };

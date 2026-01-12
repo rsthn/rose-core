@@ -9,19 +9,23 @@ namespace Rose\Errors;
 
 class Error extends \Exception
 {
-	/*
-	**	Creates an error object and uses the given parameter and the exception's error message.
-	*/
-    public function __construct (?string $message='', $code=0)
-    {
+    public function __construct (?string $message='', $code=0) {
         parent::__construct ($message ?? '', $code);
     }
 
-	/*
-	**	Converts the error to its string representation. The typeName parameter is ignored.
-	*/
-    public function __typeCast ($typeName)
-    {
-        return '('.typeOf($this).'): '.$this->getMessage();
+    public function __typeCast ($typeName) {
+        return '('.\Rose\typeOf($this).'): '.$this->getMessage();
+    }
+
+    public function getType() {
+        return 'Error';
+    }
+
+    public function __get ($name) {
+        if ($name === 'type')
+            return $this->getType();
+        if ($name === 'message')
+            return $this->getMessage();
+        return '';
     }
 };

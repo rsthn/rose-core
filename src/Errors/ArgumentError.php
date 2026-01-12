@@ -9,8 +9,11 @@ use Rose\Errors\Error;
 
 class ArgumentError extends Error
 {
-    public function __construct ($message)
-    {
+    public function __construct ($message) {
         parent::__construct($message);
+    }
+
+    public function getType() {
+        return 'ArgumentError';
     }
 };

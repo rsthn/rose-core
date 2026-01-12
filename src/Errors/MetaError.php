@@ -59,4 +59,8 @@ class MetaError extends Error
 	{
 		return !$this->levelSensitive || $this->level == ($baseLevelDelta + self::$baseLevel);
 	}
+
+    public function getType() {
+        return 'MetaError';
+    }
 };
