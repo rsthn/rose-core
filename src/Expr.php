@@ -4531,7 +4531,7 @@ Expr::register('_try', function ($parts, $data)
 
                     if ($catch === true)
                         $catch = $parts->slice($j, $i-$j);
-            
+
                     $finally = true;
                     $j = $i+1;
                     break;
@@ -4554,6 +4554,9 @@ Expr::register('_try', function ($parts, $data)
 
     try {
         $value = Expr::blockValue($code, $data);
+    }
+    catch (FalseError $e) {
+        throw $e;
     }
     catch (MetaError $e)
     {
@@ -4619,12 +4622,12 @@ Expr::register('_try', function ($parts, $data)
 Expr::register('throw', function ($args, $parts, $data)
 {
     if ($args->length > 1)
-        throw new \Exception ($args->get(1) ?? '');
+        throw new Error ($args->get(1) ?? '');
 
     if ($data->has('ex'))
         throw $data->get('ex');
 
-    throw new \Exception ($data->get('err') ?? '');
+    throw new Error ($data->get('err') ?? '');
 });
 
 // todo: move this to unit testing?
@@ -4643,7 +4646,7 @@ Expr::register('_assert', function ($parts, $data)
     if (Expr::value($parts->get(1), $data))
         return null;
 
-    throw new \Exception ($parts->has(2) ? Expr::value($parts->get(2), $data) : 'Assertion failed');
+    throw new Error ($parts->has(2) ? Expr::value($parts->get(2), $data) : 'Assertion failed');
 });
 
 /**
@@ -4662,7 +4665,7 @@ Expr::register('_assert-eq', function ($parts, $data)
         return null;
 
     $err = $value1 . ' != ' . $value2;
-    throw new \Exception ('Assertion failed: ' . $err . ($parts->has(3) ? ' => ' . Expr::expand($parts->get(3), $data) : ''));
+    throw new \Error ('Assertion failed: ' . $err . ($parts->has(3) ? ' => ' . Expr::expand($parts->get(3), $data) : ''));
 });
 
 /**
