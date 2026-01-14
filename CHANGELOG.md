@@ -1,3 +1,11 @@
+# v5.0.38 - Jan 14 2026
+
+#### Expr
+- Added check to ensure FalseError is not stopped by expression try/catch.
+- Fixed bug causing `throw` not to be catched by expression try/catch.
+
+<br/>
+
 # v5.0.37 - Jan 12 2026
 
 #### Database
