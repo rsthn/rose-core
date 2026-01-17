@@ -55,9 +55,9 @@ Expr::register('crypto:hmac', function($args) {
 
 /**
  * Returns the HMAC of a string (binary).
- * @code (`crypto:hmac-binary` <algorithm> <secret-key> <data>)
+ * @code (`crypto:hmac-bin` <algorithm> <secret-key> <data>)
  * @example
- * (crypto:hmac-binary "sha256" "secret" "Hello, World!")
+ * (crypto:hmac-bin "sha256" "secret" "Hello, World!")
  * ; binary data
  */
 Expr::register('crypto:hmac-bin', function($args) {

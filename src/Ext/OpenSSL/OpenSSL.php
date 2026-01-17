@@ -132,7 +132,7 @@ function asn1_encode ($code, $data)
     else if ($len < 256)
         $out = chr(0x81) . chr($len) . $out;
     else
-        throw new Error('Invalid length');
+        throw new Error('invalid length');
 
     return chr($code) . $out;
 }
@@ -186,7 +186,7 @@ function get_signing_algorithm ($name)
         case 'MD4': return OPENSSL_ALGO_MD4;
         case 'MD2 ': return OPENSSL_ALGO_MD2;
         default:
-            throw new Error('Invalid signature algorithm: ' . $name);
+            throw new Error('invalid signature algorithm: ' . $name);
     }
 }
 
@@ -202,13 +202,21 @@ Expr::register('openssl:version', function($args) {
 });
 
 /**
- * Wraps the given buffer in a PEM encoded block with the specified label.
+ * Wraps the given buffer (DER) in a PEM encoded block with the specified label.
  * @code (`pem:encode` <label> <data>)
  */
 Expr::register('pem:encode', function($args) {
     $label = $args->get(1);
     $value = base64_encode($args->get(2));
     return "-----BEGIN ".$label."-----\n" . wordwrap($value, 64, "\n", true) . "\n-----END ".$label."-----\n";
+});
+
+/**
+ * Decodes a PEM encoded block into a DER buffer. Note that the label of the key will be lost.
+ * @code (`pem:decode` <pem-string>)
+ */
+Expr::register('pem:decode', function($args) {
+    return get_der($args->get(1));
 });
 
 /**
@@ -223,14 +231,28 @@ Expr::register('openssl:curves', function($args) {
 });
 
 /**
- * Returns a list of supported ciphers.
+ * Returns a list of supported cipher methods.
  * @code (`openssl:ciphers`)
  * @example
  * (openssl:ciphers)
- * ; ["prime192v1","secp224r1","prime256v1",...]
+ * ; ["aes-128-cbc","aes-192-cbc","aes-256-cbc",...]
  */
 Expr::register('openssl:ciphers', function($args) {
     return new Arry(openssl_get_cipher_methods());
+});
+
+/**
+ * Returns the length (in bytes) of the initialization vector (IV) for the specified cipher method.
+ * @code (`openssl:cipher-iv-length`)
+ * @example
+ * (openssl:cipher-iv-length "aes-256-gcm")
+ * ; 12
+ */
+Expr::register('openssl:cipher-iv-length', function($args) {
+    $method = $args->get(1);
+    if (!in_array($method, openssl_get_cipher_methods()))
+        throw new Error('invalid cipher method: ' . $method);
+    return openssl_cipher_iv_length($method);
 });
 
 /**
@@ -259,7 +281,7 @@ Expr::register('openssl:create', function($args)
     else if ($type === 'DH')  $type = OPENSSL_KEYTYPE_DH;
     else if ($type === 'RSA') $type = OPENSSL_KEYTYPE_RSA;
     else if ($type === 'EC')  $type = OPENSSL_KEYTYPE_EC;
-    else throw new Error('Invalid key type: ' . $type);
+    else throw new Error('invalid key type: ' . $type);
 
     $config = [
         'private_key_type' => $type
@@ -268,12 +290,12 @@ Expr::register('openssl:create', function($args)
     $val = $args->{2};
     if ($type === OPENSSL_KEYTYPE_EC) {
         if ($val === null)
-            throw new Error('Curve name is required for EC keys');
+            throw new Error('curve name is required for EC keys');
         $config['curve_name'] = $val;
     }
     else {
         if ($val !== null && !\Rose\isInteger($val))
-            throw new Error('Invalid key size: ' . $val);
+            throw new Error('invalid key size: ' . $val);
 
         if ($val !== null)
             $config['private_key_bits'] = $val;
@@ -449,13 +471,38 @@ Expr::register('openssl:derive', function($args) {
 });
 
 /**
- * @code (`openssl:encrypt` <cipher-algorithm> <secret> <iv> <data>)
+ * Encrypts a data block with a symmetric cipher.
+ * @code (`openssl:encrypt` <cipher-method> <secret> <iv> <data>)
+ * @example
+ * (set iv (openssl:random-bytes (openssl:iv-length "aes-256-cbc")))
+ * (set secret (crypto:hmac-binary "sha256" "app-secret" "thanks is the passphrase"))
+ * (openssl:encrypt "aes-256-cbc" (secret) (iv) "hello world")
+ * ; { tag: (binary data), data: (binary data) }
  */
 Expr::register('openssl:encrypt', function($args) {
-    $algo = $args->get(1);
-    if (!in_array($algo, openssl_get_cipher_methods()))
-        throw new Error('Invalid cipher algorithm: ' . $algo);
-    $output = openssl_encrypt($args->get(4), $algo, $args->get(2), OPENSSL_RAW_DATA, $args->get(3), $tag);
+    $method = $args->get(1);
+    if (!in_array($method, openssl_get_cipher_methods()))
+        throw new Error('invalid cipher method: ' . $method);
+    $tag='';
+    $output = openssl_encrypt($args->get(4), $method, $args->get(2), OPENSSL_RAW_DATA, $args->get(3), $tag);
+    if ($output === false)
+        throw new Error(openssl_error_string());
+    return new Map([ 'tag' => $tag, 'data' => $output ]);
+});
+
+/**
+ * Decrypts a data block with a symmetric cipher.
+ * @code (`openssl:decrypt` <cipher-method> <secret> <iv> <data> [tag])
+ * @example
+ * (openssl:decrypt "aes-256-cbc" (secret) (iv) (data))
+ * ; { tag: (binary data), data: (binary data) }
+ */
+Expr::register('openssl:decrypt', function($args) {
+    $method = $args->get(1);
+    if (!in_array($method, openssl_get_cipher_methods()))
+        throw new Error('invalid cipher algorithm: ' . $method);
+    $tag = $args->{5} ?? '';
+    $output = openssl_decrypt($args->get(4), $method, $args->get(2), OPENSSL_RAW_DATA, $args->get(3), $tag);
     if ($output === false)
         throw new Error(openssl_error_string());
     return new Map([ 'tag' => $tag, 'data' => $output ]);
