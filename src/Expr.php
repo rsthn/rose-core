@@ -1867,26 +1867,21 @@ Expr::register('import', function($args, $parts, $data)
         if (!Path::exists($path))
             throw new Error ("source does not exist: " . $original_path);
 
-        if (Expr::$importedTime->get($path) == File::mtime($path, true))
-        {
-            Expr::$context->linkContext (Expr::$importedContext->get($path), $ns);
+        if (Expr::$importedTime->get($path) == File::mtime($path, true)) {
+            Expr::$context->linkContext(Expr::$importedContext->get($path), $ns);
             continue;
         }
 
         Expr::$importedTime->set($path, File::mtime($path, true));
 
-        if ($path_cache && Path::exists($path_cache) && File::mtime($path_cache, true) == File::mtime($path, true))
-        {
+        if ($path_cache && Path::exists($path_cache) && File::mtime($path_cache, true) == File::mtime($path, true)) {
             $expr = unserialize(File::getContents($path_cache));
         }
-        else
-        {
+        else {
             $expr = Expr::parse(Regex::_replace ('|/\*(.*?)\*/|s', '', File::getContents($path)));
 
-            for ($j = 0; $j < $expr->length; $j++)
-            {
-                if ($expr->get($j)->type !== 'template')
-                {
+            for ($j = 0; $j < $expr->length; $j++) {
+                if ($expr->get($j)->type !== 'template') {
                     $expr->remove($j);
                     $j--;
                 }
@@ -1926,8 +1921,7 @@ Expr::register('import', function($args, $parts, $data)
                     throw $e;
             }
         }
-        finally
-        {
+        finally {
             $context = Expr::$context;
             Expr::$context = Expr::$contextStack->pop();
             Expr::$context->linkContext ($context, $ns);

@@ -263,7 +263,7 @@ class PostgreSQL extends Driver
         }
 
         \Rose\trace('Unmapped PostgreSQL type: '.$prefix.$pg_type);
-        return 'string';
+        return $prefix.'string';
     }
 
     private function get_pg_column_types($rs)
