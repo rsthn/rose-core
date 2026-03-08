@@ -1686,10 +1686,10 @@ Returns the HMAC of a string (hexadecimal).
 ; fcfaffa7fef86515c7beb6b62d779fa4ccf092f2e61c164376054271252821ff
 ```
 
-### (`crypto:hmac-binary` \<algorithm> \<secret-key> \<data>)
+### (`crypto:hmac-bin` \<algorithm> \<secret-key> \<data>)
 Returns the HMAC of a string (binary).
 ```lisp
-(crypto:hmac-binary "sha256" "secret" "Hello, World!")
+(crypto:hmac-bin "sha256" "secret" "Hello, World!")
 ; binary data
 ```
 
@@ -1928,8 +1928,13 @@ default `targetTimezone` is the one configured in the `timezone` setting of the 
 ```lisp
 (datetime:parse "2024-03-23 02:19:49")
 ; 2024-03-23 02:19:49
+```
 
-(datetime "2024-03-23 02:19:49" "America/New_York")
+### (`datetime` \<input> [sourceTimezone] [targetTimezone])
+Parses a date and time string. Assumes source is in local timezone (LTZ) if no `sourceTimezone` specified. Note that the
+default `targetTimezone` is the one configured in the `timezone` setting of the `Locale` configuration section.
+```lisp
+(datetime "2024-03-23 02:19:49" "America/New_York" "UTC")
 ; 2024-03-23 04:19:49
 ```
 
@@ -2196,7 +2201,10 @@ Returns the version of the OpenSSL library.
 ```
 
 ### (`pem:encode` \<label> \<data>)
-Wraps the given buffer in a PEM encoded block with the specified label.
+Wraps the given buffer (DER) in a PEM encoded block with the specified label.
+
+### (`pem:decode` \<pem-string>)
+Decodes a PEM encoded block into a DER buffer. Note that the label of the key will be lost.
 
 ### (`openssl:curves`)
 Returns a list of supported curves.
@@ -2206,10 +2214,17 @@ Returns a list of supported curves.
 ```
 
 ### (`openssl:ciphers`)
-Returns a list of supported ciphers.
+Returns a list of supported cipher methods.
 ```lisp
 (openssl:ciphers)
-; ["prime192v1","secp224r1","prime256v1",...]
+; ["aes-128-cbc","aes-192-cbc","aes-256-cbc",...]
+```
+
+### (`openssl:cipher-iv-length`)
+Returns the length (in bytes) of the initialization vector (IV) for the specified cipher method.
+```lisp
+(openssl:cipher-iv-length "aes-256-gcm")
+; 12
 ```
 
 ### (`openssl:random-bytes` \<length>)
@@ -2303,7 +2318,21 @@ Generates a shared secret for public value of remote and local DH or ECDH key.
 ; (binary data)
 ```
 
-### (`openssl:encrypt` \<cipher-algorithm> \<secret> \<iv> \<data>)
+### (`openssl:encrypt` \<cipher-method> \<secret> \<iv> \<data>)
+Encrypts a data block with a symmetric cipher.
+```lisp
+(set iv (openssl:random-bytes (openssl:iv-length "aes-256-cbc")))
+(set secret (crypto:hmac-binary "sha256" "app-secret" "thanks is the passphrase"))
+(openssl:encrypt "aes-256-cbc" (secret) (iv) "hello world")
+; { tag: (binary data), data: (binary data) }
+```
+
+### (`openssl:decrypt` \<cipher-method> \<secret> \<iv> \<data> [tag])
+Decrypts a data block with a symmetric cipher.
+```lisp
+(openssl:decrypt "aes-256-cbc" (secret) (iv) (data))
+; { tag: (binary data), data: (binary data) }
+```
 
 ### (`der:extract` \<type='int'|'bits'|'octets'> \<der-string|pem-string> [\<int-size=0>])
 Extracts fields from a DER encoded string.

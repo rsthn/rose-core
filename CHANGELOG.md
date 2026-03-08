@@ -1,3 +1,19 @@
+# v5.0.39 - Mar 08 2026
+
+#### Crypto
+- Added pem:decode, openssl:decrypt and openssl:encrypt functions.
+
+#### QoL
+- Fixed minor typos in function comments.
+
+#### PostgreSQL
+- Minor fixups in driver interface.
+
+#### DateTime
+- Improved timezone handling and utility functions.
+
+<br/>
+
 # v5.0.38 - Jan 14 2026
 
 #### Expr
