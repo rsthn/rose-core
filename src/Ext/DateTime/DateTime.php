@@ -45,15 +45,21 @@ Expr::register('datetime:millis', function ($args) {
  * @example
  * (datetime:parse "2024-03-23 02:19:49")
  * ; 2024-03-23 02:19:49
- *
- * (datetime "2024-03-23 02:19:49" "America/New_York")
- * ; 2024-03-23 04:19:49
  */
 Expr::register('datetime:parse', function ($args) {
     return new DateTime($args->get(1), $args->{2}, $args->{3});
 });
+
+/**
+ * Parses a date and time string. Assumes source is in local timezone (LTZ) if no `sourceTimezone` specified. Note that the
+ * default `targetTimezone` is the one configured in the `timezone` setting of the `Locale` configuration section.
+ * @code (`datetime` <input> [sourceTimezone] [targetTimezone])
+ * @example
+ * (datetime "2024-03-23 02:19:49" "America/New_York" "UTC")
+ * ; 2024-03-23 04:19:49
+ */
 Expr::register('datetime', function ($args) {
-    return new DateTime($args->{1}, $args->{2}, $args->{3});
+    return new DateTime($args->{1}, $args->{3}, $args->{2});
 });
 
 /**

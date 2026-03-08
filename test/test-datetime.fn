@@ -1,6 +1,7 @@
 
 (def-fn test_now
     (expect:type (datetime:now) "datetime")
+    (expect:type (datetime) "datetime")
 )
 
 (def-fn test_millis_type
@@ -32,15 +33,46 @@
 
 ;; TODO: Fix this because it's broken when there is daylight savings in the present and converting times in the past
 (def-fn test_parse_tz
-    (ret)
+
     (expect:eq
         (datetime:parse "2024-07-28 11:35:20" "UTC" "GMT-6")
         "2024-07-28 17:35:20"
     )
 
+    ;; Idempotence (no change)
     (expect:eq
-        (datetime:parse "2024-03-23 02:19:49" "America/New_York" "UTC")
-        "2024-03-22 22:19:49"
+        (datetime:parse "2024-03-11 02:30:00" "America/New_York")
+        "2024-03-11 02:30:00"
+    )
+
+    ;; Specific date does not exist on America/New_York due to DST, gets bumped to UTC-4.
+    (expect:eq
+        (datetime:parse "2024-03-10 02:30:00" "America/New_York")
+        "2024-03-10 03:30:00"
+    )
+    (expect:eq
+        (datetime (datetime "2024-03-10 09:15:15" "GMT+2") "UTC" "America/New_York")
+        "2024-03-10 03:15:15"
+    )
+
+    ;; America/New_York is UTC-4 on this date.
+    (expect:eq
+        (datetime "2024-03-23 02:19:51" "America/New_York" "UTC")
+        "2024-03-23 06:19:51"
+    )
+    (expect:eq
+        (datetime (datetime "2024-03-23 02:19:49" "GMT-0330") "America/New_York" "UTC")
+        "2024-03-23 09:49:49"
+    )
+
+    ;; America/New_York is UTC-5 on this date.
+    (expect:eq
+        (datetime "2024-01-23 02:19:49" "UTC" "America/New_York")
+        "2024-01-22 21:19:49"
+    )
+    (expect:eq
+        (datetime (datetime "2024-01-23 00:19:49" "GMT-6") "UTC" "America/New_York")
+        "2024-01-23 01:19:49"
     )
 )
 
@@ -94,8 +126,8 @@
 
 (def-fn test_add_seconds
     (expect:eq
-        (datetime:add "2024-02-01 00:20:45" 1000 "second")
-        "2024-02-01 00:37:25"
+        (datetime:add (datetime:parse "2024-02-01 00:20:45" "UTC" "GMT-6") 1000 "second")
+        "2024-02-01 06:37:25"
     )
 )
 

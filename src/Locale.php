@@ -98,21 +98,18 @@ class Locale
             case 'TIME':
                 if (!$format) $format = 'time';
                 if ($config && $config->has($format)) $format = $config->get($format);
-
                 $value = $value === null ? null : (\Rose\isInteger($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
                 return $value ? DateTime::strftime($format, $value + DateTime::$offset) : null;
 
             case 'DATE':
                 if (!$format) $format = 'date';
                 if ($config && $config->has($format)) $format = $config->get($format);
-
                 $value = $value === null ? null : (\Rose\isInteger($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
                 return $value ? DateTime::strftime($format, $value + DateTime::$offset) : null;
 
             case 'DATETIME':
                 if (!$format) $format = 'datetime';
                 if ($config && $config->has($format)) $format = $config->get($format);
-
                 $value = $value === null ? null : (\Rose\isInteger($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
                 return $value ? DateTime::strftime($format, $value + DateTime::$offset) : null;
 
@@ -137,14 +134,12 @@ class Locale
                 return $value ? DateTime::strftime('%Y-%m-%d %H:%M:%S', $value + DateTime::$offset) : null;
 
             default:
-                if (Text::toUpperCase(Text::substring ($formatType, 0, 3)) == 'DT_')
-                {
+                if (Text::toUpperCase(Text::substring ($formatType, 0, 3)) == 'DT_') {
                     $value = $value === null ? null : (\Rose\isInteger($value) ? (int)$value : DateTime::getUnixTimestamp((string)$value));
                     return $value ? DateTime::strftime($config->get($formatType), $value + DateTime::$offset) : null;
                 }
 
-                if (Text::toUpperCase(Text::substring($formatType,0,7)) == 'NUMERIC')
-                {
+                if (Text::toUpperCase(Text::substring($formatType,0,7)) == 'NUMERIC') {
                     $tmp = $config->get($formatType);
                     return number_format ((double)$value, $tmp[1], $tmp[0], $tmp[2]);
                 }

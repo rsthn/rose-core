@@ -45,16 +45,10 @@ class DateTime
     private $timestamp;
 
     /**
-     * Target timezone, used to appropriately maintain a correct timestamp value when using setTimestamp().
-     */
-    public $targetTimezone;
-
-    /**
      * Default timezone and timezone offset in seconds.
      */
     public static $timezone;
     public static $offset;
-    public static $utc;
 
     /**
      * Initializes static constants of this class.
@@ -63,9 +57,7 @@ class DateTime
     {
         date_default_timezone_set('UTC');
 
-        self::$utc = new \DateTimeZone('UTC');
         self::$timezone = Locale::getInstance()->timezone;
-
         if (!self::$timezone)
             self::$timezone = 'UTC';
 
@@ -85,15 +77,15 @@ class DateTime
     /**
      * Returns the offset from UTC to the given timezone.
      * @param string $timezone
+     * @param string [$datetime]
      * @return int
      */
-    public static function timezoneOffset ($timezone)
+    public static function timezoneOffset ($timezone, $datetime = 'now')
     {
-        if (Text::toUpperCase($timezone) == 'LTZ' || !$timezone)
+        if (Text::toUpperCase($timezone) === 'LTZ' || !$timezone)
             $timezone = self::$timezone;
 
-        $timezone = new \DateTimeZone ($timezone);
-        return $timezone->getOffset(new \DateTime('now', $timezone));
+        return (new \DateTime($datetime, new \DateTimeZone($timezone)))->getOffset();
     }
 
     /**
@@ -105,37 +97,36 @@ class DateTime
      */
     public function __construct ($datetime=null, $targetTimezone=null, $fromTimezone=null)
     {
-        if (Text::toUpperCase($targetTimezone) === 'LTZ')
-            $targetTimezone = self::$timezone;
-
         if (\Rose\isNumeric($datetime)) {
             $datetime = DateTime::strftime('%Y-%m-%d %H:%M:%S', (int)$datetime);
         }
         else if ($datetime instanceOf DateTime) {
-            if (!$targetTimezone) $targetTimezone = $datetime->targetTimezone;
             $datetime = DateTime::strftime('%Y-%m-%d %H:%M:%S', $datetime->getTimestamp());
         }
-        else
-        {
-            if ($datetime && $datetime !== 'now') {
-                $targetTimezone = $targetTimezone ? $targetTimezone : self::$timezone;
-                $fromTimezone = $fromTimezone ? $fromTimezone : self::$timezone;
-            }
-            else {
-                $datetime = 'now';
-                $targetTimezone = $targetTimezone ? $targetTimezone : self::$timezone;
-                $fromTimezone = $fromTimezone ? $fromTimezone : 'UTC';
-            }
-        }
+        else if ($datetime === null)
+            $datetime = 'now';
 
-        $tmp = new \DateTime ($datetime, self::$utc);
+        if (!$targetTimezone)
+            $targetTimezone = self::$timezone;
+
+        if (!$fromTimezone)
+            $fromTimezone = $targetTimezone;
+
+        if (Text::toUpperCase($targetTimezone) === 'LTZ')
+            $targetTimezone = self::$timezone;
+        if (Text::toUpperCase($fromTimezone) === 'LTZ')
+            $fromTimezone = self::$timezone;
+
+        $tmp = new \DateTime($datetime, new \DateTimeZone($fromTimezone));
+        $sourceTimezoneOffset = $tmp->getOffset();
+
         $tmp = mktime(
                 $tmp->format('H'), $tmp->format('i'), $tmp->format('s'),
                 $tmp->format('m'), $tmp->format('d'), $tmp->format('Y')
                ) + ($tmp->format('v') / 1000.0);
 
-        $this->targetTimezone = $targetTimezone;
-        $this->setTimestamp($tmp, $targetTimezone, $fromTimezone);
+        $targetTimezoneOffset = self::timezoneOffset($targetTimezone, DateTime::strftime('%Y-%m-%d %H:%M:%S', $tmp));
+        $this->setTimestamp($tmp - $sourceTimezoneOffset + $targetTimezoneOffset);
     }
 
     /**
@@ -149,17 +140,11 @@ class DateTime
     /**
      * Sets the DateTime from the specified UNIX timestamp (UTC).
      * @param float $timestamp
-     * @param string $targetTimezone - Defaults to the object's target timezone.
-     * @param string $fromTimezone - Defaults to UTC.
      * @return DateTime
      */
-    public function setTimestamp ($timestamp, $targetTimezone='', $fromTimezone='')
+    public function setTimestamp ($timestamp)
     {
-        if (!$targetTimezone) $targetTimezone = $this->targetTimezone;
-        if (!$fromTimezone) $fromTimezone = 'UTC';
-
-        $this->timestamp = ($timestamp -= self::timezoneOffset($fromTimezone));
-        $timestamp += self::timezoneOffset($targetTimezone);
+        $this->timestamp = $timestamp;
 
         $this->year = (int)DateTime::strftime('%Y', $timestamp);
         $this->month = (int)DateTime::strftime('%m', $timestamp);
