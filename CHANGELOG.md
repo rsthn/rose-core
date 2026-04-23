@@ -1,3 +1,10 @@
+# v5.0.40 - Apr 23 2026
+
+#### Gateway
+- Added support for custom HTTP methods.
+
+<br/>
+
 # v5.0.39 - Mar 08 2026
 
 #### Crypto
