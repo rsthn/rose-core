@@ -2,7 +2,7 @@
 /*
 **	Rose Framework Initializer
 **
-**	Copyright (c) 2010-2025, RedStar Technologies, All rights reserved.
+**	Copyright (c) 2010-2026, RedStar Technologies, All rights reserved.
 **	https://rsthn.com/
 **
 **	THIS LIBRARY IS PROVIDED BY REDSTAR TECHNOLOGIES "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -37,7 +37,7 @@ function trace ($string, $out='@system.log')
 {
     static $paths = null;
 
-    if ($out[0] == '@')
+    if ($out[0] === '@')
         $out = Main::$CWD . '/' . (Main::$CORE_DIR !== '.' ? Path::append(Main::$CORE_DIR, '../logs/'.Text::substring($out, 1)) : ('./logs/' . Text::substring($out, 1)));
 
     if (!$paths)
@@ -51,13 +51,11 @@ function trace ($string, $out='@system.log')
     }
 
     try {
-        $fp = @fopen ($out, 'a+t');
+        $fp = @fopen($out, 'a+t');
         if (!$fp) return;
-
-        fwrite ($fp, $string);
-        fwrite ($fp, "\n");
-
-        fclose ($fp);
+        fwrite($fp, $string);
+        fwrite($fp, "\n");
+        fclose($fp);
     }
     catch (\Exception $e) {
         if (!Text::endsWith($out, 'errors.log'))

@@ -292,8 +292,11 @@ public $body;
 
         if (Configuration::getInstance()?->Gateway?->allow_origin && $this->server->has('HTTP_ORIGIN'))
         {
+            $custom_methods = Configuration::getInstance()?->Gateway?->custom_methods ?? '';
+            if ($custom_methods) $custom_methods = ', ' . $custom_methods;
+
             self::header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization');
-            self::header('Access-Control-Allow-Methods: HEAD, POST, GET, PUT, DELETE, PATCH, OPTIONS');
+            self::header('Access-Control-Allow-Methods: HEAD, POST, GET, PUT, DELETE, PATCH, OPTIONS' . $custom_methods);
             self::header('Access-Control-Allow-Credentials: true');
 
             if (Configuration::getInstance()->Gateway->allow_origin == '*')
