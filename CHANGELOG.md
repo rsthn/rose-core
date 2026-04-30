@@ -1,3 +1,10 @@
+# v5.0.42 - Apr 30 2026
+
+#### QoL
+- Added examples to CONFIG.md for sample configuration.
+
+<br/>
+
 # v5.0.41 - Apr 30 2026
 
 #### QoL
