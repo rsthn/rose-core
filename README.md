@@ -16,6 +16,40 @@ And _that_ dear readers, is the power of Rose.
 
 <br/>
 
+# Requirements
+
+Rose targets **PHP 8.0+**. The following PHP extensions are used by the framework:
+
+### Required (always)
+
+| Extension | Used for |
+|---|---|
+| `mbstring` | Unicode-aware string operations across `Text` / `Strings` |
+| `json` | `json:parse` / `json:dump`, response serialization |
+| `curl` | HTTP client (`request:*`) |
+| `openssl` | `openssl:*`, certificate/PKI handling, `crypto:random-bytes` |
+| `hash` | `crypto:hash` / `crypto:hmac` and related digests |
+| `zlib` | `gz:compress`, `gz:deflate`, `gz:inflate`, `gz:decompress` |
+| `gd` | All `image:*` operations |
+| `simplexml` | `xml:parse`, `xml:simplify` |
+| `session` | PHP-native session storage backend (bundled in PHP) |
+| `date` | `DateTime` / timezone handling (bundled in PHP) |
+
+### Optional — database drivers
+
+A driver extension is required **only** if its driver is selected via the `driver` field in the `[Database]` section of `system.conf`:
+
+| Driver value | PHP extension |
+|---|---|
+| `mysql` / `mysqli` | `mysqli` |
+| `postgres` | `pgsql` |
+| `sqlserver` | `sqlsrv` |
+| `odbc` | `odbc` |
+
+If you don't use the `db:*` expressions, none of these are needed.
+
+<br/>
+
 # Installation
 
 As any other package of the modern web, this one should be installed using a package manager. In this case, we're on Packagist and you can install Rose using composer.

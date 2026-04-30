@@ -63,9 +63,9 @@ class Wind
 
     public static function init()
     {
-        Gateway::registerService ('wind', new WindProxy(1));
-        Gateway::registerService ('wind-2', new WindProxy(2));
-        Gateway::registerService ('wind-3', new WindProxy(3));
+        Gateway::registerService('wind', new WindProxy(1));
+        Gateway::registerService('wind-2', new WindProxy(2));
+        Gateway::registerService('wind-3', new WindProxy(3));
 
         self::$base = Main::$CORE_DIR.'/fn';
         self::$cache = 'volatile/wind';

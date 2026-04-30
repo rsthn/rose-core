@@ -30,7 +30,7 @@ The loaded configuration object is exposed to Rose code via `(config)` and indiv
 | `allow_origin` | If set, enables CORS headers. Value `*` echoes back the request `Origin`; any other value is sent verbatim as `Access-Control-Allow-Origin`. Also gates the `SameSite` cookie attribute. |
 | `custom_methods` | Extra HTTP methods appended to `Access-Control-Allow-Methods` (only meaningful when `allow_origin` is set). |
 | `same_site` | Cookie `SameSite` attribute (`Strict` / `Lax` / `None`). Defaults to `None` when omitted. Only attached to cookies when `allow_origin` is set. |
-| `service` | If set, forces every request to be routed through that service (overrides the `srv` request param). |
+| `service` | If set, forces every request to be routed through that service (overrides the `srv` request param). Use `wind-3` for the latest version of the Wind service. |
 | `banner` | Rose expression evaluated and returned when the Wind handler is invoked with no `f` parameter. |
 | `display_errors` | When the value is anything other than `'false'`, uncaught errors are rendered to the response. |
 | `access_log` | If `'true'`, requests are written to the access log. |
@@ -63,15 +63,25 @@ Section consumed wholesale by `Connection::fromConfig()`.
 
 | Field | Purpose |
 |---|---|
-| `driver` | Driver id (e.g. `mysql`, `postgres`, `sqlite`). |
+| `driver` | Driver id — see the table below for supported values. |
 | `server` | Database host. |
 | `port` | TCP port. |
 | `user` | Database username. |
 | `password` | Database password. |
 | `database` | Database / schema name. |
 | `prefix` | Optional prefix prepended to table names. |
-| `trace` | When `'true'`, every executed query is logged. |
+| `trace` | When `'true'`, every executed query is logged to `system.log`. |
 | `postgres_types` | (PostgreSQL only.) When **not** `'false'`, the driver applies its native PHP type coercion. Defaults to enabled. |
+
+### Supported drivers
+
+| `driver` value | Backend | Required PHP extension |
+|---|---|---|
+| `mysql` | MySQL / MariaDB (MySQLi) | `mysqli` |
+| `mysqli` | MySQL / MariaDB (alias of `mysql`) | `mysqli` |
+| `postgres` | PostgreSQL | `pgsql` |
+| `sqlserver` | Microsoft SQL Server | `sqlsrv` |
+| `odbc` | Generic ODBC connection | `odbc` |
 
 ## `[Strings]`
 
@@ -87,15 +97,16 @@ Section consumed wholesale by `Connection::fromConfig()`.
 
 ## `[imports]`
 
-Free-form section. Each `key = expression` pair lets `(import key)` resolve a short alias to a real source path; the value is evaluated as a Rose expression at import time when the alias has no matching file on disk.
+Free-form section. Each `key = template` pair lets `(import key)` resolve a short alias to a real source path. The value is evaluated as a Rose template (text mode), so `(...)` segments inside the value are interpolated against the live config and runtime context before resolution. This is invoked only when the alias has no matching file on disk.
 
 ```ini
 [imports]
-math=(# "lib/math")
-util=(# "vendor/acme/util")
+math=lib/math
+util=vendor/acme/util
+lib/directives=lib/directives.(config.Database.driver).fn
 ```
 
-After this, `(import "math")` resolves as if you had written `(import "lib/math")`.
+After this, `(import "math")` resolves as if you had written `(import "lib/math")`. The `lib/directives` entry is resolved per-driver — e.g. `lib/directives.mysql.fn` when the database driver is `mysql`.
 
 ## `[endpoints]`
 
@@ -119,8 +130,65 @@ POST /users         = api/users:create
 
 A request to `GET /users/42` invokes `(get (& ctx) (& id "42"))` defined in `api/users.fn`.
 
+### Multiple handlers (middleware)
+
+When a value contains several space-separated handlers, they run in order and share the same `ctx` / `params` arguments. The response of the **last** handler is what gets returned to the client — earlier handlers are typically used as middleware (auth checks, request validation, logging) that either pass through or throw to abort the request.
+
+```ini
+[endpoints]
+GET /users/{user_id} = lib/handler:auth lib/handler:get_user_info
+```
+
+For a request to `GET /users/42`, `lib/handler:auth` runs first (it can throw to short-circuit the response), then `lib/handler:get_user_info` runs and its return value is sent back to the client.
+
 <br/>
 
 # Top-level / meta
 
 - **`config.env`** — public property on the `Configuration` instance itself (not a section). Holds the environment id loaded from the `rose-env` file or `ROSE_ENV` env var; used to layer `<env>.conf` on top of `system.conf`.
+
+<br/>
+
+# Sample `system.conf`
+
+```ini
+[Locale]
+numeric=.2,
+time=%I:%M %p
+date=%d/%m/%Y
+datetime=%d/%m/%Y %H:%M
+timezone=UTC
+include_millis=true
+
+[Gateway]
+service=wind-3
+access_log=false
+allow_origin=*
+same_site=lax
+banner={ platform "rose-core" version (file:read "VERSION") commit (file:read "COMMIT") }
+display_errors=false
+custom_methods=RESET, PLAY, SOFT-DELETE
+
+[Session]
+expires=604800
+name=app_session
+database=true
+
+[Database]
+driver=postgres
+server=localhost
+port=5432
+user=app
+password=secret
+database=app_db
+prefix=
+trace=false
+
+[imports]
+lib/directives=lib/directives.(config.Database.driver).fn
+
+[endpoints]
+GET /users/{user_id} = lib/handler:auth lib/handler:get_user_info
+POST /users          = lib/handler:auth lib/handler:create_user
+* /health            = lib/health
+```
