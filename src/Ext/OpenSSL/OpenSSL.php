@@ -474,8 +474,8 @@ Expr::register('openssl:derive', function($args) {
  * Encrypts a data block with a symmetric cipher.
  * @code (`openssl:encrypt` <cipher-method> <secret> <iv> <data>)
  * @example
- * (set iv (openssl:random-bytes (openssl:iv-length "aes-256-cbc")))
- * (set secret (crypto:hmac-binary "sha256" "app-secret" "thanks is the passphrase"))
+ * (set iv (openssl:random-bytes (openssl:cipher-iv-length "aes-256-cbc")))
+ * (set secret (crypto:hmac-bin "sha256" "app-secret" "thanks is the passphrase"))
  * (openssl:encrypt "aes-256-cbc" (secret) (iv) "hello world")
  * ; { tag: (binary data), data: (binary data) }
  */

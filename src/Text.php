@@ -762,8 +762,8 @@ Expr::register('buf:uint16', function($args) {
  * Returns the binary representation of the given 16-bit unsigned integer (big endian) or reads a 16-bit unsigned integer from the binary string.
  * @code (`buf:uint16be` <int-value>)
  * @code (`buf:uint16be` <string-value> [offset=0])
- * @examplee
- * (buf:uint16b 0x4041)
+ * @example
+ * (buf:uint16be 0x4041)
  * ; "@A"
  * 
  * (buf:uint16be "@A")

@@ -34,6 +34,12 @@ Rose comes with a powerful expression evaluator (located in the `Expr` class), b
 
 <br/>
 
+# Configuration
+
+Rose loads its configuration from `conf/system.conf` at startup, with environment-specific overrides layered on top. Every section and field consumed by the framework — `Gateway`, `Session`, `Locale`, `Database`, `imports`, `endpoints`, and more — is documented in the [Configuration Reference](./docs/CONFIG.md).
+
+<br/>
+
 # FAQ
 
 **Q: If there is no need to write host-language code, what happens when I need something new that is not doable using current functions?**

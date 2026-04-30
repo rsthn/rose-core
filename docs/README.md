@@ -28,6 +28,7 @@
 
 # Configuration
 
+> **See also:** [Configuration Reference](./CONFIG.md) — a full description of every section and field that Rose reads from `system.conf`.
 
 ### (`config`)
 Object containing the currently loaded system configuration.
@@ -436,7 +437,7 @@ Checks if an iterable (map, array or string) does NOT have a value.
 ; true
 ```
 
-### (`eq?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`eq?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`==` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` is equal to `value2`, returns `val-true` or `val-false` (loose type comparison).
 ```lisp
 (eq? 12 "12")
@@ -455,7 +456,7 @@ Checks if `value1` is equal to `value2`, returns `val-true` or `val-false` (loos
 ; false
 ```
 
-### (`eqq?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`eqq?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`===` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` is equal to `value2` and are of the same type, returns `val-true` or `val-false`.
 ```lisp
 (eqq? 12 "12")
@@ -477,7 +478,7 @@ Checks if `value1` is equal to `value2` and are of the same type, returns `val-t
 ; true
 ```
 
-### (`ne?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`ne?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`!=` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` is not equal to `value2`, returns `val-true` or `val-false`.
 ```lisp
 (ne? 12 "12")
@@ -496,7 +497,7 @@ Checks if `value1` is not equal to `value2`, returns `val-true` or `val-false`.
 ; true
 ```
 
-### (`lt?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`lt?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`<` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` \< `value2`, returns `val-true` or `val-false`.
 ```lisp
 (lt? 1 2)
@@ -509,7 +510,7 @@ Checks if `value1` \< `value2`, returns `val-true` or `val-false`.
 ; false
 ```
 
-### (`le?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`le?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`<=` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` \<= `value2`, returns `val-true` or `val-false`.
 ```lisp
 (le? 1 2)
@@ -522,7 +523,7 @@ Checks if `value1` \<= `value2`, returns `val-true` or `val-false`.
 ; false
 ```
 
-### (`gt?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`gt?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`>` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` > `value2`, returns `val-true` or `val-false`.
 ```lisp
 (gt? 1 2)
@@ -535,7 +536,7 @@ Checks if `value1` > `value2`, returns `val-true` or `val-false`.
 ; true
 ```
 
-### (`ge?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`ge?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`>=` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` >= `value2`, returns `val-true` or `val-false`.
 ```lisp
 (ge? 1 2)
@@ -2156,7 +2157,7 @@ Returns the key of the element whose value matches or `null` if not found.
 ### (`map:len` \<map>)
 Returns the length of the Map.
 ```lisp
-(map:length (map:new 'a' 1 'b' 2))
+(map:len (map:new 'a' 1 'b' 2))
 ; 2
 ```
 
@@ -2321,8 +2322,8 @@ Generates a shared secret for public value of remote and local DH or ECDH key.
 ### (`openssl:encrypt` \<cipher-method> \<secret> \<iv> \<data>)
 Encrypts a data block with a symmetric cipher.
 ```lisp
-(set iv (openssl:random-bytes (openssl:iv-length "aes-256-cbc")))
-(set secret (crypto:hmac-binary "sha256" "app-secret" "thanks is the passphrase"))
+(set iv (openssl:random-bytes (openssl:cipher-iv-length "aes-256-cbc")))
+(set secret (crypto:hmac-bin "sha256" "app-secret" "thanks is the passphrase"))
 (openssl:encrypt "aes-256-cbc" (secret) (iv) "hello world")
 ; { tag: (binary data), data: (binary data) }
 ```
@@ -2342,6 +2343,62 @@ Converts a PEM encoded key to DER format.
 
 ### (`der:parse` \<der-string|pem-string>)
 Parses a DER encoded data and returns a map with 'int', 'bits', 'octets' fields.
+
+<br/><br/>
+
+# ASN.1
+
+
+### (`asn1:int` \<value...>)
+Encodes one or more values as DER ASN.1 INTEGER fields (tag `0x02`) and returns the concatenated result.
+```lisp
+(asn1:int 1 65537)
+; (binary data)
+```
+
+### (`asn1:octets` \<value...>)
+Encodes one or more byte strings as DER ASN.1 OCTET STRING fields (tag `0x04`) and returns the concatenated result.
+```lisp
+(asn1:octets (hex:decode "DEADBEEF"))
+; (binary data)
+```
+
+### (`asn1:bits` \<bit-count> \<data>)
+Encodes a buffer as a DER ASN.1 BIT STRING (tag `0x03`). The `bit-count` argument indicates the number of valid bits in `data`; the prefix byte (unused-bits) written into the encoded value is `length(data)*8 - bit-count`.
+```lisp
+(asn1:bits 1024 (public-key-bytes))
+; (binary data)
+```
+
+### (`asn1:obj` \<value...>)
+Encodes one or more pre-encoded OID byte strings as DER ASN.1 OBJECT IDENTIFIER fields (tag `0x06`) and returns the concatenated result. Use `asn1:oid` to build an OID from numeric arcs.
+
+### (`asn1:oid` \<arc1> \<arc2> [arc...])
+Encodes a numeric OID as a DER ASN.1 OBJECT IDENTIFIER (tag `0x06`). The first two arcs are combined into `arc1*40 + arc2`, and the remaining arcs are encoded as base-128 with continuation bits.
+```lisp
+(asn1:oid 1 2 840 113549 1 1 11)
+; (binary data — OID 1.2.840.113549.1.1.11, sha256WithRSAEncryption)
+```
+
+### (`asn1:seq` \<value...>)
+Wraps the concatenation of the given DER fragments in a DER ASN.1 SEQUENCE (tag `0x30`).
+```lisp
+(asn1:seq
+    (asn1:int 1)
+    (asn1:int 65537)
+)
+; (binary data)
+```
+
+### (`asn1:arr` \<value...>)
+Alias of `asn1:seq`; wraps the concatenation of the given DER fragments in a DER ASN.1 SEQUENCE (tag `0x30`).
+
+### (`asn1:ctx` \<value...>)
+Wraps the concatenation of the given DER fragments in a DER ASN.1 context-specific `[0]` tag (`0xA0`).
+```lisp
+(asn1:ctx (asn1:oid 1 2 840 10045 3 1 7))
+; (binary data)
+```
 
 <br/><br/>
 
@@ -3970,7 +4027,7 @@ Returns the binary representation of the given 16-bit unsigned integer (little e
 ### (`buf:uint16be` \<int-value>)<br/>(`buf:uint16be` \<string-value> [offset=0])
 Returns the binary representation of the given 16-bit unsigned integer (big endian) or reads a 16-bit unsigned integer from the binary string.
 ```lisp
-(buf:uint16b 0x4041)
+(buf:uint16be 0x4041)
 ; "@A"
 
 (buf:uint16be "@A")
