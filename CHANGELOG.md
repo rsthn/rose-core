@@ -1,3 +1,11 @@
+# v5.0.41 - Apr 30 2026
+
+#### QoL
+- Added configuration documentation.
+- Fixed minor issues in docstrings.
+
+<br/>
+
 # v5.0.40 - Apr 23 2026
 
 #### Gateway
