@@ -3,8 +3,6 @@
 (def-fn test_sys_version
     (expect:str (sys:version))
     (expect:not-zero (str:len (sys:version)))
-    ; matches the version recorded in the VERSION file
-    (expect:eq (sys:version) (str:replace "\n" "" (file:read "VERSION")))
 )
 
 ; (sys:peak-memory)

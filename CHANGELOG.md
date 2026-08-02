@@ -1,3 +1,42 @@
+# v5.0.43 - Aug 02 2026
+
+#### Expr
+- Fixed parser bug causing a comment containing an apostrophe inside an expression block to abort parsing of the whole block.
+- Fixed parser bug causing `arr.<index>.<property>` to be tokenized as a decimal number, making the trailing property unreachable.
+- Added documentation for the `==`, `===`, `!=`, `<`, `<=`, `>` and `>=` operator aliases.
+- Marked `debug:context-id` as private.
+
+#### Math
+- Fixed `math:clamp` ignoring the min and max arguments and always using the defaults.
+
+#### File
+- Fixed `file:size` and `file:atime` returning stale values from the stat cache after a write.
+
+#### Directory
+- Fixed `dir:remove`, `dir:remove-recursive` and `dir:rmdir` always returning null instead of the result.
+
+#### Image
+- Fixed `image:data` not lowercasing the format when building the DATA_URI mime type.
+
+#### OpenSSL
+- Added documentation for the `asn1:*` functions.
+
+#### Gateway
+- Added missing documentation for the `gateway` function.
+
+#### Wind
+- Corrected the `f` parameter charset, updated the multi-request limit and documented the `mreq` alias.
+
+#### General
+- Added expression-level unit tests covering math, path, file, dir, stream, encoding, crypto, asn1, openssl, sys, image, gateway and the parser.
+- Added `test/run-fn.php` and updated the deployment scripts so expression tests run against the working tree instead of the installed rose-core.
+- Fixed minor bugs to increase compat with PHP 8.4.
+
+#### QoL
+- Fixed minor issues in README, CONFIG and docstrings.
+
+<br/>
+
 # v5.0.42 - Apr 30 2026
 
 #### QoL
