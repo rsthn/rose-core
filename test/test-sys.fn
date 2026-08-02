@@ -1,0 +1,130 @@
+
+; (sys:version)
+(def-fn test_sys_version
+    (expect:str (sys:version))
+    (expect:not-zero (str:len (sys:version)))
+    ; matches the version recorded in the VERSION file
+    (expect:eq (sys:version) (str:replace "\n" "" (file:read "VERSION")))
+)
+
+; (sys:peak-memory)
+(def-fn test_sys_peak_memory
+    ; reported in MB as a float, not an integer byte count
+    (expect:number (sys:peak-memory))
+    (expect:true (gt? (sys:peak-memory) 0))
+)
+
+; (sys:gc)
+(def-fn test_sys_gc
+    ; returns the number of collected cycles, which may legitimately be zero
+    (expect:int (sys:gc))
+    (expect:true (ge? (sys:gc) 0))
+)
+
+; (sys:sleep <seconds>)
+(def-fn test_sys_sleep
+    ; fractional values route through usleep
+    (set before (datetime:millis))
+    (expect:true (sys:sleep 0.05))
+    (set elapsed (- (datetime:millis) (before)))
+
+    (expect:true (ge? (elapsed) 40))
+    ; generous upper bound so a loaded machine does not cause a false failure
+    (expect:true (lt? (elapsed) 5000))
+)
+
+; (sys:shell <command>)
+(def-fn test_sys_shell
+    ; `echo` is available on both cmd.exe and POSIX shells
+    (set out (sys:shell "echo rose-shell-probe"))
+    (expect:str (out))
+    (expect:ne (str:index "rose-shell-probe" (out)) -1)
+)
+
+; (sys:exec <command>)
+;
+; Returns the process exit code (output goes straight to stdout via passthru).
+(def-fn test_sys_exec
+    (expect:eq (sys:exec "exit 0") 0)
+)
+
+; (sys:exit [errorlevel])
+;
+; NOT COVERED: terminates the PHP process, which would abort the test run itself. Any assertion
+; would have to fork a child interpreter, which the expression layer cannot do.
+
+; (env:get-all)
+;
+; NOTE: the result is bound to `vars`, not `all` — a local named `all` would shadow the built-in
+; `all` function and the call would resolve to that instead.
+(def-fn test_env_get_all
+    (set vars (env:get-all))
+    (expect:map (vars))
+    (expect:not-zero (len (vars)))
+)
+
+; (env:set <value>)
+; (env:get <name>)
+(def-fn test_env_set_get
+    (expect:true (env:set "ROSE_TEST_VAR=hello"))
+    (expect:eq (env:get "ROSE_TEST_VAR") "hello")
+
+    ; overwriting replaces the previous value
+    (env:set "ROSE_TEST_VAR=world")
+    (expect:eq (env:get "ROSE_TEST_VAR") "world")
+
+    ; an unset name yields null rather than false
+    (expect:eq (env:get "ROSE_TEST_VAR_THAT_IS_NOT_SET") null)
+
+    ; the variable is visible through env:get-all as well
+    (expect:eq ((env:get-all).ROSE_TEST_VAR) "world")
+
+    ; clean up
+    (env:set "ROSE_TEST_VAR=")
+)
+
+; (utils:uuid)
+(def-fn test_utils_uuid
+    (set id (utils:uuid))
+    (expect:str (id))
+
+    ; canonical 8-4-4-4-12 form
+    (expect:eq (str:len (id)) 36)
+    (expect:eq (str:sub 8 1 (id)) "-")
+    (expect:eq (str:sub 13 1 (id)) "-")
+    (expect:eq (str:sub 18 1 (id)) "-")
+    (expect:eq (str:sub 23 1 (id)) "-")
+
+    ; two draws must not collide
+    (expect:ne (utils:uuid) (utils:uuid))
+)
+
+; (debug:fn [prefix])
+(def-fn test_debug_fn
+    (set fns (debug:fn))
+    (expect:array (fns))
+    (expect:not-zero (len (fns)))
+
+    ; the prefix filter restricts the listing, and this very function must appear in it
+    (set mine (debug:fn "test_debug"))
+    (expect:array (mine))
+    (expect:not-zero (len (filter f in (mine) (eq? (f) "test_debug_fn"))))
+
+    ; every entry of a filtered listing carries the prefix
+    (expect:eq (len (filter f in (mine) (not (starts-with? "test_debug" (f))))) 0)
+)
+
+; (debug:context-id)
+;
+; Marked @private-code in the source, so it is intentionally absent from the public reference;
+; covered here because it is still a registered, callable function.
+(def-fn test_debug_context_id
+    ; the root context id is 0, so a null-check would pass spuriously under loose comparison
+    (expect:int (debug:context-id))
+    (expect:true (ge? (debug:context-id) 0))
+)
+
+; (debug:dump-context-chain [include-root] [include-private])
+;
+; NOT COVERED: writes the whole context chain straight to standard output, which would corrupt
+; the test runner display. It is marked @private-code and has no return value to assert on.

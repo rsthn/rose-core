@@ -1,0 +1,82 @@
+
+;; Gateway and SSE run against the CLI gateway instance. Functions whose whole effect is to emit
+;; headers or terminate the request are covered only as far as is meaningful without a live HTTP
+;; request; the exclusions are documented individually below.
+
+; (gateway)
+(def-fn test_gateway_instance
+    (expect:ne (gateway) null)
+)
+
+; gateway.* properties
+(def-fn test_gateway_properties
+    ; the request/server/headers/cookies containers always exist
+    (expect:ne (gateway.request) null)
+    (expect:ne (gateway.server) null)
+    (expect:ne (gateway.headers) null)
+    (expect:ne (gateway.cookies) null)
+
+    ; method is populated even in CLI mode
+    (expect:str (gateway.method))
+
+    ; root and fsroot are strings, fsroot points at a real directory
+    (expect:str (gateway.root))
+    (expect:str (gateway.fsroot))
+    (expect:true (path:is-dir (gateway.fsroot)))
+
+    ; secure is a boolean flag
+    (expect:bool (gateway.secure))
+)
+
+; (gateway:status <code>)
+;
+; NOT COVERED: delegates to http_response_code(), which raises "headers already sent" as soon as
+; the runner has printed anything. It cannot be exercised from a CLI test that also reports
+; progress to stdout.
+
+; (gateway:header <header-line...>)
+(def-fn test_gateway_header
+    (expect:true (gateway:header "X-Rose-Test: 1"))
+    ; several lines can be sent in one call
+    (expect:true (gateway:header "X-Rose-A: 1" "X-Rose-B: 2"))
+)
+
+; (gateway:persistent)
+(def-fn test_gateway_persistent
+    ; marks the connection as persistent; returns without error in CLI mode
+    (gateway:persistent)
+    (expect:ne (gateway) null)
+)
+
+; (gateway:timeout <seconds>)
+(def-fn test_gateway_timeout
+    (gateway:timeout 30)
+    (expect:ne (gateway) null)
+)
+
+; (gateway:flush)
+(def-fn test_gateway_flush
+    ; flushes pending output buffers; safe to call with nothing buffered
+    (gateway:flush)
+    (expect:ne (gateway) null)
+)
+
+; (gateway:redirect <url>)
+;
+; NOT COVERED: emits a Location header and stops execution of the current request, which would
+; abort the remainder of the test run.
+
+; (gateway:return [<status>] [<response>])
+; (gateway:continue [<status>] [<response>])
+;
+; NOT COVERED: both terminate the current request by design (they unwind through the Wind
+; sub-return machinery), so calling either would end the test run rather than assert anything.
+
+; (sse:init)
+; (sse:send [event-name] <data>)
+; (sse:alive)
+;
+; NOT COVERED: `sse:init` switches the response into an event-stream and emits headers, and
+; `sse:send` writes framed payloads straight to standard output — both would corrupt the test
+; runner display and neither returns a value that can be asserted. `sse:alive` reports whether
+; the client connection is still open, which has no meaning outside a live HTTP request.

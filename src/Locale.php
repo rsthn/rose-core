@@ -87,13 +87,13 @@ class Locale
                 if (!$format) $format = 'numeric';
                 if ($config && $config->has($format)) $format = $config->get($format);
                 if ($format === 'numeric') $format = '.2,';
-                return number_format((double)$value, $format[1], $format[0], $format[2]);
+                return number_format((float)$value, $format[1], $format[0], $format[2]);
 
             case 'INTEGER':
                 if (!$format) $format = 'numeric';
                 if ($config && $config->has($format)) $format = $config->get($format);
                 if ($format === 'numeric') $format = '.2,';
-                return number_format((double)$value, 0, 0, $format[2]);
+                return number_format((float)$value, 0, 0, $format[2]);
 
             case 'TIME':
                 if (!$format) $format = 'time';
@@ -141,7 +141,7 @@ class Locale
 
                 if (Text::toUpperCase(Text::substring($formatType,0,7)) == 'NUMERIC') {
                     $tmp = $config->get($formatType);
-                    return number_format ((double)$value, $tmp[1], $tmp[0], $tmp[2]);
+                    return number_format ((float)$value, $tmp[1], $tmp[0], $tmp[2]);
                 }
 
                 return Text::format($config->get($formatType), $value);

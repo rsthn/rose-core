@@ -1,0 +1,52 @@
+
+; (stream:open <path> [mode='r'])
+; (stream:write <data-stream> <data>)
+; (stream:read <data-stream> <length>)
+; (stream:close <data-stream>)
+(def-fn test_stream_write_read
+    (dir:create "test/volatile")
+
+    (set out (stream:open "test/volatile/stream.txt" "w"))
+    (expect:ne (out) null)
+    (expect:true (stream:write (out) "Hello, "))
+    (expect:true (stream:write (out) "World!"))
+    (expect:true (stream:close (out)))
+
+    (expect:eq (file:read "test/volatile/stream.txt") "Hello, World!")
+
+    ; read it back through the stream API
+    (set in (stream:open "test/volatile/stream.txt"))
+    (expect:eq (stream:read (in) 5) "Hello")
+    (expect:eq (stream:read (in) 2) ", ")
+    (expect:eq (stream:read (in) 6) "World!")
+    (expect:true (stream:close (in)))
+
+    (file:remove "test/volatile/stream.txt")
+)
+
+; append mode preserves existing content
+(def-fn test_stream_append_mode
+    (dir:create "test/volatile")
+    (file:write "test/volatile/stream-append.txt" "first")
+
+    (set s (stream:open "test/volatile/stream-append.txt" "a"))
+    (stream:write (s) "-second")
+    (stream:close (s))
+
+    (expect:eq (file:read "test/volatile/stream-append.txt") "first-second")
+
+    (file:remove "test/volatile/stream-append.txt")
+)
+
+; reading past the end yields an empty string rather than an error
+(def-fn test_stream_read_past_end
+    (dir:create "test/volatile")
+    (file:write "test/volatile/stream-short.txt" "ab")
+
+    (set s (stream:open "test/volatile/stream-short.txt"))
+    (expect:eq (stream:read (s) 2) "ab")
+    (expect:eq (stream:read (s) 8) "")
+    (stream:close (s))
+
+    (file:remove "test/volatile/stream-short.txt")
+)

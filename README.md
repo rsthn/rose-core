@@ -27,13 +27,11 @@ Rose targets **PHP 8.0+**. The following PHP extensions are used by the framewor
 | `mbstring` | Unicode-aware string operations across `Text` / `Strings` |
 | `json` | `json:parse` / `json:dump`, response serialization |
 | `curl` | HTTP client (`request:*`) |
-| `openssl` | `openssl:*`, certificate/PKI handling, `crypto:random-bytes` |
+| `openssl` | `openssl:*`, certificate/PKI handling, `openssl:random-bytes` |
 | `hash` | `crypto:hash` / `crypto:hmac` and related digests |
 | `zlib` | `gz:compress`, `gz:deflate`, `gz:inflate`, `gz:decompress` |
 | `gd` | All `image:*` operations |
 | `simplexml` | `xml:parse`, `xml:simplify` |
-| `session` | PHP-native session storage backend (bundled in PHP) |
-| `date` | `DateTime` / timezone handling (bundled in PHP) |
 
 ### Optional — database drivers
 

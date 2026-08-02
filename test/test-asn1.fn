@@ -1,0 +1,101 @@
+
+;; DER encoding tests. Expected values are asserted as hex so that byte-level regressions are
+;; visible in the failure message rather than as unprintable binary.
+
+; (asn1:int <value...>)
+(def-fn test_asn1_int
+    ; tag 0x02, length 1, value 1
+    (expect:eq (hex:encode (asn1:int 1)) "020101")
+    (expect:eq (hex:encode (asn1:int 255)) "0201ff")
+
+    ; 65537 spans three content bytes
+    (expect:eq (hex:encode (asn1:int 65537)) "0203010001")
+
+    ; zero is encoded as a single 0x00 byte
+    (expect:eq (hex:encode (asn1:int 0)) "020100")
+
+    ; several values concatenate into one buffer
+    (expect:eq (hex:encode (asn1:int 1 2)) "020101020102")
+)
+
+; (asn1:octets <value...>)
+(def-fn test_asn1_octets
+    ; tag 0x04, length 2, contents "AB"
+    (expect:eq (hex:encode (asn1:octets "AB")) "04024142")
+    (expect:eq (hex:encode (asn1:octets "")) "0400")
+
+    ; multiple values concatenate
+    (expect:eq (hex:encode (asn1:octets "A" "B")) "040141040142")
+)
+
+; (asn1:bits <bit-count> <data>)
+(def-fn test_asn1_bits
+    ; 32 significant bits over 4 bytes leaves 0 unused bits
+    (expect:eq (hex:encode (asn1:bits 32 (hex:decode "deadbeef"))) "030500deadbeef")
+
+    ; 30 significant bits over 4 bytes leaves 2 unused
+    (expect:eq (hex:encode (asn1:bits 30 (hex:decode "deadbeef"))) "030502deadbeef")
+)
+
+; (asn1:seq <value...>)
+(def-fn test_asn1_seq
+    ; tag 0x30 wrapping a single 3-byte INTEGER
+    (expect:eq (hex:encode (asn1:seq (asn1:int 1))) "3003020101")
+
+    ; wrapping two INTEGERs
+    (expect:eq (hex:encode (asn1:seq (asn1:int 1) (asn1:int 2))) "3006020101020102")
+
+    ; empty sequence
+    (expect:eq (hex:encode (asn1:seq)) "3000")
+)
+
+; (asn1:arr <value...>)
+;
+; `asn1:arr` is documented as an alias of `asn1:seq`; this pins that they really are
+; byte-identical, so any future divergence (e.g. switching to SET / tag 0x31) fails here.
+(def-fn test_asn1_arr_is_seq_alias
+    (expect:eq (hex:encode (asn1:arr (asn1:int 1))) (hex:encode (asn1:seq (asn1:int 1))))
+    (expect:eq (hex:encode (asn1:arr (asn1:int 1))) "3003020101")
+    (expect:eq (str:sub 0 2 (hex:encode (asn1:arr (asn1:int 7)))) "30")
+)
+
+; (asn1:ctx <value...>)
+(def-fn test_asn1_ctx
+    ; context-specific constructed tag [0] == 0xA0
+    (expect:eq (hex:encode (asn1:ctx (asn1:int 1))) "a003020101")
+    (expect:eq (hex:encode (asn1:ctx)) "a000")
+)
+
+; (asn1:obj <value...>)
+(def-fn test_asn1_obj
+    ; the value is used verbatim as an already-encoded OID body
+    (expect:eq (hex:encode (asn1:obj (hex:decode "2a8648ce3d0201"))) "06072a8648ce3d0201")
+)
+
+; (asn1:oid <arc1> <arc2> [arc...])
+(def-fn test_asn1_oid
+    ; 1.2.840.113549 (RSA) -> 06 06 2A 86 48 86 F7 0D
+    (expect:eq (hex:encode (asn1:oid 1 2 840 113549)) "06062a864886f70d")
+
+    ; 1.2 alone packs into the single leading byte 1*40+2 = 0x2A
+    (expect:eq (hex:encode (asn1:oid 1 2)) "06012a")
+
+    ; 1.2.840.10045.2.1 (EC public key)
+    (expect:eq (hex:encode (asn1:oid 1 2 840 10045 2 1)) "06072a8648ce3d0201")
+)
+
+; length encoding
+(def-fn test_asn1_length_forms
+    ; payloads under 128 bytes use the short form (a single length byte)
+    (set short (asn1:octets (rpad 127 "A" "")))
+    (expect:eq (str:sub 0 4 (hex:encode (short))) "047f")
+
+    ; 128..255 bytes switch to the 0x81 long form
+    (set long (asn1:octets (rpad 200 "A" "")))
+    (expect:eq (str:sub 0 6 (hex:encode (long))) "0481c8")
+)
+
+; the encoder refuses payloads of 256 bytes or more
+(def-fn test_asn1_length_limit
+    (expect:error "invalid length" (fn (asn1:octets (rpad 256 "A" ""))))
+)

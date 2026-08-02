@@ -20,6 +20,7 @@ class File
 	*/
     public static function size (string $filepath)
     {
+		clearstatcache();
         return file_exists($filepath) ? filesize($filepath) : null;
     }
 
@@ -45,6 +46,7 @@ class File
 	*/
     public static function atime (string $filepath, bool $timestamp=false)
     {
+		clearstatcache();
         return $timestamp ? fileatime($filepath) : (string)new DateTime(fileatime($filepath));
     }
 

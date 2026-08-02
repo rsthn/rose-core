@@ -52,7 +52,7 @@ class Image
     /*
     **	Creates an image instance. Loads the given filename if not null.
     */
-    public function __construct (string $filename=null)
+    public function __construct (?string $filename=null)
     {
         $this->type = 'png';
         $this->filename = 'output.png';
@@ -131,7 +131,7 @@ class Image
     **	Saves the image to the given target file, throws an exception if the file type is unsupported, or if there was an
     **	error while trying to save. If no target specified the filename used in load() will be used.
     */
-    public function save (string $target=null, string $type=null, int $quality=95)
+    public function save (?string $target=null, ?string $type=null, int $quality=95)
     {
         if ($target == null)
             $target = $this->filename;
@@ -222,7 +222,7 @@ class Image
         if ($mode === 'BINARY') return $data;
 
         if ($mode === 'DATA_URI')
-            return 'data:image/'.$type.';base64,'.base64_encode($data);
+            return 'data:image/'.Text::toLowerCase($type).';base64,'.base64_encode($data);
 
         return base64_encode($data);
     }
@@ -231,7 +231,7 @@ class Image
     **	Returns the width of the image. If the width parameter is not null the image will be horizontally resized to the given
     **	width, and the height will be adjusted if the holdAspect parameter is set to true.
     */
-    public function width (int $width=null, bool $holdAspect=true)
+    public function width (?int $width=null, bool $holdAspect=true)
     {
         if ($width !== null)
         {
@@ -249,7 +249,7 @@ class Image
     **	Returns the height of the image. If the height parameter is not null the image will be vertically resized to the given
     **	height, and the width will be adjusted if the holdAspect parameter is set to true.
     */
-    public function height (int $height=null, bool $holdAspect=true)
+    public function height (?int $height=null, bool $holdAspect=true)
     {
         if ($height !== null)
         {
@@ -280,7 +280,7 @@ class Image
     /*
     **	Scales the image by the given the width and height factors. Each factor must be a real number between 0 and 1 (inclusive).
     */
-    public function scale (float $wf, float $hf=null, $rewrite=true)
+    public function scale (float $wf, ?float $hf=null, $rewrite=true)
     {
         if ($hf === null) $hf = $wf;
         return $this->resize (intval($this->width()*$wf), intval($this->height()*$hf), $rewrite);
@@ -321,7 +321,7 @@ class Image
     **	Cuts a portion of the image and returns a new image object. If the top point coordinates are null, they will be
     **	centered. If the size parameters are null they will be set to the size of the image.
     */
-    public function cut (int $w=null, int $h=null, int $sx=null, int $sy=null)
+    public function cut (?int $w=null, ?int $h=null, ?int $sx=null, ?int $sy=null)
     {
         $tx=null; $ty=null; $image=null;
 
@@ -353,7 +353,7 @@ class Image
     **	Crops to a portion of the image. This is similar to cutting a portion of the image and replacing the original
     **	by the portion.
     */
-    public function crop (int $w=null, int $h=null, int $sx=null, int $sy=null)
+    public function crop (?int $w=null, ?int $h=null, ?int $sx=null, ?int $sy=null)
     {
         $tx=null; $ty=null; $image=null;
 
@@ -386,7 +386,7 @@ class Image
     **	image only if the rewrite parameter is set to false. The onTooWide and onTooTall parameters indicates how
     **	to cut if the image is either too wide or too tall respectively.
     */
-    public function smartCut (int $w=null, int $h=null, int $onTooWide=Image::CENTER, int $onTooTall=Image::CENTER, bool $rewrite=false)
+    public function smartCut (?int $w=null, ?int $h=null, int $onTooWide=Image::CENTER, int $onTooTall=Image::CENTER, bool $rewrite=false)
     {
         $sx=null; $sy=null; $image=null;
 

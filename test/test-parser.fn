@@ -1,0 +1,98 @@
+
+;; Tokenizer regression tests.
+;;
+;; Both groups below cover defects that were silent for a long time because nothing exercised
+;; them: a comment containing an apostrophe aborted the parse of the whole enclosing block, and
+;; an array index followed by a property was scanned as a decimal number.
+
+;; ---------------------------------------------------------------------------------------------
+;; Comments inside an expression block.
+;;
+;; The block scanner tracks quotes so that parenthesis inside strings are not miscounted. Without
+;; comment handling, a lone apostrophe in a comment opened a string that ran to end of input and
+;; raised "unexpected end of template (25)".
+
+(def-fn test_parser_comment_with_apostrophe
+    ; the entry's keys are fine now
+    (expect:eq 1 1)
+)
+
+(def-fn test_parser_comment_with_quotes_and_parens
+    ; a comment may contain ' and " and ` and even (unbalanced parens
+    (set v 5)
+    ; another one, with a stray ) too
+    (expect:eq (v) 5)
+)
+
+(def-fn test_parser_comment_between_arguments
+    (set total (+
+        1
+        ; the operand's value follows
+        2
+    ))
+    (expect:eq (total) 3)
+)
+
+(def-fn test_parser_apostrophe_in_string_is_preserved
+    ; a comment must not eat real strings
+    (set s "the entry's keys")
+    (expect:eq (s) "the entry's keys")
+    (expect:eq (str:len (s)) 16)
+)
+
+(def-fn test_parser_semicolon_inside_string_is_not_a_comment
+    (set s "a;b")
+    (expect:eq (s) "a;b")
+    (expect:eq (str:len (s)) 3)
+)
+
+;; ---------------------------------------------------------------------------------------------
+;; Index access followed by a property.
+;;
+;; `a.0.name` used to tokenise as the number `0.` plus a stray identifier, because a digit right
+;; after an access token started a numeric literal whose decimal point swallowed the next dot.
+
+(def-fn test_parser_index_then_property
+    (set a [{name "x" id 7} {name "y" id 8}])
+
+    (expect:eq (a.0.name) "x")
+    (expect:eq (a.0.id) 7)
+    (expect:eq (a.1.name) "y")
+    (expect:eq (a.1.id) 8)
+)
+
+(def-fn test_parser_index_then_property_nested
+    (set m {list [{name "z" tags ["p" "q"]}]})
+
+    (expect:eq (m.list.0.name) "z")
+    (expect:eq (m.list.0.tags.1) "q")
+)
+
+(def-fn test_parser_index_only_access_still_works
+    (set a [{name "x" id 7} {name "y" id 8}])
+    (set plain ["first" "second"])
+
+    ; indexing without a trailing property must still index, not yield a key name
+    (expect:eq (json:str (a.0)) "{\"name\":\"x\",\"id\":7}")
+    (expect:eq (plain.0) "first")
+    (expect:eq (plain.1) "second")
+)
+
+(def-fn test_parser_quoted_index_equivalence
+    (set a [{name "x" id 7} {name "y" id 8}])
+
+    ; the quoted forms always worked and must stay equivalent to the bare form
+    (expect:eq (a.'0'.name) (a.0.name))
+    (expect:eq (a."1".id) (a.1.id))
+)
+
+(def-fn test_parser_numeric_literals_unaffected
+    ; a digit in normal position is still a number, decimals included
+    (expect:eq (math:fixed 5.4782 1) 5.5)
+    (expect:eq (+ 1.5 2.25) 3.75)
+    (expect:eq (- 10 4) 6)
+    (expect:eq (math:floor 5.8) 5)
+
+    ; negative numbers too
+    (expect:eq (math:abs -5.5) 5.5)
+)

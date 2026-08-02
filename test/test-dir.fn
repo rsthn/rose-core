@@ -1,0 +1,159 @@
+
+;; Builds a known tree under test/volatile/tree:
+;;   tree/a.txt  tree/b.log  tree/sub/c.txt  tree/sub/deep/d.txt
+(def-fn :make_tree
+    (dir:create "test/volatile/tree/sub/deep")
+    (file:write "test/volatile/tree/a.txt" "a")
+    (file:write "test/volatile/tree/b.log" "b")
+    (file:write "test/volatile/tree/sub/c.txt" "c")
+    (file:write "test/volatile/tree/sub/deep/d.txt" "d")
+)
+
+(def-fn :drop_tree
+    (dir:remove-recursive "test/volatile/tree")
+)
+
+; (dir:create <path>)
+(def-fn test_dir_create
+    (dir:remove-recursive "test/volatile/created")
+
+    (expect:true (dir:create "test/volatile/created/nested/deep"))
+    (expect:true (path:is-dir "test/volatile/created/nested/deep"))
+
+    (dir:remove-recursive "test/volatile/created")
+    (expect:false (path:exists "test/volatile/created"))
+)
+
+; (dir:files <path> [regex-pattern])
+(def-fn test_dir_files
+    (make_tree)
+
+    (set files (dir:files "test/volatile/tree"))
+    (expect:array (files))
+    (expect:eq (len (files)) 2)
+
+    ; entries expose name and path
+    (set names (array:sort-asc (map f in (files) (f.name))))
+    (expect:eq (names.0) "a.txt")
+    (expect:eq (names.1) "b.log")
+    (expect:true (ends-with? "a.txt" ((array:first (filter f in (files) (eq? (f.name) "a.txt"))).path)))
+
+    ; pattern filters the result
+    (expect:eq (len (dir:files "test/volatile/tree" "/\\.txt$/")) 1)
+
+    (drop_tree)
+)
+
+; (dir:dirs <path> [regex-pattern])
+(def-fn test_dir_dirs
+    (make_tree)
+
+    (set dirs (dir:dirs "test/volatile/tree"))
+    (expect:array (dirs))
+    (expect:eq (len (dirs)) 1)
+
+    (expect:eq (dirs.0.name) "sub")
+    (expect:true (ends-with? "sub/" (dirs.0.path)))
+
+    (drop_tree)
+)
+
+; (dir:entries <path> [regex-pattern])
+(def-fn test_dir_entries
+    (make_tree)
+
+    (set e (dir:entries "test/volatile/tree"))
+    (expect:map (e))
+    (expect:eq (e.name) "tree")
+    (expect:array (e.files))
+    (expect:array (e.dirs))
+    (expect:eq (len (e.files)) 2)
+    (expect:eq (len (e.dirs)) 1)
+
+    (drop_tree)
+)
+
+; (dir:files-recursive <path> [regex-pattern])
+(def-fn test_dir_files_recursive
+    (make_tree)
+
+    (set files (dir:files-recursive "test/volatile/tree"))
+    (expect:array (files))
+    (expect:eq (len (files)) 4)
+
+    ; recursion reaches the deepest level
+    (expect:eq (len (filter f in (files) (eq? (f.name) "d.txt"))) 1)
+
+    ; pattern still applies while recursing
+    (expect:eq (len (dir:files-recursive "test/volatile/tree" "/\\.txt$/")) 3)
+
+    (drop_tree)
+)
+
+; (dir:dirs-recursive <path> [regex-pattern])
+(def-fn test_dir_dirs_recursive
+    (make_tree)
+
+    (set dirs (dir:dirs-recursive "test/volatile/tree"))
+    (expect:array (dirs))
+    (expect:eq (len (dirs)) 2)
+
+    (drop_tree)
+)
+
+; (dir:entries-recursive <path> [regex-pattern])
+(def-fn test_dir_entries_recursive
+    (make_tree)
+
+    (set e (dir:entries-recursive "test/volatile/tree"))
+    (expect:map (e))
+    (expect:eq (len (e.files)) 4)
+    (expect:eq (len (e.dirs)) 2)
+
+    (drop_tree)
+)
+
+; (dir:remove <path>)
+(def-fn test_dir_remove
+    (dir:create "test/volatile/empty-dir")
+    (expect:true (dir:remove "test/volatile/empty-dir"))
+    (expect:false (path:exists "test/volatile/empty-dir"))
+
+    ; a non-empty directory is refused, and the failure is reported
+    (dir:create "test/volatile/full-dir")
+    (file:write "test/volatile/full-dir/x.txt" "x")
+    (expect:false (dir:remove "test/volatile/full-dir"))
+    (expect:true (path:is-dir "test/volatile/full-dir"))
+
+    (dir:remove-recursive "test/volatile/full-dir")
+)
+
+; (dir:rmdir <path>)
+(def-fn test_dir_rmdir
+    (dir:create "test/volatile/rmdir-target")
+    (expect:true (dir:rmdir "test/volatile/rmdir-target"))
+    (expect:false (path:exists "test/volatile/rmdir-target"))
+)
+
+; (dir:remove-recursive <path>)
+(def-fn test_dir_remove_recursive
+    (make_tree)
+
+    (expect:true (dir:remove-recursive "test/volatile/tree"))
+    (expect:false (path:exists "test/volatile/tree"))
+)
+
+; (dir:copy <source> <destination> [recursive=true] [overwrite=true])
+(def-fn test_dir_copy
+    (make_tree)
+    (dir:remove-recursive "test/volatile/tree-copy")
+    (dir:create "test/volatile/tree-copy")
+
+    (dir:copy "test/volatile/tree" "test/volatile/tree-copy")
+    (expect:true (path:is-file "test/volatile/tree-copy/a.txt"))
+    (expect:eq (file:read "test/volatile/tree-copy/a.txt") "a")
+    (expect:true (path:is-file "test/volatile/tree-copy/sub/c.txt"))
+
+    (dir:remove-recursive "test/volatile/tree-copy")
+    (drop_tree)
+)

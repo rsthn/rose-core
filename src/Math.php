@@ -235,6 +235,12 @@ Expr::register('math:floor', function($args) {
  * ; 10
  */
 Expr::register('math:clamp', function($args) {
+    if ($args->length >= 4)
+        return Math::clamp($args->get(1), $args->get(2), $args->get(3));
+
+    if ($args->length == 3)
+        return Math::clamp($args->get(1), $args->get(2));
+
     return Math::clamp($args->get(1));
 });
 

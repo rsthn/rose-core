@@ -5,6 +5,7 @@ vendor/
 *.log
 *.tmp
 volatile/
+.rnd
 composer.lock
 *.code-workspace
 TODO.txt

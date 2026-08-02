@@ -1,0 +1,142 @@
+
+; (file:write <path> <contents>)
+; (file:read <path>)
+(def-fn test_file_write_read
+    (dir:create "test/volatile")
+
+    (file:write "test/volatile/rw.txt" "Hello, World!")
+    (expect:eq (file:read "test/volatile/rw.txt") "Hello, World!")
+
+    ; writing again replaces rather than appends
+    (file:write "test/volatile/rw.txt" "second")
+    (expect:eq (file:read "test/volatile/rw.txt") "second")
+
+    (file:remove "test/volatile/rw.txt")
+)
+
+; (file:append <path> <contents>)
+(def-fn test_file_append
+    (dir:create "test/volatile")
+
+    (file:write "test/volatile/append.txt" "a")
+    (file:append "test/volatile/append.txt" "b")
+    (file:append "test/volatile/append.txt" "c")
+    (expect:eq (file:read "test/volatile/append.txt") "abc")
+
+    (file:remove "test/volatile/append.txt")
+)
+
+; (file:size <path>)
+(def-fn test_file_size
+    (dir:create "test/volatile")
+
+    (file:write "test/volatile/size.txt" "12345")
+    (expect:eq (file:size "test/volatile/size.txt") 5)
+
+    ; re-writing the same path reports the new size, not a stale cached one
+    (file:write "test/volatile/size.txt" "")
+    (expect:eq (file:size "test/volatile/size.txt") 0)
+
+    (file:write "test/volatile/size.txt" "1234567890")
+    (expect:eq (file:size "test/volatile/size.txt") 10)
+
+    (file:remove "test/volatile/size.txt")
+
+    ; missing file yields null rather than throwing
+    (expect:eq (file:size "test/volatile/definitely-missing.txt") null)
+)
+
+; (file:create <path>)
+(def-fn test_file_create
+    (dir:create "test/volatile")
+
+    (expect:true (file:create "test/volatile/created.txt"))
+    (expect:true (path:is-file "test/volatile/created.txt"))
+    (expect:eq (file:size "test/volatile/created.txt") 0)
+
+    (file:remove "test/volatile/created.txt")
+)
+
+; (file:remove <path>)
+(def-fn test_file_remove
+    (dir:create "test/volatile")
+
+    (file:write "test/volatile/remove.txt" "x")
+    (expect:true (path:exists "test/volatile/remove.txt"))
+
+    (expect:true (file:remove "test/volatile/remove.txt"))
+    (expect:false (path:exists "test/volatile/remove.txt"))
+)
+
+; (file:unlink <path>)
+(def-fn test_file_unlink
+    (dir:create "test/volatile")
+
+    (file:write "test/volatile/unlink.txt" "x")
+    (file:unlink "test/volatile/unlink.txt")
+    (expect:false (path:exists "test/volatile/unlink.txt"))
+)
+
+; (file:copy <source> <target> [stream=false])
+(def-fn test_file_copy
+    (dir:create "test/volatile")
+    (file:write "test/volatile/copy-src.txt" "payload")
+
+    (file:copy "test/volatile/copy-src.txt" "test/volatile/copy-dst.txt")
+    (expect:eq (file:read "test/volatile/copy-dst.txt") "payload")
+
+    ; the stream flag must produce identical output
+    (file:copy "test/volatile/copy-src.txt" "test/volatile/copy-stream.txt" true)
+    (expect:eq (file:read "test/volatile/copy-stream.txt") "payload")
+
+    (file:remove "test/volatile/copy-src.txt")
+    (file:remove "test/volatile/copy-dst.txt")
+    (file:remove "test/volatile/copy-stream.txt")
+)
+
+; (file:mtime <path>)
+(def-fn test_file_mtime
+    (dir:create "test/volatile")
+    (file:write "test/volatile/mtime.txt" "x")
+
+    (expect:str (file:mtime "test/volatile/mtime.txt"))
+    (expect:not-zero (str:len (file:mtime "test/volatile/mtime.txt")))
+
+    (file:remove "test/volatile/mtime.txt")
+)
+
+; (file:atime <path>)
+(def-fn test_file_atime
+    (dir:create "test/volatile")
+    (file:write "test/volatile/atime.txt" "x")
+
+    (expect:str (file:atime "test/volatile/atime.txt"))
+    (expect:not-zero (str:len (file:atime "test/volatile/atime.txt")))
+
+    (file:remove "test/volatile/atime.txt")
+)
+
+; (file:touch <path> [datetime])
+(def-fn test_file_touch
+    (dir:create "test/volatile")
+    (file:write "test/volatile/touch.txt" "x")
+
+    (expect:true (file:touch "test/volatile/touch.txt" "2024-03-24 03:36:18"))
+    (expect:true (starts-with? "2024-03-24" (file:mtime "test/volatile/touch.txt")))
+
+    (file:remove "test/volatile/touch.txt")
+)
+
+; (file:dump <path>)
+;
+; Writes straight to standard output. `test:run` swaps out echo/print but not raw output, so this
+; only verifies the call succeeds on an empty file (producing no visible output).
+(def-fn test_file_dump
+    (dir:create "test/volatile")
+    (file:write "test/volatile/dump.txt" "")
+
+    (file:dump "test/volatile/dump.txt")
+    (expect:eq (file:size "test/volatile/dump.txt") 0)
+
+    (file:remove "test/volatile/dump.txt")
+)

@@ -10,7 +10,7 @@ We do not enforce any language for this purpose, however if you'd like to set sa
 
 - Requests should be sent as regular request parameters using either HTTP method (GET or POST) to the API end-point, with the `Content-Type` header set to `application/x-www-form-urlencoded` or `multipart/form-data` (use the latter when files are uploaded to the service).
 
-- The `f` request parameter is mandatory and indicates the name of the function to execute, this parameter can have only the characters `[#A-Za-z0-9.,_-]`, any other character will be removed.
+- The `f` request parameter is mandatory and indicates the name of the function to execute, this parameter can have only the characters `[A-Za-z0-9._-]`, any other character will be removed.
 
 <br/>
 
@@ -33,7 +33,7 @@ Responses are always in JSON format (unless otherwise explicitly specified) with
 
 # Multi-Request Mode
 
-This mode can be used to run multiple requests (maximum is implementation-dependant, however we recommend 16 as limit) in a single web-request. To use this feature use the special `rpkg` parameter which is a list of semi-colon separated `id,data` pairs, where `id` is the name you want the response to have when returned, and `data` is the Base64 encoded request parameters.
+This mode can be used to run multiple requests (maximum is implementation-dependant; rose-core caps this at 64) in a single web-request. To use this feature use the special `rpkg` parameter (or its alias `mreq`) which is a list of semi-colon separated `id,data` pairs, where `id` is the name you want the response to have when returned, and `data` is the Base64 encoded request parameters.
 
 For example, consider the following value for `rpkg`:
 

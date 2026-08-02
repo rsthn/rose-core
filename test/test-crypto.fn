@@ -1,0 +1,82 @@
+
+; (crypto:hash-list)
+(def-fn test_crypto_hash_list
+    (set algos (crypto:hash-list))
+    (expect:array (algos))
+    (expect:not-zero (len (algos)))
+    (expect:not-zero (len (filter a in (algos) (eq? (a) "sha256"))))
+    (expect:not-zero (len (filter a in (algos) (eq? (a) "md5"))))
+)
+
+; (crypto:hash <algorithm> <data>)
+(def-fn test_crypto_hash
+    ; published digests for the input "abc"
+    (expect:eq (crypto:hash "md5" "abc") "900150983cd24fb0d6963f7d28e17f72")
+    (expect:eq (crypto:hash "sha1" "abc") "a9993e364706816aba3e25717850c26c9cd0d89d")
+    (expect:eq (crypto:hash "sha256" "abc")
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+
+    ; empty input still yields the well-known digest
+    (expect:eq (crypto:hash "sha256" "")
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+)
+
+; (crypto:hash-bin <algorithm> <data>)
+(def-fn test_crypto_hash_bin
+    ; the binary form is the same digest, unhexed
+    (expect:eq (hex:encode (crypto:hash-bin "sha256" "abc")) (crypto:hash "sha256" "abc"))
+    (expect:eq (hex:encode (crypto:hash-bin "md5" "abc")) (crypto:hash "md5" "abc"))
+)
+
+; (crypto:hmac <algorithm> <secret-key> <data>)
+(def-fn test_crypto_hmac
+    ; published RFC-style vector
+    (expect:eq (crypto:hmac "sha256" "key" "The quick brown fox jumps over the lazy dog")
+        "f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8")
+
+    ; a different key must produce a different tag
+    (expect:ne (crypto:hmac "sha256" "key1" "data") (crypto:hmac "sha256" "key2" "data"))
+)
+
+; (crypto:hmac-bin <algorithm> <secret-key> <data>)
+(def-fn test_crypto_hmac_bin
+    (expect:eq (hex:encode (crypto:hmac-bin "sha256" "key" "data"))
+        (crypto:hmac "sha256" "key" "data"))
+)
+
+; (crypto:unique <length> [charset])
+(def-fn test_crypto_unique
+    (expect:eq (str:len (crypto:unique 16)) 16)
+    (expect:eq (str:len (crypto:unique 32)) 32)
+
+    ; two draws must not collide
+    (expect:ne (crypto:unique 32) (crypto:unique 32))
+
+    ; an explicit charset is respected, and must be exactly 64 characters long
+    (set v (crypto:unique 24 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"))
+    (expect:eq (str:len (v)) 24)
+    (expect:eq (str:replace "A" "" (v)) "")
+
+    ; a charset of any other length is rejected
+    (expect:error "Code charset string should be 64 characters long."
+        (fn (crypto:unique 24 "ab")))
+)
+
+; (crypto:equals <known-string> <user-string>)
+(def-fn test_crypto_equals
+    (expect:true (crypto:equals "secret" "secret"))
+    (expect:false (crypto:equals "secret" "Secret"))
+    (expect:false (crypto:equals "secret" "secret "))
+    (expect:false (crypto:equals "secret" ""))
+    (expect:true (crypto:equals "" ""))
+)
+
+; (crypto:random-bytes <length>)
+(def-fn test_crypto_random_bytes
+    ; measured through hex so that non-UTF8 bytes do not confuse str:len
+    (expect:eq (str:len (hex:encode (crypto:random-bytes 16))) 32)
+    (expect:eq (str:len (hex:encode (crypto:random-bytes 1))) 2)
+
+    ; two draws must not collide
+    (expect:ne (hex:encode (crypto:random-bytes 32)) (hex:encode (crypto:random-bytes 32)))
+)

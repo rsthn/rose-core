@@ -198,7 +198,7 @@ class Directory
      * Copies all files (and directories if recursive is set) from the source to the destination, if 'overwrite' is true the destination
      * files will be overwritten.
      */
-    public static function copy (string $source, string $dest, bool $recursive=true, bool $overwrite=false, string $pattern=null)
+    public static function copy (string $source, string $dest, bool $recursive=true, bool $overwrite=false, ?string $pattern=null)
     {
         if ($dest == '' || $source == '')
             return false;
@@ -331,8 +331,7 @@ Expr::register('dir:entries-recursive', function ($args) {
  * ; true
  */
 Expr::register('dir:remove', function ($args) {
-    Directory::remove($args->get(1), false);
-    return null;
+    return Directory::remove($args->get(1), false);
 });
 
 /**
@@ -343,8 +342,7 @@ Expr::register('dir:remove', function ($args) {
  * ; true
  */
 Expr::register('dir:remove-recursive', function ($args) {
-    Directory::remove($args->get(1), true);
-    return null;
+    return Directory::remove($args->get(1), true);
 });
 
 /**
@@ -355,8 +353,7 @@ Expr::register('dir:remove-recursive', function ($args) {
  * ; true
  */
 Expr::register('dir:rmdir', function ($args) {
-    Directory::rmdir($args->get(1));
-    return null;
+    return Directory::rmdir($args->get(1));
 });
 
 /**

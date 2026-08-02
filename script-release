@@ -22,7 +22,9 @@ ECHO {clr 92}Running tests ...{clr 0}
     ECHO
 
 ECHO {clr 92}Running expression tests ...{clr 0}
-    RUN rose test test\\test-all.fn
+    ;; Uses the in-repo runner, not `rose test` -- the latter loads rose-core from rose-cli's
+    ;; vendor directory and would validate the last published release instead of this tree.
+    RUN php test/run-fn.php test/test-all.fn
     ECHO
 
 ECHO {clr 92}Updating documentation ...{clr 0}

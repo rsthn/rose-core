@@ -145,7 +145,7 @@ For a request to `GET /users/42`, `lib/handler:auth` runs first (it can throw to
 
 # Top-level / meta
 
-- **`config.env`** — public property on the `Configuration` instance itself (not a section). Holds the environment id loaded from the `rose-env` file or `ROSE_ENV` env var; used to layer `<env>.conf` on top of `system.conf`.
+- **`config.env`** — public property on the `Configuration` instance itself (not a section). Holds the environment id loaded from the `rose-env` file or the `ROSE_ENV` env var, defaulting to `def` when neither is present. Used to layer `conf/<env>.conf` on top of `system.conf` — this layering is skipped entirely while the id is `def`.
 
 <br/>
 

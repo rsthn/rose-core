@@ -399,6 +399,7 @@ class Expr
     {
         $nflush = 'string'; $flush = null; $state = 0;
         $str = ''; $parts = new Arry(); $mparts = $parts; $nparts = false;
+        $after_access = false;
 
         if ($is_tpl === true)
         {
@@ -609,6 +610,15 @@ class Expr
                     {
                         $state = 25;
                     }
+                    else if ($last === ';' && $remove_comments)
+                    {
+                        // comment inside a block: skip to end of line so apostrophes and
+                        // parenthesis in prose are not treated as syntax.
+                        $n = Text::length($template)-1;
+                        while ($i < $n && $template[$i] !== "\n") $i++;
+                        $i--;
+                        break;
+                    }
 
                     if ($check && !count($sym_stack))
                     {
@@ -622,6 +632,11 @@ class Expr
                     break;
 
                 case 10:
+                    // A key that follows an access token is always an identifier, never a numeric
+                    // literal, otherwise the dot in `a.0.name` is consumed as a decimal point.
+                    $was_after_access = $after_access;
+                    $after_access = false;
+
                     if ($template[$i] === "\0")
                     {
                         $flush = $nflush;
@@ -634,9 +649,10 @@ class Expr
 
                         $nflush = 'identifier';
                         $str = '';
+                        $after_access = true;
                         break;
                     }
-                    else if (Regex::_matches('/^(([-+][0-9])|([0-9]))/', $template[$i].$template[$i+1]) && $str === '')
+                    else if (Regex::_matches('/^(([-+][0-9])|([0-9]))/', $template[$i].$template[$i+1]) && $str === '' && !$was_after_access)
                     {
                         if ($flush && $str) {
                             $emit ($flush, $str);
@@ -2635,6 +2651,7 @@ Expr::register('_not-in?', function ($parts, $data)
 /**
  * Checks if `value1` is equal to `value2`, returns `val-true` or `val-false` (loose type comparison).
  * @code (`eq?` <value1> <value2> [val-true=true] [val-false=false])
+ * @code (`==` <value1> <value2> [val-true=true] [val-false=false])
  * @example
  * (eq? 12 "12")
  * ; true
@@ -2650,6 +2667,9 @@ Expr::register('_not-in?', function ($parts, $data)
  *
  * (eq? 12 13)
  * ; false
+ *
+ * (== 12 "12")
+ * ; true
  */
 Expr::register('_eq?', function($parts, $data) {
     return Expr::value($parts->get(1), $data) == Expr::value($parts->get(2), $data)
@@ -2668,6 +2688,7 @@ Expr::register('_==', function($parts, $data) {
 /**
  * Checks if `value1` is equal to `value2` and are of the same type, returns `val-true` or `val-false`.
  * @code (`eqq?` <value1> <value2> [val-true=true] [val-false=false])
+ * @code (`===` <value1> <value2> [val-true=true] [val-false=false])
  * @example
  * (eqq? 12 "12")
  * ; false
@@ -2684,8 +2705,11 @@ Expr::register('_==', function($parts, $data) {
  * (eqq? 12 12)
  * ; true
  *
- * (eqq? "X" "X)
+ * (eqq? "X" "X")
  * ; true
+ *
+ * (=== 12 "12")
+ * ; false
  */
 Expr::register('_eqq?', function($parts, $data) {
     return Expr::value($parts->get(1), $data) === Expr::value($parts->get(2), $data)
@@ -2704,6 +2728,7 @@ Expr::register('_===', function($parts, $data) {
 /**
  * Checks if `value1` is not equal to `value2`, returns `val-true` or `val-false`.
  * @code (`ne?` <value1> <value2> [val-true=true] [val-false=false])
+ * @code (`!=` <value1> <value2> [val-true=true] [val-false=false])
  * @example
  * (ne? 12 "12")
  * ; false
@@ -2718,6 +2743,9 @@ Expr::register('_===', function($parts, $data) {
  * ; false
  *
  * (ne? 12 13)
+ * ; true
+ *
+ * (!= 12 13)
  * ; true
  */
 Expr::register('_ne?', function($parts, $data) {
@@ -2737,6 +2765,7 @@ Expr::register('_!=', function($parts, $data) {
 /**
  * Checks if `value1` < `value2`, returns `val-true` or `val-false`.
  * @code (`lt?` <value1> <value2> [val-true=true] [val-false=false])
+ * @code (`<` <value1> <value2> [val-true=true] [val-false=false])
  * @example
  * (lt? 1 2)
  * ; true
@@ -2746,6 +2775,9 @@ Expr::register('_!=', function($parts, $data) {
  *
  * (lt? 10 5)
  * ; false
+ *
+ * (< 1 2)
+ * ; true
  */
 Expr::register('_lt?', function($parts, $data) {
     return Expr::value($parts->get(1), $data) < Expr::value($parts->get(2), $data)
@@ -2764,6 +2796,7 @@ Expr::register('_<', function($parts, $data) {
 /**
  * Checks if `value1` <= `value2`, returns `val-true` or `val-false`.
  * @code (`le?` <value1> <value2> [val-true=true] [val-false=false])
+ * @code (`<=` <value1> <value2> [val-true=true] [val-false=false])
  * @example
  * (le? 1 2)
  * ; true
@@ -2773,6 +2806,9 @@ Expr::register('_<', function($parts, $data) {
  *
  * (le? 10 5)
  * ; false
+ *
+ * (<= 10 10)
+ * ; true
  */
 Expr::register('_le?', function($parts, $data) {
     return Expr::value($parts->get(1), $data) <= Expr::value($parts->get(2), $data)
@@ -2791,6 +2827,7 @@ Expr::register('_<=', function($parts, $data) {
 /**
  * Checks if `value1` > `value2`, returns `val-true` or `val-false`.
  * @code (`gt?` <value1> <value2> [val-true=true] [val-false=false])
+ * @code (`>` <value1> <value2> [val-true=true] [val-false=false])
  * @example
  * (gt? 1 2)
  * ; false
@@ -2799,6 +2836,9 @@ Expr::register('_<=', function($parts, $data) {
  * ; false
  *
  * (gt? 10 5)
+ * ; true
+ *
+ * (> 10 5)
  * ; true
  */
 Expr::register('_gt?', function($parts, $data) {
@@ -2818,6 +2858,7 @@ Expr::register('_>', function($parts, $data) {
 /**
  * Checks if `value1` >= `value2`, returns `val-true` or `val-false`.
  * @code (`ge?` <value1> <value2> [val-true=true] [val-false=false])
+ * @code (`>=` <value1> <value2> [val-true=true] [val-false=false])
  * @example
  * (ge? 1 2)
  * ; false
@@ -2826,6 +2867,9 @@ Expr::register('_>', function($parts, $data) {
  * ; true
  *
  * (ge? 10 5)
+ * ; true
+ *
+ * (>= 10 10)
  * ; true
  */
 Expr::register('_ge?', function($parts, $data) {
@@ -5462,6 +5506,7 @@ Expr::register('debug:fn', function($args)
 
 /**
  * Returns the current execution context ID.
+ * @private-code (`debug:context-id`)
  */
 Expr::register('debug:context-id', function($args) {
     return Expr::$context->getId();

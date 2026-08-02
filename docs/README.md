@@ -436,7 +436,7 @@ Checks if an iterable (map, array or string) does NOT have a value.
 ; true
 ```
 
-### (`eq?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`eq?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`==` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` is equal to `value2`, returns `val-true` or `val-false` (loose type comparison).
 ```lisp
 (eq? 12 "12")
@@ -453,9 +453,12 @@ Checks if `value1` is equal to `value2`, returns `val-true` or `val-false` (loos
 
 (eq? 12 13)
 ; false
+
+(== 12 "12")
+; true
 ```
 
-### (`eqq?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`eqq?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`===` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` is equal to `value2` and are of the same type, returns `val-true` or `val-false`.
 ```lisp
 (eqq? 12 "12")
@@ -473,11 +476,14 @@ Checks if `value1` is equal to `value2` and are of the same type, returns `val-t
 (eqq? 12 12)
 ; true
 
-(eqq? "X" "X)
+(eqq? "X" "X")
 ; true
+
+(=== 12 "12")
+; false
 ```
 
-### (`ne?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`ne?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`!=` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` is not equal to `value2`, returns `val-true` or `val-false`.
 ```lisp
 (ne? 12 "12")
@@ -494,9 +500,12 @@ Checks if `value1` is not equal to `value2`, returns `val-true` or `val-false`.
 
 (ne? 12 13)
 ; true
+
+(!= 12 13)
+; true
 ```
 
-### (`lt?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`lt?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`\<` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` \< `value2`, returns `val-true` or `val-false`.
 ```lisp
 (lt? 1 2)
@@ -507,9 +516,12 @@ Checks if `value1` \< `value2`, returns `val-true` or `val-false`.
 
 (lt? 10 5)
 ; false
+
+(< 1 2)
+; true
 ```
 
-### (`le?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`le?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`\<=` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` \<= `value2`, returns `val-true` or `val-false`.
 ```lisp
 (le? 1 2)
@@ -520,9 +532,12 @@ Checks if `value1` \<= `value2`, returns `val-true` or `val-false`.
 
 (le? 10 5)
 ; false
+
+(<= 10 10)
+; true
 ```
 
-### (`gt?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`gt?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`>` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` > `value2`, returns `val-true` or `val-false`.
 ```lisp
 (gt? 1 2)
@@ -533,9 +548,12 @@ Checks if `value1` > `value2`, returns `val-true` or `val-false`.
 
 (gt? 10 5)
 ; true
+
+(> 10 5)
+; true
 ```
 
-### (`ge?` \<value1> \<value2> [val-true=true] [val-false=false])
+### (`ge?` \<value1> \<value2> [val-true=true] [val-false=false])<br/>(`>=` \<value1> \<value2> [val-true=true] [val-false=false])
 Checks if `value1` >= `value2`, returns `val-true` or `val-false`.
 ```lisp
 (ge? 1 2)
@@ -545,6 +563,9 @@ Checks if `value1` >= `value2`, returns `val-true` or `val-false`.
 ; true
 
 (ge? 10 5)
+; true
+
+(>= 10 10)
 ; true
 ```
 
@@ -2343,6 +2364,60 @@ Converts a PEM encoded key to DER format.
 ### (`der:parse` \<der-string|pem-string>)
 Parses a DER encoded data and returns a map with 'int', 'bits', 'octets' fields.
 
+### (`asn1:int` \<value...>)
+Encodes each value as an ASN.1 INTEGER (tag `0x02`) and returns the concatenated DER output.
+```lisp
+(asn1:int 65537)
+; (binary data)
+```
+
+### (`asn1:octets` \<value...>)
+Encodes each value as an ASN.1 OCTET STRING (tag `0x04`) and returns the concatenated DER output.
+```lisp
+(asn1:octets (hex:decode "DEADBEEF"))
+; (binary data)
+```
+
+### (`asn1:bits` \<bit-count> \<data>)
+Encodes the given data as an ASN.1 BIT STRING (tag `0x03`). The `bit-count` is the number of significant
+bits in `data`, from which the leading unused-bit count byte is derived.
+```lisp
+(asn1:bits 32 (hex:decode "DEADBEEF"))
+; (binary data)
+```
+
+### (`asn1:seq` \<value...>)<br/>(`asn1:arr` \<value...>)
+Wraps the concatenation of the given values in an ASN.1 SEQUENCE (tag `0x30`).
+<br/>
+<br/>Note: the encoder supports payloads up to 255 bytes, larger values raise `invalid length`.
+```lisp
+(asn1:seq (asn1:int 1) (asn1:int 2))
+; (binary data)
+```
+
+### (`asn1:ctx` \<value...>)
+Wraps the concatenation of the given values in a context-specific constructed tag `[0]` (`0xA0`).
+```lisp
+(asn1:ctx (asn1:int 1))
+; (binary data)
+```
+
+### (`asn1:obj` \<value...>)
+Encodes each value as an ASN.1 OBJECT IDENTIFIER (tag `0x06`), using the value verbatim as the
+already-encoded OID body. To build an OID from its arcs use `asn1:oid` instead.
+```lisp
+(asn1:obj (hex:decode "2A8648CE3D0201"))
+; (binary data)
+```
+
+### (`asn1:oid` \<arc1> \<arc2> [arc...])
+Encodes the given arcs as an ASN.1 OBJECT IDENTIFIER (tag `0x06`). The first two arcs are packed into a
+single byte (`arc1*40 + arc2`), the remaining ones are encoded as base-128 values.
+```lisp
+(asn1:oid 1 2 840 113549)
+; (binary data)
+```
+
 <br/><br/>
 
 # HTTP Requests
@@ -3006,6 +3081,13 @@ be read from the file specified in the `path` field of the `input` object.
 ```lisp
 (gateway.body)
 ; {"name": "John"}
+```
+
+### (`gateway`)
+Provides access to the instance properties of the Gateway class.
+```lisp
+(gateway.method)
+; GET
 ```
 
 ### (`gateway:status` \<code>)

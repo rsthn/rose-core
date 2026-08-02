@@ -1,0 +1,168 @@
+
+;; Image tests operate on a generated 16x8 PNG fixture (left half red, right half blue) so that
+;; the suite carries no binary assets in the repository.
+
+(def-fn :make_image
+    (dir:create "test/volatile")
+    (file:write "test/volatile/fixture.png"
+        (base64:decode "iVBORw0KGgoAAAANSUhEUgAAABAAAAAICAIAAAB/FOjAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAHUlEQVQYlWM8ISfHgA2EMazCKs6EVRQPGNVADAAACGMCFJGAhhoAAAAASUVORK5CYII="))
+    (image:load "test/volatile/fixture.png")
+)
+
+; (image:load <path>)
+; (image:width <image>) / (image:height <image>)
+(def-fn test_image_load_and_size
+    (set img (make_image))
+    (expect:ne (img) null)
+
+    (expect:eq (image:width (img)) 16)
+    (expect:eq (image:height (img)) 8)
+
+    (file:remove "test/volatile/fixture.png")
+)
+
+; (image:width <image> <newWidth> [keepRatio=true])
+(def-fn test_image_width_resize
+    (set img (make_image))
+
+    ; setting the width with the default keepRatio scales the height proportionally
+    (image:width (img) 32)
+    (expect:eq (image:width (img)) 32)
+    (expect:eq (image:height (img)) 16)
+
+    (file:remove "test/volatile/fixture.png")
+)
+
+; (image:height <image> <newHeight> [keepRatio=true])
+(def-fn test_image_height_resize
+    (set img (make_image))
+
+    (image:height (img) 16)
+    (expect:eq (image:height (img)) 16)
+    (expect:eq (image:width (img)) 32)
+
+    (file:remove "test/volatile/fixture.png")
+)
+
+; (image:resize <image> <newWidth> <newHeight> [rewriteOriginal=true])
+(def-fn test_image_resize
+    (set img (make_image))
+
+    ; resize ignores aspect ratio
+    (image:resize (img) 4 4)
+    (expect:eq (image:width (img)) 4)
+    (expect:eq (image:height (img)) 4)
+
+    (file:remove "test/volatile/fixture.png")
+)
+
+; (image:scale <image> <scaleX> [scaleY=null] [rewriteOriginal=true])
+(def-fn test_image_scale
+    (set img (make_image))
+
+    ; a single factor applies to both axes
+    (image:scale (img) 0.5)
+    (expect:eq (image:width (img)) 8)
+    (expect:eq (image:height (img)) 4)
+
+    (file:remove "test/volatile/fixture.png")
+)
+
+; (image:fit <image> <newWidth> <newHeight> [rewriteOriginal=false])
+(def-fn test_image_fit
+    (set img (make_image))
+
+    ; fits inside the box while preserving the 2:1 aspect ratio
+    (set out (image:fit (img) 8 8))
+    (expect:ne (out) null)
+    (expect:eq (image:width (out)) 8)
+    (expect:eq (image:height (out)) 4)
+
+    (file:remove "test/volatile/fixture.png")
+)
+
+; (image:cut <image> <newWidth> <newHeight> [startX] [startY])
+(def-fn test_image_cut
+    (set img (make_image))
+
+    ; cut returns a new image and leaves the original untouched
+    (set piece (image:cut (img) 8 8 0 0))
+    (expect:eq (image:width (piece)) 8)
+    (expect:eq (image:height (piece)) 8)
+    (expect:eq (image:width (img)) 16)
+
+    (file:remove "test/volatile/fixture.png")
+)
+
+; (image:crop <image> <newWidth> <newHeight> [startX] [startY])
+(def-fn test_image_crop
+    (set img (make_image))
+
+    ; crop replaces the original with the cut region
+    (image:crop (img) 8 8 0 0)
+    (expect:eq (image:width (img)) 8)
+    (expect:eq (image:height (img)) 8)
+
+    (file:remove "test/volatile/fixture.png")
+)
+
+; (image:smartcut <image> <newWidth> <newHeight> <onTooWide> <onTooTall> [rewriteOriginal=false])
+(def-fn test_image_smartcut
+    (set img (make_image))
+
+    (set piece (image:smartcut (img) 8 8 "CENTER" "CENTER"))
+    (expect:ne (piece) null)
+    (expect:eq (image:width (piece)) 8)
+    (expect:eq (image:height (piece)) 8)
+
+    (file:remove "test/volatile/fixture.png")
+)
+
+; (image:save <image> [path] [format] [quality])
+(def-fn test_image_save
+    (set img (make_image))
+
+    (image:save (img) "test/volatile/saved.png" "PNG")
+    (expect:true (path:is-file "test/volatile/saved.png"))
+
+    ; the saved file loads back at the same dimensions
+    (set again (image:load "test/volatile/saved.png"))
+    (expect:eq (image:width (again)) 16)
+    (expect:eq (image:height (again)) 8)
+
+    ; a different format is also accepted
+    (image:save (img) "test/volatile/saved.jpg" "JPG" 80)
+    (expect:true (path:is-file "test/volatile/saved.jpg"))
+
+    (file:remove "test/volatile/saved.png")
+    (file:remove "test/volatile/saved.jpg")
+    (file:remove "test/volatile/fixture.png")
+)
+
+; (image:data <image> [format] [mode] [quality])
+(def-fn test_image_data
+    (set img (make_image))
+
+    ; BINARY is the default mode and yields raw PNG bytes starting with the PNG signature
+    (set raw (image:data (img) "PNG"))
+    (expect:eq (str:sub 0 8 (hex:encode (raw))) "89504e47")
+
+    ; BASE64 and DATA_URI wrap the same payload
+    (set b64 (image:data (img) "PNG" "BASE64"))
+    (expect:str (b64))
+    (expect:eq (hex:encode (base64:decode (b64))) (hex:encode (raw)))
+
+    ; the MIME type is always lowercased, regardless of how the format was spelled
+    (set uri (image:data (img) "png" "DATA_URI"))
+    (expect:true (starts-with? "data:image/png;base64," (uri)))
+
+    (set uri_upper (image:data (img) "PNG" "DATA_URI"))
+    (expect:true (starts-with? "data:image/png;base64," (uri_upper)))
+
+    (file:remove "test/volatile/fixture.png")
+)
+
+; (image:dump <image> [format] [quality])
+;
+; NOT COVERED: writes the encoded image straight to standard output, which would corrupt the test
+; runner display. `image:data` exercises the same encoding path and is asserted above.

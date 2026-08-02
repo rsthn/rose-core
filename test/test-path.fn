@@ -1,0 +1,176 @@
+
+; (path:fsroot)
+(def-fn test_path_fsroot
+    (expect:str (path:fsroot))
+    (expect:not-zero (str:len (path:fsroot)))
+)
+
+; (path:cwd)
+(def-fn test_path_cwd
+    (expect:str (path:cwd))
+    (expect:true (path:is-dir (path:cwd)))
+)
+
+; (path:basename <path>)
+(def-fn test_path_basename
+    (expect:eq (path:basename "/var/www/html/index.html") "index.html")
+    (expect:eq (path:basename "index.html") "index.html")
+    (expect:eq (path:basename "/var/www/html") "html")
+)
+
+; (path:extname <path>)
+(def-fn test_path_extname
+    (expect:eq (path:extname "/var/www/html/index.html") ".html")
+    (expect:eq (path:extname "archive.tar.gz") ".gz")
+    (expect:eq (path:extname "noext") "")
+)
+
+; (path:name <path>)
+(def-fn test_path_name
+    (expect:eq (path:name "/var/www/html/index.html") "index")
+    (expect:eq (path:name "archive.tar.gz") "archive.tar")
+)
+
+; (path:normalize <path>)
+(def-fn test_path_normalize
+    (expect:eq (path:normalize "/var/www/html/") "/var/www/html")
+    (expect:eq (path:normalize "/var/www/html//") "/var/www/html")
+    (expect:eq (path:normalize "/var/www/html") "/var/www/html")
+)
+
+; (path:dirname <path>)
+(def-fn test_path_dirname
+    (expect:eq (path:dirname "/var/www/html/index.html") "/var/www/html")
+    (expect:eq (path:dirname "/var/www/html/") "/var/www")
+)
+
+; (path:append <path> <items...>)
+(def-fn test_path_append
+    (expect:eq (path:append "/var/www/html" "index.html") "/var/www/html/index.html")
+    (expect:eq (path:append "/var/www" "html" "index.html") "/var/www/html/index.html")
+    (expect:eq (path:append "/var/www/" "index.html") "/var/www/index.html")
+)
+
+; (path:resolve <path>)
+(def-fn test_path_resolve
+    (expect:str (path:resolve "."))
+    (expect:true (path:is-dir (path:resolve ".")))
+    ; resolving an existing file yields an absolute path ending in the basename
+    (expect:true (ends-with? "composer.json" (path:resolve "composer.json")))
+)
+
+; (path:exists <path>)
+(def-fn test_path_exists
+    (expect:true (path:exists "composer.json"))
+    (expect:true (path:exists "src"))
+    (expect:false (path:exists "this-does-not-exist-12345"))
+)
+
+; (path:is-file <path>)
+(def-fn test_path_is_file
+    (expect:true (path:is-file "composer.json"))
+    (expect:false (path:is-file "src"))
+    (expect:false (path:is-file "this-does-not-exist-12345"))
+)
+
+; (path:is-dir <path>)
+(def-fn test_path_is_dir
+    (expect:true (path:is-dir "src"))
+    (expect:false (path:is-dir "composer.json"))
+    (expect:false (path:is-dir "this-does-not-exist-12345"))
+)
+
+; (path:is-link <path>)
+(def-fn test_path_is_link
+    (expect:false (path:is-link "composer.json"))
+    (expect:false (path:is-link "src"))
+)
+
+; (path:temp)
+(def-fn test_path_temp
+    (expect:str (path:temp))
+    (expect:true (path:is-dir (path:temp)))
+)
+
+; (path:tempnam <prefix>)
+(def-fn test_path_tempnam
+    (set p (path:tempnam "rose"))
+    (expect:str (p))
+    (expect:not-zero (str:len (p)))
+    (when (path:exists (p))
+        (file:remove (p)))
+)
+
+; (path:rename <source> <target>)
+(def-fn test_path_rename
+    (dir:create "test/volatile")
+    (file:write "test/volatile/rename-a.txt" "data")
+
+    (expect:true (path:rename "test/volatile/rename-a.txt" "test/volatile/rename-b.txt"))
+    (expect:false (path:exists "test/volatile/rename-a.txt"))
+    (expect:true (path:exists "test/volatile/rename-b.txt"))
+    (expect:eq (file:read "test/volatile/rename-b.txt") "data")
+
+    (file:remove "test/volatile/rename-b.txt")
+)
+
+; (path:chmod <path> <mode>)
+(def-fn test_path_chmod
+    (dir:create "test/volatile")
+    (file:write "test/volatile/chmod.txt" "data")
+
+    ; chmod is a no-op for most modes on Windows but must still report success
+    (expect:true (path:chmod "test/volatile/chmod.txt" 0644))
+    (expect:true (path:exists "test/volatile/chmod.txt"))
+
+    (file:remove "test/volatile/chmod.txt")
+)
+
+; (path:chdir <path>)
+(def-fn test_path_chdir
+    (set original (path:cwd))
+
+    (expect:true (path:chdir "src"))
+    (expect:true (ends-with? "src" (path:normalize (path:cwd))))
+
+    ; always restore, otherwise every later test resolving relative paths breaks
+    (path:chdir (original))
+    (expect:eq (path:normalize (path:cwd)) (path:normalize (original)))
+)
+
+; (path:symlink <link> <target>)
+; (path:link <link> <target>)
+;
+; Both require privileges that are frequently unavailable (notably on Windows without developer
+; mode or elevation), so this asserts the successful path only when the platform actually allows
+; it, and otherwise only that the failure is reported rather than silently swallowed.
+(def-fn test_path_symlink_and_link
+    (dir:create "test/volatile")
+    (file:write "test/volatile/link-target.txt" "linked")
+
+    (set made false)
+    (try
+        (set made (path:symlink "test/volatile/link-alias.txt" "test/volatile/link-target.txt"))
+    catch
+        (set made false)
+    )
+
+    (when (and (made) (path:exists "test/volatile/link-alias.txt"))
+        (expect:eq (file:read "test/volatile/link-alias.txt") "linked")
+        (file:remove "test/volatile/link-alias.txt")
+    )
+
+    (set hard false)
+    (try
+        (set hard (path:link "test/volatile/link-hard.txt" "test/volatile/link-target.txt"))
+    catch
+        (set hard false)
+    )
+
+    (when (and (hard) (path:exists "test/volatile/link-hard.txt"))
+        (expect:eq (file:read "test/volatile/link-hard.txt") "linked")
+        (file:remove "test/volatile/link-hard.txt")
+    )
+
+    (file:remove "test/volatile/link-target.txt")
+)

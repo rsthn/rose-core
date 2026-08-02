@@ -1,0 +1,115 @@
+
+; (math:rand)
+(def-fn test_math_rand
+    (expect:int (math:rand))
+    (expect:true (ge? (math:rand) 0))
+    (expect:true (le? (math:rand) 65535))
+)
+
+; (math:abs <value>)
+(def-fn test_math_abs
+    (expect:eq (math:abs -5) 5)
+    (expect:eq (math:abs 5) 5)
+    (expect:eq (math:abs 0) 0)
+    (expect:eq (math:abs -5.5) 5.5)
+)
+
+; (math:round <value>)
+(def-fn test_math_round
+    (expect:eq (math:round 5.5) 6)
+    (expect:eq (math:round 5.4) 5)
+    ; rounds half toward +infinity: floor(x+0.5)
+    (expect:eq (math:round -5.5) -5)
+    (expect:eq (math:round 5) 5)
+)
+
+; (math:fixed <value> [decimals=2])
+(def-fn test_math_fixed
+    (expect:eq (math:fixed 5.5112) 5.51)
+    (expect:eq (math:fixed 5.4782) 5.48)
+    (expect:eq (math:fixed 5.4782 1) 5.5)
+    (expect:eq (math:fixed 5.4782 3) 5.478)
+    (expect:eq (math:fixed 5.4782 0) 5)
+)
+
+; (math:ceil <value>)
+(def-fn test_math_ceil
+    (expect:eq (math:ceil 5.1) 6)
+    (expect:eq (math:ceil 5.9) 6)
+    (expect:eq (math:ceil 5) 5)
+    (expect:eq (math:ceil -5.1) -5)
+)
+
+; (math:floor <value>)
+(def-fn test_math_floor
+    (expect:eq (math:floor 5.8) 5)
+    (expect:eq (math:floor 5.1) 5)
+    (expect:eq (math:floor 5) 5)
+    (expect:eq (math:floor -5.1) -6)
+)
+
+; (math:clamp <value> <min> <max>)
+(def-fn test_math_clamp
+    (expect:eq (math:clamp 5 1 10) 5)
+    (expect:eq (math:clamp 0 1 10) 1)
+    (expect:eq (math:clamp 15 1 10) 10)
+    (expect:eq (math:clamp 1 1 10) 1)
+    (expect:eq (math:clamp 10 1 10) 10)
+)
+
+; (math:align <value> <size>)
+(def-fn test_math_align
+    (expect:eq (math:align 5 3) 6)
+    (expect:eq (math:align 6 3) 6)
+    (expect:eq (math:align 7 3) 9)
+    (expect:eq (math:align 0 3) 0)
+)
+
+; (math:to-hex <value> [size=2])
+(def-fn test_math_to_hex
+    (expect:eq (math:to-hex 255) "ff")
+    (expect:eq (math:to-hex 0) "00")
+    (expect:eq (math:to-hex 255 4) "00ff")
+)
+
+; (math:to-bin <value> [size=8])
+(def-fn test_math_to_bin
+    (expect:eq (math:to-bin 129) "10000001")
+    (expect:eq (math:to-bin 0) "00000000")
+    (expect:eq (math:to-bin 1) "00000001")
+)
+
+; (math:to-oct <value> [size=3])
+(def-fn test_math_to_oct
+    (expect:eq (math:to-oct 15) "017")
+    (expect:eq (math:to-oct 8) "010")
+)
+
+; (math:from-hex <value>)
+(def-fn test_math_from_hex
+    (expect:eq (math:from-hex "ff") 255)
+    (expect:eq (math:from-hex "00") 0)
+    (expect:eq (math:from-hex "FF") 255)
+    (expect:eq (math:from-hex "100") 256)
+)
+
+; (math:from-bin <value>)
+(def-fn test_math_from_bin
+    (expect:eq (math:from-bin "10000001") 129)
+    (expect:eq (math:from-bin "0") 0)
+    (expect:eq (math:from-bin "11111111") 255)
+)
+
+; (math:from-oct <value>)
+(def-fn test_math_from_oct
+    (expect:eq (math:from-oct "17") 15)
+    (expect:eq (math:from-oct "10") 8)
+    (expect:eq (math:from-oct "0") 0)
+)
+
+; round-trip consistency
+(def-fn test_math_roundtrip
+    (expect:eq (math:from-hex (math:to-hex 4095 4)) 4095)
+    (expect:eq (math:from-bin (math:to-bin 200)) 200)
+    (expect:eq (math:from-oct (math:to-oct 63)) 63)
+)

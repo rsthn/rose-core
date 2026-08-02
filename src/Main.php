@@ -137,11 +137,11 @@ function isInteger ($value) {
 }
 
 /**
- * Returns `true` if the value represents a number, ensure to use a `float` or `double` cast when actually using
+ * Returns `true` if the value represents a number, ensure to use a `float` cast when actually using
  * the value, since it may contain extra characters after the number.
  */
 function isNumber ($value) {
-    return is_double ($value);
+    return is_float ($value);
 }
 
 /**
@@ -343,13 +343,13 @@ class Main
         ignore_user_abort(false);
         umask(0);
         error_reporting (E_ALL & ~E_NOTICE & ~E_DEPRECATED);
-        mt_srand ((int)(((double)microtime ()) * 10000));
+        mt_srand ((int)(((float)microtime ()) * 10000));
         set_time_limit ($cliMode ? 0 : 300);
         mb_internal_encoding('UTF-8');
 
         // Set global error handlers and disable PHP error output.
         if (!$cliMode) {
-            set_error_handler ('Rose\\error_handler', E_STRICT | E_USER_ERROR | E_WARNING | E_USER_WARNING);
+            set_error_handler ('Rose\\error_handler', E_USER_ERROR | E_WARNING | E_USER_WARNING);
             register_shutdown_function ('Rose\\fatal_handler');
         }
 

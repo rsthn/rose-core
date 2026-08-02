@@ -1,0 +1,138 @@
+
+; (base64:encode <value>)
+; (base64:decode <value>)
+(def-fn test_base64
+    (expect:eq (base64:encode "Hello") "SGVsbG8=")
+    (expect:eq (base64:decode "SGVsbG8=") "Hello")
+    (expect:eq (base64:decode (base64:encode "round trip")) "round trip")
+    (expect:eq (base64:encode "") "")
+    ; multi-byte input survives the round trip
+    (expect:eq (base64:decode (base64:encode "Привет")) "Привет")
+)
+
+; (base64u:encode <value>)
+; (base64u:decode <value>)
+(def-fn test_base64u
+    ; url-safe variant: no '+', '/' or '=' padding in the output
+    (set enc (base64u:encode "\xFB\xFF\xBF"))
+    (expect:eq (str:index "+" (enc)) -1)
+    (expect:eq (str:index "/" (enc)) -1)
+    (expect:eq (str:index "=" (enc)) -1)
+
+    (expect:eq (base64u:decode (base64u:encode "round trip")) "round trip")
+    (expect:eq (base64u:decode (base64u:encode "Привет")) "Привет")
+)
+
+; (hex:encode <string>)
+; (hex:decode <string>)
+(def-fn test_hex
+    (expect:eq (hex:encode "AB") "4142")
+    (expect:eq (hex:decode "4142") "AB")
+    (expect:eq (hex:decode (hex:encode "round trip")) "round trip")
+    (expect:eq (hex:encode "") "")
+)
+
+; (url:encode <value>)
+; (url:decode <value>)
+(def-fn test_url
+    (expect:eq (url:encode "a b") "a+b")
+    (expect:eq (url:decode "a+b") "a b")
+    (expect:eq (url:decode (url:encode "a/b?c=d&e")) "a/b?c=d&e")
+    (expect:eq (url:decode (url:encode "Привет")) "Привет")
+)
+
+; (url-query:str <fields>)
+(def-fn test_url_query_str
+    (set q (url-query:str (& name "Jon" age 36)))
+    (expect:str (q))
+    (expect:ne (str:index "name=Jon" (q)) -1)
+    (expect:ne (str:index "age=36" (q)) -1)
+)
+
+; (html-text:encode <value>)
+; (html-text:decode <value>)
+(def-fn test_html_text
+    (expect:eq (html-text:encode "<b>") "&lt;b&gt;")
+    (expect:eq (html-text:decode "&lt;b&gt;") "<b>")
+    (expect:eq (html-text:decode (html-text:encode "<a href=\"x\">&</a>")) "<a href=\"x\">&</a>")
+)
+
+; (html:encode <data>)
+;
+; Renders an array or map as an HTML table (it is not a text-escaping helper).
+(def-fn test_html_encode
+    ; array of maps -> header row from the keys of the first entry, one row per entry
+    (set out (html:encode (# (& "Name" "John" "Age" 35) (& "Name" "Jane" "Age" 25))))
+    (expect:str (out))
+    (expect:ne (str:index "<table" (out)) -1)
+    (expect:ne (str:index "<th>Name</th>" (out)) -1)
+    (expect:ne (str:index "<th>Age</th>" (out)) -1)
+    (expect:ne (str:index "<td>John</td>" (out)) -1)
+    (expect:ne (str:index "<td>Jane</td>" (out)) -1)
+
+    ; map -> one row per key/value pair
+    (set out2 (html:encode (& "Name" "John")))
+    (expect:ne (str:index "<th>Name</th>" (out2)) -1)
+    (expect:ne (str:index "<td>John</td>" (out2)) -1)
+
+    ; empty array yields an empty string
+    (set empty [])
+    (expect:eq (html:encode (empty)) "")
+)
+
+; (gz:compress <string>)
+; (gz:decompress <string>)
+(def-fn test_gz_compress
+    (set data "The quick brown fox jumps over the lazy dog. The quick brown fox.")
+    (set packed (gz:compress (data)))
+
+    (expect:str (packed))
+    (expect:eq (gz:decompress (packed)) (data))
+    ; repetitive input must actually get smaller
+    (expect:true (lt? (str:len (packed)) (str:len (data))))
+)
+
+; (gz:deflate <string>)
+; (gz:inflate <string>)
+(def-fn test_gz_deflate
+    (set data "The quick brown fox jumps over the lazy dog. The quick brown fox.")
+    (set packed (gz:deflate (data)))
+
+    (expect:str (packed))
+    (expect:eq (gz:inflate (packed)) (data))
+    (expect:true (lt? (str:len (packed)) (str:len (data))))
+)
+
+; (json:str <value>)
+; (json:parse <string>)
+(def-fn test_json_str_parse
+    (expect:eq (json:str (& name "Jon")) "{\"name\":\"Jon\"}")
+    (expect:eq (json:str (# 1 2 3)) "[1,2,3]")
+
+    (set parsed (json:parse "{\"name\":\"Jon\",\"age\":36}"))
+    (expect:map (parsed))
+    (expect:eq (parsed.name) "Jon")
+    (expect:eq (parsed.age) 36)
+
+    (set arr (json:parse "[1,2,3]"))
+    (expect:array (arr))
+    (expect:eq (len (arr)) 3)
+)
+
+; (json:dump <value>)
+(def-fn test_json_dump
+    ; pretty-printed form of the same data, so it round-trips identically
+    (set out (json:dump (& name "Jon")))
+    (expect:str (out))
+    (expect:eq ((json:parse (out)).name) "Jon")
+)
+
+; (xml:parse <xml>)
+; (xml:simplify <xml-node>)
+(def-fn test_xml
+    (set doc (xml:parse "<root><item id=\"1\">first</item><item id=\"2\">second</item></root>"))
+    (expect:ne (doc) null)
+
+    (set simple (xml:simplify (doc)))
+    (expect:ne (simple) null)
+)

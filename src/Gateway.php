@@ -461,6 +461,10 @@ public $body;
 
 /**
  * Provides access to the instance properties of the Gateway class.
+ * @code (`gateway`)
+ * @example
+ * (gateway.method)
+ * ; GET
  */
 Expr::register('gateway', function ($args) {
     return Gateway::getInstance();

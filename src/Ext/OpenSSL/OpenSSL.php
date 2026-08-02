@@ -562,6 +562,13 @@ Expr::register('der:parse', function($args) {
 
 
 
+/**
+ * Encodes each value as an ASN.1 INTEGER (tag `0x02`) and returns the concatenated DER output.
+ * @code (`asn1:int` <value...>)
+ * @example
+ * (asn1:int 65537)
+ * ; (binary data)
+ */
 Expr::register('asn1:int', function($args) {
     $out = '';
     for ($i = 1; $i < $args->length; $i++)
@@ -569,6 +576,13 @@ Expr::register('asn1:int', function($args) {
     return $out;
 });
 
+/**
+ * Encodes each value as an ASN.1 OCTET STRING (tag `0x04`) and returns the concatenated DER output.
+ * @code (`asn1:octets` <value...>)
+ * @example
+ * (asn1:octets (hex:decode "DEADBEEF"))
+ * ; (binary data)
+ */
 Expr::register('asn1:octets', function($args) {
     $out = '';
     for ($i = 1; $i < $args->length; $i++)
@@ -576,20 +590,53 @@ Expr::register('asn1:octets', function($args) {
     return $out;
 });
 
+/**
+ * Encodes the given data as an ASN.1 BIT STRING (tag `0x03`). The `bit-count` is the number of significant
+ * bits in `data`, from which the leading unused-bit count byte is derived.
+ * @code (`asn1:bits` <bit-count> <data>)
+ * @example
+ * (asn1:bits 32 (hex:decode "DEADBEEF"))
+ * ; (binary data)
+ */
 Expr::register('asn1:bits', function($args) {
     $out = '';
     $out .= asn1_encode(0x03, chr(Text::length($args->get(2))*8 - $args->get(1)).$args->get(2));
     return $out;
 });
 
+/**
+ * Wraps the concatenation of the given values in an ASN.1 SEQUENCE (tag `0x30`).
+ *
+ * Note: the encoder supports payloads up to 255 bytes, larger values raise `invalid length`.
+ * @code (`asn1:seq` <value...>)
+ * @code (`asn1:arr` <value...>)
+ * @example
+ * (asn1:seq (asn1:int 1) (asn1:int 2))
+ * ; (binary data)
+ */
 Expr::register('asn1:seq', function($args) {
     return asn1_encode(0x30, $args->slice(1)->join(''));
 });
 
+/**
+ * Wraps the concatenation of the given values in a context-specific constructed tag `[0]` (`0xA0`).
+ * @code (`asn1:ctx` <value...>)
+ * @example
+ * (asn1:ctx (asn1:int 1))
+ * ; (binary data)
+ */
 Expr::register('asn1:ctx', function($args) {
     return asn1_encode(0xA0, $args->slice(1)->join(''));
 });
 
+/**
+ * Encodes each value as an ASN.1 OBJECT IDENTIFIER (tag `0x06`), using the value verbatim as the
+ * already-encoded OID body. To build an OID from its arcs use `asn1:oid` instead.
+ * @code (`asn1:obj` <value...>)
+ * @example
+ * (asn1:obj (hex:decode "2A8648CE3D0201"))
+ * ; (binary data)
+ */
 Expr::register('asn1:obj', function($args) {
     $out = '';
     for ($i = 1; $i < $args->length; $i++)
@@ -597,10 +644,19 @@ Expr::register('asn1:obj', function($args) {
     return $out;
 });
 
+// Alias of `asn1:seq`, documented on its docblock above.
 Expr::register('asn1:arr', function($args) {
     return asn1_encode(0x30, $args->slice(1)->join(''));
 });
 
+/**
+ * Encodes the given arcs as an ASN.1 OBJECT IDENTIFIER (tag `0x06`). The first two arcs are packed into a
+ * single byte (`arc1*40 + arc2`), the remaining ones are encoded as base-128 values.
+ * @code (`asn1:oid` <arc1> <arc2> [arc...])
+ * @example
+ * (asn1:oid 1 2 840 113549)
+ * ; (binary data)
+ */
 Expr::register('asn1:oid', function($args) {
     $a = (int)($args->get(1));
     $b = (int)($args->get(2));

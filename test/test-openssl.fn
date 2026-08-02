@@ -1,0 +1,196 @@
+
+; (openssl:version)
+(def-fn test_openssl_version
+    (expect:str (openssl:version))
+    (expect:not-zero (str:len (openssl:version)))
+)
+
+; (openssl:curves)
+(def-fn test_openssl_curves
+    (set curves (openssl:curves))
+    (expect:array (curves))
+    (expect:not-zero (len (curves)))
+    (expect:not-zero (len (filter c in (curves) (eq? (c) "prime256v1"))))
+)
+
+; (openssl:ciphers)
+(def-fn test_openssl_ciphers
+    (set ciphers (openssl:ciphers))
+    (expect:array (ciphers))
+    (expect:not-zero (len (ciphers)))
+    (expect:not-zero (len (filter c in (ciphers) (eq? (c) "aes-256-cbc"))))
+)
+
+; (openssl:cipher-iv-length <method>)
+(def-fn test_openssl_cipher_iv_length
+    (expect:eq (openssl:cipher-iv-length "aes-256-cbc") 16)
+    (expect:eq (openssl:cipher-iv-length "aes-128-cbc") 16)
+
+    ; an unknown method is rejected rather than silently returning 0
+    (expect:error "invalid cipher method: not-a-cipher"
+        (fn (openssl:cipher-iv-length "not-a-cipher")))
+)
+
+; (openssl:random-bytes <length>)
+(def-fn test_openssl_random_bytes
+    (expect:eq (str:len (hex:encode (openssl:random-bytes 16))) 32)
+    (expect:ne (hex:encode (openssl:random-bytes 32)) (hex:encode (openssl:random-bytes 32)))
+)
+
+; (openssl:create <type> [curve-name] [bits])
+(def-fn test_openssl_create_rejects_unknown_type
+    (expect:error "invalid key type: XYZ" (fn (openssl:create "XYZ")))
+)
+
+; (openssl:create "EC" <curve>) / (openssl:bits <pkey>)
+; (openssl:export-private / export-public / import-private / import-public)
+(def-fn test_openssl_ec_keypair
+    (set key (openssl:create "EC" "prime256v1"))
+    (expect:ne (key) null)
+    (expect:eq (openssl:bits (key)) 256)
+
+    (set priv (openssl:export-private (key)))
+    (set pub (openssl:export-public (key)))
+
+    (expect:true (starts-with? "-----BEGIN" (priv)))
+    (expect:true (starts-with? "-----BEGIN" (pub)))
+    (expect:ne (str:index "PUBLIC KEY" (pub)) -1)
+
+    ; both halves import back into usable key objects
+    (expect:ne (openssl:import-private (priv)) null)
+    (expect:ne (openssl:import-public (pub)) null)
+    (expect:eq (openssl:bits (openssl:import-private (priv))) 256)
+)
+
+; (openssl:sign <private-key> <algorithm> <data>)
+; (openssl:verify <public-key> <algorithm> <signature> <data>)
+(def-fn test_openssl_sign_verify
+    (set key (openssl:create "EC" "prime256v1"))
+    (set priv (openssl:import-private (openssl:export-private (key))))
+    (set pub (openssl:import-public (openssl:export-public (key))))
+
+    (set sig (openssl:sign (priv) "SHA256" "the payload"))
+    (expect:not-zero (str:len (hex:encode (sig))))
+
+    ; correct data verifies, tampered data does not
+    (expect:true (openssl:verify (pub) "SHA256" (sig) "the payload"))
+    (expect:false (openssl:verify (pub) "SHA256" (sig) "the payloae"))
+)
+
+; (openssl:public-encrypt / private-decrypt)
+; (openssl:private-encrypt / public-decrypt)
+(def-fn test_openssl_rsa_encrypt_decrypt
+    (set key (openssl:create "RSA" null 2048))
+    (set priv (openssl:import-private (openssl:export-private (key))))
+    (set pub (openssl:import-public (openssl:export-public (key))))
+
+    (expect:eq (openssl:bits (key)) 2048)
+
+    ; public -> private
+    (set sealed (openssl:public-encrypt (pub) "secret message"))
+    (expect:ne (hex:encode (sealed)) (hex:encode "secret message"))
+    (expect:eq (openssl:private-decrypt (priv) (sealed)) "secret message")
+
+    ; private -> public
+    (set signed (openssl:private-encrypt (priv) "secret message"))
+    (expect:eq (openssl:public-decrypt (pub) (signed)) "secret message")
+)
+
+; (openssl:derive <private-key> <public-key> [key-length])
+(def-fn test_openssl_derive
+    (set a (openssl:create "EC" "prime256v1"))
+    (set b (openssl:create "EC" "prime256v1"))
+
+    (set a_priv (openssl:import-private (openssl:export-private (a))))
+    (set a_pub (openssl:import-public (openssl:export-public (a))))
+    (set b_priv (openssl:import-private (openssl:export-private (b))))
+    (set b_pub (openssl:import-public (openssl:export-public (b))))
+
+    ; ECDH: both sides arrive at the same shared secret
+    (set s1 (openssl:derive (a_priv) (b_pub)))
+    (set s2 (openssl:derive (b_priv) (a_pub)))
+
+    (expect:not-zero (str:len (hex:encode (s1))))
+    (expect:eq (hex:encode (s1)) (hex:encode (s2)))
+)
+
+; (openssl:encrypt <method> <secret> <iv> <data>)
+; (openssl:decrypt <method> <secret> <iv> <data> [tag])
+;
+; Both return a map of the form { tag, data } rather than a bare string.
+(def-fn test_openssl_symmetric
+    (set secret (rpad 32 "K" ""))
+    (set iv (rpad 16 "V" ""))
+
+    (set sealed (openssl:encrypt "aes-256-cbc" (secret) (iv) "attack at dawn"))
+    (expect:map (sealed))
+    (expect:ne (hex:encode (sealed.data)) (hex:encode "attack at dawn"))
+
+    (set opened (openssl:decrypt "aes-256-cbc" (secret) (iv) (sealed.data)))
+    (expect:map (opened))
+    (expect:eq (opened.data) "attack at dawn")
+
+    ; a different iv yields different ciphertext for the same plaintext
+    (set sealed2 (openssl:encrypt "aes-256-cbc" (secret) (rpad 16 "W" "") "attack at dawn"))
+    (expect:ne (hex:encode (sealed.data)) (hex:encode (sealed2.data)))
+
+    ; unknown methods are rejected on both sides
+    ; (values are inlined: a `fn` body does not capture the enclosing locals)
+    (expect:error "invalid cipher method: nope"
+        (fn (openssl:encrypt "nope" "0123456789abcdef0123456789abcdef" "0123456789abcdef" "x")))
+    (expect:error "invalid cipher algorithm: nope"
+        (fn (openssl:decrypt "nope" "0123456789abcdef0123456789abcdef" "0123456789abcdef" "x")))
+)
+
+; AEAD ciphers round-trip through the tag returned by encrypt
+(def-fn test_openssl_symmetric_aead
+    (set secret (rpad 32 "K" ""))
+    (set iv (rpad 12 "V" ""))
+
+    (set sealed (openssl:encrypt "aes-256-gcm" (secret) (iv) "attack at dawn"))
+    (expect:not-zero (str:len (hex:encode (sealed.tag))))
+
+    (set opened (openssl:decrypt "aes-256-gcm" (secret) (iv) (sealed.data) (sealed.tag)))
+    (expect:eq (opened.data) "attack at dawn")
+)
+
+; (openssl:error)
+(def-fn test_openssl_error
+    ; returns either a string or null depending on whether the error queue holds anything
+    (set e (openssl:error))
+    (expect:true (or (eq? (e) null) (str? (e))))
+)
+
+; (pem:encode <label> <data>)
+; (pem:decode <pem-string>)
+(def-fn test_pem_encode_decode
+    (set der (hex:decode "deadbeef"))
+    (set pem (pem:encode "TEST DATA" (der)))
+
+    (expect:true (starts-with? "-----BEGIN TEST DATA-----" (pem)))
+    (expect:ne (str:index "-----END TEST DATA-----" (pem)) -1)
+
+    ; round trip returns the original bytes
+    (expect:eq (hex:encode (pem:decode (pem))) "deadbeef")
+)
+
+; (der:get <pem-string>)
+; (der:parse <der-string|pem-string>)
+; (der:extract <type> <der-string|pem-string> [int-size=0])
+(def-fn test_der
+    (set key (openssl:create "EC" "prime256v1"))
+    (set pub (openssl:export-public (key)))
+
+    ; der:get strips the PEM armour and returns raw DER
+    (set der (der:get (pub)))
+    (expect:not-zero (str:len (hex:encode (der))))
+    ; a DER SEQUENCE always begins with tag 0x30
+    (expect:eq (str:sub 0 2 (hex:encode (der))) "30")
+
+    ; der:parse accepts the PEM form directly
+    (expect:ne (der:parse (pub)) null)
+
+    ; der:extract pulls out the bit-string payload of the public key
+    (set bits (der:extract "bits" (pub)))
+    (expect:not-zero (str:len (hex:encode (bits))))
+)
